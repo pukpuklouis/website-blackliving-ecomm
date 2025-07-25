@@ -1,0 +1,54 @@
+---
+import ProductLayout from '../../layouts/ProductLayout.astro';
+import ProductVariantSelector from '../../components/ProductVariantSelector.tsx';
+
+export async function getStaticPaths() {
+  // This will be implemented to fetch products from the API
+  return [
+    { params: { productSlug: 'black-s2' } },
+    { params: { productSlug: 'black-s3' } },
+    { params: { productSlug: 'black-s4' } },
+    { params: { productSlug: 'black-l-class' } },
+  ];
+}
+
+const { productSlug } = Astro.params;
+
+// Mock product data - will be fetched from API
+const product = {
+  title: '席夢思黑標 S2 床墊',
+  description: '頂級美國原裝進口床墊，提供極致睡眠體驗',
+  image: '/images/simmons-black-s2.jpg',
+  price: '專櫃價2-3折起',
+  category: '席夢思黑標'
+};
+---
+
+<ProductLayout {...product}>
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+    <div>
+      <img 
+        src={product.image} 
+        alt={product.title}
+        class="w-full h-auto rounded-lg shadow-lg"
+      />
+    </div>
+    
+    <div>
+      <h1 class="text-3xl font-bold text-gray-900 mb-4">{product.title}</h1>
+      <p class="text-lg text-gray-600 mb-6">{product.description}</p>
+      
+      <ProductVariantSelector client:load />
+      
+      <div class="mt-8">
+        <h3 class="text-xl font-semibold mb-4">產品特色</h3>
+        <ul class="space-y-2 text-gray-600">
+          <li>• 美國原裝進口</li>
+          <li>• 10年品質保固</li>
+          <li>• 買貴退差價</li>
+          <li>• 全台最低價保證</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</ProductLayout>

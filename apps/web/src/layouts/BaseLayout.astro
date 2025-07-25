@@ -1,0 +1,128 @@
+---
+// Base layout for all Black Living pages
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import SEO from '../components/SEO.astro';
+
+export interface Props {
+  title: string;
+  description: string;
+  canonical?: string;
+  image?: string;
+  type?: 'website' | 'article' | 'product';
+  publishedTime?: string;
+  modifiedTime?: string;
+  schema?: object;
+  class?: string;
+}
+
+const {
+  title,
+  description,
+  canonical,
+  image,
+  type,
+  publishedTime,
+  modifiedTime,
+  schema,
+  class: className = ''
+} = Astro.props;
+---
+
+<!doctype html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    
+    <!-- SEO -->
+    <SEO 
+      title={title}
+      description={description}
+      canonical={canonical}
+      image={image}
+      type={type}
+      publishedTime={publishedTime}
+      modifiedTime={modifiedTime}
+      schema={schema}
+    />
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Google Tag Manager (placeholder) -->
+    <!-- Add GTM script here when ready -->
+  </head>
+  
+  <body class={`font-sans antialiased ${className}`}>
+    <!-- Google Tag Manager (noscript) -->
+    <!-- Add GTM noscript here when ready -->
+    
+    <Header />
+    
+    <main>
+      <slot />
+    </main>
+    
+    <Footer />
+    
+    <!-- Floating Action Buttons -->
+    <div class="fixed right-4 bottom-4 z-50 space-y-3">
+      <!-- LINE Button -->
+      <a 
+        href="https://line.me/R/ti/p/@blackking"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="block w-14 h-14 bg-green-500 hover:bg-green-600 text-white rounded-full shadow-lg flex items-center justify-center transition-colors"
+        title="加入LINE好友"
+      >
+        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M12.017 0C5.396 0 .029 4.285.029 9.567c0 2.132.809 4.116 2.226 5.729.119.154.154.274.045.448-.154.274-.689 2.226-.809 2.548-.154.448.045.598.309.448.264-.119 2.865-1.588 3.329-1.882.154-.119.309-.119.463-.045.809.154 1.618.274 2.455.274 6.621 0 11.988-4.285 11.988-9.567C24.005 4.285 18.638.001 12.017.001zm-6.621 12.896c-.154 0-.274-.119-.274-.274V8.293c0-.154.119-.274.274-.274s.274.119.274.274v4.329c0 .154-.119.274-.274.274zm1.618 0c-.154 0-.274-.119-.274-.274V8.293c0-.154.119-.274.274-.274s.274.119.274.274v2.772l2.226-2.772c.045-.045.119-.074.198-.074.154 0 .274.119.274.274v4.329c0 .154-.119.274-.274.274s-.274-.119-.274-.274v-2.772l-2.226 2.772c-.045.045-.119.074-.198.074zm5.132 0H9.674c-.154 0-.274-.119-.274-.274V8.293c0-.154.119-.274.274-.274h2.472c.154 0 .274.119.274.274s-.119.274-.274.274H9.948v1.463h2.198c.154 0 .274.119.274.274s-.119.274-.274.274H9.948v1.463h2.198c.154 0 .274.119.274.274s-.119.274-.274.274zm3.329-.548c-.045.045-.119.074-.198.074s-.154-.029-.198-.074l-1.882-2.341v2.615c0 .154-.119.274-.274.274s-.274-.119-.274-.274V8.293c0-.154.119-.274.274-.274.079 0 .154.029.198.074l1.882 2.341V8.293c0-.154.119-.274.274-.274s.274.119.274.274v4.055z"/>
+        </svg>
+      </a>
+      
+      <!-- Appointment Button -->
+      <a 
+        href="/appointment"
+        class="block w-14 h-14 bg-black hover:bg-gray-800 text-white rounded-full shadow-lg flex items-center justify-center transition-colors"
+        title="預約試躊"
+      >
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        </svg>
+      </a>
+    </div>
+  </body>
+</html>
+
+<style is:global>
+  html {
+    font-family: 'Noto Sans TC', system-ui, sans-serif;
+    scroll-behavior: smooth;
+  }
+  
+  body {
+    line-height: 1.6;
+  }
+  
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+  
+  ::-webkit-scrollbar-track {
+    background: #f1f1f1;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+    background: #555;
+  }
+</style>

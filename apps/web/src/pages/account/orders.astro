@@ -1,0 +1,45 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+// This page will be protected by Better Auth middleware
+---
+
+<BaseLayout>
+  <main class="container mx-auto px-4 py-8">
+    <div class="max-w-4xl mx-auto">
+      <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900 mb-2">訂單記錄</h1>
+        <p class="text-gray-600">查看您的購買記錄</p>
+      </div>
+      
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div class="md:col-span-1">
+          <nav class="space-y-2">
+            <a href="/account/profile" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg">個人資料</a>
+            <a href="/account/orders" class="block px-4 py-2 bg-black text-white rounded-lg">訂單記錄</a>
+            <a href="/account/appointments" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg">預約記錄</a>
+          </nav>
+        </div>
+        
+        <div class="md:col-span-2">
+          <div class="space-y-6">
+            <!-- Order items will be dynamically rendered -->
+            <div class="bg-white p-6 rounded-lg shadow-md">
+              <div class="flex justify-between items-start mb-4">
+                <div>
+                  <h3 class="font-semibold text-lg">訂單 #BL2024001</h3>
+                  <p class="text-sm text-gray-500">下單日期：2024-01-15</p>
+                </div>
+                <span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm">已完成</span>
+              </div>
+              
+              <div class="border-t pt-4">
+                <p class="text-gray-700">席夢思黑標 S2 床墊 - 標準雙人</p>
+                <p class="text-sm text-gray-500 mt-1">NT$ 45,000</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</BaseLayout>
