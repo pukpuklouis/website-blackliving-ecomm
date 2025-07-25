@@ -1,0 +1,175 @@
+---
+// Homepage for Black Living
+import BaseLayout from '../layouts/BaseLayout.astro';
+import HeroSlider from '../components/HeroSlider.astro';
+import FeatureIcons from '../components/FeatureIcons.astro';
+import ProductCard from '../components/ProductCard.astro';
+
+// Sample products for homepage display
+const featuredProducts = [
+  {
+    id: 'simmons-s2',
+    name: 'Simmons Black S2',
+    series: 'S2 系列',
+    image: '/products/s2-sample.jpg',
+    features: ['獨立筒彈簧', '記憶棉層', '涼感布料'],
+    priceFrom: 45000,
+    href: '/simmons-black/s2'
+  },
+  {
+    id: 'simmons-s3',
+    name: 'Simmons Black S3',
+    series: 'S3 系列', 
+    image: '/products/s3-sample.jpg',
+    features: ['多層獨立筒', '天然乳膠', '抗菌布面'],
+    priceFrom: 65000,
+    href: '/simmons-black/s3'
+  },
+  {
+    id: 'simmons-l-class',
+    name: 'Simmons Black L-Class',
+    series: 'L-Class',
+    image: '/products/l-class-sample.jpg',
+    features: ['鈦金屬彈簧', '竹炭纖維', '頂級工藝'],
+    href: '/simmons-black/l-class'
+  }
+];
+---
+
+<BaseLayout 
+  title="Black Living 黑哥家居 - 席夢思黑標床墊專家"
+  description="專營席夢思黑標床墊，提供全台最低價與專業服務。中和、中壢實體展間，歡迎預約試躺體驗。"
+  type="website"
+>
+  <!-- Hero Section -->
+  <HeroSlider />
+  
+  <!-- Brand Story Section -->
+  <section class="py-16 bg-white">
+    <div class="container mx-auto px-4">
+      <div class="max-w-4xl mx-auto text-center">
+        <h2 class="text-4xl font-bold mb-6">從黑標王到 Black Living</h2>
+        <p class="text-xl text-gray-600 mb-8">
+          我們從專營席夢思「黑標」床墊起家，憑藉對品質的堅持與對客戶的承諾，
+          成為蝦皮第一賣家。現在，我們將服務範圍擴展至整個居家生活領域，
+          致力於為每個家庭打造舒適的睡眠環境。
+        </p>
+        <div class="flex justify-center items-center space-x-8 text-6xl">
+          <span>🖤</span>
+          <span>🌙</span>
+          <span>🏠</span>
+        </div>
+        <p class="text-gray-500 mt-4">
+          Black (黑) • Moon (月亮) • Living (生活)
+        </p>
+      </div>
+    </div>
+  </section>
+  
+  <!-- Feature Icons -->
+  <FeatureIcons />
+  
+  <!-- Featured Products -->
+  <section class="py-16 bg-white">
+    <div class="container mx-auto px-4">
+      <h2 class="text-3xl font-bold text-center mb-12">席夢思熱銷床墊</h2>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        {featuredProducts.map((product) => (
+          <ProductCard product={product} />
+        ))}
+      </div>
+      
+      <div class="text-center mt-12">
+        <a 
+          href="/simmons-black"
+          class="inline-block bg-black text-white px-8 py-3 text-lg font-semibold rounded hover:bg-gray-800 transition-colors"
+        >
+          查看完整產品系列
+        </a>
+      </div>
+    </div>
+  </section>
+  
+  <!-- Testimonials Preview -->
+  <section class="py-16 bg-gray-50">
+    <div class="container mx-auto px-4">
+      <h2 class="text-3xl font-bold text-center mb-12">顧客好評</h2>
+      
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <!-- Sample testimonials -->
+        <div class="bg-white p-6 rounded-lg shadow">
+          <div class="flex items-center mb-4">
+            <div class="flex text-yellow-400">
+              ★★★★★
+            </div>
+            <span class="ml-2 text-gray-600">蝦皮買家</span>
+          </div>
+          <p class="text-gray-700">
+            "床墊品質真的很好，價格也比專櫃便宜很多，客服回復很快速專業！"
+          </p>
+        </div>
+        
+        <div class="bg-white p-6 rounded-lg shadow">
+          <div class="flex items-center mb-4">
+            <div class="flex text-yellow-400">
+              ★★★★★
+            </div>
+            <span class="ml-2 text-gray-600">Google 評論</span>
+          </div>
+          <p class="text-gray-700">
+            "實體店面試躺後決定購買，睡了半年品質依然很好，推薦！"
+          </p>
+        </div>
+        
+        <div class="bg-white p-6 rounded-lg shadow">
+          <div class="flex items-center mb-4">
+            <div class="flex text-yellow-400">
+              ★★★★★
+            </div>
+            <span class="ml-2 text-gray-600">Line 客戶</span>
+          </div>
+          <p class="text-gray-700">
+            "從諮詢到送貨都很滿意，黑哥的服務真的沒話說！"
+          </p>
+        </div>
+      </div>
+      
+      <div class="text-center mt-8">
+        <a 
+          href="/testimonials"
+          class="text-black font-semibold hover:underline"
+        >
+          查看更多好評 →
+        </a>
+      </div>
+    </div>
+  </section>
+  
+  <!-- CTA Section -->
+  <section class="py-16 bg-black text-white">
+    <div class="container mx-auto px-4 text-center">
+      <h2 class="text-3xl font-bold mb-6">準備好體驗頂級睡眠了嗎？</h2>
+      <p class="text-xl mb-8 text-gray-300">
+        歡迎蒞臨我們的實體展間，親自體驗席夢思黑標床墊的舒適感受
+      </p>
+      
+      <div class="flex flex-col sm:flex-row gap-4 justify-center">
+        <a 
+          href="/appointment"
+          class="bg-white text-black px-8 py-3 font-semibold rounded hover:bg-gray-100 transition-colors"
+        >
+          立即預約試躺
+        </a>
+        <a 
+          href="https://line.me/R/ti/p/@blackking"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="border border-white text-white px-8 py-3 font-semibold rounded hover:bg-white hover:text-black transition-colors"
+        >
+          Line 線上諮詢
+        </a>
+      </div>
+    </div>
+  </section>
+</BaseLayout>

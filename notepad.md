@@ -2,3 +2,4 @@
 - 2025-07-25: Integrated "Better Auth" into the project's file structure and development plan to handle user authentication, including capabilities for users to check their status and manage reservations.
 - 2025-07-25: Corrected `astro-file-structure.md` to remove all "..." placeholders and provide a complete, detailed project structure.
 - 2025-07-25: Corrected `development-plan.md` to integrate Better Auth while preserving the original phased structure of the plan.
+- 2025-07-25: Added an explanation for the `SEO.astro` component to `astro-file-structure.md` to document its role in centralizing SEO management.

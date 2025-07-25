@@ -1,0 +1,42 @@
+name = "blackliving-api"
+main = "src/index.ts"
+compatibility_date = "2024-07-01"
+compatibility_flags = ["nodejs_compat"]
+
+[env.development]
+name = "blackliving-api-dev"
+
+[env.staging]
+name = "blackliving-api-staging"
+
+[env.production]
+name = "blackliving-api"
+
+# Cloudflare D1 Database
+[[d1_databases]]
+binding = "DB"
+database_name = "blackliving-db"
+database_id = "your-database-id-here"
+
+# Cloudflare R2 Storage
+[[r2_buckets]]
+binding = "R2"
+bucket_name = "blackliving-images"
+
+# Cloudflare KV Storage
+[[kv_namespaces]]
+binding = "CACHE"
+id = "your-kv-namespace-id-here"
+preview_id = "your-preview-kv-namespace-id-here"
+
+# Environment Variables
+[vars]
+NODE_ENV = "development"
+API_BASE_URL = "https://api.blackliving.com"
+WEB_BASE_URL = "https://blackliving.com"
+
+# Secrets (set via wrangler secret put)
+# JWT_SECRET
+# BETTER_AUTH_SECRET
+# GOOGLE_CLIENT_ID
+# GOOGLE_CLIENT_SECRET

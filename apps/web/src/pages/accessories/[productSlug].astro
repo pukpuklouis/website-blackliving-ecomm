@@ -1,0 +1,43 @@
+---
+import ProductLayout from '../../layouts/ProductLayout.astro';
+import ProductVariantSelector from '../../components/ProductVariantSelector.tsx';
+
+export async function getStaticPaths() {
+  // This will be implemented to fetch accessories from the API
+  return [
+    { params: { productSlug: 'pillow-set' } },
+    { params: { productSlug: 'mattress-protector' } },
+    { params: { productSlug: 'bed-frame' } },
+  ];
+}
+
+const { productSlug } = Astro.params;
+
+// Mock product data - will be fetched from API
+const product = {
+  title: '頂級枕頭組合',
+  description: '搭配席夢思床墊的完美枕頭選擇',
+  image: '/images/pillow-set.jpg',
+  price: '特惠價格',
+  category: '精選周邊'
+};
+---
+
+<ProductLayout {...product}>
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+    <div>
+      <img 
+        src={product.image} 
+        alt={product.title}
+        class="w-full h-auto rounded-lg shadow-lg"
+      />
+    </div>
+    
+    <div>
+      <h1 class="text-3xl font-bold text-gray-900 mb-4">{product.title}</h1>
+      <p class="text-lg text-gray-600 mb-6">{product.description}</p>
+      
+      <ProductVariantSelector client:load />
+    </div>
+  </div>
+</ProductLayout>

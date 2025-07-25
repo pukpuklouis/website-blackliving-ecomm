@@ -1,0 +1,16 @@
+{
+  "name": "@blackliving/types",
+  "version": "1.0.0",
+  "description": "Shared TypeScript type definitions for Black Living",
+  "main": "index.ts",
+  "type": "module",
+  "exports": {
+    ".": "./index.ts"
+  },
+  "dependencies": {
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.4"
+  }
+}

@@ -7,7 +7,7 @@
 #### **技術棧總覽 (Tech Stack Overview)**
 
 *   **前端框架 (Frontend Framework):** **Astro** - 用於建構以內容為主的頁面，並透過「島嶼架構」嵌入互動元件。
-*   **UI 元件庫 (UI Library):** **React** - 用於開發需要高度互動性的「島嶼」，例如購物車、管理後台等。
+*   **UI 元件庫 (UI Library):** **Shadcn** - 用於開發需要高度互動性的「Island」，例如購物車、管理後台等。
 *   **認證 (Authentication):** **Better Auth** - 用於處理使用者登入、Session 管理與路由保護。
 *   **狀態管理 (State Management):** **Zustand** - 一個輕量、快速的 React 狀態管理函式庫。
 *   **樣式方案 (Styling):** **Tailwind CSS** - 一個 Utility-First 的 CSS 框架，能快速建構現代化介面。
@@ -15,7 +15,7 @@
 *   **後端運算 (Backend Compute):** **Cloudflare Workers** - 在 Cloudflare 的全球網路上運行的 Serverless Functions。
 *   **API 框架 (API Framework):** **Hono** - 一個專為 Edge 環境設計的輕量級 Web 框架，用於在 Worker 中建構 API。
 *   **主要資料庫 (Primary Database):** **Cloudflare D1** (基於 SQLite) 或 **Neon** (Serverless Postgres)。我們將使用 **Drizzle ORM** 來操作資料庫，它對 Serverless 環境非常友好。
-*   **資料庫快取 (Database Cache):** **Cloudflare Hyperdrive** - 用於加速 Worker 對 Neon (如果選擇) 的連線。
+*   **資料庫快取 (Database Cache):** **Cloudflare Hyperdrive** - 用於加速 Worker 對 D1 的連線。
 *   **物件儲存 (Object Storage):** **Cloudflare R2** - 用於儲存所有產品圖片、使用者上傳的檔案等。
 *   **鍵值儲存 (Key-Value Store):** **Cloudflare KV** - 用於快取 API 回應、儲存 Session 資料等，以進一步優化速度。
 *   **資料驗證 (Schema Validation):** **Zod** - 用於驗證前端表單輸入和後端 API 的資料格式，確保資料一致性。
@@ -39,7 +39,7 @@
         *   在 Hono 中介軟體 (Middleware) 中整合 Better Auth，用於驗證與保護需要登入的 API 路由。
         *   Astro 前端將建立一個 `pages/api/auth/[...betterauth].ts` 路由，來處理所有由 Better Auth 管理的認證端點。
     *   **產品 API (`/api/products/*`):**
-        *   `GET /`: 獲取產品列表，優先從 **KV** 快取讀取，若無則從 D1/Neon 查詢並寫入快取。
+        *   `GET /`: 獲取熱門產品列表，優先從 **KV** 快取讀取，若無則從 D1/Neon 查詢並寫入快取。
         *   `GET /:id`: 獲取單一產品詳情。
     *   **管理員 API (需 Better Auth Admin 角色驗證):**
         *   `POST /admin/products`: 新增產品，並將圖片上傳至 **R2**。
@@ -84,11 +84,11 @@
     *   新增 `AppointmentManager.tsx` 元件，讓登入使用者可以查看、更新或取消自己的預約。
 3.  **管理後台 (Admin Dashboard):**
     *   建立一個受密碼保護的 `/admin` 路由群組。
-    *   開發一系列 React 管理介面元件：
+    *   開發一系列 React 管理介面元件：使用Shadcn ui 建立完整的Dashboard
         *   `Dashboard.tsx`: 顯示銷售數據圖表。
         *   `ProductManagement.tsx`: 完整的產品 CRUD 操作介面。
         *   `OrderManagement.tsx`: 查看訂單詳情並更新出貨狀態。
-        *   `PostManagemnt.tsx` ：用table 管理發文
+        *   `PostManagemnt.tsx` ：用table 管理發文, CRUD操作介面。
         *   `BlogComposer.tsx`：novel.sh Markdown編輯器，快速編輯發文
 4.  **部署與優化：**
     *   將 Astro 前端專案部署至 **Cloudflare Pages**。

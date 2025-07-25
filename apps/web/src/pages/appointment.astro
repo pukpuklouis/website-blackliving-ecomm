@@ -1,0 +1,17 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import AppointmentForm from '../components/AppointmentForm.tsx';
+---
+
+<BaseLayout>
+  <main class="container mx-auto px-4 py-8">
+    <div class="text-center mb-12">
+      <h1 class="text-4xl font-bold text-gray-900 mb-4">預約試躺</h1>
+      <p class="text-xl text-gray-600">選擇最近的門市體驗席夢思黑標床墊</p>
+    </div>
+    
+    <div class="max-w-2xl mx-auto">
+      <AppointmentForm client:load />
+    </div>
+  </main>
+</BaseLayout>

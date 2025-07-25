@@ -1,0 +1,99 @@
+---
+// Floating action buttons for Line and appointment
+export interface Props {
+  position?: 'right' | 'left';
+  showLine?: boolean;
+  showAppointment?: boolean;
+  lineUrl?: string;
+  appointmentUrl?: string;
+  class?: string;
+}
+
+const {
+  position = 'right',
+  showLine = true,
+  showAppointment = true,
+  lineUrl = 'https://line.me/R/ti/p/@blackking',
+  appointmentUrl = '/appointment',
+  class: className = ''
+} = Astro.props;
+
+const positionClasses = position === 'right' ? 'right-4' : 'left-4';
+---
+
+<div class={`fixed ${positionClasses} bottom-4 z-50 space-y-3 ${className}`}>
+  {showLine && (
+    <a 
+      href={lineUrl}
+      target="_blank"
+      rel="noopener noreferrer"
+      class="block w-14 h-14 bg-green-500 hover:bg-green-600 text-white rounded-full shadow-lg flex items-center justify-center transition-all duration-300 hover:scale-110 group"
+      title="加入LINE好友諮詢"
+      aria-label="加入LINE好友諮詢"
+    >
+      <!-- LINE Icon -->
+      <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+        <path d="M12.017 0C5.396 0 .029 4.285.029 9.567c0 2.132.809 4.116 2.226 5.729.119.154.154.274.045.448-.154.274-.689 2.226-.809 2.548-.154.448.045.598.309.448.264-.119 2.865-1.588 3.329-1.882.154-.119.309-.119.463-.045.809.154 1.618.274 2.455.274 6.621 0 11.988-4.285 11.988-9.567C24.005 4.285 18.638.001 12.017.001zm-6.621 12.896c-.154 0-.274-.119-.274-.274V8.293c0-.154.119-.274.274-.274s.274.119.274.274v4.329c0 .154-.119.274-.274.274zm1.618 0c-.154 0-.274-.119-.274-.274V8.293c0-.154.119-.274.274-.274s.274.119.274.274v2.772l2.226-2.772c.045-.045.119-.074.198-.074.154 0 .274.119.274.274v4.329c0 .154-.119.274-.274.274s-.274-.119-.274-.274v-2.772l-2.226 2.772c-.045.045-.119.074-.198.074zm5.132 0H9.674c-.154 0-.274-.119-.274-.274V8.293c0-.154.119-.274.274-.274h2.472c.154 0 .274.119.274.274s-.119.274-.274.274H9.948v1.463h2.198c.154 0 .274.119.274.274s-.119.274-.274.274H9.948v1.463h2.198c.154 0 .274.119.274.274s-.119.274-.274.274zm3.329-.548c-.045.045-.119.074-.198.074s-.154-.029-.198-.074l-1.882-2.341v2.615c0 .154-.119.274-.274.274s-.274-.119-.274-.274V8.293c0-.154.119-.274.274-.274.079 0 .154.029.198.074l1.882 2.341V8.293c0-.154.119-.274.274-.274s.274.119.274.274v4.055z"/>
+      </svg>
+      
+      <!-- Tooltip -->
+      <div class="absolute right-16 top-1/2 transform -translate-y-1/2 bg-gray-900 text-white px-3 py-2 rounded-lg text-sm whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+        線上諮詢
+        <div class="absolute top-1/2 -right-1 transform -translate-y-1/2 w-2 h-2 bg-gray-900 rotate-45"></div>
+      </div>
+    </a>
+  )}
+  
+  {showAppointment && (
+    <a 
+      href={appointmentUrl}
+      class="block w-14 h-14 bg-black hover:bg-gray-800 text-white rounded-full shadow-lg flex items-center justify-center transition-all duration-300 hover:scale-110 group"
+      title="預約試躺"
+      aria-label="預約試躺"
+    >
+      <!-- Calendar Icon -->
+      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+      </svg>
+      
+      <!-- Tooltip -->
+      <div class="absolute right-16 top-1/2 transform -translate-y-1/2 bg-gray-900 text-white px-3 py-2 rounded-lg text-sm whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+        預約試躺
+        <div class="absolute top-1/2 -right-1 transform -translate-y-1/2 w-2 h-2 bg-gray-900 rotate-45"></div>
+      </div>
+    </a>
+  )}
+  
+  <!-- Pulse animation for LINE button -->
+  {showLine && (
+    <style>
+      @keyframes pulse-green {
+        0%, 100% {
+          box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
+        }
+        50% {
+          box-shadow: 0 0 0 8px rgba(34, 197, 94, 0);
+        }
+      }
+      
+      .bg-green-500 {
+        animation: pulse-green 2s infinite;
+      }
+    </style>
+  )}
+</div>
+
+<!-- Mobile optimization -->
+<style>
+  @media (max-width: 640px) {
+    .fixed.right-4 {
+      right: 1rem;
+      bottom: 1rem;
+    }
+    
+    .fixed.left-4 {
+      left: 1rem; 
+      bottom: 1rem;
+    }
+  }
+</style>

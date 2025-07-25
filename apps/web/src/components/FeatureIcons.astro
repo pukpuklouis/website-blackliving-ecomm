@@ -1,0 +1,53 @@
+---
+// Feature icons section for Black Living homepage
+export interface Props {
+  features?: Array<{
+    icon: string;
+    title: string;
+    description: string;
+  }>;
+}
+
+const { features = [] } = Astro.props;
+
+const defaultFeatures = [
+  {
+    icon: '🏆',
+    title: '全台最低價',
+    description: '專櫃價2-3折起，買貴退差價保證'
+  },
+  {
+    icon: '🇺🇸',
+    title: '100% 美國製造',
+    description: '席夢思原廠進口，品質保證'
+  },
+  {
+    icon: '🛡️',
+    title: '十年保固',
+    description: '無折舊保固，睡壞直接換新'
+  },
+  {
+    icon: '⭐',
+    title: '五星好評',
+    description: '百位網友推薦，蝦皮第一賣家'
+  }
+];
+
+const featuresToShow = features.length > 0 ? features : defaultFeatures;
+---
+
+<section class="py-16 bg-gray-50">
+  <div class="container mx-auto px-4">
+    <h2 class="text-3xl font-bold text-center mb-12">四大堅持</h2>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+      {featuresToShow.map((feature) => (
+        <div class="text-center">
+          <div class="text-5xl mb-4">{feature.icon}</div>
+          <h3 class="text-xl font-semibold mb-3">{feature.title}</h3>
+          <p class="text-gray-600">{feature.description}</p>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>
