@@ -1,0 +1,4 @@
+- 2025-07-25: Reviewed the meeting minutes and updated `astro-file-structure.md` and `development-plan.md` to align with the new project requirements.
+- 2025-07-25: Integrated "Better Auth" into the project's file structure and development plan to handle user authentication, including capabilities for users to check their status and manage reservations.
+- 2025-07-25: Corrected `astro-file-structure.md` to remove all "..." placeholders and provide a complete, detailed project structure.
+- 2025-07-25: Corrected `development-plan.md` to integrate Better Auth while preserving the original phased structure of the plan.

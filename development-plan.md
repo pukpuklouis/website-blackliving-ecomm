@@ -8,8 +8,10 @@
 
 *   **前端框架 (Frontend Framework):** **Astro** - 用於建構以內容為主的頁面，並透過「島嶼架構」嵌入互動元件。
 *   **UI 元件庫 (UI Library):** **React** - 用於開發需要高度互動性的「島嶼」，例如購物車、管理後台等。
+*   **認證 (Authentication):** **Better Auth** - 用於處理使用者登入、Session 管理與路由保護。
 *   **狀態管理 (State Management):** **Zustand** - 一個輕量、快速的 React 狀態管理函式庫。
 *   **樣式方案 (Styling):** **Tailwind CSS** - 一個 Utility-First 的 CSS 框架，能快速建構現代化介面。
+*   **內容編輯器(CMSEditor)**：Novel.sh - 一個Notion like 的內文編輯，能快速編輯Blog post
 *   **後端運算 (Backend Compute):** **Cloudflare Workers** - 在 Cloudflare 的全球網路上運行的 Serverless Functions。
 *   **API 框架 (API Framework):** **Hono** - 一個專為 Edge 環境設計的輕量級 Web 框架，用於在 Worker 中建構 API。
 *   **主要資料庫 (Primary Database):** **Cloudflare D1** (基於 SQLite) 或 **Neon** (Serverless Postgres)。我們將使用 **Drizzle ORM** 來操作資料庫，它對 Serverless 環境非常友好。
@@ -27,19 +29,19 @@
 
 1.  **環境與資料庫設定：**
     *   使用 `wrangler` 初始化 Cloudflare Workers 專案。
-    *   選擇 D1 或 Neon 作為主要資料庫，並使用 **Drizzle ORM** 定義 `Product`, `User`, `Order` 的資料庫綱要 (Schema)。
+    *   選擇 D1 或 Neon 作為主要資料庫，並使用 **Drizzle ORM** 定義 `Product`, `Order` 的資料庫綱要 (Schema)。`User` 綱要將由 Better Auth 管理。
     *   設定 **R2** 儲存桶 (Bucket) 用於存放商品圖片。
     *   設定 **KV** 命名空間 (Namespace) 用於快取。
     *   如果使用 Neon，設定 **Hyperdrive** 來連接資料庫。
 2.  **API 開發 (with Hono on Cloudflare Workers):**
-    *   **認證 API (`/api/auth/*`):**
-        *   `POST /register`: 使用者註冊，密碼將使用 `bcrypt.js` 進行雜湊後存入資料庫。
-        *   `POST /login`: 使用者登入，成功後產生 JWT (JSON Web Token) 並回傳。
-        *   `GET /me`: 驗證 JWT 並回傳使用者資訊。
+    *   **認證機制 (Authentication with Better Auth):**
+        *   導入 **Better Auth** 作為主要的認證解決方案，取代手動實作。
+        *   在 Hono 中介軟體 (Middleware) 中整合 Better Auth，用於驗證與保護需要登入的 API 路由。
+        *   Astro 前端將建立一個 `pages/api/auth/[...betterauth].ts` 路由，來處理所有由 Better Auth 管理的認證端點。
     *   **產品 API (`/api/products/*`):**
         *   `GET /`: 獲取產品列表，優先從 **KV** 快取讀取，若無則從 D1/Neon 查詢並寫入快取。
         *   `GET /:id`: 獲取單一產品詳情。
-    *   **管理員 API (需 JWT 驗證為 Admin 角色):**
+    *   **管理員 API (需 Better Auth Admin 角色驗證):**
         *   `POST /admin/products`: 新增產品，並將圖片上傳至 **R2**。
         *   `PUT /admin/products/:id`: 更新產品資訊。
         *   `GET /admin/orders`: 查詢所有訂單。
@@ -61,7 +63,7 @@
 3.  **互動式島嶼開發 (React + Zustand + Zod):**
     *   **`AddToCartButton.tsx`:** 一個互動按鈕，點擊後使用 Zustand 更新全域的購物車狀態。
     *   **`ShoppingCart.tsx`:** 一個懸浮或獨立頁面的購物車元件，顯示 Zustand 中的購物車內容，並可與後端 API 同步。
-    *   **`AuthForm.tsx`:** 包含登入與註冊表單，使用 **Zod** 進行前端驗證，並呼叫後端認證 API。
+    *   **`Auth.tsx`:** 使用 **Better Auth** 提供的 React Hooks 或預建元件來處理登入、註冊、登出及顯示使用者狀態。
     *   **`ProductGallery.tsx`:** 產品詳情頁中的圖片瀏覽器。
 
 ---
@@ -70,20 +72,24 @@
 
 此階段將前後端串連，並完成金流與管理功能。
 
-1.  **結帳與金流：**
-    *   建立結帳頁面 (`checkout.astro`)，其中包含收件資訊表單 (React 島嶼)。
+1.  **結帳與金流 (公司帳戶匯款流程)：**
+    *   建立結帳頁面 (`checkout.astro`)，此頁面將受 Better Auth 保護，未登入者會被導向登入。
     *   使用者點擊「下單」後，前端將訂單資訊傳送至後端 `POST /api/orders` API。
-    *   後端建立訂單後，與**綠界 (ECPay)** 或**藍新 (NewebPay)** 的 API 互動，產生付款頁面並重導向使用者。
-    *   建立一個專門的 Worker 端點 (`/api/payment/callback`) 來接收金流服務商的付款成功通知，並更新 D1/Neon 中的訂單狀態。
-2.  **使用者中心 (React 島嶼):**
-    *   建立 `/account/profile` 和 `/account/orders` 路由。
+    *   後端 API 在資料庫中建立訂單，並將其狀態設為「待付款」。
+    *   訂單成功建立後，前端會將使用者引導至「預約試躺」表單頁面，完成下單流程。
+    *   付款方式為「公司帳戶匯款」，相關資訊將顯示在訂單確認頁面與會員中心，不需串接即時金流服務。
+2.  **使用者中心 (React  Island):**
+    *   建立 `/account/profile`, `/account/orders`, 和 `/account/appointments` 路由，由 Better Auth 保護。
     *   開發 `ProfileEditor.tsx` 和 `OrderHistory.tsx` 元件，讓使用者管理個人資料與查詢訂單。
+    *   新增 `AppointmentManager.tsx` 元件，讓登入使用者可以查看、更新或取消自己的預約。
 3.  **管理後台 (Admin Dashboard):**
     *   建立一個受密碼保護的 `/admin` 路由群組。
     *   開發一系列 React 管理介面元件：
         *   `Dashboard.tsx`: 顯示銷售數據圖表。
         *   `ProductManagement.tsx`: 完整的產品 CRUD 操作介面。
         *   `OrderManagement.tsx`: 查看訂單詳情並更新出貨狀態。
+        *   `PostManagemnt.tsx` ：用table 管理發文
+        *   `BlogComposer.tsx`：novel.sh Markdown編輯器，快速編輯發文
 4.  **部署與優化：**
     *   將 Astro 前端專案部署至 **Cloudflare Pages**。
     *   將 Worker 後端專案部署至 **Cloudflare Workers**。
