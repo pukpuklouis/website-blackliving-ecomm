@@ -54,3 +54,10 @@ docker-compose.yml
 
 # Misc
 coverage/
+
+# tests
+
+__tests__
+test-results/
+tests-results/*/*
+tests/
