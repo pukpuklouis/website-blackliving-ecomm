@@ -7,9 +7,8 @@ import { BreadcrumbComponent } from '../components/BreadcrumbComponent';
 
 export default function DashboardLayout() {
   return (
-    // <div className="relative">
-      <SidebarProvider>
-        <BlackLivingAppSidebar />
+      <SidebarProvider style={{"--sidebar-width": "12rem"} as React.CSSProperties}>
+        <BlackLivingAppSidebar variant="inset" side="left"/>
         <SidebarInset>
           <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
             <SidebarTrigger />
@@ -20,6 +19,5 @@ export default function DashboardLayout() {
           </div>
         </SidebarInset>
       </SidebarProvider>
-    // </div>
   );
 }
