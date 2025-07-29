@@ -3,6 +3,8 @@ import { SidebarProvider, SidebarInset, SidebarTrigger } from '@blackliving/ui';
 import { BlackLivingAppSidebar } from '../components/BlackLivingAppSidebar';
 import { BreadcrumbComponent } from '../components/BreadcrumbComponent';
 
+
+
 export default function DashboardLayout() {
   return (
     <SidebarProvider>

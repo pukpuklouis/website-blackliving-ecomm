@@ -1,5 +1,1 @@
-@import "tailwindcss";
-@import "@blackliving/ui/styles/globals.css";
-
-/* Tailwind v4 theme configuration using @theme directive */
-
+@import '@repo/tailwind-config/styles.css';

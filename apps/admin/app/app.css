@@ -1,13 +1,1 @@
-@import "tailwindcss";
-@import "@blackliving/ui/styles/globals.css";
-@config "../tailwind.config.ts";
-
-html,
-body {
-  background-color: hsl(var(--background));
-  color: hsl(var(--foreground));
-
-  @media (prefers-color-scheme: dark) {
-    color-scheme: dark;
-  }
-}
+@import '@repo/tailwind-config/styles.css';
