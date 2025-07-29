@@ -109,3 +109,103 @@ The project will use a **Monorepo structure** with three main applications:
 - Appointment booking with location selection
 
 This project represents a sophisticated e-commerce platform with strong emphasis on customer trust, premium quality positioning, and omnichannel customer experience bridging online and offline touchpoints.
+
+## Development Environment & Setup
+
+### Package Manager & Workspace
+- **Package Manager**: PNPM (v9.5.0+) - `packageManager: "pnpm@9.5.0"`
+- **Workspace Configuration**: Monorepo using PNPM workspaces
+- **Build System**: Turborepo for efficient builds and caching
+- **Node Version**: >=18.0.0
+
+### Tech Stack Summary
+
+#### Frontend Technologies
+- **Web App**: Astro v5.12.4 with React v19.1.0 islands
+- **Admin App**: React Router v7.7.1 with React v19.1.0
+- **Styling**: Tailwind CSS v4.1.11 (latest version)
+- **UI Components**: Shadcn/ui components in shared workspace packages
+- **State Management**: Zustand v5.0.6
+- **Type Safety**: TypeScript v5.8.3 with Zod v3/v4 validation
+
+#### Backend Technologies  
+- **API Framework**: Hono v4.8.9 on Cloudflare Workers
+- **Database**: Cloudflare D1 with Drizzle ORM v0.31.4
+- **Storage**: Cloudflare R2 buckets for images
+- **Cache**: Cloudflare KV storage
+- **Deployment**: Wrangler v4.26.0
+
+#### Development Tools
+- **Linting**: ESLint v9.0.0 with TypeScript support
+- **Formatting**: Prettier v3.6.2 with Astro plugin
+- **Testing**: Playwright for E2E testing
+- **Type Checking**: TypeScript strict mode across all apps
+
+### Available Scripts
+
+#### Root Level Commands (use these for development)
+```bash
+# Development - starts all apps in watch mode
+pnpm dev
+
+# Build all applications
+pnpm build  
+
+# Lint all code
+pnpm lint
+
+# Type check all applications  
+pnpm type-check
+
+# Format all code
+pnpm format
+
+# Clean build artifacts
+pnpm clean
+
+# Run tests
+pnpm test
+```
+
+#### Individual App Commands (if needed)
+```bash
+# Web app (Astro)
+cd apps/web
+pnpm dev          # Start dev server at localhost:4321
+pnpm build        # Build for production (includes Astro check)
+pnpm preview      # Preview production build
+
+# Admin app (React Router)  
+cd apps/admin
+pnpm dev          # Start dev server with --host flag
+pnpm build        # Build for production
+pnpm typecheck    # Type check and generate types
+
+# API (Cloudflare Workers)
+cd apps/api  
+pnpm dev          # Start Wrangler dev server
+pnpm build        # Dry run deployment
+pnpm deploy       # Deploy to Cloudflare
+pnpm type-check   # TypeScript check without emit
+```
+
+### Environment Configuration
+
+#### Cloudflare Worker Configuration (apps/api/wrangler.toml)
+- **D1 Database**: `blackliving-db` bound as `DB`
+- **R2 Storage**: `blackliving-images` bound as `R2` 
+- **KV Cache**: Bound as `CACHE`
+- **Environments**: development, staging, production
+
+#### Important Notes
+- **Never use npm** - this project uses PNPM exclusively
+- **Never install packages individually** - use workspace dependencies
+- **Always run commands from root** unless specifically working on single app
+- **Astro uses Tailwind v4** - no @astrojs/tailwind integration needed
+- **Shared packages** use workspace:* references for internal dependencies
+
+### Deployment Configuration
+- **Web**: Static build with Cloudflare Pages adapter
+- **Admin**: React Router with Vite build  
+- **API**: Cloudflare Workers with Wrangler
+- **Secrets**: Set via `wrangler secret put` for production
