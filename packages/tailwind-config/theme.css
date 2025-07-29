@@ -1,0 +1,5 @@
+/* packages/tailwind-config/theme.css */
+@theme {
+  --color-primary: #007bff;
+  /* You can add other design tokens here */
+}

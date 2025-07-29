@@ -1,0 +1,8 @@
+/* packages/tailwind-config/styles.css */
+@import 'tailwindcss';
+@import './theme.css';
+
+@source '../../packages/ui/src/**/*.{ts,tsx}';
+@source '../../packages/ui/components/**/*.{ts,tsx}';
+@source '../../apps/web/src/**/*.{astro,html,js,jsx,md,mdx,svelte,ts,tsx,vue}';
+@source '../../apps/admin/src/**/*.{ts,tsx}';
