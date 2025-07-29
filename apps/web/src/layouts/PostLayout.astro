@@ -1,29 +1,26 @@
 ---
 import BaseLayout from './BaseLayout.astro';
-import { SEO } from '../components/SEO.astro';
+import SEO from '../components/SEO.astro';
+import '../styles/global.css';
 
 export interface Props {
   title: string;
   description: string;
   image?: string;
-  publishDate?: Date;
-  author?: string;
+  publishedTime?: string;
+  modifiedTime?: string;
 }
 
-const { title, description, image, publishDate, author } = Astro.props;
+const { title, description, image, publishedTime, modifiedTime } = Astro.props;
 ---
 
-<BaseLayout>
-  <SEO 
-    slot="head"
-    title={title}
-    description={description}
-    image={image}
-    type="article"
-    publishDate={publishDate}
-    author={author}
-  />
-  
+<BaseLayout 
+  title={title}
+  description={description}
+  image={image}
+  publishedTime={publishedTime}
+  modifiedTime={modifiedTime}
+>
   <main class="container mx-auto px-4 py-8 max-w-4xl">
     <article class="prose prose-lg mx-auto">
       <slot />

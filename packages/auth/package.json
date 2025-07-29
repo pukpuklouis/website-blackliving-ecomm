@@ -8,12 +8,11 @@
     ".": "./index.ts"
   },
   "dependencies": {
-    "better-auth": "^0.4.0",
-    "better-auth/adapters/drizzle": "^0.4.0",
     "@blackliving/db": "workspace:*",
-    "zod": "^3.23.8"
+    "better-auth": "^0.4.13",
+    "zod": "^3.25.76"
   },
   "devDependencies": {
-    "typescript": "^5.5.4"
+    "typescript": "^5.8.3"
   }
 }

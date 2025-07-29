@@ -2,7 +2,7 @@ import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
 import { zValidator } from '@hono/zod-validator';
-import { auth } from '@blackliving/auth';
+// import { createAuth } from '@blackliving/auth';
 
 // Import API modules
 import products from './modules/products';
@@ -13,6 +13,7 @@ export interface Env {
   DB: D1Database;
   R2: R2Bucket;
   CACHE: KVNamespace;
+  NODE_ENV: string;
   JWT_SECRET: string;
   BETTER_AUTH_SECRET: string;
   GOOGLE_CLIENT_ID: string;
@@ -39,11 +40,16 @@ app.get('/', (c) => {
   });
 });
 
-// Better Auth integration
-app.use('/auth/*', async (c, next) => {
-  // Better Auth middleware will be integrated here
-  return auth.handler(c.req.raw);
-});
+// Better Auth integration (temporarily disabled)
+// app.use('/auth/*', async (c, next) => {
+//   // Better Auth middleware will be integrated here
+//   const auth = createAuth({
+//     NODE_ENV: c.env.NODE_ENV,
+//     GOOGLE_CLIENT_ID: c.env.GOOGLE_CLIENT_ID,
+//     GOOGLE_CLIENT_SECRET: c.env.GOOGLE_CLIENT_SECRET,
+//   });
+//   return auth.handler(c.req.raw);
+// });
 
 // API Routes
 app.route('/api/products', products);
@@ -60,7 +66,7 @@ app.onError((err, c) => {
   console.error('API Error:', err);
   return c.json({ 
     error: 'Internal Server Error', 
-    message: process.env.NODE_ENV === 'development' ? err.message : 'Something went wrong'
+    message: c.env.NODE_ENV === 'development' ? err.message : 'Something went wrong'
   }, 500);
 });
 

@@ -110,21 +110,3 @@ const slidesToShow = slides.length > 0 ? slides : defaultSlides;
     }, 5000);
   });
 </script>
-
-<style>
-  .slide {
-    @apply absolute inset-0 opacity-0 transition-opacity duration-1000;
-  }
-  
-  .slide.active {
-    @apply opacity-100;
-  }
-  
-  [data-slide-to] {
-    @apply cursor-pointer hover:bg-white/75;
-  }
-  
-  [data-slide-to].bg-white {
-    @apply bg-white;
-  }
-</style>

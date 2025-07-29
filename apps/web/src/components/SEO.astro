@@ -12,10 +12,10 @@ export interface Props {
 }
 
 const {
-  title,
+  title = 'Black Living 黑哥家居',
   description,
   canonical,
-  image = '/og-image.jpg',
+  image = 'https://placehold.co/1200x630?text=og+image',
   type = 'website',
   publishedTime,
   modifiedTime,
@@ -103,4 +103,3 @@ const imageURL = new URL(image, Astro.site).href;
     ]
   }
 }
-</script>

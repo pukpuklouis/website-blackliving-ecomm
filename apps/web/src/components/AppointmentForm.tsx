@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { z } from 'zod';
+import { Button } from '@blackliving/ui';
 
 // Appointment form validation schema
 const appointmentSchema = z.object({

@@ -2,11 +2,41 @@
 export * from './components/ui/button';
 export * from './components/ui/input';
 export * from './components/ui/label';
-export * from './components/ui/textarea';
 export * from './components/ui/dropdown-menu';
-export * from './components/ui/dialog';
-export * from './components/ui/toast';
-export * from './components/ui/toaster';
+
+// Dashboard components  
+export * from './components/ui/sidebar';
+export * from './components/ui/app-sidebar';
+export * from './components/ui/nav-main';
+export * from './components/ui/nav-user';
+export * from './components/ui/nav-secondary';
+export * from './components/ui/nav-documents';
+export * from './components/ui/site-header';
+export * from './components/ui/breadcrumb';
+export * from './components/ui/card';
+export * from './components/ui/badge';
+export * from './components/ui/avatar';
+export * from './components/ui/table';
+export * from './components/ui/data-table';
+export * from './components/ui/tabs';
+export * from './components/ui/select';
+export * from './components/ui/checkbox';
+export * from './components/ui/separator';
+export * from './components/ui/sheet';
+export * from './components/ui/skeleton';
+export * from './components/ui/tooltip';
+export * from './components/ui/toggle';
+export * from './components/ui/toggle-group';
+export * from './components/ui/drawer';
+export * from './components/ui/chart';
+export * from './components/ui/chart-area-interactive';
+export * from './components/ui/simple-chart';
+export * from './components/ui/section-cards';
+export * from './components/ui/sonner';
 
 // Export utilities
 export * from './lib/utils';
+
+// Export hooks
+export * from './hooks/use-toast';
+export * from './hooks/use-mobile';
