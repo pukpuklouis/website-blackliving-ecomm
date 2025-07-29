@@ -1,10 +1,19 @@
 // @ts-check
 import { defineConfig } from 'astro/config';
 import react from '@astrojs/react';
-import tailwind from '@astrojs/tailwind';
-
+import sitemap from '@astrojs/sitemap';
+import cloudflare from '@astrojs/cloudflare';
+import tailwindcss from '@tailwindcss/vite';
 // https://astro.build/config
+// Note: Using Tailwind v4 - no @astrojs/tailwind integration needed
 export default defineConfig({
-  integrations: [react(), tailwind()],
-  output: 'hybrid'
+  site: "http://localhost:4321",
+  integrations: [react(), sitemap()],
+
+  output: 'static',
+  adapter: cloudflare(),
+
+  vite: {
+    plugins: [tailwindcss()]
+  }
 });

@@ -3,7 +3,14 @@
     "allow": [
       "Bash(pnpm create:*)",
       "Bash(mkdir:*)",
-      "Bash(touch:*)"
+      "Bash(touch:*)",
+      "Bash(ls:*)",
+      "Bash(cat:*)",
+      "mcp__context7-sse__resolve-library-id",
+      "Bash(pnpm build:*)",
+      "Bash(pnpm vite:*)",
+      "Bash(pnpm run:*)",
+      "Bash(pnpm typecheck:*)"
     ],
     "deny": []
   }

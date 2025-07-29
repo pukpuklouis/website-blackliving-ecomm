@@ -2,7 +2,11 @@ import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { db } from "@blackliving/db";
 
-export const auth = betterAuth({
+export const createAuth = (env: {
+  GOOGLE_CLIENT_ID?: string;
+  GOOGLE_CLIENT_SECRET?: string;
+  NODE_ENV?: string;
+}) => betterAuth({
   database: drizzleAdapter(db, {
     provider: "sqlite", // Cloudflare D1 uses SQLite
   }),
@@ -15,8 +19,8 @@ export const auth = betterAuth({
     {
       id: "google",
       name: "Google",
-      clientId: process.env.GOOGLE_CLIENT_ID!,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      clientId: env.GOOGLE_CLIENT_ID!,
+      clientSecret: env.GOOGLE_CLIENT_SECRET!,
     },
   ],
 
@@ -68,8 +72,8 @@ export const auth = betterAuth({
   socialProviders: {
     google: {
       enabled: true,
-      clientId: process.env.GOOGLE_CLIENT_ID!,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      clientId: env.GOOGLE_CLIENT_ID!,
+      clientSecret: env.GOOGLE_CLIENT_SECRET!,
     },
   },
 
@@ -77,13 +81,20 @@ export const auth = betterAuth({
     generateId: () => crypto.randomUUID(),
     crossSubDomainCookies: {
       enabled: true,
-      domain: process.env.NODE_ENV === "production" ? ".blackliving.com" : "localhost",
+      domain: env.NODE_ENV === "production" ? ".blackliving.com" : "localhost",
     },
   },
 
   logger: {
-    level: process.env.NODE_ENV === "development" ? "debug" : "error",
+    level: env.NODE_ENV === "development" ? "debug" : "error",
   },
+});
+
+// For backward compatibility, export a default auth instance
+export const auth = createAuth({
+  NODE_ENV: "development",
+  GOOGLE_CLIENT_ID: "",
+  GOOGLE_CLIENT_SECRET: "",
 });
 
 export type Session = typeof auth.$Infer.Session;

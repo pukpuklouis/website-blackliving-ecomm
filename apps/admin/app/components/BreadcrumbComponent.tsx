@@ -1,0 +1,57 @@
+import { useLocation, Link } from 'react-router';
+import {
+  Breadcrumb,
+  BreadcrumbList,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbSeparator,
+  BreadcrumbPage,
+} from '@blackliving/ui';
+import { Fragment } from 'react';
+
+const routeNames: Record<string, string> = {
+  '/dashboard': '主控台',
+  '/dashboard/products': '產品管理',
+  '/dashboard/orders': '訂單管理',
+  '/dashboard/posts': '文章管理',
+  '/dashboard/blog': '部落格編輯',
+  '/dashboard/appointments': '預約管理',
+  '/dashboard/customers': '客戶管理',
+  '/dashboard/analytics': '分析報表',
+  '/dashboard/settings': '系統設定',
+};
+
+export function BreadcrumbComponent() {
+  const location = useLocation();
+  const pathSegments = location.pathname.split('/').filter(Boolean);
+  
+  const breadcrumbs = pathSegments.map((segment, index) => {
+    const path = '/' + pathSegments.slice(0, index + 1).join('/');
+    return {
+      path,
+      name: routeNames[path] || segment,
+      isLast: index === pathSegments.length - 1,
+    };
+  });
+
+  return (
+    <Breadcrumb>
+      <BreadcrumbList>
+        {breadcrumbs.map((crumb, index) => (
+          <Fragment key={crumb.path}>
+            <BreadcrumbItem>
+              {crumb.isLast ? (
+                <BreadcrumbPage>{crumb.name}</BreadcrumbPage>
+              ) : (
+                <BreadcrumbLink asChild>
+                  <Link to={crumb.path}>{crumb.name}</Link>
+                </BreadcrumbLink>
+              )}
+            </BreadcrumbItem>
+            {!crumb.isLast && <BreadcrumbSeparator />}
+          </Fragment>
+        ))}
+      </BreadcrumbList>
+    </Breadcrumb>
+  );
+}
