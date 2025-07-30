@@ -8,7 +8,17 @@
     "build": "wrangler deploy --dry-run",
     "deploy": "wrangler deploy",
     "type-check": "tsc --noEmit",
-    "lint": "eslint src --ext .ts"
+    "lint": "eslint src --ext .ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:ui": "vitest --ui",
+    "test:unit": "vitest run tests/**/*.test.ts --exclude=**/*.integration.test.ts --exclude=**/*.e2e.test.ts",
+    "test:integration": "vitest run --config vitest.integration.config.ts src/**/*.integration.test.ts tests/**/*.integration.test.ts",
+    "test:coverage": "vitest run --coverage",
+    "test:runner": "tsx tests/test-runner.ts",
+    "test:db": "vitest run tests/db-utils.test.ts",
+    "test:seed": "vitest run tests/seed-data.test.ts",
+    "test:verbose": "VERBOSE=true vitest run"
   },
   "dependencies": {
     "@blackliving/auth": "workspace:*",
@@ -20,13 +30,18 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
+    "@cloudflare/vitest-pool-workers": "^0.8.58",
     "@cloudflare/workers-types": "^4.20250726.0",
+    "@paralleldrive/cuid2": "^2.2.2",
     "@types/node": "^20.19.9",
     "@typescript-eslint/eslint-plugin": "^7.18.0",
     "@typescript-eslint/parser": "^7.18.0",
+    "@vitest/ui": "^3.2.4",
     "drizzle-kit": "^0.22.8",
     "eslint": "^9.32.0",
+    "tsx": "^4.7.0",
     "typescript": "^5.8.3",
+    "vitest": "^3.2.4",
     "wrangler": "4.26.0"
   }
 }

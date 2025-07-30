@@ -4,7 +4,7 @@ export default function BlogPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">部落格編輯</h1>
+        <h1 className="text-3xl font-bold text-gray-900">部落格編輯aaa</h1>
         <p className="text-gray-600 mt-2">使用 Novel.sh 編輯器快速編輯發文</p>
       </div>
 

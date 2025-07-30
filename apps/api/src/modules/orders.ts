@@ -1,9 +1,20 @@
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
+import { requireAdmin, requireAuth } from '@blackliving/auth';
 import type { Env } from '../index';
 
-const orders = new Hono<{ Bindings: Env }>();
+const orders = new Hono<{ 
+  Bindings: Env;
+  Variables: {
+    db: any;
+    cache: any;
+    storage: any;
+    auth: any;
+    user: any;
+    session: any;
+  };
+}>();
 
 // Validation schemas
 const createOrderSchema = z.object({
@@ -31,10 +42,10 @@ const updateOrderStatusSchema = z.object({
 });
 
 // GET /api/orders - List orders (Admin only)
-orders.get('/', async (c) => {
+orders.get('/', requireAdmin(), async (c) => {
   try {
-    // TODO: Add authentication middleware to check admin role
     const { status, limit = '50', offset = '0' } = c.req.query();
+    const db = c.get('db');
     
     let query = 'SELECT * FROM orders WHERE 1=1';
     const params: any[] = [];
@@ -47,7 +58,7 @@ orders.get('/', async (c) => {
     query += ' ORDER BY created_at DESC LIMIT ? OFFSET ?';
     params.push(parseInt(limit), parseInt(offset));
 
-    const result = await c.env.DB.prepare(query).bind(...params).all();
+    const result = await db.prepare(query).bind(...params).all();
     
     return c.json({
       success: true,
@@ -62,11 +73,12 @@ orders.get('/', async (c) => {
 });
 
 // GET /api/orders/:id - Get single order
-orders.get('/:id', async (c) => {
+orders.get('/:id', requireAdmin(), async (c) => {
   try {
     const id = c.req.param('id');
+    const db = c.get('db');
     
-    const result = await c.env.DB.prepare(
+    const result = await db.prepare(
       'SELECT * FROM orders WHERE id = ?'
     ).bind(id).first();
 
@@ -91,11 +103,12 @@ orders.post('/',
   async (c) => {
     try {
       const data = c.req.valid('json');
+      const db = c.get('db');
       
       const id = `BL${Date.now()}${Math.random().toString(36).substr(2, 4).toUpperCase()}`;
       const now = new Date().toISOString();
 
-      await c.env.DB.prepare(`
+      await db.prepare(`
         INSERT INTO orders (
           id, customer_info, items, total_amount, payment_method,
           status, notes, created_at, updated_at
@@ -133,17 +146,18 @@ orders.post('/',
 
 // PUT /api/orders/:id/status - Update order status (Admin only)
 orders.put('/:id/status',
+  requireAdmin(),
   zValidator('json', updateOrderStatusSchema),
   async (c) => {
     try {
-      // TODO: Add authentication middleware to check admin role
       const id = c.req.param('id');
       const { status, notes } = c.req.valid('json');
+      const db = c.get('db');
 
       const now = new Date().toISOString();
       const updateNotes = notes ? notes : '';
 
-      const result = await c.env.DB.prepare(`
+      const result = await db.prepare(`
         UPDATE orders 
         SET status = ?, notes = ?, updated_at = ?
         WHERE id = ?
@@ -169,12 +183,18 @@ orders.put('/:id/status',
 );
 
 // GET /api/orders/customer/:email - Get customer orders
-orders.get('/customer/:email', async (c) => {
+orders.get('/customer/:email', requireAuth(), async (c) => {
   try {
-    // TODO: Add authentication middleware to ensure user can only access their own orders
     const email = c.req.param('email');
+    const user = c.get('user');
+    const db = c.get('db');
     
-    const result = await c.env.DB.prepare(`
+    // Ensure user can only access their own orders (unless admin)
+    if (user.role !== 'admin' && user.email !== email) {
+      return c.json({ error: 'Unauthorized access to customer orders' }, 403);
+    }
+    
+    const result = await db.prepare(`
       SELECT * FROM orders 
       WHERE JSON_EXTRACT(customer_info, '$.email') = ?
       ORDER BY created_at DESC

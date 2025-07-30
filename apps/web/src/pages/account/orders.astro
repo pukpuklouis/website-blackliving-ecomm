@@ -21,25 +21,175 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
         </div>
         
         <div class="md:col-span-2">
-          <div class="space-y-6">
-            <!-- Order items will be dynamically rendered -->
-            <div class="bg-white p-6 rounded-lg shadow-md">
-              <div class="flex justify-between items-start mb-4">
-                <div>
-                  <h3 class="font-semibold text-lg">訂單 #BL2024001</h3>
-                  <p class="text-sm text-gray-500">下單日期：2024-01-15</p>
-                </div>
-                <span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm">已完成</span>
-              </div>
-              
-              <div class="border-t pt-4">
-                <p class="text-gray-700">席夢思黑標 S2 床墊 - 標準雙人</p>
-                <p class="text-sm text-gray-500 mt-1">NT$ 45,000</p>
-              </div>
-            </div>
+          <div id="loading" class="text-center py-8">
+            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
+            <p class="mt-2 text-gray-600">載入中...</p>
+          </div>
+
+          <div id="not-authenticated" class="text-center py-8 hidden">
+            <p class="text-gray-600 mb-4">請先登入您的帳號</p>
+            <a href="/login" class="bg-black text-white px-6 py-2 rounded-lg hover:bg-gray-800 inline-block">
+              前往登入
+            </a>
+          </div>
+
+          <div id="no-orders" class="text-center py-8 hidden">
+            <p class="text-gray-600 mb-4">您目前沒有任何訂單</p>
+            <a href="/simmons-black" class="bg-black text-white px-6 py-2 rounded-lg hover:bg-gray-800 inline-block">
+              開始購物
+            </a>
+          </div>
+          
+          <div id="orders-container" class="space-y-6 hidden">
+            <!-- Orders will be dynamically rendered here -->
           </div>
         </div>
       </div>
     </div>
   </main>
 </BaseLayout>
+
+<script>
+  // Get API base URL
+  const API_BASE = import.meta.env.PUBLIC_API_URL || 'http://localhost:8787';
+
+  const loading = document.getElementById('loading')!;
+  const notAuthenticated = document.getElementById('not-authenticated')!;
+  const noOrders = document.getElementById('no-orders')!;
+  const ordersContainer = document.getElementById('orders-container')!;
+
+  let currentUser: any = null;
+
+  async function checkAuth() {
+    try {
+      const response = await fetch(`${API_BASE}/api/auth/session`, {
+        credentials: 'include',
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.user) {
+          currentUser = data.user;
+          await loadOrders();
+          return;
+        }
+      }
+      
+      showNotAuthenticated();
+    } catch (error) {
+      console.error('Auth check failed:', error);
+      showNotAuthenticated();
+    }
+  }
+
+  async function loadOrders() {
+    try {
+      const response = await fetch(`${API_BASE}/api/orders/customer/${currentUser.email}`, {
+        credentials: 'include',
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.data.length > 0) {
+          showOrders(data.data);
+        } else {
+          showNoOrders();
+        }
+      } else {
+        throw new Error('Failed to load orders');
+      }
+    } catch (error) {
+      console.error('Failed to load orders:', error);
+      showNoOrders();
+    }
+  }
+
+  function showNotAuthenticated() {
+    loading.classList.add('hidden');
+    ordersContainer.classList.add('hidden');
+    noOrders.classList.add('hidden');
+    notAuthenticated.classList.remove('hidden');
+  }
+
+  function showNoOrders() {
+    loading.classList.add('hidden');
+    notAuthenticated.classList.add('hidden');
+    ordersContainer.classList.add('hidden');
+    noOrders.classList.remove('hidden');
+  }
+
+  function showOrders(orders: any[]) {
+    loading.classList.add('hidden');
+    notAuthenticated.classList.add('hidden');
+    noOrders.classList.add('hidden');
+    ordersContainer.classList.remove('hidden');
+
+    ordersContainer.innerHTML = orders.map(order => {
+      const customerInfo = JSON.parse(order.customer_info);
+      const items = JSON.parse(order.items);
+      const statusColor = getStatusColor(order.status);
+      const statusText = getStatusText(order.status);
+
+      return `
+        <div class="bg-white p-6 rounded-lg shadow-md">
+          <div class="flex justify-between items-start mb-4">
+            <div>
+              <h3 class="font-semibold text-lg">訂單 #${order.id}</h3>
+              <p class="text-sm text-gray-500">下單日期：${new Date(order.created_at).toLocaleDateString('zh-TW')}</p>
+              <p class="text-sm text-gray-500">收件人：${customerInfo.name}</p>
+            </div>
+            <span class="${statusColor} px-3 py-1 rounded-full text-sm">${statusText}</span>
+          </div>
+          
+          <div class="border-t pt-4 space-y-2">
+            ${items.map((item: any) => `
+              <div class="flex justify-between">
+                <div>
+                  <p class="text-gray-700">${item.productName} - ${item.variant}</p>
+                  <p class="text-sm text-gray-500">數量：${item.quantity}</p>
+                </div>
+                <p class="text-gray-900 font-medium">NT$ ${item.price.toLocaleString()}</p>
+              </div>
+            `).join('')}
+            
+            <div class="border-t pt-2 mt-4">
+              <div class="flex justify-between font-semibold text-lg">
+                <span>總計</span>
+                <span>NT$ ${order.total_amount.toLocaleString()}</span>
+              </div>
+            </div>
+            
+            ${order.notes ? `<p class="text-sm text-gray-600 mt-2">備註：${order.notes}</p>` : ''}
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function getStatusColor(status: string) {
+    const colors: { [key: string]: string } = {
+      'pending': 'bg-yellow-100 text-yellow-800',
+      'confirmed': 'bg-blue-100 text-blue-800',
+      'processing': 'bg-purple-100 text-purple-800',
+      'shipped': 'bg-indigo-100 text-indigo-800',
+      'delivered': 'bg-green-100 text-green-800',
+      'cancelled': 'bg-red-100 text-red-800'
+    };
+    return colors[status] || 'bg-gray-100 text-gray-800';
+  }
+
+  function getStatusText(status: string) {
+    const texts: { [key: string]: string } = {
+      'pending': '待確認',
+      'confirmed': '已確認',
+      'processing': '處理中',
+      'shipped': '已出貨',
+      'delivered': '已送達',
+      'cancelled': '已取消'
+    };
+    return texts[status] || status;
+  }
+
+  // Initialize
+  checkAuth();
+</script>

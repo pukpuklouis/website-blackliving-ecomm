@@ -61,3 +61,14 @@ __tests__
 test-results/
 tests-results/*/*
 tests/
+
+logs
+dev-debug.log
+# Editor directories and files
+.idea
+.vscode
+# OS specific
+
+# Task files
+# tasks.json
+# tasks/ 

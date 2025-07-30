@@ -9,7 +9,7 @@
   },
   "dependencies": {
     "@blackliving/db": "workspace:*",
-    "better-auth": "^0.4.13",
+    "better-auth": "^1.3.4",
     "zod": "^3.25.76"
   },
   "devDependencies": {
