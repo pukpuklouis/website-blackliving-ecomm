@@ -1,6 +1,6 @@
 name = "blackliving-api"
 main = "src/index.ts"
-compatibility_date = "2024-07-01"
+compatibility_date = "2024-09-23"
 compatibility_flags = ["nodejs_compat"]
 
 [env.development]
@@ -18,10 +18,28 @@ binding = "DB"
 database_name = "blackliving-db"
 database_id = "your-database-id-here"
 
+[[env.development.d1_databases]]
+binding = "DB"
+database_name = "blackliving-db-dev"
+database_id = "your-dev-database-id-here"
+
+[[env.staging.d1_databases]]
+binding = "DB"
+database_name = "blackliving-db-staging" 
+database_id = "your-staging-database-id-here"
+
 # Cloudflare R2 Storage
 [[r2_buckets]]
 binding = "R2"
 bucket_name = "blackliving-images"
+
+[[env.development.r2_buckets]]
+binding = "R2"
+bucket_name = "blackliving-images-dev"
+
+[[env.staging.r2_buckets]]
+binding = "R2"
+bucket_name = "blackliving-images-staging"
 
 # Cloudflare KV Storage
 [[kv_namespaces]]
@@ -29,14 +47,64 @@ binding = "CACHE"
 id = "your-kv-namespace-id-here"
 preview_id = "your-preview-kv-namespace-id-here"
 
+[[env.development.kv_namespaces]]
+binding = "CACHE"
+id = "your-dev-kv-id-here"
+preview_id = "your-dev-preview-kv-id-here"
+
+[[env.staging.kv_namespaces]]
+binding = "CACHE"
+id = "your-staging-kv-id-here"
+preview_id = "your-staging-preview-kv-id-here"
+
 # Environment Variables
 [vars]
 NODE_ENV = "development"
 API_BASE_URL = "https://api.blackliving.com"
 WEB_BASE_URL = "https://blackliving.com"
 
-# Secrets (set via wrangler secret put)
-# JWT_SECRET
-# BETTER_AUTH_SECRET
-# GOOGLE_CLIENT_ID
-# GOOGLE_CLIENT_SECRET
+[env.development.vars]
+NODE_ENV = "development"
+API_BASE_URL = "http://localhost:8787"
+WEB_BASE_URL = "http://localhost:4321"
+
+[env.staging.vars]
+NODE_ENV = "staging"
+API_BASE_URL = "https://api-staging.blackliving.com"
+WEB_BASE_URL = "https://staging.blackliving.com"
+
+[env.production.vars]
+NODE_ENV = "production"
+API_BASE_URL = "https://api.blackliving.com"
+WEB_BASE_URL = "https://blackliving.com"
+
+[env.test]
+name = "blackliving-api-test"
+
+[[env.test.d1_databases]]
+binding = "DB"
+database_name = "blackliving-db-test"
+database_id = "your-test-database-id-here"
+migrations_dir = "../../packages/db/migrations"
+
+[[env.test.r2_buckets]]
+binding = "R2"
+bucket_name = "blackliving-images-test"
+
+[[env.test.kv_namespaces]]
+binding = "CACHE"
+id = "your-test-kv-id-here"
+preview_id = "your-test-preview-kv-id-here"
+
+[env.test.vars]
+NODE_ENV = "test"
+API_BASE_URL = "http://localhost:8787"
+WEB_BASE_URL = "http://localhost:4321"
+BETTER_AUTH_URL = "http://localhost:8787"
+
+# Secrets (set via wrangler secret put <SECRET_NAME> <VALUE> --env <ENVIRONMENT>)
+# Required secrets for all environments:
+# - BETTER_AUTH_SECRET
+# - GOOGLE_CLIENT_ID
+# - GOOGLE_CLIENT_SECRET
+# - JWT_SECRET (optional, for additional JWT operations)

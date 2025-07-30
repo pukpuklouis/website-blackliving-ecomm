@@ -9,7 +9,7 @@
     "./schema": "./schema.ts"
   },
   "scripts": {
-    "db:generate": "drizzle-kit generate:sqlite",
+    "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio"
   },

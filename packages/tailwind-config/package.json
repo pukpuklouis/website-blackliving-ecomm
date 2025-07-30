@@ -5,5 +5,8 @@
   "exports": {
     "./styles.css": "./styles.css",
     "./theme.css": "./theme.css"
+  },
+  "dependencies": {
+    "tw-animate-css": "^1.3.6"
   }
 }

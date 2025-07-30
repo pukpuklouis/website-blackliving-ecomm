@@ -1,6 +1,7 @@
-import { Sidebar, SidebarContent, SidebarHeader, SidebarRail } from '@blackliving/ui';
+import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarRail } from '@blackliving/ui';
 import { AdminNavMain } from './AdminNavMain';
 import { AdminNavSecondary } from './AdminNavSecondary';
+import { AdminNavUser } from './AdminNavUser';
 import { 
   Home, 
   Package, 
@@ -74,7 +75,7 @@ export function BlackLivingAppSidebar({ ...props }) {
   return (
     <Sidebar collapsible="icon" variant="inset" {...props}>
       <SidebarHeader>
-        <div className="flex items-center gap-2 px-4 py-2">
+        <div className="flex items-center gap-2 px-2 py-2">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
             <Home className="h-4 w-4" />
           </div>
@@ -88,6 +89,9 @@ export function BlackLivingAppSidebar({ ...props }) {
         <AdminNavMain items={data.navMain} />
         <AdminNavSecondary items={data.navSecondary} className="mt-auto" />
       </SidebarContent>
+      <SidebarFooter>
+        <AdminNavUser />
+      </SidebarFooter>
       <SidebarRail />
     </Sidebar>
   );

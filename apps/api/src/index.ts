@@ -2,12 +2,21 @@ import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
 import { zValidator } from '@hono/zod-validator';
-// import { createAuth } from '@blackliving/auth';
+import { createDB } from '@blackliving/db';
+import { createAuth, createAuthMiddleware } from '@blackliving/auth';
+import { createCacheManager } from './lib/cache';
+import { createStorageManager } from './lib/storage';
+import type { D1Database, R2Bucket, KVNamespace } from '@cloudflare/workers-types';
 
 // Import API modules
 import products from './modules/products';
 import orders from './modules/orders';
 import appointments from './modules/appointments';
+import admin from './modules/admin';
+import reviews from './modules/reviews';
+import newsletter from './modules/newsletter';
+import contact from './modules/contact';
+import user from './modules/user';
 
 export interface Env {
   DB: D1Database;
@@ -20,16 +29,53 @@ export interface Env {
   GOOGLE_CLIENT_SECRET: string;
 }
 
-const app = new Hono<{ Bindings: Env }>();
+const app = new Hono<{ 
+  Bindings: Env;
+  Variables: {
+    db: ReturnType<typeof createDB>;
+    cache: ReturnType<typeof createCacheManager>;
+    storage: ReturnType<typeof createStorageManager>;
+    auth: ReturnType<typeof createAuth>;
+    user: any;
+    session: any;
+  };
+}>();
 
-// Middleware
+// Middleware setup
 app.use('*', logger());
 app.use('*', cors({
   origin: ['http://localhost:4321', 'http://localhost:5173', 'https://blackliving.com', 'https://admin.blackliving.com'],
-  allowHeaders: ['Content-Type', 'Authorization'],
+  allowHeaders: ['Content-Type', 'Authorization', 'Cookie'],
   allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   credentials: true,
 }));
+
+// Initialize services middleware
+app.use('*', async (c, next) => {
+  const db = createDB(c.env.DB);
+  const cache = createCacheManager(c.env.CACHE);
+  const storage = createStorageManager(c.env.R2);
+  const auth = createAuth(db, {
+    GOOGLE_CLIENT_ID: c.env.GOOGLE_CLIENT_ID,
+    GOOGLE_CLIENT_SECRET: c.env.GOOGLE_CLIENT_SECRET,
+    NODE_ENV: c.env.NODE_ENV,
+    BETTER_AUTH_SECRET: c.env.BETTER_AUTH_SECRET,
+  });
+
+  c.set('db', db);
+  c.set('cache', cache);
+  c.set('storage', storage);
+  c.set('auth', auth);
+
+  await next();
+});
+
+// Auth middleware for session handling
+app.use('*', async (c, next) => {
+  const auth = c.get('auth');
+  const authMiddleware = createAuthMiddleware(auth);
+  return authMiddleware(c, next);
+});
 
 // Health check
 app.get('/', (c) => {
@@ -51,10 +97,21 @@ app.get('/', (c) => {
 //   return auth.handler(c.req.raw);
 // });
 
+// Better Auth routes (handle authentication endpoints)
+app.all('/api/auth/*', async (c) => {
+  const auth = c.get('auth');
+  return auth.handler(c.req.raw);
+});
+
 // API Routes
 app.route('/api/products', products);
 app.route('/api/orders', orders);
 app.route('/api/appointments', appointments);
+app.route('/api/admin', admin);
+app.route('/api/reviews', reviews);
+app.route('/api/newsletter', newsletter);
+app.route('/api/contact', contact);
+app.route('/api/user', user);
 
 // 404 handler
 app.notFound((c) => {
@@ -71,3 +128,4 @@ app.onError((err, c) => {
 });
 
 export default app;
+export { app };

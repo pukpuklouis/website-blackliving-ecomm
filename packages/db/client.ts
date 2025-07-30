@@ -1,33 +1,29 @@
-import { drizzle } from 'drizzle-orm/libsql';
-import { createClient } from '@libsql/client';
+import { drizzle } from 'drizzle-orm/d1';
 import * as schema from './schema';
 
-// Create database client
-// In Cloudflare Workers, this will be injected via env.DB
-// In development, you can use a local SQLite file or Turso
-export function createDB(connectionString?: string) {
-  if (connectionString) {
-    // For Turso or remote SQLite
-    const client = createClient({
-      url: connectionString,
-      authToken: process.env.TURSO_AUTH_TOKEN,
-    });
-    return drizzle(client, { schema });
-  }
-  
-  // For Cloudflare D1 (will be overridden in Workers environment)
-  // This is just a placeholder for type safety
-  return drizzle({} as any, { schema });
+// Create database client for Cloudflare D1
+export function createDB(d1Database: D1Database) {
+  return drizzle(d1Database, { schema });
 }
 
-// Export the database instance
-export const db = createDB(process.env.DATABASE_URL);
+// For development/local testing with a local SQLite file
+export function createLocalDB() {
+  // This will only be used in development
+  const { drizzle: drizzleLocal } = require('drizzle-orm/libsql');
+  const { createClient } = require('@libsql/client');
+  
+  const client = createClient({
+    url: process.env.DATABASE_URL || 'file:./dev.db',
+    authToken: process.env.TURSO_AUTH_TOKEN,
+  });
+  
+  return drizzleLocal(client, { schema });
+}
 
 // Export all schema tables for convenience
 export * from './schema';
 
 // Export types
-export type DB = typeof db;
 export type Users = typeof schema.users.$inferSelect;
 export type NewUser = typeof schema.users.$inferInsert;
 export type Products = typeof schema.products.$inferSelect;
@@ -38,3 +34,9 @@ export type Appointments = typeof schema.appointments.$inferSelect;
 export type NewAppointment = typeof schema.appointments.$inferInsert;
 export type Posts = typeof schema.posts.$inferSelect;
 export type NewPost = typeof schema.posts.$inferInsert;
+export type Reviews = typeof schema.reviews.$inferSelect;
+export type NewReview = typeof schema.reviews.$inferInsert;
+export type Newsletters = typeof schema.newsletters.$inferSelect;
+export type NewNewsletter = typeof schema.newsletters.$inferInsert;
+export type Contacts = typeof schema.contacts.$inferSelect;
+export type NewContact = typeof schema.contacts.$inferInsert;
