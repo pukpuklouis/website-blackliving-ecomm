@@ -1,3 +1,8 @@
+# IMPORTANT: In non-development environments, you must replace the
+# placeholder IDs ("__PROD_DB_ID__", "__PROD_KV_NAMESPACE_ID__") with your actual
+# production/staging/test resource IDs. These are configured in your Cloudflare dashboard.
+# The development environment uses local defaults and does not require these placeholders.
+
 name = "blackliving-api"
 main = "src/index.ts"
 compatibility_date = "2024-09-23"
@@ -13,9 +18,11 @@ name = "blackliving-api-staging"
 name = "blackliving-api"
 
 # Cloudflare D1 Database
+# Cloudflare D1 Database
 [[d1_databases]]
 binding = "DB"
 database_name = "blackliving-db"
+database_id = "__PROD_DB_ID__"
 
 migrations_dir = "../../packages/db/migrations"
 
@@ -47,6 +54,7 @@ bucket_name = "blackliving-images-staging"
 # Cloudflare KV Storage
 [[kv_namespaces]]
 binding = "CACHE"
+id = "__PROD_KV_NAMESPACE_ID__"
 
 [[env.development.kv_namespaces]]
 binding = "CACHE"
