@@ -80,4 +80,4 @@ dev-debug.log
 # tasks/ 
 
 # db
-packages/db/migrations/meta/_journal.json
+# Note: _journal.json should be tracked in git for proper migration state

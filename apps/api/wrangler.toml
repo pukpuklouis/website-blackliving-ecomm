@@ -120,5 +120,9 @@ BETTER_AUTH_URL = "http://localhost:8787"
 # Required secrets for all environments:
 # - BETTER_AUTH_SECRET
 # - GOOGLE_CLIENT_ID
-# - GOOGLE_CLIENT_SECRET
+# - GOOGLE_CLIENT_SECRET  
+# - GOOGLE_ADMIN_CLIENT_ID (for Option B)
+# - GOOGLE_ADMIN_CLIENT_SECRET (for Option B)
+# - GOOGLE_CUSTOMER_CLIENT_ID (for Option B)
+# - GOOGLE_CUSTOMER_CLIENT_SECRET (for Option B)
 # - JWT_SECRET (optional, for additional JWT operations)

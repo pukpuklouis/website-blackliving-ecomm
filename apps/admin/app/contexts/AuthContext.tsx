@@ -84,19 +84,18 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const loginWithGoogle = async (): Promise<boolean> => {
     try {
-      const response = await fetch(`${API_BASE}/api/auth/sign-in/social`, {
+      const response = await fetch(`${API_BASE}/api/auth/admin/sign-in/social/google`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         credentials: 'include',
-        body: JSON.stringify({ provider: 'google' }),
       });
 
       if (response.ok) {
         const data = await response.json();
-        if (data.url && data.redirect) {
-          // Redirect to Google OAuth
+        if (data.url) {
+          // Redirect to Google OAuth with admin context
           window.location.href = data.url;
           return true;
         } else {

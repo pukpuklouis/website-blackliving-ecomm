@@ -16,7 +16,7 @@
   "dependencies": {
     "@libsql/client": "^0.6.2",
     "@paralleldrive/cuid2": "^2.2.2",
-    "drizzle-orm": "^0.31.4"
+    "drizzle-orm": "^0.44.4"
   },
   "devDependencies": {
     "drizzle-kit": "^0.22.8",
