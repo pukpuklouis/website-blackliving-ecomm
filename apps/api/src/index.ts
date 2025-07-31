@@ -99,8 +99,34 @@ app.get('/', (c) => {
 
 // Better Auth routes (handle authentication endpoints)
 app.all('/api/auth/*', async (c) => {
-  const auth = c.get('auth');
-  return auth.handler(c.req.raw);
+  try {
+    const auth = c.get('auth');
+    console.log('Auth handler called for:', c.req.url);
+    console.log('Method:', c.req.method);
+    console.log('Auth object exists:', !!auth);
+    
+    // Log the auth instance methods to see what's available
+    if (auth) {
+      console.log('Auth handler type:', typeof auth.handler);
+      console.log('Auth api available:', !!auth.api);
+    }
+    
+    // Create a new Request object from the incoming request
+    const request = new Request(c.req.url, {
+      method: c.req.method,
+      headers: c.req.header(),
+      body: c.req.raw.body,
+    });
+    
+    console.log('Calling auth.handler with URL:', request.url);
+    const response = await auth.handler(request);
+    console.log('Auth handler response status:', response.status);
+    
+    return response;
+  } catch (error) {
+    console.error('Auth handler error:', error);
+    return c.json({ error: 'Auth handler failed', message: error.message }, 500);
+  }
 });
 
 // API Routes

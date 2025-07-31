@@ -4,9 +4,12 @@
   "description": "Black Living API - Cloudflare Workers with Hono",
   "main": "src/index.ts",
   "scripts": {
-    "dev": "wrangler dev",
+    "dev": "wrangler dev --local --port 8787",
+    "dev:staging": "wrangler dev --env staging --local",
+    "dev:remote": "wrangler dev",
     "build": "wrangler deploy --dry-run",
     "deploy": "wrangler deploy",
+    "deploy:staging": "wrangler deploy --env staging",
     "type-check": "tsc --noEmit",
     "lint": "eslint src --ext .ts",
     "test": "vitest run",

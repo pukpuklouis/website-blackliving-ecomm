@@ -1,16 +1,17 @@
 CREATE TABLE `accounts` (
 	`id` text PRIMARY KEY NOT NULL,
+	`account_id` text NOT NULL,
+	`provider_id` text NOT NULL,
 	`user_id` text NOT NULL,
-	`provider` text NOT NULL,
-	`provider_account_id` text NOT NULL,
-	`type` text NOT NULL,
 	`access_token` text,
 	`refresh_token` text,
-	`expires_at` integer,
-	`token_type` text,
-	`scope` text,
 	`id_token` text,
+	`access_token_expires_at` integer,
+	`refresh_token_expires_at` integer,
+	`scope` text,
+	`password` text,
 	`created_at` integer,
+	`updated_at` integer,
 	FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON UPDATE no action ON DELETE cascade
 );
 --> statement-breakpoint
@@ -118,11 +119,13 @@ CREATE TABLE `reviews` (
 --> statement-breakpoint
 CREATE TABLE `sessions` (
 	`id` text PRIMARY KEY NOT NULL,
-	`user_id` text NOT NULL,
 	`expires_at` integer NOT NULL,
+	`token` text NOT NULL,
+	`created_at` integer,
+	`updated_at` integer,
 	`ip_address` text,
 	`user_agent` text,
-	`created_at` integer,
+	`user_id` text NOT NULL,
 	FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON UPDATE no action ON DELETE cascade
 );
 --> statement-breakpoint
@@ -132,9 +135,18 @@ CREATE TABLE `users` (
 	`email` text NOT NULL,
 	`email_verified` integer DEFAULT false,
 	`image` text,
+	`created_at` integer,
+	`updated_at` integer,
 	`phone` text,
 	`role` text DEFAULT 'customer',
-	`preferences` text DEFAULT '{}',
+	`preferences` text DEFAULT '{}'
+);
+--> statement-breakpoint
+CREATE TABLE `verifications` (
+	`id` text PRIMARY KEY NOT NULL,
+	`identifier` text NOT NULL,
+	`value` text NOT NULL,
+	`expires_at` integer NOT NULL,
 	`created_at` integer,
 	`updated_at` integer
 );
@@ -142,4 +154,5 @@ CREATE TABLE `users` (
 CREATE UNIQUE INDEX `newsletters_email_unique` ON `newsletters` (`email`);--> statement-breakpoint
 CREATE UNIQUE INDEX `posts_slug_unique` ON `posts` (`slug`);--> statement-breakpoint
 CREATE UNIQUE INDEX `products_slug_unique` ON `products` (`slug`);--> statement-breakpoint
+CREATE UNIQUE INDEX `sessions_token_unique` ON `sessions` (`token`);--> statement-breakpoint
 CREATE UNIQUE INDEX `users_email_unique` ON `users` (`email`);
