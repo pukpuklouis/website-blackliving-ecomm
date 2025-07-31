@@ -16,13 +16,14 @@ name = "blackliving-api"
 [[d1_databases]]
 binding = "DB"
 database_name = "blackliving-db"
-database_id = "local-db-id"
+
 migrations_dir = "../../packages/db/migrations"
 
 [[env.development.d1_databases]]
 binding = "DB"
 database_name = "blackliving-db-dev"
 database_id = "local-dev-db-id"
+
 migrations_dir = "../../packages/db/migrations"
 
 [[env.staging.d1_databases]]
@@ -46,8 +47,6 @@ bucket_name = "blackliving-images-staging"
 # Cloudflare KV Storage
 [[kv_namespaces]]
 binding = "CACHE"
-id = "local-kv-id"
-preview_id = "local-preview-kv-id"
 
 [[env.development.kv_namespaces]]
 binding = "CACHE"
@@ -58,6 +57,11 @@ preview_id = "local-dev-preview-kv-id"
 binding = "CACHE"
 id = "your-staging-kv-id-here"
 preview_id = "your-staging-preview-kv-id-here"
+
+[[env.production.kv_namespaces]]
+binding = "CACHE"
+id = "your-production-kv-id-here"
+preview_id = "your-production-preview-kv-id-here"
 
 # Environment Variables
 [vars]

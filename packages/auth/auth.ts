@@ -1,3 +1,4 @@
+declare const process: any;
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 
@@ -9,7 +10,8 @@ export const auth = betterAuth({
     usePlural: true,
   }),
   
-  secret: "dev-secret-key",
+  secret: process.env.SECRET_KEY || "dev-secret-key",
+  
   
   emailAndPassword: {
     enabled: true,
@@ -37,3 +39,6 @@ export const auth = betterAuth({
     expiresIn: 60 * 60 * 24 * 7, // 7 days
   },
 });
+if (!process.env.SECRET_KEY) {
+  console.warn("警告：正在使用預設的開發密鑰。這不適用於生產環境！請設定 SECRET_KEY 環境變數。");
+}

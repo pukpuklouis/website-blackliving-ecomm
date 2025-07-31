@@ -101,16 +101,6 @@ app.get('/', (c) => {
 app.all('/api/auth/*', async (c) => {
   try {
     const auth = c.get('auth');
-    console.log('Auth handler called for:', c.req.url);
-    console.log('Method:', c.req.method);
-    console.log('Auth object exists:', !!auth);
-    
-    // Log the auth instance methods to see what's available
-    if (auth) {
-      console.log('Auth handler type:', typeof auth.handler);
-      console.log('Auth api available:', !!auth.api);
-    }
-    
     // Create a new Request object from the incoming request
     const request = new Request(c.req.url, {
       method: c.req.method,
