@@ -84,9 +84,30 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const loginWithGoogle = async (): Promise<boolean> => {
     try {
-      // Redirect to Google OAuth
-      window.location.href = `${API_BASE}/api/auth/sign-in/google`;
-      return true;
+      const response = await fetch(`${API_BASE}/api/auth/sign-in/social`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({ provider: 'google' }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.url && data.redirect) {
+          // Redirect to Google OAuth
+          window.location.href = data.url;
+          return true;
+        } else {
+          console.error('Google login setup error - no redirect URL received');
+          return false;
+        }
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('Google login failed:', errorData.message || 'Unknown error');
+        return false;
+      }
     } catch (error) {
       console.error('Google login failed:', error);
       return false;

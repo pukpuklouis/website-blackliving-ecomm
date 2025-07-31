@@ -1,6 +1,7 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { createDB } from "@blackliving/db";
+import * as schema from "@blackliving/db/schema";
 
 export const createAuth = (
   db: ReturnType<typeof createDB>,
@@ -13,23 +14,29 @@ export const createAuth = (
 ) => betterAuth({
   database: drizzleAdapter(db, {
     provider: "sqlite", // Cloudflare D1 uses SQLite
+    usePlural: true,
   }),
   
   secret: env.BETTER_AUTH_SECRET || "dev-secret-key",
   
-  providers: [
-    {
-      id: "email-password",
-      name: "Email & Password",
-    },
-    // Only include Google provider if credentials are available
-    ...(env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET ? [{
-      id: "google" as const,
-      name: "Google",
+  baseURL: env.NODE_ENV === "production" ? "https://blackliving.com" : "http://localhost:4321",
+  
+  trustedOrigins: [
+    "http://localhost:4321",  // Web app
+    "http://localhost:5173",  // Admin app
+    "http://localhost:8787",  // API server
+    "https://blackliving.com",
+    "https://admin.blackliving.com",
+  ],
+  
+  // Using socialProviders instead of providers array
+  socialProviders: env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET ? {
+    google: {
       clientId: env.GOOGLE_CLIENT_ID,
       clientSecret: env.GOOGLE_CLIENT_SECRET,
-    }] : []),
-  ],
+      redirectURI: `${env.NODE_ENV === "production" ? "https://api.blackliving.com" : "http://localhost:8787"}/api/auth/callback/google`,
+    },
+  } : {},
 
   session: {
     expiresIn: 60 * 60 * 24 * 7, // 7 days
@@ -65,7 +72,7 @@ export const createAuth = (
 
   emailAndPassword: {
     enabled: true,
-    requireEmailVerification: true,
+    requireEmailVerification: false, // Disable for development
     sendResetPassword: async ({ user, url }) => {
       // Implement email sending logic
       console.log(`Send password reset email to ${user.email}: ${url}`);
@@ -76,16 +83,11 @@ export const createAuth = (
     },
   },
 
-  socialProviders: env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET ? {
-    google: {
-      enabled: true,
-      clientId: env.GOOGLE_CLIENT_ID,
-      clientSecret: env.GOOGLE_CLIENT_SECRET,
-    },
-  } : {},
 
   advanced: {
-    generateId: () => crypto.randomUUID(),
+    database: {
+      generateId: () => crypto.randomUUID(),
+    },
     crossSubDomainCookies: {
       enabled: true,
       domain: env.NODE_ENV === "production" ? ".blackliving.com" : "localhost",

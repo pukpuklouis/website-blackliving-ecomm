@@ -36,6 +36,12 @@ Thumbs.db
 .env.*
 !.env.example
 
+# Local environment files
+.dev.vars
+.dev.vars.*
+.env.local
+.env.*.local
+
 # React Router
 .react-router/
 
@@ -72,3 +78,6 @@ dev-debug.log
 # Task files
 # tasks.json
 # tasks/ 
+
+# db
+packages/db/migrations/meta/_journal.json
