@@ -16,6 +16,8 @@ export const users = sqliteTable('users', {
   preferences: text('preferences', { mode: 'json' }).default('{}'),
 });
 
+// Better Auth session table - follows Better Auth's recommended schema
+// Role is stored in users table, not sessions table per Better Auth design
 export const sessions = sqliteTable('sessions', {
   id: text('id').primaryKey(),
   expiresAt: integer('expires_at', { mode: 'timestamp' }).notNull(),

@@ -2,6 +2,13 @@ import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
 import { requireAdmin, requireAuth } from '@blackliving/auth';
+import { 
+  customerProfiles, 
+  customerTags, 
+  customerTagAssignments, 
+  customerInteractions 
+} from '@blackliving/db/schema';
+import { eq, desc, and, sql, like, or } from 'drizzle-orm';
 import type { Env } from '../index';
 
 const customers = new Hono<{ 
@@ -67,57 +74,78 @@ customers.get('/', requireAdmin(), async (c) => {
     const { segment, tag, churnRisk, limit = '50', offset = '0', search } = c.req.query();
     const db = c.get('db');
     
-    let query = `
-      SELECT cp.*, 
-             GROUP_CONCAT(ct.name) as tag_names,
-             GROUP_CONCAT(ct.color) as tag_colors,
-             GROUP_CONCAT(ct.id) as tag_ids
-      FROM customer_profiles cp
-      LEFT JOIN customer_tag_assignments cta ON cp.id = cta.customer_profile_id
-      LEFT JOIN customer_tags ct ON cta.customer_tag_id = ct.id
-      WHERE 1=1
-    `;
-    const params: any[] = [];
-
+    // Build conditions array
+    const conditions = [];
+    
     if (segment) {
-      query += ' AND cp.segment = ?';
-      params.push(segment);
+      conditions.push(eq(customerProfiles.segment, segment));
     }
 
     if (churnRisk) {
-      query += ' AND cp.churn_risk = ?';
-      params.push(churnRisk);
+      conditions.push(eq(customerProfiles.churnRisk, churnRisk));
     }
 
     if (search) {
-      query += ' AND (cp.name LIKE ? OR cp.email LIKE ? OR cp.phone LIKE ? OR cp.customer_number LIKE ?)';
       const searchTerm = `%${search}%`;
-      params.push(searchTerm, searchTerm, searchTerm, searchTerm);
+      conditions.push(
+        or(
+          like(customerProfiles.name, searchTerm),
+          like(customerProfiles.email, searchTerm),
+          like(customerProfiles.phone, searchTerm),
+          like(customerProfiles.customerNumber, searchTerm)
+        )
+      );
     }
 
-    query += ' GROUP BY cp.id ORDER BY cp.created_at DESC LIMIT ? OFFSET ?';
-    params.push(parseInt(limit), parseInt(offset));
-
-    const result = await db.prepare(query).bind(...params).all();
+    // For complex GROUP_CONCAT queries, we'll use raw SQL with Drizzle
+    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+    
+    const result = await db
+      .select({
+        // Customer profile fields
+        id: customerProfiles.id,
+        userId: customerProfiles.userId,
+        customerNumber: customerProfiles.customerNumber,
+        name: customerProfiles.name,
+        email: customerProfiles.email,
+        phone: customerProfiles.phone,
+        birthday: customerProfiles.birthday,
+        gender: customerProfiles.gender,
+        address: customerProfiles.address,
+        notes: customerProfiles.notes,
+        source: customerProfiles.source,
+        segment: customerProfiles.segment,
+        orderCount: customerProfiles.orderCount,
+        totalSpent: customerProfiles.totalSpent,
+        lastOrderAt: customerProfiles.lastOrderAt,
+        lastContactAt: customerProfiles.lastContactAt,
+        churnRisk: customerProfiles.churnRisk,
+        lifetimeValue: customerProfiles.lifetimeValue,
+        createdAt: customerProfiles.createdAt,
+        updatedAt: customerProfiles.updatedAt,
+        // Aggregated tag fields
+        tagNames: sql<string>`GROUP_CONCAT(${customerTags.name})`.as('tag_names'),
+        tagColors: sql<string>`GROUP_CONCAT(${customerTags.color})`.as('tag_colors'),
+        tagIds: sql<string>`GROUP_CONCAT(${customerTags.id})`.as('tag_ids'),
+      })
+      .from(customerProfiles)
+      .leftJoin(customerTagAssignments, eq(customerProfiles.id, customerTagAssignments.customerProfileId))
+      .leftJoin(customerTags, eq(customerTagAssignments.customerTagId, customerTags.id))
+      .where(whereClause)
+      .groupBy(customerProfiles.id)
+      .orderBy(desc(customerProfiles.createdAt))
+      .limit(parseInt(limit))
+      .offset(parseInt(offset));
     
     // Process customer data with tags
-    const customers = result.results.map((customer: any) => ({
+    const customers = result.map((customer: any) => ({
       ...customer,
-      address: customer.address ? JSON.parse(customer.address) : null,
-      shippingAddresses: JSON.parse(customer.shipping_addresses || '[]'),
-      favoriteCategories: JSON.parse(customer.favorite_categories || '[]'),
-      purchaseHistory: JSON.parse(customer.purchase_history || '[]'),
-      tags: customer.tag_names ? customer.tag_names.split(',').map((name: string, index: number) => ({
-        id: customer.tag_ids.split(',')[index],
+      tags: customer.tagNames ? customer.tagNames.split(',').map((name: string, index: number) => ({
+        id: customer.tagIds.split(',')[index],
         name: name.trim(),
-        color: customer.tag_colors.split(',')[index],
+        color: customer.tagColors.split(',')[index],
         category: 'unknown'
       })) : [],
-      createdAt: new Date(customer.created_at),
-      updatedAt: new Date(customer.updated_at),
-      lastPurchaseAt: customer.last_purchase_at ? new Date(customer.last_purchase_at) : null,
-      firstPurchaseAt: customer.first_purchase_at ? new Date(customer.first_purchase_at) : null,
-      lastContactAt: customer.last_contact_at ? new Date(customer.last_contact_at) : null,
     }));
 
     return c.json({
