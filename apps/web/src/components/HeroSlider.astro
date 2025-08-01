@@ -1,112 +1,43 @@
 ---
-// Hero slider component for homepage
-export interface Props {
-  slides?: Array<{
-    image: string;
-    title: string;
-    subtitle: string;
-    cta?: {
-      text: string;
-      href: string;
-    };
-  }>;
-}
+// Hero slider component for homepage, now using shadcn/ui Carousel
+import { getCollection } from 'astro:content';
+import HeroCarousel from './HeroCarousel.tsx';
 
-const { slides = [] } = Astro.props;
-
-const defaultSlides = [
-  {
-    image: '/hero-1.jpg',
-    title: '席夢思黑標床墊',
-    subtitle: '專櫃價2-3折起，全台最低價保證',
-    cta: { text: '立即選購', href: '/simmons-black' }
-  },
-  {
-    image: '/hero-2.jpg', 
-    title: '預約試躺體驗',
-    subtitle: '中和、中壢展間歡迎預約',
-    cta: { text: '預約試躺', href: '/appointment' }
-  }
-];
-
-const slidesToShow = slides.length > 0 ? slides : defaultSlides;
+const slides = (await getCollection('hero-slider')).sort((a, b) => a.data.order - b.data.order);
 ---
 
 <section class="relative h-screen overflow-hidden">
-  <div class="hero-slider" data-slides={JSON.stringify(slidesToShow)}>
-    {slidesToShow.map((slide, index) => (
-      <div class={`slide ${index === 0 ? 'active' : ''}`} data-slide={index}>
-        <div class="absolute inset-0">
-          <img 
-            src={slide.image} 
-            alt={slide.title}
-            class="w-full h-full object-cover"
-          />
-          <div class="absolute inset-0 bg-black/40"></div>
-        </div>
-        
-        <div class="relative z-10 h-full flex items-center justify-center text-center text-white">
-          <div class="max-w-4xl px-4">
-            <h1 class="text-5xl md:text-7xl font-bold mb-6">
-              {slide.title}
-            </h1>
-            <p class="text-xl md:text-2xl mb-8 opacity-90">
-              {slide.subtitle}
-            </p>
-            {slide.cta && (
-              <a 
-                href={slide.cta.href}
-                class="inline-block bg-white text-black px-8 py-4 text-lg font-semibold rounded hover:bg-gray-100 transition-colors"
-              >
-                {slide.cta.text}
-              </a>
-            )}
-          </div>
-        </div>
-      </div>
-    ))}
-  </div>
-  
-  <!-- Navigation dots -->
-  <div class="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex space-x-2">
-    {slidesToShow.map((_, index) => (
-      <button 
-        class={`w-3 h-3 rounded-full transition-colors ${index === 0 ? 'bg-white' : 'bg-white/50'}`}
-        data-slide-to={index}
-      ></button>
-    ))}
-  </div>
+  <HeroCarousel slides={slides} client:load />
 </section>
 
-<script>
-  // Simple slider functionality
-  document.addEventListener('DOMContentLoaded', () => {
-    const slider = document.querySelector('.hero-slider');
-    if (!slider) return;
-    
-    const slides = slider.querySelectorAll('.slide');
-    const dots = document.querySelectorAll('[data-slide-to]');
-    let currentSlide = 0;
-    
-    function showSlide(index: number) {
-      slides.forEach(slide => slide.classList.remove('active'));
-      dots.forEach(dot => dot.classList.remove('bg-white'));
-      
-      slides[index]?.classList.add('active');
-      dots[index]?.classList.add('bg-white');
-      
-      currentSlide = index;
+<style>
+  @keyframes fade-in-down {
+    from {
+      opacity: 0;
+      transform: translateY(-20px);
     }
-    
-    // Dot navigation
-    dots.forEach((dot, index) => {
-      dot.addEventListener('click', () => showSlide(index));
-    });
-    
-    // Auto-advance every 5 seconds
-    setInterval(() => {
-      const nextSlide = (currentSlide + 1) % slides.length;
-      showSlide(nextSlide);
-    }, 5000);
-  });
-</script>
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes fade-in-up {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-fade-in-down {
+    animation: fade-in-down 0.8s ease-out forwards;
+  }
+
+  .animate-fade-in-up {
+    animation: fade-in-up 0.8s ease-out 0.2s forwards;
+  }
+</style>

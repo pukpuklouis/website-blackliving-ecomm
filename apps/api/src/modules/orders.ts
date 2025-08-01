@@ -22,23 +22,43 @@ const createOrderSchema = z.object({
     name: z.string().min(1),
     email: z.string().email(),
     phone: z.string().min(1),
-    address: z.string().min(1),
   }),
   items: z.array(z.object({
     productId: z.string(),
-    productName: z.string(),
-    variant: z.string(),
+    variantId: z.string().optional(),
+    name: z.string(),
     quantity: z.number().positive(),
     price: z.number().positive(),
+    size: z.string().optional(),
   })),
+  subtotalAmount: z.number().positive(),
+  shippingFee: z.number().min(0).default(0),
   totalAmount: z.number().positive(),
-  paymentMethod: z.enum(['bank_transfer']).default('bank_transfer'),
-  notes: z.string().optional(),
+  paymentMethod: z.enum(['bank_transfer', 'credit_card', 'cash_on_delivery']).default('bank_transfer'),
+  notes: z.string().default(''),
+  shippingAddress: z.object({
+    name: z.string().min(1),
+    phone: z.string().min(1),
+    address: z.string().min(1),
+    city: z.string().min(1),
+    district: z.string().min(1),
+    postalCode: z.string().min(1),
+  }).optional(),
 });
 
 const updateOrderStatusSchema = z.object({
-  status: z.enum(['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled']),
-  notes: z.string().optional(),
+  status: z.enum(['pending_payment', 'paid', 'processing', 'shipped', 'delivered', 'cancelled']),
+  adminNotes: z.string().optional(),
+  trackingNumber: z.string().optional(),
+  shippingCompany: z.string().optional(),
+});
+
+const confirmPaymentSchema = z.object({
+  paymentStatus: z.enum(['paid']),
+  status: z.enum(['paid']),
+  paymentVerifiedAt: z.string().datetime(),
+  paymentVerifiedBy: z.string(),
+  adminNotes: z.string().optional(),
 });
 
 // GET /api/orders - List orders (Admin only)
@@ -60,10 +80,23 @@ orders.get('/', requireAdmin(), async (c) => {
 
     const result = await db.prepare(query).bind(...params).all();
     
+    // Parse JSON fields for each order
+    const orders = result.results.map((order: any) => ({
+      ...order,
+      customerInfo: JSON.parse(order.customer_info || '{}'),
+      items: JSON.parse(order.items || '[]'),
+      shippingAddress: order.shipping_address ? JSON.parse(order.shipping_address) : null,
+      createdAt: new Date(order.created_at),
+      updatedAt: new Date(order.updated_at),
+      paymentVerifiedAt: order.payment_verified_at ? new Date(order.payment_verified_at) : null,
+      shippedAt: order.shipped_at ? new Date(order.shipped_at) : null,
+      deliveredAt: order.delivered_at ? new Date(order.delivered_at) : null,
+    }));
+    
     return c.json({
       success: true,
-      data: result.results,
-      total: result.results.length
+      data: { orders },
+      total: orders.length
     });
 
   } catch (error) {
@@ -105,35 +138,47 @@ orders.post('/',
       const data = c.req.valid('json');
       const db = c.get('db');
       
-      const id = `BL${Date.now()}${Math.random().toString(36).substr(2, 4).toUpperCase()}`;
-      const now = new Date().toISOString();
+      // Generate order number: BL + YYYYMMDD + sequence
+      const today = new Date();
+      const dateStr = today.getFullYear().toString() + 
+                     (today.getMonth() + 1).toString().padStart(2, '0') + 
+                     today.getDate().toString().padStart(2, '0');
+      const orderNumber = `BL${dateStr}${Math.random().toString(36).substr(2, 4).toUpperCase()}`;
+      
+      const now = Date.now();
 
       await db.prepare(`
         INSERT INTO orders (
-          id, customer_info, items, total_amount, payment_method,
-          status, notes, created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+          id, order_number, customer_info, items, subtotal_amount, shipping_fee,
+          total_amount, payment_method, status, payment_status, notes,
+          shipping_address, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `).bind(
-        id,
+        crypto.randomUUID(),
+        orderNumber,
         JSON.stringify(data.customerInfo),
         JSON.stringify(data.items),
+        data.subtotalAmount,
+        data.shippingFee,
         data.totalAmount,
         data.paymentMethod,
-        'pending',
-        data.notes || '',
+        'pending_payment',
+        'unpaid',
+        data.notes,
+        data.shippingAddress ? JSON.stringify(data.shippingAddress) : null,
         now,
         now
       ).run();
 
       // Send notification email (implement later)
-      // await sendOrderConfirmationEmail(id, data);
+      // await sendOrderConfirmationEmail(orderNumber, data);
 
       return c.json({
         success: true,
         data: { 
-          id, 
-          status: 'pending',
-          message: '訂單已建立成功，我們將盡快與您聯繫確認付款資訊' 
+          orderNumber, 
+          status: 'pending_payment',
+          message: '訂單已建立成功，請依照指示完成付款' 
         }
       }, 201);
 
@@ -144,24 +189,51 @@ orders.post('/',
   }
 );
 
-// PUT /api/orders/:id/status - Update order status (Admin only)
-orders.put('/:id/status',
+// PATCH /api/orders/:id/status - Update order status (Admin only)
+orders.patch('/:id/status',
   requireAdmin(),
   zValidator('json', updateOrderStatusSchema),
   async (c) => {
     try {
       const id = c.req.param('id');
-      const { status, notes } = c.req.valid('json');
+      const { status, adminNotes, trackingNumber, shippingCompany } = c.req.valid('json');
       const db = c.get('db');
 
-      const now = new Date().toISOString();
-      const updateNotes = notes ? notes : '';
+      const now = Date.now();
+      let updateQuery = 'UPDATE orders SET status = ?, updated_at = ?';
+      let params = [status, now];
 
-      const result = await db.prepare(`
-        UPDATE orders 
-        SET status = ?, notes = ?, updated_at = ?
-        WHERE id = ?
-      `).bind(status, updateNotes, now, id).run();
+      if (adminNotes !== undefined) {
+        updateQuery += ', admin_notes = ?';
+        params.push(adminNotes);
+      }
+
+      if (trackingNumber !== undefined) {
+        updateQuery += ', tracking_number = ?';
+        params.push(trackingNumber);
+      }
+
+      if (shippingCompany !== undefined) {
+        updateQuery += ', shipping_company = ?';
+        params.push(shippingCompany);
+      }
+
+      // Set shipped_at when status becomes shipped
+      if (status === 'shipped') {
+        updateQuery += ', shipped_at = ?';
+        params.push(now);
+      }
+
+      // Set delivered_at when status becomes delivered
+      if (status === 'delivered') {
+        updateQuery += ', delivered_at = ?';
+        params.push(now);
+      }
+
+      updateQuery += ' WHERE id = ?';
+      params.push(id);
+
+      const result = await db.prepare(updateQuery).bind(...params).run();
 
       if (result.changes === 0) {
         return c.json({ error: 'Order not found' }, 404);
@@ -178,6 +250,55 @@ orders.put('/:id/status',
     } catch (error) {
       console.error('Error updating order status:', error);
       return c.json({ error: 'Failed to update order status' }, 500);
+    }
+  }
+);
+
+// PATCH /api/orders/:id/confirm-payment - Confirm payment (Admin only)
+orders.patch('/:id/confirm-payment',
+  requireAdmin(),
+  zValidator('json', confirmPaymentSchema),
+  async (c) => {
+    try {
+      const id = c.req.param('id');
+      const { paymentStatus, status, paymentVerifiedAt, paymentVerifiedBy, adminNotes } = c.req.valid('json');
+      const db = c.get('db');
+
+      const now = Date.now();
+      const verifiedAt = new Date(paymentVerifiedAt).getTime();
+
+      let updateQuery = `
+        UPDATE orders 
+        SET payment_status = ?, status = ?, payment_verified_at = ?, 
+            payment_verified_by = ?, updated_at = ?
+      `;
+      let params = [paymentStatus, status, verifiedAt, paymentVerifiedBy, now];
+
+      if (adminNotes !== undefined) {
+        updateQuery += ', admin_notes = ?';
+        params.push(adminNotes);
+      }
+
+      updateQuery += ' WHERE id = ?';
+      params.push(id);
+
+      const result = await db.prepare(updateQuery).bind(...params).run();
+
+      if (result.changes === 0) {
+        return c.json({ error: 'Order not found' }, 404);
+      }
+
+      // Send payment confirmation notification (implement later)
+      // await sendPaymentConfirmationEmail(id);
+
+      return c.json({
+        success: true,
+        message: 'Payment confirmed successfully'
+      });
+
+    } catch (error) {
+      console.error('Error confirming payment:', error);
+      return c.json({ error: 'Failed to confirm payment' }, 500);
     }
   }
 );

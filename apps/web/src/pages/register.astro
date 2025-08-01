@@ -210,7 +210,37 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     }
   });
 
-  googleRegisterButton.addEventListener('click', () => {
-    window.location.href = `${API_BASE}/api/auth/sign-in/google`;
+  googleRegisterButton.addEventListener('click', async () => {
+    setLoading(true);
+    hideMessages();
+    
+    try {
+      // Use customer-specific OAuth endpoint for registration
+      const response = await fetch(`${API_BASE}/api/auth/customer/sign-in/social/google`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.url) {
+          // Redirect to Google OAuth
+          window.location.href = data.url;
+        } else {
+          showError('Google 註冊設定錯誤');
+        }
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        showError(errorData.message || 'Google 註冊失敗，請稍後再試');
+      }
+    } catch (error) {
+      console.error('Google register error:', error);
+      showError('Google 註冊時發生錯誤，請稍後再試');
+    } finally {
+      setLoading(false);
+    }
   });
 </script>

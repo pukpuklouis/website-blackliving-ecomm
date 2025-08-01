@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import AccountNav from '../../components/AccountNav.astro';
 // This page will be protected by Better Auth middleware
 ---
 
@@ -12,13 +13,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
       </div>
       
       <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-        <div class="md:col-span-1">
-          <nav class="space-y-2">
-            <a href="/account/profile" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg">個人資料</a>
-            <a href="/account/orders" class="block px-4 py-2 bg-black text-white rounded-lg">訂單記錄</a>
-            <a href="/account/appointments" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg">預約記錄</a>
-          </nav>
-        </div>
+        <AccountNav currentPage="orders" />
         
         <div class="md:col-span-2">
           <div id="loading" class="text-center py-8">

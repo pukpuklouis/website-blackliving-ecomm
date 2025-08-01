@@ -1,9 +1,20 @@
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
+import { requireAdmin, requireAuth } from '@blackliving/auth';
 import type { Env } from '../index';
 
-const appointments = new Hono<{ Bindings: Env }>();
+const appointments = new Hono<{ 
+  Bindings: Env;
+  Variables: {
+    db: any;
+    cache: any;
+    storage: any;
+    auth: any;
+    user: any;
+    session: any;
+  };
+}>();
 
 // Validation schemas
 const createAppointmentSchema = z.object({
@@ -12,24 +23,32 @@ const createAppointmentSchema = z.object({
     phone: z.string().min(1),
     email: z.string().email().optional(),
   }),
-  storeLocation: z.enum(['中和', '中壢']),
-  preferredDate: z.string(), // ISO date string
-  preferredTime: z.enum(['上午', '下午', '晚上']),
-  productInterest: z.array(z.string()).optional(),
-  notes: z.string().optional(),
+  storeLocation: z.enum(['zhonghe', 'zhongli']),
+  preferredDate: z.string(), // YYYY-MM-DD
+  preferredTime: z.enum(['morning', 'afternoon', 'evening']),
+  productInterest: z.array(z.string()).default([]),
+  visitPurpose: z.enum(['trial', 'consultation', 'pricing']).default('trial'),
+  notes: z.string().default(''),
 });
 
-const updateAppointmentSchema = z.object({
-  status: z.enum(['pending', 'confirmed', 'completed', 'cancelled']),
-  confirmedDateTime: z.string().optional(), // ISO datetime string
-  notes: z.string().optional(),
+const updateAppointmentStatusSchema = z.object({
+  status: z.enum(['pending', 'confirmed', 'completed', 'cancelled', 'no_show']),
+  adminNotes: z.string().optional(),
+  staffAssigned: z.string().optional(),
+});
+
+const confirmAppointmentSchema = z.object({
+  status: z.enum(['confirmed']),
+  confirmedDateTime: z.string().datetime(),
+  adminNotes: z.string().optional(),
+  staffAssigned: z.string().optional(),
 });
 
 // GET /api/appointments - List appointments (Admin only)
-appointments.get('/', async (c) => {
+appointments.get('/', requireAdmin(), async (c) => {
   try {
-    // TODO: Add authentication middleware to check admin role
     const { status, store, date, limit = '50', offset = '0' } = c.req.query();
+    const db = c.get('db');
     
     let query = 'SELECT * FROM appointments WHERE 1=1';
     const params: any[] = [];
@@ -52,12 +71,24 @@ appointments.get('/', async (c) => {
     query += ' ORDER BY preferred_date ASC, created_at DESC LIMIT ? OFFSET ?';
     params.push(parseInt(limit), parseInt(offset));
 
-    const result = await c.env.DB.prepare(query).bind(...params).all();
+    const result = await db.prepare(query).bind(...params).all();
+    
+    // Parse JSON fields for each appointment
+    const appointments = result.results.map((appointment: any) => ({
+      ...appointment,
+      customerInfo: JSON.parse(appointment.customer_info || '{}'),
+      productInterest: JSON.parse(appointment.product_interest || '[]'),
+      createdAt: new Date(appointment.created_at),
+      updatedAt: new Date(appointment.updated_at),
+      confirmedDateTime: appointment.confirmed_datetime ? new Date(appointment.confirmed_datetime) : null,
+      actualVisitTime: appointment.actual_visit_time ? new Date(appointment.actual_visit_time) : null,
+      completedAt: appointment.completed_at ? new Date(appointment.completed_at) : null,
+    }));
     
     return c.json({
       success: true,
-      data: result.results,
-      total: result.results.length
+      data: { appointments },
+      total: appointments.length
     });
 
   } catch (error) {
@@ -96,35 +127,45 @@ appointments.post('/',
   async (c) => {
     try {
       const data = c.req.valid('json');
+      const db = c.get('db');
       
-      const id = `APT${Date.now()}${Math.random().toString(36).substr(2, 4).toUpperCase()}`;
-      const now = new Date().toISOString();
+      // Generate appointment number: AP + YYYYMMDD + sequence
+      const today = new Date();
+      const dateStr = today.getFullYear().toString() + 
+                     (today.getMonth() + 1).toString().padStart(2, '0') + 
+                     today.getDate().toString().padStart(2, '0');
+      const appointmentNumber = `AP${dateStr}${Math.random().toString(36).substr(2, 4).toUpperCase()}`;
+      
+      const now = Date.now();
 
-      await c.env.DB.prepare(`
+      await db.prepare(`
         INSERT INTO appointments (
-          id, customer_info, store_location, preferred_date, preferred_time,
-          product_interest, status, notes, created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          id, appointment_number, customer_info, store_location, preferred_date, 
+          preferred_time, product_interest, visit_purpose, status, notes, 
+          created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `).bind(
-        id,
+        crypto.randomUUID(),
+        appointmentNumber,
         JSON.stringify(data.customerInfo),
         data.storeLocation,
         data.preferredDate,
         data.preferredTime,
-        JSON.stringify(data.productInterest || []),
+        JSON.stringify(data.productInterest),
+        data.visitPurpose,
         'pending',
-        data.notes || '',
+        data.notes,
         now,
         now
       ).run();
 
       // Send confirmation SMS/Email (implement later)
-      // await sendAppointmentConfirmation(id, data);
+      // await sendAppointmentConfirmation(appointmentNumber, data);
 
       return c.json({
         success: true,
         data: {
-          id,
+          appointmentNumber,
           status: 'pending',
           message: '預約已送出，我們將在24小時內與您聯繫確認時間',
           storeInfo: getStoreInfo(data.storeLocation)
@@ -138,38 +179,109 @@ appointments.post('/',
   }
 );
 
-// PUT /api/appointments/:id - Update appointment (Admin only)
-appointments.put('/:id',
-  zValidator('json', updateAppointmentSchema),
+// PATCH /api/appointments/:id/status - Update appointment status (Admin only)
+appointments.patch('/:id/status',
+  requireAdmin(),
+  zValidator('json', updateAppointmentStatusSchema),
   async (c) => {
     try {
-      // TODO: Add authentication middleware to check admin role
       const id = c.req.param('id');
-      const { status, confirmedDateTime, notes } = c.req.valid('json');
+      const { status, adminNotes, staffAssigned } = c.req.valid('json');
+      const db = c.get('db');
 
-      const now = new Date().toISOString();
+      const now = Date.now();
+      let updateQuery = 'UPDATE appointments SET status = ?, updated_at = ?';
+      let params = [status, now];
 
-      const result = await c.env.DB.prepare(`
-        UPDATE appointments 
-        SET status = ?, confirmed_datetime = ?, notes = ?, updated_at = ?
-        WHERE id = ?
-      `).bind(status, confirmedDateTime || null, notes || '', now, id).run();
+      if (adminNotes !== undefined) {
+        updateQuery += ', admin_notes = ?';
+        params.push(adminNotes);
+      }
+
+      if (staffAssigned !== undefined) {
+        updateQuery += ', staff_assigned = ?';
+        params.push(staffAssigned);
+      }
+
+      // Set completed_at when status becomes completed
+      if (status === 'completed') {
+        updateQuery += ', completed_at = ?';
+        params.push(now);
+      }
+
+      updateQuery += ' WHERE id = ?';
+      params.push(id);
+
+      const result = await db.prepare(updateQuery).bind(...params).run();
 
       if (result.changes === 0) {
         return c.json({ error: 'Appointment not found' }, 404);
       }
 
       // Send status update notification (implement later)
-      // await sendAppointmentStatusUpdate(id, status, confirmedDateTime);
+      // await sendAppointmentStatusUpdate(id, status);
 
       return c.json({
         success: true,
-        message: 'Appointment updated successfully'
+        message: 'Appointment status updated successfully'
       });
 
     } catch (error) {
-      console.error('Error updating appointment:', error);
-      return c.json({ error: 'Failed to update appointment' }, 500);
+      console.error('Error updating appointment status:', error);
+      return c.json({ error: 'Failed to update appointment status' }, 500);
+    }
+  }
+);
+
+// PATCH /api/appointments/:id/confirm - Confirm appointment (Admin only)
+appointments.patch('/:id/confirm',
+  requireAdmin(),
+  zValidator('json', confirmAppointmentSchema),
+  async (c) => {
+    try {
+      const id = c.req.param('id');
+      const { status, confirmedDateTime, adminNotes, staffAssigned } = c.req.valid('json');
+      const db = c.get('db');
+
+      const now = Date.now();
+      const confirmedTime = new Date(confirmedDateTime).getTime();
+
+      let updateQuery = `
+        UPDATE appointments 
+        SET status = ?, confirmed_datetime = ?, updated_at = ?
+      `;
+      let params = [status, confirmedTime, now];
+
+      if (adminNotes !== undefined) {
+        updateQuery += ', admin_notes = ?';
+        params.push(adminNotes);
+      }
+
+      if (staffAssigned !== undefined) {
+        updateQuery += ', staff_assigned = ?';
+        params.push(staffAssigned);
+      }
+
+      updateQuery += ' WHERE id = ?';
+      params.push(id);
+
+      const result = await db.prepare(updateQuery).bind(...params).run();
+
+      if (result.changes === 0) {
+        return c.json({ error: 'Appointment not found' }, 404);
+      }
+
+      // Send confirmation notification (implement later)
+      // await sendAppointmentConfirmation(id);
+
+      return c.json({
+        success: true,
+        message: 'Appointment confirmed successfully'
+      });
+
+    } catch (error) {
+      console.error('Error confirming appointment:', error);
+      return c.json({ error: 'Failed to confirm appointment' }, 500);
     }
   }
 );
@@ -240,13 +352,13 @@ appointments.get('/availability/:store/:date', async (c) => {
 // Helper function to get store information
 function getStoreInfo(location: string) {
   const stores = {
-    '中和': {
+    'zhonghe': {
       name: 'Black Living 中和門市',
       address: '新北市中和區中正路123號',
       phone: '02-1234-5678',
       hours: '週一至週日 10:00-21:00'
     },
-    '中壢': {
+    'zhongli': {
       name: 'Black Living 中壢門市', 
       address: '桃園市中壢區中山路456號',
       phone: '03-1234-5678',

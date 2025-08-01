@@ -43,7 +43,7 @@ const data = {
     },
     {
       title: "部落格編輯",
-      url: "/dashboard/blog",
+      url: "/dashboard/blog-composer",
       icon: PenTool,
     },
     {
