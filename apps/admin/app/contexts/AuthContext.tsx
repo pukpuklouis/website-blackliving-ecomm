@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
+import { signOut } from '@blackliving/auth/client';
 
 interface User {
   id: string;
@@ -115,13 +116,30 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const logout = async () => {
     try {
-      await fetch(`${API_BASE}/api/auth/sign-out`, {
-        method: 'POST',
-        credentials: 'include',
+      // Use Better Auth's proper signOut method
+      await signOut({
+        fetchOptions: {
+          onSuccess: () => {
+            console.log('Better Auth logout successful');
+          },
+          onError: (error) => {
+            console.warn('Better Auth logout error:', error);
+          },
+        },
       });
+      
+      // Clear any local storage
+      if (typeof(Storage) !== "undefined") {
+        localStorage.clear();
+        sessionStorage.clear();
+      }
+      
     } catch (error) {
       console.error('Logout failed:', error);
+      // Fallback: clear session cookies manually
+      document.cookie = 'better-auth.session_token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
     } finally {
+      // Always clear user state locally
       setUser(null);
     }
   };

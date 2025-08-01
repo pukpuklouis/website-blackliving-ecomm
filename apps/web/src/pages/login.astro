@@ -133,8 +133,8 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       });
 
       if (response.ok) {
-        // Check if user is admin
-        const sessionResponse = await fetch(`${API_BASE}/api/auth/get-session`, {
+        // Check session after login
+        const sessionResponse = await fetch(`${API_BASE}/api/auth/session`, {
           credentials: 'include',
         });
         
@@ -162,18 +162,18 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     hideError();
     
     try {
-      const response = await fetch(`${API_BASE}/api/auth/sign-in/social`, {
+      // Use customer-specific OAuth endpoint
+      const response = await fetch(`${API_BASE}/api/auth/customer/sign-in/social/google`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         credentials: 'include',
-        body: JSON.stringify({ provider: 'google' }),
       });
 
       if (response.ok) {
         const data = await response.json();
-        if (data.url && data.redirect) {
+        if (data.url) {
           // Redirect to Google OAuth
           window.location.href = data.url;
         } else {

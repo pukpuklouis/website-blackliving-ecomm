@@ -33,7 +33,20 @@ const products = defineCollection({
   }),
 });
 
+const heroSlider = defineCollection({
+  type: 'data',
+  schema: z.object({
+    title: z.string(),
+    subtitle: z.string(),
+    image: z.string(),
+    buttonText: z.string(),
+    buttonLink: z.string(),
+    order: z.number(),
+  }),
+});
+
 export const collections = {
   posts,
   products,
+  'hero-slider': heroSlider,
 };

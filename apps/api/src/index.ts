@@ -14,11 +14,13 @@ import type { D1Database, R2Bucket, KVNamespace } from '@cloudflare/workers-type
 import products from './modules/products';
 import orders from './modules/orders';
 import appointments from './modules/appointments';
+import customers from './modules/customers';
 import admin from './modules/admin';
 import reviews from './modules/reviews';
 import newsletter from './modules/newsletter';
 import contact from './modules/contact';
 import user from './modules/user';
+import { postsRouter } from './modules/posts';
 
 export interface Env {
   DB: D1Database;
@@ -166,11 +168,15 @@ app.get('/api/auth/callback/google/admin', async (c) => {
     const state = url.searchParams.get('state');
     
     if (!code) {
-      return c.json({ error: 'Missing authorization code' }, 400);
+      console.error('Missing authorization code');
+      const adminDashboardURL = `${c.env.NODE_ENV === "production" ? "https://admin.blackliving.com" : "http://localhost:5173"}/login?error=oauth_failed`;
+      return c.redirect(adminDashboardURL);
     }
     
     if (state !== 'admin') {
-      return c.json({ error: 'Invalid state parameter' }, 400);
+      console.error('Invalid state parameter:', state);
+      const adminDashboardURL = `${c.env.NODE_ENV === "production" ? "https://admin.blackliving.com" : "http://localhost:5173"}/login?error=invalid_state`;
+      return c.redirect(adminDashboardURL);
     }
 
     // 使用 Admin OAuth credentials 交換 token
@@ -195,7 +201,8 @@ app.get('/api/auth/callback/google/admin', async (c) => {
 
     if (!tokenResponse.ok) {
       console.error('Token exchange failed:', await tokenResponse.text());
-      return c.json({ error: 'Token exchange failed' }, 500);
+      const adminDashboardURL = `${c.env.NODE_ENV === "production" ? "https://admin.blackliving.com" : "http://localhost:5173"}/login?error=token_exchange_failed`;
+      return c.redirect(adminDashboardURL);
     }
 
     const tokenData = await tokenResponse.json() as { access_token: string };
@@ -209,7 +216,8 @@ app.get('/api/auth/callback/google/admin', async (c) => {
 
     if (!userResponse.ok) {
       console.error('Failed to get user info:', await userResponse.text());
-      return c.json({ error: 'Failed to get user info' }, 500);
+      const adminDashboardURL = `${c.env.NODE_ENV === "production" ? "https://admin.blackliving.com" : "http://localhost:5173"}/login?error=user_info_failed`;
+      return c.redirect(adminDashboardURL);
     }
 
     const userData = await userResponse.json();
@@ -247,12 +255,13 @@ app.get('/api/auth/callback/google/admin', async (c) => {
         user = updatedUser;
       }
 
-      // 創建 session
+      // Create session manually (Better Auth compatible)
       const sessionToken = crypto.randomUUID();
+      const sessionId = crypto.randomUUID();
       const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
 
       await db.insert(sessions).values({
-        id: crypto.randomUUID(),
+        id: sessionId,
         token: sessionToken,
         userId: user.id,
         expiresAt,
@@ -260,13 +269,17 @@ app.get('/api/auth/callback/google/admin', async (c) => {
         ipAddress: c.req.header('CF-Connecting-IP') || c.req.header('X-Forwarded-For') || '',
       });
 
-      // 設置 session cookie
-      c.header('Set-Cookie', `better-auth.session_token=${sessionToken}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=604800`);
+      // Set Better Auth session cookie
+      const cookieHeader = `better-auth.session_token=${sessionToken}; Path=/; HttpOnly; ${c.env.NODE_ENV === 'production' ? 'Secure; ' : ''}SameSite=Lax; Max-Age=604800`;
+      c.header('Set-Cookie', cookieHeader);
+      
+      console.log('Session created for admin user:', { userId: user.id, sessionId, sessionToken: sessionToken.substring(0, 8) + '...' });
       
       console.log('Admin user created/updated:', user);
     } catch (dbError) {
       console.error('Database error:', dbError);
-      // 繼續執行重導向，但記錄錯誤
+      const adminDashboardURL = `${c.env.NODE_ENV === "production" ? "https://admin.blackliving.com" : "http://localhost:5173"}/login?error=database_error`;
+      return c.redirect(adminDashboardURL);
     }
     
     // 永遠重導向到 Admin Dashboard
@@ -275,7 +288,8 @@ app.get('/api/auth/callback/google/admin', async (c) => {
     
   } catch (error) {
     console.error('Admin OAuth callback error:', error);
-    return c.json({ error: 'Admin OAuth callback failed' }, 500);
+    const adminDashboardURL = `${c.env.NODE_ENV === "production" ? "https://admin.blackliving.com" : "http://localhost:5173"}/login?error=oauth_callback_failed`;
+    return c.redirect(adminDashboardURL);
   }
 });
 
@@ -399,21 +413,116 @@ app.get('/api/auth/callback/google/customer', async (c) => {
   }
 });
 
+// Manual session check endpoint for debugging
+app.get('/api/auth/session', async (c) => {
+  try {
+    const auth = c.get('auth');
+    const cookieHeader = c.req.header('Cookie');
+    
+    if (!cookieHeader) {
+      return c.json({ user: null, session: null });
+    }
+    
+    // Extract session token from cookie
+    const sessionTokenMatch = cookieHeader.match(/better-auth\.session_token=([^;]+)/);
+    if (!sessionTokenMatch) {
+      return c.json({ user: null, session: null });
+    }
+    
+    const sessionToken = sessionTokenMatch[1];
+    
+    const db = c.get('db');
+    
+    // Query session directly
+    const sessionResult = await db.select({
+      id: sessions.id,
+      token: sessions.token,
+      userId: sessions.userId,
+      expiresAt: sessions.expiresAt,
+      user: {
+        id: users.id,
+        email: users.email,
+        name: users.name,
+        role: users.role,
+        image: users.image,
+      }
+    })
+    .from(sessions)
+    .innerJoin(users, eq(sessions.userId, users.id))
+    .where(eq(sessions.token, sessionToken))
+    .limit(1);
+    
+    if (sessionResult.length === 0) {
+      return c.json({ user: null, session: null });
+    }
+    
+    const session = sessionResult[0];
+    
+    // Check if session is expired
+    if (session.expiresAt < new Date()) {
+      return c.json({ user: null, session: null });
+    }
+    
+    return c.json({
+      user: session.user,
+      session: {
+        id: session.id,
+        expiresAt: session.expiresAt,
+      }
+    });
+    
+  } catch (error) {
+    console.error('Session check error:', error);
+    return c.json({ user: null, session: null });
+  }
+});
+
 // API Routes
 app.route('/api/products', products);
 app.route('/api/orders', orders);
 app.route('/api/appointments', appointments);
+app.route('/api/customers', customers);
 app.route('/api/admin', admin);
 app.route('/api/reviews', reviews);
 app.route('/api/newsletter', newsletter);
 app.route('/api/contact', contact);
 app.route('/api/user', user);
+app.route('/api/posts', postsRouter);
 
 // Better Auth integration (handles all other /api/auth/* routes - must be last)
 app.use('/api/auth/*', async (c, next) => {
   try {
     const auth = c.get('auth');
-    const response = await auth.handler(c.req.raw);
+    
+    // Create a proper request object for Better Auth
+    const url = new URL(c.req.url);
+    const method = c.req.method;
+    const headers = c.req.raw.headers;
+    
+    // For POST requests, ensure we have proper body handling
+    let body = null;
+    if (method === 'POST' || method === 'PUT' || method === 'PATCH') {
+      try {
+        const contentType = headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          const text = await c.req.text();
+          body = text || '{}';  // Provide empty JSON if no body
+        } else {
+          body = await c.req.raw.text();
+        }
+      } catch (bodyError) {
+        console.warn('Body parsing error:', bodyError);
+        body = '{}';  // Fallback to empty JSON
+      }
+    }
+    
+    const authRequest = new Request(url.toString(), {
+      method,
+      headers,
+      body,
+    });
+    
+    const response = await auth.handler(authRequest);
     
     // Copy response headers
     response.headers.forEach((value, key) => {

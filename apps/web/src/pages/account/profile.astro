@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import AccountNav from '../../components/AccountNav.astro';
 // This page will be protected by Better Auth middleware
 ---
 
@@ -12,21 +13,12 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
       </div>
       
       <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-        <div class="md:col-span-1">
-          <nav class="space-y-2">
-            <a href="/account/profile" class="block px-4 py-2 bg-black text-white rounded-lg">個人資料</a>
-            <a href="/account/orders" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg">訂單記錄</a>
-            <a href="/account/appointments" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg">預約記錄</a>
-          </nav>
-        </div>
+        <AccountNav currentPage="profile" />
         
         <div class="md:col-span-2">
           <div class="bg-white p-6 rounded-lg shadow-md">
             <div class="flex justify-between items-center mb-6">
               <h2 class="text-xl font-semibold">基本資料</h2>
-              <button id="logout-btn" class="text-gray-600 hover:text-red-600 text-sm">
-                登出
-              </button>
             </div>
             
             <div id="loading" class="text-center py-8">
@@ -93,7 +85,6 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
   const loading = document.getElementById('loading')!;
   const notAuthenticated = document.getElementById('not-authenticated')!;
   const profileForm = document.getElementById('profile-form') as HTMLFormElement;
-  const logoutBtn = document.getElementById('logout-btn')!;
   const updateBtn = document.getElementById('update-btn') as HTMLButtonElement;
   const message = document.getElementById('message')!;
 
@@ -101,7 +92,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 
   async function checkAuth() {
     try {
-      const response = await fetch(`${API_BASE}/api/auth/get-session`, {
+      const response = await fetch(`${API_BASE}/api/auth/session`, {
         credentials: 'include',
       });
 
@@ -147,19 +138,6 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
       message.classList.add('hidden');
     }, 5000);
   }
-
-  // Handle logout
-  logoutBtn.addEventListener('click', async () => {
-    try {
-      await fetch(`${API_BASE}/api/auth/sign-out`, {
-        method: 'POST',
-        credentials: 'include',
-      });
-      window.location.href = '/login';
-    } catch (error) {
-      console.error('Logout failed:', error);
-    }
-  });
 
   // Handle profile update
   profileForm.addEventListener('submit', async (e) => {

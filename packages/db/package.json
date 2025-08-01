@@ -11,15 +11,18 @@
   "scripts": {
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
-    "db:studio": "drizzle-kit studio"
+    "db:studio": "drizzle-kit studio --config drizzle.config.local.ts",
+    "db:studio:local": "drizzle-kit studio --config drizzle.config.local.ts",
+    "db:push": "drizzle-kit push --config drizzle.config.local.ts --force",
+    "db:seed": "node seed-test-data.cjs"
   },
   "dependencies": {
-    "@libsql/client": "^0.6.2",
+    "@libsql/client": "^0.15.10",
     "@paralleldrive/cuid2": "^2.2.2",
     "drizzle-orm": "^0.44.4"
   },
   "devDependencies": {
-    "drizzle-kit": "^0.22.8",
+    "drizzle-kit": "^0.31.4",
     "typescript": "^5.8.3"
   }
 }

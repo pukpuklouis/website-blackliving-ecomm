@@ -14,6 +14,12 @@ export default defineConfig({
   adapter: cloudflare(),
 
   vite: {
-    plugins: [tailwindcss()]
+    plugins: [tailwindcss()],
+    resolve: {
+      alias: {
+        '~': new URL('./src', import.meta.url).pathname,
+        '@': new URL('../../packages/ui', import.meta.url).pathname
+      }
+    }
   }
 });

@@ -9,7 +9,7 @@ export default [
     route("products", "routes/dashboard/products.tsx"),
     route("orders", "routes/dashboard/orders.tsx"),
     route("posts", "routes/dashboard/posts.tsx"),
-    route("blog", "routes/dashboard/blog.tsx"),
+    route("blog-composer", "routes/dashboard/blog-composer.tsx"),
     route("appointments", "routes/dashboard/appointments.tsx"),
     route("customers", "routes/dashboard/customers.tsx"),
     route("analytics", "routes/dashboard/analytics.tsx"),

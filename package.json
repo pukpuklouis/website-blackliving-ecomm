@@ -18,7 +18,9 @@
     "clean": "turbo run clean",
     "type-check": "turbo run type-check",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md,mdx,astro}\"",
-    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md,mdx,astro}\""
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md,mdx,astro}\"",
+    "db:sync": "node sync-local-db.js",
+    "db:studio": "pnpm db:sync && cd packages/db && pnpm db:studio:local"
   },
   "devDependencies": {
     "@turbo/gen": "^1.13.4",

@@ -21,6 +21,7 @@
     "@blackliving/ui": "workspace:*",
     "@tailwindcss/vite": "^4.1.11",
     "astro": "^5.12.4",
+    "embla-carousel-autoplay": "^8.6.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "tailwindcss": "^4.1.11",
@@ -30,8 +31,8 @@
     "zustand": "^5.0.6"
   },
   "devDependencies": {
+    "@blackliving/tailwind-config": "workspace:*",
     "@types/react": "^19.1.8",
-    "@types/react-dom": "^19.1.6",
-    "@repo/tailwind-config": "workspace:*"
+    "@types/react-dom": "^19.1.6"
   }
 }
