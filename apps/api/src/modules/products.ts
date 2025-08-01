@@ -145,7 +145,7 @@ app.get('/', zValidator('query', productQuerySchema), async (c) => {
       .select()
       .from(products)
       .where(conditions.length > 0 ? and(...conditions) : undefined)
-      .orderBy(Array.isArray(orderBy) ? orderBy : [orderBy])
+      .orderBy(...(Array.isArray(orderBy) ? orderBy : [orderBy]))
       .limit(limit)
       .offset(offset);
 
@@ -166,7 +166,7 @@ app.get('/', zValidator('query', productQuerySchema), async (c) => {
     };
 
     // Cache the result for 10 minutes
-    await cache.put(cacheKey, JSON.stringify(responseData), { expirationTtl: 600 });
+    await cache.set(cacheKey, JSON.stringify(responseData), { expirationTtl: 600 });
 
     return c.json({
       success: true,
@@ -209,7 +209,7 @@ app.get('/featured', async (c) => {
       .limit(8);
 
     // Cache for 15 minutes
-    await cache.put(cacheKey, JSON.stringify(featuredProducts), { expirationTtl: 900 });
+    await cache.set(cacheKey, JSON.stringify(featuredProducts), { expirationTtl: 900 });
 
     return c.json({
       success: true,
@@ -271,7 +271,7 @@ app.get('/categories', async (c) => {
     }
 
     // Cache for 30 minutes
-    await cache.put(cacheKey, JSON.stringify(categories), { expirationTtl: 1800 });
+    await cache.set(cacheKey, JSON.stringify(categories), { expirationTtl: 1800 });
 
     return c.json({
       success: true,

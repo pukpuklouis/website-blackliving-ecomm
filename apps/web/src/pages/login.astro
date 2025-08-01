@@ -162,13 +162,19 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     hideError();
     
     try {
-      // Use customer-specific OAuth endpoint
-      const response = await fetch(`${API_BASE}/api/auth/customer/sign-in/social/google`, {
+      // Use Better Auth's social sign-in endpoint
+      const callbackURL = `${window.location.origin}/account/callback`;
+      
+      const response = await fetch(`${API_BASE}/api/auth/sign-in/social`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         credentials: 'include',
+        body: JSON.stringify({
+          provider: 'google',
+          callbackURL: callbackURL,
+        }),
       });
 
       if (response.ok) {

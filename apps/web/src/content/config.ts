@@ -36,12 +36,18 @@ const products = defineCollection({
 const heroSlider = defineCollection({
   type: 'data',
   schema: z.object({
-    title: z.string(),
-    subtitle: z.string(),
-    image: z.string(),
-    buttonText: z.string(),
-    buttonLink: z.string(),
-    order: z.number(),
+    slideset: z.object({
+      slides: z.array(
+        z.object({
+          title: z.string(),
+          subtitle: z.string(),
+          image: z.string(),
+          buttonText: z.string(),
+          buttonLink: z.string(),
+          order: z.number(),
+        }),
+      ),
+    }),
   }),
 });
 
