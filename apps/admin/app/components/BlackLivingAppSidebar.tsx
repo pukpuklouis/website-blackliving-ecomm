@@ -42,11 +42,6 @@ const data = {
       icon: FileText,
     },
     {
-      title: "部落格編輯",
-      url: "/dashboard/blog-composer",
-      icon: PenTool,
-    },
-    {
       title: "預約管理",
       url: "/dashboard/appointments",
       icon: Calendar,

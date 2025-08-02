@@ -302,7 +302,9 @@ export default function CustomersPage() {
   const loadCustomers = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:8787/api/customers');
+      const response = await fetch('http://localhost:8787/api/customers', {
+        credentials: 'include'
+      });
       if (response.ok) {
         const result = await response.json();
         setCustomers(result.success ? result.data.customers : []);
@@ -317,7 +319,9 @@ export default function CustomersPage() {
 
   const loadCustomerInteractions = async (customerId: string) => {
     try {
-      const response = await fetch(`http://localhost:8787/api/customers/${customerId}/interactions`);
+      const response = await fetch(`http://localhost:8787/api/customers/${customerId}/interactions`, {
+        credentials: 'include'
+      });
       if (response.ok) {
         const result = await response.json();
         setCustomerInteractions(result.success ? result.data.interactions : []);
