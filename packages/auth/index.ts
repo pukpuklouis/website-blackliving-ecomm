@@ -1,7 +1,7 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { createDB } from "@blackliving/db";
-import * as schema from "@blackliving/db/schema";
+import { users, sessions, accounts, verifications } from "@blackliving/db/schema";
 
 /**
  * Creates Better Auth instance with proper Cloudflare Workers integration
@@ -20,6 +20,12 @@ export const createAuth = (
     database: drizzleAdapter(db, {
       provider: "sqlite", // Cloudflare D1 uses SQLite
       usePlural: true,
+      schema: {
+        users: users,
+        sessions: sessions,
+        accounts: accounts,
+        verifications: verifications,
+      },
     }),
     
     secret: env.BETTER_AUTH_SECRET || "dev-secret-key-change-in-production",

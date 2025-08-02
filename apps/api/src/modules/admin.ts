@@ -2,7 +2,7 @@ import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
 import { eq, desc, asc, and, like, count, sql } from 'drizzle-orm';
-import { requireAdmin } from '@blackliving/auth';
+import { requireAdmin, auditLog, requireFreshSession } from '../middleware/auth';
 import { products, posts, orders, appointments, reviews } from '@blackliving/db';
 import type { 
   CreateProductRequest, 
@@ -19,8 +19,9 @@ import { FileTypes, FileSizes, StorageManager } from '../lib/storage';
 
 const admin = new Hono();
 
-// Apply admin authentication to all routes
+// Apply comprehensive admin authentication to all routes
 admin.use('*', requireAdmin());
+admin.use('*', auditLog('admin-access'));
 
 // Dashboard Analytics
 admin.get('/dashboard/stats', async (c) => {
@@ -245,7 +246,8 @@ admin.put('/products/:id', zValidator('json', z.object({
   }
 });
 
-admin.delete('/products/:id', async (c) => {
+// Sensitive operations require fresh session
+admin.delete('/products/:id', requireFreshSession(15), auditLog('product-delete'), async (c) => {
   const db = c.get('db');
   const cache = c.get('cache');
   const storage = c.get('storage');
@@ -478,7 +480,7 @@ admin.put('/posts/:id', zValidator('json', z.object({
   }
 });
 
-admin.delete('/posts/:id', async (c) => {
+admin.delete('/posts/:id', requireFreshSession(15), auditLog('post-delete'), async (c) => {
   const db = c.get('db');
   const cache = c.get('cache');
   const postId = c.req.param('id');

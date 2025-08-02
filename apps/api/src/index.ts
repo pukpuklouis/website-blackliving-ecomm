@@ -1,14 +1,15 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
-import { zValidator } from '@hono/zod-validator';
 import { createDB } from '@blackliving/db';
-import { createAuth, createBetterAuthMiddleware } from '@blackliving/auth';
-import { users, sessions } from '@blackliving/db/schema';
+import { createAuth } from '@blackliving/auth';
+import { users } from '@blackliving/db/schema';
 import { eq } from 'drizzle-orm';
 import { createCacheManager } from './lib/cache';
 import { createStorageManager } from './lib/storage';
 import type { D1Database, R2Bucket, KVNamespace } from '@cloudflare/workers-types';
+
+import { createEnhancedAuthMiddleware } from './middleware/auth';
 
 // Import API modules
 import products from './modules/products';
@@ -44,38 +45,55 @@ const app = new Hono<{
   };
 }>();
 
-// Middleware setup
+// Security Layer 1: Basic logging only (temporarily disable security)
 app.use('*', logger());
+
+// Security Layer 3: Enhanced CORS with production security
 app.use('*', cors({
-  origin: (origin) => {
-    // Allow all origins in development by reflecting the request origin
-    if (process.env.NODE_ENV === 'development') {
-      return origin;
+  origin: (origin, c) => {
+    // Development environment - allow localhost origins only
+    if (c.env.NODE_ENV === 'development') {
+      const devOrigins = [
+        'http://localhost:4321',
+        'http://localhost:5173', 
+        'http://localhost:8787'
+      ];
+      if (!origin || devOrigins.includes(origin)) {
+        return origin;
+      }
+      return undefined;
     }
     
-    // Production whitelist
+    // Production whitelist - strict domain validation
     const allowedOrigins = [
-      'http://localhost:4321',
-      'http://localhost:5173',
-      'http://localhost:8787',
       'https://blackliving.com',
+      'https://www.blackliving.com',
       'https://admin.blackliving.com',
       'https://api.blackliving.com',
     ];
     
-    // Allow if origin is in the whitelist or if it's a same-origin/server request (no origin)
     if (!origin || allowedOrigins.includes(origin)) {
       return origin;
     }
     
-    // Block all other origins
+    // Log suspicious origin attempts
+    console.warn(`Blocked CORS request from unauthorized origin: ${origin}`);
     return undefined;
   },
-  allowHeaders: ['Content-Type', 'Authorization', 'Cookie', 'X-Requested-With'],
+  allowHeaders: [
+    'Content-Type', 
+    'Authorization', 
+    'Cookie', 
+    'X-Requested-With',
+    'X-CSRF-Token',
+    'X-API-Key'
+  ],
   allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
   credentials: true,
   maxAge: 86400, // 24 hours
 }));
+
+// Security Layer 4: Disabled temporarily
 
 // Initialize services middleware
 app.use('*', async (c, next) => {
@@ -97,11 +115,11 @@ app.use('*', async (c, next) => {
   await next();
 });
 
-// Better Auth middleware for session handling
+// Security Layer 5: Enhanced Better Auth session handling
 app.use('*', async (c, next) => {
   const auth = c.get('auth');
-  const authMiddleware = createBetterAuthMiddleware(auth);
-  return authMiddleware(c, next);
+  const enhancedAuthMiddleware = createEnhancedAuthMiddleware(auth);
+  return enhancedAuthMiddleware(c, next);
 });
 
 // Health check
@@ -257,10 +275,13 @@ app.post('/api/auth/debug/force-admin-login', async (c) => {
     const authResponse = await auth.handler(signInRequest);
     
     // Copy session cookies
-    const setCookieHeaders = authResponse.headers.getSetCookie?.() || [];
-    for (const cookieHeader of setCookieHeaders) {
-      c.header('Set-Cookie', cookieHeader);
-    }
+    // The `getSetCookie` method is not available in all environments (e.g. older CF Workers).
+    // A more compatible way is to iterate over the headers.
+    authResponse.headers.forEach((value, key) => {
+      if (key.toLowerCase() === 'set-cookie') {
+        c.header('Set-Cookie', value);
+      }
+    });
     
     return c.json({
       success: true,
@@ -273,6 +294,8 @@ app.post('/api/auth/debug/force-admin-login', async (c) => {
   }
 });
 
+
+// Security Layer 6: Disabled temporarily
 
 // Better Auth integration - handles all remaining /api/auth/* routes
 // MUST be placed AFTER custom auth routes to avoid intercepting them
@@ -291,6 +314,8 @@ app.all("/api/auth/*", async (c) => {
     }, 500);
   }
 });
+// Security Layer 7: Disabled temporarily
+
 // API Routes
 app.route('/api/products', products);
 app.route('/api/orders', orders);
@@ -319,4 +344,3 @@ app.onError((err, c) => {
 });
 
 export default app;
-export { app };

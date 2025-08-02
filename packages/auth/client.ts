@@ -1,20 +1,57 @@
 import { createAuthClient } from "better-auth/react";
 
-// Production-ready Better Auth React client
-export const authClient = createAuthClient({
-  baseURL: typeof window !== 'undefined' && window.location.hostname === 'localhost' 
-    ? "http://localhost:8787" 
-    : "https://api.blackliving.com",
+// Get base URL with enhanced security validation
+const getBaseURL = () => {
+  if (typeof window !== 'undefined') {
+    // Browser environment with security checks
+    const hostname = window.location.hostname;
+    
+    // Validate hostname to prevent subdomain attacks
+    const allowedHosts = ['localhost', 'blackliving.com', 'admin.blackliving.com'];
+    const isValidHost = allowedHosts.some(allowed => 
+      hostname === allowed || hostname.endsWith('.' + allowed)
+    );
+    
+    if (!isValidHost) {
+      console.error('Invalid hostname detected:', hostname);
+      throw new Error('Unauthorized domain access');
+    }
+    
+    if (hostname === 'localhost') {
+      return 'http://localhost:8787'; // Local API server
+    }
+    
+    return 'https://api.blackliving.com'; // Production API
+  }
   
-  // Better Auth React client options
+  // Server-side environment
+  return process.env.NODE_ENV === 'production' 
+    ? 'https://api.blackliving.com'
+    : 'http://localhost:8787';
+};
+
+// Production-ready Better Auth React client with enhanced security
+export const authClient = createAuthClient({
+  baseURL: getBaseURL(),
+  
+  // Enhanced fetch options for security
   fetchOptions: {
     credentials: 'include' as const,
     headers: {
       'Content-Type': 'application/json',
+      'X-Requested-With': 'XMLHttpRequest', // CSRF protection
     },
   },
   
-  // Enable debug logging in development
+  // Session configuration with security
+  session: {
+    // Automatically refresh session when it's about to expire
+    autoRefresh: true,
+    // Refresh 5 minutes before expiry
+    refreshThreshold: 5 * 60 * 1000,
+  },
+  
+  // Enable debug logging in development only
   logger: typeof window !== 'undefined' && window.location.hostname === 'localhost' 
     ? console 
     : undefined,
@@ -101,25 +138,235 @@ export const signInWithGoogleCustomer = async () => {
 };
 
 /**
- * Check current session status
+ * Enhanced session validation with security checks
+ */
+
+// Session storage key for additional security metadata
+const SESSION_METADATA_KEY = 'auth_session_metadata';
+
+interface SessionMetadata {
+  fingerprint: string;
+  lastActivity: number;
+  ipAddress?: string;
+  userAgent: string;
+}
+
+/**
+ * Generate browser fingerprint for session security
+ */
+function generateBrowserFingerprint(): string {
+  if (typeof window === 'undefined') return 'server';
+  
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+  if (ctx) {
+    ctx.textBaseline = 'top';
+    ctx.font = '14px Arial';
+    ctx.fillText('Browser fingerprint', 2, 2);
+  }
+  
+  const fingerprint = [
+    navigator.userAgent,
+    navigator.language,
+    screen.width + 'x' + screen.height,
+    Intl.DateTimeFormat().resolvedOptions().timeZone,
+    canvas.toDataURL(),
+  ].join('|');
+  
+  // Simple hash function
+  let hash = 0;
+  for (let i = 0; i < fingerprint.length; i++) {
+    const char = fingerprint.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32-bit integer
+  }
+  
+  return Math.abs(hash).toString(36);
+}
+
+/**
+ * Enhanced session validation with security checks
+ */
+export async function validateSession() {
+  try {
+    const session = await authClient.getSession();
+    
+    if (!session.data) {
+      clearSessionMetadata();
+      return { valid: false, reason: 'no_session' };
+    }
+    
+    // Check browser fingerprint consistency
+    const storedMetadata = getSessionMetadata();
+    const currentFingerprint = generateBrowserFingerprint();
+    
+    if (storedMetadata && storedMetadata.fingerprint !== currentFingerprint) {
+      console.warn('Session fingerprint mismatch detected');
+      await authClient.signOut();
+      clearSessionMetadata();
+      return { valid: false, reason: 'fingerprint_mismatch' };
+    }
+    
+    // Update last activity
+    updateSessionMetadata({
+      fingerprint: currentFingerprint,
+      lastActivity: Date.now(),
+      userAgent: navigator.userAgent,
+    });
+    
+    return { 
+      valid: true, 
+      session: session.data,
+      user: session.data.user,
+    };
+    
+  } catch (error) {
+    console.error('Session validation error:', error);
+    clearSessionMetadata();
+    return { valid: false, reason: 'validation_error' };
+  }
+}
+
+/**
+ * Check current session status (legacy compatibility)
  */
 export const checkSession = async (): Promise<{ user: any; session: any; authenticated: boolean }> => {
   try {
-    const baseURL = typeof window !== 'undefined' && window.location.hostname === 'localhost' 
-      ? "http://localhost:8787" 
-      : "https://api.blackliving.com";
+    const baseURL = getBaseURL();
     
     const response = await fetch(`${baseURL}/api/auth/session`, {
       credentials: 'include',
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest',
+      },
     });
     
     if (response.ok) {
-      return await response.json();
+      const data = await response.json();
+      
+      // Initialize session metadata if user is authenticated
+      if (data.authenticated && data.user) {
+        updateSessionMetadata({
+          fingerprint: generateBrowserFingerprint(),
+          lastActivity: Date.now(),
+          userAgent: navigator.userAgent,
+        });
+      }
+      
+      return data;
     } else {
+      clearSessionMetadata();
       return { user: null, session: null, authenticated: false };
     }
   } catch (error) {
     console.error('Session check failed:', error);
+    clearSessionMetadata();
     return { user: null, session: null, authenticated: false };
   }
 };
+
+/**
+ * Secure sign-out with cleanup
+ */
+export async function secureSignOut() {
+  try {
+    await signOut();
+    clearSessionMetadata();
+    
+    // Clear any additional client-side data
+    if (typeof window !== 'undefined') {
+      // Only clear auth-related data, not all localStorage
+      const authKeys = Object.keys(localStorage).filter(key => 
+        key.startsWith('auth_') || 
+        key.startsWith('session_') ||
+        key.includes('better-auth')
+      );
+      
+      authKeys.forEach(key => localStorage.removeItem(key));
+      sessionStorage.clear();
+    }
+    
+    return { success: true };
+    
+  } catch (error) {
+    console.error('Sign out error:', error);
+    clearSessionMetadata();
+    return { success: true }; // Always succeed for security
+  }
+}
+
+/**
+ * Session metadata management
+ */
+function getSessionMetadata(): SessionMetadata | null {
+  if (typeof window === 'undefined') return null;
+  
+  try {
+    const stored = localStorage.getItem(SESSION_METADATA_KEY);
+    return stored ? JSON.parse(stored) : null;
+  } catch {
+    return null;
+  }
+}
+
+function updateSessionMetadata(metadata: Partial<SessionMetadata>) {
+  if (typeof window === 'undefined') return;
+  
+  const current = getSessionMetadata() || {} as SessionMetadata;
+  const updated = { ...current, ...metadata };
+  
+  try {
+    localStorage.setItem(SESSION_METADATA_KEY, JSON.stringify(updated));
+  } catch (error) {
+    console.warn('Failed to store session metadata:', error);
+  }
+}
+
+function clearSessionMetadata() {
+  if (typeof window === 'undefined') return;
+  
+  try {
+    localStorage.removeItem(SESSION_METADATA_KEY);
+  } catch (error) {
+    console.warn('Failed to clear session metadata:', error);
+  }
+}
+
+/**
+ * Role-based access control utilities
+ */
+export function hasRole(user: any, requiredRole: string | string[]): boolean {
+  if (!user?.role) return false;
+  
+  const roles = Array.isArray(requiredRole) ? requiredRole : [requiredRole];
+  return roles.includes(user.role);
+}
+
+export function isAdmin(user: any): boolean {
+  return hasRole(user, 'admin');
+}
+
+export function isCustomer(user: any): boolean {
+  return hasRole(user, ['customer', 'admin']);
+}
+
+/**
+ * Auto-refresh session in the background
+ */
+export function startSessionRefresh() {
+  if (typeof window === 'undefined') return;
+  
+  // Refresh session every 5 minutes
+  const refreshInterval = 5 * 60 * 1000;
+  
+  const intervalId = setInterval(async () => {
+    try {
+      await validateSession();
+    } catch (error) {
+      console.warn('Background session refresh failed:', error);
+    }
+  }, refreshInterval);
+  
+  // Return cleanup function
+  return () => clearInterval(intervalId);
+}

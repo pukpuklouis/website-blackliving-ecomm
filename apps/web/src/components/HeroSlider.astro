@@ -3,13 +3,11 @@
 import { getCollection } from 'astro:content';
 import HeroCarousel from './HeroCarousel.tsx';
 
-// Assuming a single data file (e.g., slides.json) for the hero slider collection
-const heroSliderCollection = await getCollection('hero-slider');
-const heroData = heroSliderCollection[0]?.data;
+const slides = (await getCollection('hero-slider'))[0]?.data.slideset.slides?.map(s => ({ data: s }));
 ---
 
 <section class="relative h-screen overflow-hidden">
-  {heroData && <HeroCarousel slideset={heroData.slideset} client:load />}
+  {slides?.length && <HeroCarousel slides={slides} client:load />}
 </section>
 
 <style>
