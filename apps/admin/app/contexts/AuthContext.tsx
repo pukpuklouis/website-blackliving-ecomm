@@ -1,5 +1,5 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import { signOut } from '@blackliving/auth/client';
+import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import { signOut, signInWithGoogleAdmin, checkSession } from '@blackliving/auth/client';
 
 interface User {
   id: string;
@@ -35,21 +35,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8787';
+  const API_BASE = import.meta.env.VITE_API_URL;
 
-  const checkAuth = async () => {
+  const checkAuth = useCallback(async () => {
     try {
-      const response = await fetch(`${API_BASE}/api/auth/session`, {
-        credentials: 'include',
-      });
+      const data = await checkSession();
       
-      if (response.ok) {
-        const data = await response.json();
-        if (data.user && data.user.role === 'admin') {
-          setUser(data.user);
-        } else {
-          setUser(null);
-        }
+      if (data.user && data.user.role === 'admin') {
+        setUser(data.user);
       } else {
         setUser(null);
       }
@@ -59,7 +52,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [setUser]);
 
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
@@ -85,29 +78,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const loginWithGoogle = async (): Promise<boolean> => {
     try {
-      const response = await fetch(`${API_BASE}/api/auth/admin/sign-in/social/google`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        if (data.url) {
-          // Redirect to Google OAuth with admin context
-          window.location.href = data.url;
-          return true;
-        } else {
-          console.error('Google login setup error - no redirect URL received');
-          return false;
-        }
-      } else {
-        const errorData = await response.json().catch(() => ({}));
-        console.error('Google login failed:', errorData.message || 'Unknown error');
+      const result = await signInWithGoogleAdmin();
+      
+      if (!result.success) {
+        console.error('Google login failed:', result.error);
         return false;
       }
+      
+      return true;
     } catch (error) {
       console.error('Google login failed:', error);
       return false;
@@ -146,7 +124,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   useEffect(() => {
     checkAuth();
-  }, []);
+  }, [checkAuth]);
 
   const value: AuthContextType = {
     user,

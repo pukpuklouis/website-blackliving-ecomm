@@ -38,17 +38,40 @@ export const {
  */
 export const signInWithGoogleAdmin = async () => {
   try {
-    // Use Better Auth's built-in social sign-in with admin callback
+    const baseURL = typeof window !== 'undefined' && window.location.hostname === 'localhost' 
+      ? "http://localhost:8787" 
+      : "https://api.blackliving.com";
+    
     const adminCallbackURL = typeof window !== 'undefined' && window.location.hostname === 'localhost' 
       ? "http://localhost:5173/auth/callback"
       : "https://admin.blackliving.com/auth/callback";
     
-    await signIn.social({
-      provider: "google",
-      callbackURL: adminCallbackURL,
+    // Use the same direct API approach that works for customers
+    const response = await fetch(`${baseURL}/api/auth/sign-in/social`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify({
+        provider: 'google',
+        callbackURL: adminCallbackURL,
+      }),
     });
-    
-    return { success: true };
+
+    if (response.ok) {
+      const data = await response.json();
+      if (data.url) {
+        // Redirect to Google OAuth
+        window.location.href = data.url;
+        return { success: true };
+      } else {
+        return { success: false, error: 'No OAuth URL returned' };
+      }
+    } else {
+      const errorData = await response.json().catch(() => ({}));
+      return { success: false, error: errorData.message || 'OAuth request failed' };
+    }
   } catch (error) {
     console.error('Admin Google login error:', error);
     return { success: false, error: 'Network error during admin Google login' };

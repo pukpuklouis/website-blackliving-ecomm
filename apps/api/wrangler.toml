@@ -76,21 +76,25 @@ preview_id = "your-production-preview-kv-id-here"
 NODE_ENV = "development"
 API_BASE_URL = "https://api.blackliving.com"
 WEB_BASE_URL = "https://blackliving.com"
+ADMIN_BASE_URL = "https://admin.blackliving.com"
 
 [env.development.vars]
 NODE_ENV = "development"
 API_BASE_URL = "http://localhost:8787"
 WEB_BASE_URL = "http://localhost:4321"
+ADMIN_BASE_URL = "http://localhost:5173"
 
 [env.staging.vars]
 NODE_ENV = "staging"
 API_BASE_URL = "https://api-staging.blackliving.com"
 WEB_BASE_URL = "https://staging.blackliving.com"
+ADMIN_BASE_URL = "https://admin-staging.blackliving.com"
 
 [env.production.vars]
 NODE_ENV = "production"
 API_BASE_URL = "https://api.blackliving.com"
 WEB_BASE_URL = "https://blackliving.com"
+ADMIN_BASE_URL = "https://admin.blackliving.com"
 
 [env.test]
 name = "blackliving-api-test"
@@ -114,6 +118,7 @@ preview_id = "your-test-preview-kv-id-here"
 NODE_ENV = "test"
 API_BASE_URL = "http://localhost:8787"
 WEB_BASE_URL = "http://localhost:4321"
+ADMIN_BASE_URL = "http://localhost:5173"
 BETTER_AUTH_URL = "http://localhost:8787"
 
 # Secrets (set via wrangler secret put <SECRET_NAME> <VALUE> --env <ENVIRONMENT>)
