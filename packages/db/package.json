@@ -11,10 +11,12 @@
   "scripts": {
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
-    "db:studio": "drizzle-kit studio --config drizzle.config.local.ts",
-    "db:studio:local": "drizzle-kit studio --config drizzle.config.local.ts",
-    "db:push": "drizzle-kit push --config drizzle.config.local.ts --force",
-    "db:seed": "node seed-test-data.cjs"
+    "db:studio": "drizzle-kit studio",
+    "db:migrate:dev": "cd ../../apps/api && wrangler d1 migrations apply blackliving-db-dev --local --env development",
+    "db:migrate:prod": "cd ../../apps/api && wrangler d1 migrations apply blackliving-db --local",
+    "db:seed:dev": "cd ../../apps/api && wrangler d1 execute blackliving-db-dev --file=../../packages/db/seed-wrangler.sql --local --env development",
+    "db:seed:prod": "cd ../../apps/api && wrangler d1 execute blackliving-db --file=../../packages/db/seed-wrangler.sql --local",
+    "db:seed": "cd ../../apps/api && wrangler d1 execute blackliving-db --file=../../packages/db/seed-wrangler.sql --local"
   },
   "dependencies": {
     "@libsql/client": "^0.15.10",
@@ -22,7 +24,11 @@
     "drizzle-orm": "^0.44.4"
   },
   "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
+    "better-sqlite3": "^12.2.0",
     "drizzle-kit": "^0.31.4",
+    "drizzle-seed": "^0.3.1",
+    "tsx": "^4.7.0",
     "typescript": "^5.8.3"
   }
 }

@@ -215,6 +215,7 @@ export const customerProfiles = sqliteTable('customer_profiles', {
   totalSpent: real('total_spent').default(0), // 總消費金額
   orderCount: integer('order_count').default(0), // 訂單數量
   avgOrderValue: real('avg_order_value').default(0), // 平均客單價
+  lastOrderAt: integer('last_order_at', { mode: 'timestamp' }), // 最後訂單時間
   lastPurchaseAt: integer('last_purchase_at', { mode: 'timestamp' }), // 最後購買時間
   firstPurchaseAt: integer('first_purchase_at', { mode: 'timestamp' }), // 首次購買時間
   // Product Preferences

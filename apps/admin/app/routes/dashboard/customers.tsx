@@ -210,8 +210,8 @@ export default function CustomersPage() {
       header: '總消費',
       cell: info => (
         <div className="text-right">
-          <div className="font-medium">NT${info.getValue().toLocaleString()}</div>
-          <div className="text-xs text-gray-500">{info.row.original.orderCount} 筆訂單</div>
+          <div className="font-medium">NT${(info.getValue() || 0).toLocaleString()}</div>
+          <div className="text-xs text-gray-500">{info.row.original.orderCount || 0} 筆訂單</div>
         </div>
       ),
     }),
@@ -219,7 +219,7 @@ export default function CustomersPage() {
       header: '平均客單價',
       cell: info => (
         <div className="font-medium text-right">
-          NT${info.getValue().toLocaleString()}
+          NT${(info.getValue() || 0).toLocaleString()}
         </div>
       ),
     }),
@@ -403,7 +403,7 @@ export default function CustomersPage() {
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">平均客單價</p>
                 <p className="text-2xl font-bold">
-                  NT${customers.length > 0 ? Math.round(customers.reduce((sum, c) => sum + c.avgOrderValue, 0) / customers.length).toLocaleString() : 0}
+                  NT${customers.length > 0 ? Math.round(customers.reduce((sum, c) => sum + (c.avgOrderValue || 0), 0) / customers.length).toLocaleString() : 0}
                 </p>
               </div>
             </div>
@@ -635,7 +635,7 @@ export default function CustomersPage() {
                   <Card>
                     <CardContent className="p-4 text-center">
                       <div className="text-2xl font-bold text-green-600">
-                        NT${selectedCustomer.totalSpent.toLocaleString()}
+                        NT${(selectedCustomer.totalSpent || 0).toLocaleString()}
                       </div>
                       <div className="text-sm text-gray-600">總消費金額</div>
                     </CardContent>
@@ -651,7 +651,7 @@ export default function CustomersPage() {
                   <Card>
                     <CardContent className="p-4 text-center">
                       <div className="text-2xl font-bold text-purple-600">
-                        NT${selectedCustomer.avgOrderValue.toLocaleString()}
+                        NT${(selectedCustomer.avgOrderValue || 0).toLocaleString()}
                       </div>
                       <div className="text-sm text-gray-600">平均客單價</div>
                     </CardContent>
