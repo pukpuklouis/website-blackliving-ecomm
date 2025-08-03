@@ -1,4 +1,6 @@
 ---
+import AccountNavComponent from './ui/AccountNav.tsx';
+
 export interface Props {
   currentPage: 'profile' | 'orders' | 'appointments';
 }
@@ -6,78 +8,4 @@ export interface Props {
 const { currentPage } = Astro.props;
 ---
 
-<div class="md:col-span-1">
-  <nav class="space-y-2">
-    <a 
-      href="/account/profile" 
-      class={`block px-4 py-2 rounded-lg ${currentPage === 'profile' ? 'bg-black text-white' : 'text-gray-700 hover:bg-gray-100'}`}
-    >
-      個人資料
-    </a>
-    <a 
-      href="/account/orders" 
-      class={`block px-4 py-2 rounded-lg ${currentPage === 'orders' ? 'bg-black text-white' : 'text-gray-700 hover:bg-gray-100'}`}
-    >
-      訂單記錄
-    </a>
-    <a 
-      href="/account/appointments" 
-      class={`block px-4 py-2 rounded-lg ${currentPage === 'appointments' ? 'bg-black text-white' : 'text-gray-700 hover:bg-gray-100'}`}
-    >
-      預約記錄
-    </a>
-    <hr class="my-4 border-gray-200">
-    <button 
-      id="account-nav-logout" 
-      class="block w-full text-left px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg"
-    >
-      登出
-    </button>
-  </nav>
-</div>
-
-<script>
-  // Get API base URL
-  const API_BASE = import.meta.env.PUBLIC_API_URL || 'http://localhost:8787';
-  
-  // Handle logout for shared navigation
-  const logoutBtn = document.getElementById('account-nav-logout');
-  if (logoutBtn) {
-    logoutBtn.addEventListener('click', async () => {
-      try {
-        // Try multiple logout endpoints as Better Auth might use different ones
-        const endpoints = [
-          `${API_BASE}/api/auth/sign-out`,
-          `${API_BASE}/api/auth/logout`,
-          `${API_BASE}/api/auth/session-logout`
-        ];
-        
-        for (const endpoint of endpoints) {
-          try {
-            const response = await fetch(endpoint, {
-              method: 'POST',
-              credentials: 'include',
-            });
-            if (response.ok) {
-              break; // Success, exit loop
-            }
-          } catch (err) {
-            console.warn(`Logout attempt failed for ${endpoint}:`, err);
-          }
-        }
-        
-        // Clear any local storage/session storage
-        if (typeof(Storage) !== "undefined") {
-          localStorage.clear();
-          sessionStorage.clear();
-        }
-        
-        window.location.href = '/login';
-      } catch (error) {
-        console.error('All logout attempts failed:', error);
-        // Still redirect even if logout fails
-        window.location.href = '/login';
-      }
-    });
-  }
-</script>
+<AccountNavComponent currentPage={currentPage} client:load />

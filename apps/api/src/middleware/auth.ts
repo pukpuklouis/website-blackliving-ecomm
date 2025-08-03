@@ -125,6 +125,10 @@ export function requireRole(requiredRole: string | string[]) {
                c.req.header('x-forwarded-for')?.split(',')[0] || 
                'unknown';
     
+    // Debug logging
+    console.log('DEBUG requireRole - user object:', JSON.stringify(user, null, 2));
+    console.log('DEBUG requireRole - required roles:', requiredRole);
+    
     if (!user) {
       console.warn(`Unauthorized role access attempt from IP: ${ip}, path: ${c.req.path}`);
       throw new HTTPException(401, {
@@ -133,6 +137,8 @@ export function requireRole(requiredRole: string | string[]) {
     }
     
     const roles = Array.isArray(requiredRole) ? requiredRole : [requiredRole];
+    
+    console.log('DEBUG requireRole - user.role:', user.role, 'required:', roles);
     
     if (!roles.includes(user.role)) {
       console.warn(`Insufficient role access attempt: user=${user.id}, role=${user.role}, required=${roles.join('|')}, ip=${ip}, path=${c.req.path}`);

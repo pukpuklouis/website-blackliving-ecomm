@@ -268,3 +268,222 @@ export const customerInteractions = sqliteTable('customer_interactions', {
   metadata: text('metadata', { mode: 'json' }).default('{}'), // Additional data
   createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
 });
+
+// Customer Addresses - Critical: Address management system
+export const customerAddresses = sqliteTable('customer_addresses', {
+  id: text('id').primaryKey().$defaultFn(() => createId()),
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  type: text('type').notNull(), // shipping, billing, both
+  label: text('label'), // 家裡, 公司, 其他
+  isDefault: integer('is_default', { mode: 'boolean' }).default(false),
+  
+  // Address Details
+  recipientName: text('recipient_name').notNull(), // 收件人姓名
+  recipientPhone: text('recipient_phone').notNull(), // 收件人電話
+  
+  // Taiwan Address Format
+  city: text('city').notNull(), // 縣市 (台北市, 新北市, 桃園市...)
+  district: text('district').notNull(), // 區域 (中正區, 信義區...)
+  postalCode: text('postal_code').notNull(), // 郵遞區號
+  street: text('street').notNull(), // 街道地址
+  building: text('building'), // 大樓名稱
+  floor: text('floor'), // 樓層
+  room: text('room'), // 房號
+  
+  // Delivery Instructions
+  deliveryInstructions: text('delivery_instructions'), // 配送備註
+  accessCode: text('access_code'), // 大樓密碼/門禁代碼
+  
+  // Metadata
+  lastUsedAt: integer('last_used_at', { mode: 'timestamp' }),
+  usageCount: integer('usage_count').default(0), // 使用次數
+  isActive: integer('is_active', { mode: 'boolean' }).default(true),
+  createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
+});
+
+// Payment Methods - Critical: Secure payment method storage
+export const customerPaymentMethods = sqliteTable('customer_payment_methods', {
+  id: text('id').primaryKey().$defaultFn(() => createId()),
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  type: text('type').notNull(), // credit_card, bank_account, digital_wallet
+  provider: text('provider'), // visa, mastercard, jcb, line_pay, apple_pay
+  
+  // Tokenized Card Information (PCI compliant)
+  cardToken: text('card_token'), // Tokenized card number from payment processor
+  lastFourDigits: text('last_four_digits'), // Last 4 digits for display
+  expiryMonth: text('expiry_month'), // MM
+  expiryYear: text('expiry_year'), // YYYY
+  cardholderName: text('cardholder_name'),
+  
+  // Bank Account Information
+  bankName: text('bank_name'), // 銀行名稱
+  bankCode: text('bank_code'), // 銀行代碼 (808, 822, etc.)
+  accountType: text('account_type'), // checking, savings
+  accountLastFour: text('account_last_four'), // 帳號後四碼
+  
+  // Digital Wallet
+  walletProvider: text('wallet_provider'), // line_pay, apple_pay, google_pay
+  walletAccountId: text('wallet_account_id'), // Encrypted wallet account reference
+  
+  // Settings
+  isDefault: integer('is_default', { mode: 'boolean' }).default(false),
+  isActive: integer('is_active', { mode: 'boolean' }).default(true),
+  nickname: text('nickname'), // 自訂名稱 "我的信用卡", "公司卡"
+  
+  // Security & Compliance
+  encryptionKeyId: text('encryption_key_id'), // Reference to encryption key
+  lastUsedAt: integer('last_used_at', { mode: 'timestamp' }),
+  usageCount: integer('usage_count').default(0),
+  
+  // Metadata
+  createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
+});
+
+// User Security - High Priority: Password & security management
+export const userSecurity = sqliteTable('user_security', {
+  id: text('id').primaryKey().$defaultFn(() => createId()),
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  
+  // Password Management
+  passwordHash: text('password_hash'), // Bcrypt hash
+  passwordSalt: text('password_salt'),
+  passwordLastChanged: integer('password_last_changed', { mode: 'timestamp' }),
+  forcePasswordChange: integer('force_password_change', { mode: 'boolean' }).default(false),
+  
+  // Login Tracking
+  lastLoginAt: integer('last_login_at', { mode: 'timestamp' }),
+  lastLoginIp: text('last_login_ip'),
+  lastLoginUserAgent: text('last_login_user_agent'),
+  loginCount: integer('login_count').default(0),
+  
+  // Security Settings
+  twoFactorEnabled: integer('two_factor_enabled', { mode: 'boolean' }).default(false),
+  twoFactorSecret: text('two_factor_secret'), // TOTP secret
+  backupCodes: text('backup_codes', { mode: 'json' }).default('[]'),
+  
+  // Account Security
+  isLocked: integer('is_locked', { mode: 'boolean' }).default(false),
+  lockedAt: integer('locked_at', { mode: 'timestamp' }),
+  lockedReason: text('locked_reason'),
+  failedLoginAttempts: integer('failed_login_attempts').default(0),
+  lastFailedLoginAt: integer('last_failed_login_at', { mode: 'timestamp' }),
+  
+  // Privacy Settings
+  allowDataCollection: integer('allow_data_collection', { mode: 'boolean' }).default(true),
+  allowMarketing: integer('allow_marketing', { mode: 'boolean' }).default(true),
+  allowSmsMarketing: integer('allow_sms_marketing', { mode: 'boolean' }).default(false),
+  
+  // Metadata
+  createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
+});
+
+// Wishlist - Medium Priority: Customer personalization
+export const customerWishlists = sqliteTable('customer_wishlists', {
+  id: text('id').primaryKey().$defaultFn(() => createId()),
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  productId: text('product_id').notNull().references(() => products.id, { onDelete: 'cascade' }),
+  variantId: text('variant_id'), // Specific product variant if applicable
+  
+  // Wishlist Details
+  notes: text('notes'), // Personal notes about the product
+  priority: text('priority').default('medium'), // high, medium, low
+  priceAlert: real('price_alert'), // Price threshold for notifications
+  
+  // Metadata
+  addedAt: integer('added_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
+  lastViewedAt: integer('last_viewed_at', { mode: 'timestamp' }),
+  viewCount: integer('view_count').default(1),
+});
+
+// Recently Viewed Products - Medium Priority: Personalization
+export const customerRecentlyViewed = sqliteTable('customer_recently_viewed', {
+  id: text('id').primaryKey().$defaultFn(() => createId()),
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  productId: text('product_id').notNull().references(() => products.id, { onDelete: 'cascade' }),
+  
+  // Viewing Details
+  viewedAt: integer('viewed_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
+  viewDurationSeconds: integer('view_duration_seconds'), // Time spent viewing
+  referrerUrl: text('referrer_url'), // How they found the product
+  deviceType: text('device_type'), // mobile, desktop, tablet
+  
+  // Metadata for cleanup (keep only recent views)
+  createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
+});
+
+// Customer Reviews - Medium Priority: User-generated content
+export const customerReviews = sqliteTable('customer_reviews', {
+  id: text('id').primaryKey().$defaultFn(() => createId()),
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  productId: text('product_id').notNull().references(() => products.id, { onDelete: 'cascade' }),
+  orderId: text('order_id').references(() => orders.id), // Link to purchase
+  
+  // Review Content
+  rating: integer('rating').notNull(), // 1-5 stars
+  title: text('title').notNull(),
+  content: text('content').notNull(),
+  pros: text('pros', { mode: 'json' }).default('[]'), // Array of positive points
+  cons: text('cons', { mode: 'json' }).default('[]'), // Array of negative points
+  
+  // Review Images
+  images: text('images', { mode: 'json' }).default('[]'), // User-uploaded photos
+  
+  // Moderation
+  status: text('status').default('pending'), // pending, approved, rejected, flagged
+  moderatedBy: text('moderated_by'), // Admin who moderated
+  moderatedAt: integer('moderated_at', { mode: 'timestamp' }),
+  moderationNotes: text('moderation_notes'),
+  
+  // Helpfulness
+  helpfulCount: integer('helpful_count').default(0),
+  totalVotes: integer('total_votes').default(0),
+  
+  // Purchase Verification
+  verified: integer('verified', { mode: 'boolean' }).default(false), // Verified purchase
+  purchaseDate: integer('purchase_date', { mode: 'timestamp' }),
+  
+  // Display Settings
+  featured: integer('featured', { mode: 'boolean' }).default(false),
+  displayName: text('display_name'), // How reviewer name appears
+  showFullName: integer('show_full_name', { mode: 'boolean' }).default(false),
+  
+  // Metadata
+  createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
+});
+
+// Notification Preferences - Medium Priority: Communication management
+export const customerNotificationPreferences = sqliteTable('customer_notification_preferences', {
+  id: text('id').primaryKey().$defaultFn(() => createId()),
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  
+  // Email Notifications
+  emailOrderUpdates: integer('email_order_updates', { mode: 'boolean' }).default(true),
+  emailAppointmentReminders: integer('email_appointment_reminders', { mode: 'boolean' }).default(true),
+  emailNewsletters: integer('email_newsletters', { mode: 'boolean' }).default(true),
+  emailPromotions: integer('email_promotions', { mode: 'boolean' }).default(true),
+  emailPriceAlerts: integer('email_price_alerts', { mode: 'boolean' }).default(true),
+  emailProductRecommendations: integer('email_product_recommendations', { mode: 'boolean' }).default(false),
+  
+  // SMS Notifications  
+  smsOrderUpdates: integer('sms_order_updates', { mode: 'boolean' }).default(false),
+  smsAppointmentReminders: integer('sms_appointment_reminders', { mode: 'boolean' }).default(true),
+  smsPromotions: integer('sms_promotions', { mode: 'boolean' }).default(false),
+  smsDeliveryUpdates: integer('sms_delivery_updates', { mode: 'boolean' }).default(true),
+  
+  // Push Notifications (for future mobile app)
+  pushOrderUpdates: integer('push_order_updates', { mode: 'boolean' }).default(true),
+  pushAppointmentReminders: integer('push_appointment_reminders', { mode: 'boolean' }).default(true),
+  pushPromotions: integer('push_promotions', { mode: 'boolean' }).default(false),
+  
+  // Communication Frequency
+  emailFrequency: text('email_frequency').default('immediate'), // immediate, daily, weekly
+  smsFrequency: text('sms_frequency').default('important_only'), // immediate, important_only, never
+  
+  // Metadata
+  createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
+});

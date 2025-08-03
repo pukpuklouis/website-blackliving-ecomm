@@ -15,7 +15,8 @@ import AccountNav from '../../components/AccountNav.astro';
       <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
         <AccountNav currentPage="appointments" />
         
-        <div class="md:col-span-2">
+        <div class="md:col-span-2 min-w-0">
+          <div class="min-w-[600px] min-h-[400px]">
           <div class="space-y-6">
             <!-- Appointment items will be dynamically rendered -->
             <div class="bg-white p-6 rounded-lg shadow-md">
@@ -37,6 +38,7 @@ import AccountNav from '../../components/AccountNav.astro';
                 <button class="text-sm text-red-600 hover:text-red-800">取消預約</button>
               </div>
             </div>
+          </div>
           </div>
         </div>
       </div>

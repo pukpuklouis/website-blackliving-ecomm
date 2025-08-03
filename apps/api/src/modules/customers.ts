@@ -10,6 +10,7 @@ import {
 } from '@blackliving/db/schema';
 import { eq, desc, and, sql, like, or } from 'drizzle-orm';
 import type { Env } from '../index';
+import { customerProfileRoutes } from '../routes/customer-profile';
 
 const customers = new Hono<{ 
   Bindings: Env;
@@ -193,6 +194,9 @@ customers.get('/', requireAdmin(), async (c) => {
     }, 500);
   }
 });
+
+// Mount customer profile routes (for authenticated customers) - MUST be before /:id route
+customers.route('/profile', customerProfileRoutes);
 
 // GET /api/customers/:id - Get single customer with detailed analytics
 customers.get('/:id', requireAdmin(), async (c) => {
