@@ -249,7 +249,7 @@ app.get('/categories', async (c) => {
       .select({
         category: products.category,
         count: count(),
-        inStockCount: sql<number>`SUM(CASE WHEN ${products.inStock} = TRUE THEN 1 ELSE 0 END)`.as('inStockCount'),
+        inStockCount: sql<number>`SUM(CASE WHEN ${products.inStock} = TRUE THEN 1 ELSE 0 END)`,
       })
       .from(products)
       .groupBy(products.category);

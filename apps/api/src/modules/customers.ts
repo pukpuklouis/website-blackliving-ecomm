@@ -68,6 +68,36 @@ const assignTagSchema = z.object({
   customerTagId: z.string(),
 });
 
+// Debug endpoint to test authentication and database
+customers.get('/debug', async (c) => {
+  const user = c.get('user');
+  const db = c.get('db');
+  
+  // Test direct database query
+  let customerCount = 0;
+  let testCustomer = null;
+  let error = null;
+  
+  try {
+    // Use Drizzle ORM to query
+    const customers = await db.select().from(customerProfiles).limit(5);
+    customerCount = customers.length;
+    testCustomer = customers[0] || null;
+  } catch (e) {
+    error = e.message;
+  }
+  
+  return c.json({
+    user: user,
+    isAdmin: user?.role === 'admin',
+    dbAvailable: !!db,
+    customerCount,
+    testCustomer,
+    error,
+    timestamp: new Date().toISOString()
+  });
+});
+
 // GET /api/customers - List customers with analytics (Admin only)
 customers.get('/', requireAdmin(), async (c) => {
   try {
@@ -124,9 +154,9 @@ customers.get('/', requireAdmin(), async (c) => {
         createdAt: customerProfiles.createdAt,
         updatedAt: customerProfiles.updatedAt,
         // Aggregated tag fields
-        tagNames: sql<string>`GROUP_CONCAT(${customerTags.name})`.as('tag_names'),
-        tagColors: sql<string>`GROUP_CONCAT(${customerTags.color})`.as('tag_colors'),
-        tagIds: sql<string>`GROUP_CONCAT(${customerTags.id})`.as('tag_ids'),
+        tagNames: sql<string>`GROUP_CONCAT(${customerTags.name})`,
+        tagColors: sql<string>`GROUP_CONCAT(${customerTags.color})`,
+        tagIds: sql<string>`GROUP_CONCAT(${customerTags.id})`,
       })
       .from(customerProfiles)
       .leftJoin(customerTagAssignments, eq(customerProfiles.id, customerTagAssignments.customerProfileId))
@@ -141,9 +171,9 @@ customers.get('/', requireAdmin(), async (c) => {
     const customers = result.map((customer: any) => ({
       ...customer,
       tags: customer.tagNames ? customer.tagNames.split(',').map((name: string, index: number) => ({
-        id: customer.tagIds.split(',')[index],
+        id: customer.tagIds ? customer.tagIds.split(',')[index] : null,
         name: name.trim(),
-        color: customer.tagColors.split(',')[index],
+        color: customer.tagColors ? customer.tagColors.split(',')[index] : '#6B7280',
         category: 'unknown'
       })) : [],
     }));
@@ -156,7 +186,11 @@ customers.get('/', requireAdmin(), async (c) => {
 
   } catch (error) {
     console.error('Error fetching customers:', error);
-    return c.json({ error: 'Failed to fetch customers' }, 500);
+    console.error('Error details:', error.message, error.stack);
+    return c.json({ 
+      error: 'Failed to fetch customers',
+      details: error.message 
+    }, 500);
   }
 });
 
