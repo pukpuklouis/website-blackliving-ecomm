@@ -20,6 +20,15 @@ export default defineConfig({
         '~': new URL('./src', import.meta.url).pathname,
         '@': new URL('../../packages/ui', import.meta.url).pathname
       }
+    },
+    server: {
+      proxy: {
+        '/api': {
+          target: 'http://localhost:8787',
+          changeOrigin: true,
+          secure: false
+        }
+      }
     }
   }
 });

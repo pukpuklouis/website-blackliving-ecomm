@@ -18,17 +18,18 @@ const appointments = new Hono<{
 
 // Validation schemas
 const createAppointmentSchema = z.object({
+  storeId: z.string().min(1),
+  productId: z.string().min(1),
   customerInfo: z.object({
-    name: z.string().min(1),
-    phone: z.string().min(1),
-    email: z.string().email().optional(),
+    name: z.string().min(2, '姓名至少需要2個字符'),
+    phone: z.string().min(10, '請輸入有效的電話號碼'),
+    email: z.string().email('請輸入有效的Email地址'),
   }),
-  storeLocation: z.enum(['zhonghe', 'zhongli']),
   preferredDate: z.string(), // YYYY-MM-DD
-  preferredTime: z.enum(['morning', 'afternoon', 'evening']),
-  productInterest: z.array(z.string()).default([]),
-  visitPurpose: z.enum(['trial', 'consultation', 'pricing']).default('trial'),
-  notes: z.string().default(''),
+  preferredTime: z.string().min(1),
+  message: z.string().default(''),
+  createAccount: z.boolean().default(false),
+  hasExistingAccount: z.boolean().default(false),
 });
 
 const updateAppointmentStatusSchema = z.object({
@@ -138,6 +139,8 @@ appointments.post('/',
       
       const now = Date.now();
 
+      const appointmentId = crypto.randomUUID();
+
       await db.prepare(`
         INSERT INTO appointments (
           id, appointment_number, customer_info, store_location, preferred_date, 
@@ -145,16 +148,16 @@ appointments.post('/',
           created_at, updated_at
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `).bind(
-        crypto.randomUUID(),
+        appointmentId,
         appointmentNumber,
         JSON.stringify(data.customerInfo),
-        data.storeLocation,
+        data.storeId,
         data.preferredDate,
         data.preferredTime,
-        JSON.stringify(data.productInterest),
-        data.visitPurpose,
+        JSON.stringify([data.productId]),
+        'trial',
         'pending',
-        data.notes,
+        data.message,
         now,
         now
       ).run();
@@ -165,10 +168,11 @@ appointments.post('/',
       return c.json({
         success: true,
         data: {
+          appointmentId,
           appointmentNumber,
           status: 'pending',
           message: '預約已送出，我們將在24小時內與您聯繫確認時間',
-          storeInfo: getStoreInfo(data.storeLocation)
+          storeInfo: getStoreInfo(data.storeId)
         }
       }, 201);
 
