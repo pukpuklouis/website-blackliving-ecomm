@@ -72,7 +72,7 @@ const assignTagSchema = z.object({
 // Debug endpoint to test authentication and database
 customers.get('/debug', async (c) => {
   const user = c.get('user');
-  const db = c.get('db');
+  // Database from c.env.DB
   
   // Test direct database query
   let customerCount = 0;
@@ -103,7 +103,7 @@ customers.get('/debug', async (c) => {
 customers.get('/', requireAdmin(), async (c) => {
   try {
     const { segment, tag, churnRisk, limit = '50', offset = '0', search } = c.req.query();
-    const db = c.get('db');
+    // Database from c.env.DB
     
     // Build conditions array
     const conditions = [];
@@ -202,10 +202,8 @@ customers.route('/profile', customerProfileRoutes);
 customers.get('/:id', requireAdmin(), async (c) => {
   try {
     const id = c.req.param('id');
-    const db = c.get('db');
-    
     // Get customer profile with tags
-    const customerResult = await db.prepare(`
+    const customerResult = await c.env.DB.prepare(`
       SELECT cp.*, 
              GROUP_CONCAT(ct.name) as tag_names,
              GROUP_CONCAT(ct.color) as tag_colors,
@@ -259,8 +257,6 @@ customers.post('/',
   async (c) => {
     try {
       const data = c.req.valid('json');
-      const db = c.get('db');
-      
       // Generate customer number: CU + YYYYMMDD + sequence
       const today = new Date();
       const dateStr = today.getFullYear().toString() + 
@@ -270,7 +266,7 @@ customers.post('/',
       
       const now = Date.now();
 
-      await db.prepare(`
+      await c.env.DB.prepare(`
         INSERT INTO customer_profiles (
           id, customer_number, name, email, phone, birthday, gender,
           address, notes, source, segment, created_at, updated_at
@@ -314,8 +310,6 @@ customers.put('/:id',
     try {
       const id = c.req.param('id');
       const data = c.req.valid('json');
-      const db = c.get('db');
-
       const now = Date.now();
       let updateQuery = 'UPDATE customer_profiles SET updated_at = ?';
       let params = [now];
@@ -335,7 +329,7 @@ customers.put('/:id',
       updateQuery += ' WHERE id = ?';
       params.push(id);
 
-      const result = await db.prepare(updateQuery).bind(...params).run();
+      const result = await c.env.DB.prepare(updateQuery).bind(...params).run();
 
       if (result.changes === 0) {
         return c.json({ error: 'Customer not found' }, 404);
@@ -357,9 +351,9 @@ customers.put('/:id',
 customers.get('/:id/interactions', requireAdmin(), async (c) => {
   try {
     const id = c.req.param('id');
-    const db = c.get('db');
+    // Database from c.env.DB
     
-    const result = await db.prepare(`
+    const result = await c.env.DB.prepare(`
       SELECT * FROM customer_interactions 
       WHERE customer_profile_id = ?
       ORDER BY created_at DESC
@@ -397,12 +391,12 @@ customers.post('/:id/interactions',
     try {
       const id = c.req.param('id');
       const data = c.req.valid('json');
-      const db = c.get('db');
+      // Database from c.env.DB
       const user = c.get('user');
 
       const now = Date.now();
 
-      await db.prepare(`
+      await c.env.DB.prepare(`
         INSERT INTO customer_interactions (
           id, customer_profile_id, type, title, description, 
           related_id, related_type, performed_by, metadata, created_at
@@ -421,7 +415,7 @@ customers.post('/:id/interactions',
       ).run();
 
       // Update customer's last contact time
-      await db.prepare(`
+      await c.env.DB.prepare(`
         UPDATE customer_profiles 
         SET last_contact_at = ?, updated_at = ?
         WHERE id = ?
@@ -442,9 +436,9 @@ customers.post('/:id/interactions',
 // GET /api/customers/tags - List all customer tags
 customers.get('/tags', requireAdmin(), async (c) => {
   try {
-    const db = c.get('db');
+    // Database from c.env.DB
     
-    const result = await db.prepare(`
+    const result = await c.env.DB.prepare(`
       SELECT * FROM customer_tags 
       ORDER BY category, name
     `).all();
@@ -472,11 +466,11 @@ customers.post('/tags',
   async (c) => {
     try {
       const data = c.req.valid('json');
-      const db = c.get('db');
+      // Database from c.env.DB
 
       const now = Date.now();
 
-      await db.prepare(`
+      await c.env.DB.prepare(`
         INSERT INTO customer_tags (
           id, name, color, description, category, created_at
         ) VALUES (?, ?, ?, ?, ?, ?)
@@ -508,12 +502,12 @@ customers.post('/tags/assign',
   async (c) => {
     try {
       const { customerProfileId, customerTagId } = c.req.valid('json');
-      const db = c.get('db');
+      // Database from c.env.DB
       const user = c.get('user');
 
       const now = Date.now();
 
-      await db.prepare(`
+      await c.env.DB.prepare(`
         INSERT OR IGNORE INTO customer_tag_assignments (
           id, customer_profile_id, customer_tag_id, assigned_by, assigned_at
         ) VALUES (?, ?, ?, ?, ?)
@@ -544,9 +538,9 @@ customers.delete('/tags/assign/:customerProfileId/:customerTagId',
     try {
       const customerProfileId = c.req.param('customerProfileId');
       const customerTagId = c.req.param('customerTagId');
-      const db = c.get('db');
+      // Database from c.env.DB
 
-      const result = await db.prepare(`
+      const result = await c.env.DB.prepare(`
         DELETE FROM customer_tag_assignments 
         WHERE customer_profile_id = ? AND customer_tag_id = ?
       `).bind(customerProfileId, customerTagId).run();
@@ -570,24 +564,24 @@ customers.delete('/tags/assign/:customerProfileId/:customerTagId',
 // GET /api/customers/analytics - Customer analytics dashboard
 customers.get('/analytics', requireAdmin(), async (c) => {
   try {
-    const db = c.get('db');
+    // Database from c.env.DB
     
     // Get customer segmentation stats
-    const segmentStats = await db.prepare(`
+    const segmentStats = await c.env.DB.prepare(`
       SELECT segment, COUNT(*) as count, AVG(total_spent) as avg_spent
       FROM customer_profiles 
       GROUP BY segment
     `).all();
 
     // Get churn risk distribution
-    const churnStats = await db.prepare(`
+    const churnStats = await c.env.DB.prepare(`
       SELECT churn_risk, COUNT(*) as count
       FROM customer_profiles 
       GROUP BY churn_risk
     `).all();
 
     // Get top customers by spending
-    const topCustomers = await db.prepare(`
+    const topCustomers = await c.env.DB.prepare(`
       SELECT name, total_spent, order_count
       FROM customer_profiles 
       ORDER BY total_spent DESC 
@@ -595,7 +589,7 @@ customers.get('/analytics', requireAdmin(), async (c) => {
     `).all();
 
     // Get customer acquisition over time (last 12 months)
-    const acquisitionStats = await db.prepare(`
+    const acquisitionStats = await c.env.DB.prepare(`
       SELECT 
         strftime('%Y-%m', datetime(created_at/1000, 'unixepoch')) as month,
         COUNT(*) as new_customers

@@ -157,8 +157,7 @@ user.post('/create-account',
 
       // If appointment ID is provided, link the account to the appointment
       if (appointmentId) {
-        const db = c.get('db');
-        await db.prepare(`
+        await c.env.DB.prepare(`
           UPDATE appointments 
           SET customer_id = ?, updated_at = ?
           WHERE id = ?
