@@ -49,7 +49,6 @@ const confirmAppointmentSchema = z.object({
 appointments.get('/', requireAdmin(), async (c) => {
   try {
     const { status, store, date, limit = '50', offset = '0' } = c.req.query();
-    const db = c.get('db');
     
     let query = 'SELECT * FROM appointments WHERE 1=1';
     const params: any[] = [];
@@ -72,7 +71,7 @@ appointments.get('/', requireAdmin(), async (c) => {
     query += ' ORDER BY preferred_date ASC, created_at DESC LIMIT ? OFFSET ?';
     params.push(parseInt(limit), parseInt(offset));
 
-    const result = await db.prepare(query).bind(...params).all();
+    const result = await c.env.DB.prepare(query).bind(...params).all();
     
     // Parse JSON fields for each appointment
     const appointments = result.results.map((appointment: any) => ({
@@ -128,7 +127,6 @@ appointments.post('/',
   async (c) => {
     try {
       const data = c.req.valid('json');
-      const db = c.get('db');
       
       // Generate appointment number: AP + YYYYMMDD + sequence
       const today = new Date();
@@ -141,7 +139,7 @@ appointments.post('/',
 
       const appointmentId = crypto.randomUUID();
 
-      await db.prepare(`
+      await c.env.DB.prepare(`
         INSERT INTO appointments (
           id, appointment_number, customer_info, store_location, preferred_date, 
           preferred_time, product_interest, visit_purpose, status, notes, 
@@ -191,7 +189,6 @@ appointments.patch('/:id/status',
     try {
       const id = c.req.param('id');
       const { status, adminNotes, staffAssigned } = c.req.valid('json');
-      const db = c.get('db');
 
       const now = Date.now();
       let updateQuery = 'UPDATE appointments SET status = ?, updated_at = ?';
@@ -216,7 +213,7 @@ appointments.patch('/:id/status',
       updateQuery += ' WHERE id = ?';
       params.push(id);
 
-      const result = await db.prepare(updateQuery).bind(...params).run();
+      const result = await c.env.DB.prepare(updateQuery).bind(...params).run();
 
       if (result.changes === 0) {
         return c.json({ error: 'Appointment not found' }, 404);
@@ -245,7 +242,6 @@ appointments.patch('/:id/confirm',
     try {
       const id = c.req.param('id');
       const { status, confirmedDateTime, adminNotes, staffAssigned } = c.req.valid('json');
-      const db = c.get('db');
 
       const now = Date.now();
       const confirmedTime = new Date(confirmedDateTime).getTime();
@@ -269,7 +265,7 @@ appointments.patch('/:id/confirm',
       updateQuery += ' WHERE id = ?';
       params.push(id);
 
-      const result = await db.prepare(updateQuery).bind(...params).run();
+      const result = await c.env.DB.prepare(updateQuery).bind(...params).run();
 
       if (result.changes === 0) {
         return c.json({ error: 'Appointment not found' }, 404);
