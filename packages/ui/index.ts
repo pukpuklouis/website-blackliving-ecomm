@@ -38,6 +38,7 @@ export * from './components/ui/chart-area-interactive';
 export * from './components/ui/simple-chart';
 export * from './components/ui/section-cards';
 export * from './components/ui/sonner';
+export * from './components/ui/line-icon';
 
 // Export utilities
 export * from './lib/utils';

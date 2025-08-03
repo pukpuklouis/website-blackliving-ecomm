@@ -2,6 +2,7 @@
 // Homepage for Black Living
 import BaseLayout from '../layouts/BaseLayout.astro';
 import HeroSlider from '../components/HeroSlider.astro';
+import BrandStory from '../components/BrandStory.astro';
 import FeatureIcons from '../components/FeatureIcons.astro';
 import ProductCard from '../components/ProductCard.astro';
 
@@ -45,27 +46,7 @@ const featuredProducts = [
   <!-- Hero Section -->
   <HeroSlider />
   
-  <!-- Brand Story Section -->
-  <section class="py-16 bg-white">
-    <div class="container mx-auto px-4">
-      <div class="max-w-4xl mx-auto text-center">
-        <h2 class="text-4xl font-bold mb-6">從黑標王到 Black Living</h2>
-        <p class="text-xl text-gray-600 mb-8">
-          我們從專營席夢思「黑標」床墊起家，憑藉對品質的堅持與對客戶的承諾，
-          成為蝦皮第一賣家。現在，我們將服務範圍擴展至整個居家生活領域，
-          致力於為每個家庭打造舒適的睡眠環境。
-        </p>
-        <div class="flex justify-center items-center space-x-8 text-6xl">
-          <span>🖤</span>
-          <span>🌙</span>
-          <span>🏠</span>
-        </div>
-        <p class="text-gray-500 mt-4">
-          Black (黑) • Moon (月亮) • Living (生活)
-        </p>
-      </div>
-    </div>
-  </section>
+  <BrandStory />
   
   <!-- Feature Icons -->
   <FeatureIcons />
