@@ -1,6 +1,6 @@
 {
   "command": "pnpm dev --filter admin",
-  "serverUrl": "http://localhost:5173/dashboard",
+  "serverUrl": "http://localhost:4321",
   "authenticateProxy": false,
   "commitMode": "commits"
 }

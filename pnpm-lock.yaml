@@ -226,6 +226,9 @@ importers:
       embla-carousel-autoplay:
         specifier: ^8.6.0
         version: 8.6.0(embla-carousel@8.6.0)
+      lucide-react:
+        specifier: ^0.528.0
+        version: 0.528.0(react@19.1.1)
       react:
         specifier: ^19.1.1
         version: 19.1.1

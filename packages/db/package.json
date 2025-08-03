@@ -6,7 +6,8 @@
   "type": "module",
   "exports": {
     ".": "./client.ts",
-    "./schema": "./schema.ts"
+    "./schema": "./schema.ts",
+    "./customer-profile-service": "./customer-profile-service.ts"
   },
   "scripts": {
     "db:generate": "drizzle-kit generate",
