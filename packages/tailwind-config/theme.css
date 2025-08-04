@@ -128,8 +128,8 @@
   --sidebar-accent-foreground: oklch(0.1776 0 0);
   --sidebar-border: oklch(0.9219 0 0);
   --sidebar-ring: oklch(0.7429 0.1310 75.7500);
-  --font-sans: Noto Sans TC, ui-sans-serif, sans-serif, system-ui;
-  --font-serif: Playfair Display, ui-serif, serif;
+  --font-sans: var(--font-agatho), var(--font-noto-tc), ui-sans-serif, sans-serif, system-ui;
+  --font-serif: var(--font-agatho), var(--font-noto-tc), ui-serif, serif;
   --font-mono: monospace;
   --radius: 0.3rem;
   --shadow-2xs: 0px 2px 4px 0px hsl(0 0% 0% / 0.05);

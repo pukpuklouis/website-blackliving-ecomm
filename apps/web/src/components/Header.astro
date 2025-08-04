@@ -7,32 +7,103 @@ export interface Props {
 const { class: className } = Astro.props;
 ---
 
-<header class={`bg-white shadow-sm ${className}`}>
-  <div class="container mx-auto px-4">
-    <nav class="flex items-center justify-between py-4">
-      <div class="flex items-center space-x-8">
+<header class={`bg-white shadow-lg ${className}`}>
+  <!-- Top Row: Logo and User Actions -->
+  <div class="bg-white border-b border-gray-200">
+    <div class="container mx-auto px-6">
+      <div class="flex items-center justify-between py-4">
         <!-- Logo -->
-        <a href="/" class="flex items-center space-x-2">
-          <img src="/logo.svg" alt="Black Living 黑哥家居" class="h-8 w-auto" />
+        <a href="/" class="flex items-center">
+          <img
+            src="https://api.builder.io/api/v1/image/assets/TEMP/e9f01fdc2fb69fc2035c3a2ca9f734fc73cd0a49?width=205"
+            alt="Black Living 黑哥家居"
+            class="h-9 w-auto"
+          />
         </a>
-        
-        <!-- Main Navigation -->
-        <ul class="hidden md:flex space-x-6">
-          <li><a href="/about" class="text-gray-700 hover:text-black">關於黑哥</a></li>
-          <li><a href="/simmons-black" class="text-gray-700 hover:text-black">席夢思黑標床墊</a></li>
-          <li><a href="/accessories" class="text-gray-700 hover:text-black">精選周邊</a></li>
-          <li><a href="/us-imports" class="text-gray-700 hover:text-black">美國品牌代購專區</a></li>
-          <li><a href="/testimonials" class="text-gray-700 hover:text-black">顧客好評</a></li>
-          <li><a href="/posts" class="text-gray-700 hover:text-black">好文分享</a></li>
-          <li><a href="/appointment" class="text-gray-700 hover:text-black">預約試躺</a></li>
+
+        <!-- User Actions -->
+        <div class="flex items-center gap-4">
+          <a href="/cart" class="text-black text-base font-normal hover:text-gray-600 transition-colors">
+            購物車
+          </a>
+          <a href="/account" class="text-black text-base font-normal hover:text-gray-600 transition-colors">
+            會員中心
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom Row: Navigation -->
+  <div class="bg-[#C69C6D]">
+    <div class="container mx-auto px-6">
+      <nav class="flex justify-center py-4">
+        <ul class="flex items-center gap-6 flex-wrap justify-center">
+          <li>
+            <a href="/about" class="text-white text-base font-normal hover:text-gray-200 transition-colors whitespace-nowrap">
+              關於黑哥
+            </a>
+          </li>
+          <li>
+            <a href="/simmons-black" class="text-white text-base font-normal hover:text-gray-200 transition-colors whitespace-nowrap">
+              席夢思黑標床墊
+            </a>
+          </li>
+          <li>
+            <a href="/accessories" class="text-white text-base font-normal hover:text-gray-200 transition-colors whitespace-nowrap">
+              精選周邊
+            </a>
+          </li>
+          <li>
+            <a href="/us-imports" class="text-white text-base font-normal hover:text-gray-200 transition-colors whitespace-nowrap">
+              美國品牌代購專區
+            </a>
+          </li>
+          <li>
+            <a href="/testimonials" class="text-white text-base font-normal hover:text-gray-200 transition-colors whitespace-nowrap">
+              顧客好評
+            </a>
+          </li>
+          <li>
+            <a href="/posts" class="text-white text-base font-normal hover:text-gray-200 transition-colors whitespace-nowrap">
+              好文分享
+            </a>
+          </li>
+          <li>
+            <a href="/appointment" class="text-white text-base font-normal hover:text-gray-200 transition-colors whitespace-nowrap">
+              預約試躺
+            </a>
+          </li>
         </ul>
-      </div>
-      
-      <!-- User Actions -->
-      <div class="flex items-center space-x-4">
-        <a href="/cart" class="text-gray-700 hover:text-black">購物車</a>
-        <a href="/account" class="text-gray-700 hover:text-black">會員中心</a>
-      </div>
-    </nav>
+      </nav>
+    </div>
   </div>
 </header>
+
+<!-- Mobile Navigation Toggle (for future mobile menu implementation) -->
+<style>
+  @media (max-width: 768px) {
+    header nav ul {
+      gap: 1rem;
+    }
+
+    header nav ul li a {
+      font-size: 14px;
+    }
+  }
+
+  @media (max-width: 640px) {
+    header .container {
+      padding-left: 1rem;
+      padding-right: 1rem;
+    }
+
+    header nav ul {
+      gap: 0.75rem;
+    }
+
+    header nav ul li a {
+      font-size: 13px;
+    }
+  }
+</style>

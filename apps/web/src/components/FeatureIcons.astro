@@ -1,8 +1,10 @@
 ---
+import { Image } from 'astro:assets';
+
 // Feature icons section for Black Living homepage
 export interface Props {
   features?: Array<{
-    icon: string;
+    icon3d?: string;
     title: string;
     description: string;
   }>;
@@ -12,22 +14,22 @@ const { features = [] } = Astro.props;
 
 const defaultFeatures = [
   {
-    icon: '🏆',
+    icon3d: "/feature-icon/features-icon-price.webp",
     title: '全台最低價',
     description: '專櫃價2-3折起，買貴退差價保證'
   },
   {
-    icon: '🇺🇸',
+    icon3d: "/feature-icon/features-icon-USA.webp",
     title: '100% 美國製造',
     description: '席夢思原廠進口，品質保證'
   },
   {
-    icon: '🛡️',
+    icon3d: "/feature-icon/features-icon-WRNTY.webp",
     title: '十年保固',
     description: '無折舊保固，睡壞直接換新'
   },
   {
-    icon: '⭐',
+    icon3d: "/feature-icon/features-icon-REVIEW.webp",
     title: '五星好評',
     description: '百位網友推薦，蝦皮第一賣家'
   }
@@ -43,7 +45,7 @@ const featuresToShow = features.length > 0 ? features : defaultFeatures;
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
       {featuresToShow.map((feature) => (
         <div class="text-center">
-          <div class="text-5xl mb-4">{feature.icon}</div>
+          <Image src={feature.icon3d} alt={feature.title} width={400} height={400} loading="eager" class="size-48"/>
           <h3 class="text-xl font-semibold mb-3">{feature.title}</h3>
           <p class="text-gray-600">{feature.description}</p>
         </div>

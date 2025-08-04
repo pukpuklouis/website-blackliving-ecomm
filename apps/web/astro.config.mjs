@@ -1,9 +1,11 @@
 // @ts-check
-import { defineConfig } from 'astro/config';
+import { defineConfig, fontProviders } from 'astro/config';
 import react from '@astrojs/react';
 import sitemap from '@astrojs/sitemap';
 import cloudflare from '@astrojs/cloudflare';
 import tailwindcss from '@tailwindcss/vite';
+
+
 // https://astro.build/config
 // Note: Using Tailwind v4 - no @astrojs/tailwind integration needed
 export default defineConfig({
@@ -12,6 +14,54 @@ export default defineConfig({
 
   output: 'static',
   adapter: cloudflare(),
+
+  experimental: {
+    fonts: [
+      {
+        name: "Agatho",
+        cssVariable: "--font-agatho",
+        provider: "local",
+        variants: [
+          {
+            src: [
+              "./src/assets/fonts/agatho/Agatho_Light.woff2"
+            ],
+            weight: "300",
+            style: "normal"
+          },
+          {
+            src: [
+              "./src/assets/fonts/agatho/Agatho_Regular.woff2"
+            ],
+            weight: "400",
+            style: "normal"
+          },
+          {
+            src: [
+              "./src/assets/fonts/agatho/Agatho_Medium.woff2"
+            ],
+            weight: "500",
+            style: "normal"
+          },
+          {
+            src: [
+              "./src/assets/fonts/agatho/Agatho_Bold.woff2"
+            ],
+            weight: "700",
+            style: "normal"
+          }
+        ]
+      },
+      {
+        provider: fontProviders.google(),
+        name: "Noto Sans TC",
+        weights: [400, 500, 600, 700],
+        styles: ["normal"],
+        subsets: ["chinese-traditional"],
+        cssVariable: "--font-noto-tc"
+      }
+    ]
+  },
 
   vite: {
     plugins: [tailwindcss()],
