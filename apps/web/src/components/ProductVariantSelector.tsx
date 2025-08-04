@@ -1,14 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { z } from 'zod';
 
-// Validation schema for product variant selection
-const variantSchema = z.object({
-  size: z.enum(['single', 'double', 'queen', 'king'], { message: '請選擇床墊尺寸' }),
-  firmness: z.enum(['soft', 'medium', 'firm'], { message: '請選擇軟硬度' }),
-  quantity: z.number().min(1, '數量至少為1').max(10, '數量不能超過10'),
-});
+// Dynamic validation schema that adapts to available variants
+const createVariantSchema = (variants: ProductVariant[]) => {
+  const availableSizes = [...new Set(variants.map(v => v.size))];
+  const availableFirmness = [...new Set(variants.map(v => v.firmness))];
+  
+  return z.object({
+    size: z.enum(availableSizes as [string, ...string[]], { message: '請選擇尺寸' }),
+    firmness: z.enum(availableFirmness as [string, ...string[]], { message: '請選擇類型' }),
+    quantity: z.number().min(1, '數量至少為1').max(10, '數量不能超過10'),
+  });
+};
 
-type VariantData = z.infer<typeof variantSchema>;
+type VariantData = {
+  size: string;
+  firmness: string;
+  quantity: number;
+};
 
 interface ProductVariant {
   size: string;
@@ -41,19 +50,60 @@ export default function ProductVariantSelector({
   const [currentSku, setCurrentSku] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
 
-  // Size options with Chinese labels
-  const sizeOptions = [
-    { value: 'single', label: '單人 (3.5尺)', width: '105cm' },
-    { value: 'double', label: '雙人 (5尺)', width: '152cm' },
-    { value: 'queen', label: '加大雙人 (6尺)', width: '182cm' },
-    { value: 'king', label: '特大雙人 (7尺)', width: '212cm' }
-  ];
+  // Auto-select variant if only one option exists
+  useEffect(() => {
+    if (variants.length === 1) {
+      const singleVariant = variants[0];
+      setSelectedVariant(prev => ({
+        ...prev,
+        size: singleVariant.size,
+        firmness: singleVariant.firmness
+      }));
+    }
+  }, [variants]);
 
-  const firmnessOptions = [
-    { value: 'soft', label: '偏軟', description: '適合側睡者' },
-    { value: 'medium', label: '適中', description: '適合多數人' },
-    { value: 'firm', label: '偏硬', description: '適合仰睡者' }
-  ];
+  // Generate dynamic options from variant data
+  const availableSizes = [...new Set(variants.map(v => v.size))];
+  const availableFirmness = [...new Set(variants.map(v => v.firmness))];
+  
+  // Size label mapping with fallback to value
+  const getSizeLabel = (size: string) => {
+    const sizeMap: Record<string, { label: string; width?: string }> = {
+      'single': { label: '單人 (3.5尺)', width: '105cm' },
+      'double': { label: '雙人 (5尺)', width: '152cm' },
+      'queen': { label: '加大雙人 (6尺)', width: '182cm' },
+      'king': { label: '特大雙人 (7尺)', width: '212cm' },
+      'small': { label: '小號' },
+      'medium': { label: '中號' },
+      'large': { label: '大號' },
+      'standard': { label: '標準尺寸' },
+      'compact': { label: '迷你尺寸' },
+    };
+    return sizeMap[size] || { label: size }; // Fallback to raw value
+  };
+
+  // Firmness label mapping with fallback to value
+  const getFirmnessLabel = (firmness: string) => {
+    const firmnessMap: Record<string, { label: string; description?: string }> = {
+      'soft': { label: '偏軟', description: '適合側睡者' },
+      'medium': { label: '適中', description: '適合多數人' },
+      'firm': { label: '偏硬', description: '適合仰睡者' },
+      'standard': { label: '標準' },
+      'premium': { label: '高級' },
+      'basic': { label: '基本款' },
+    };
+    return firmnessMap[firmness] || { label: firmness }; // Fallback to raw value
+  };
+
+  const sizeOptions = availableSizes.map(size => ({
+    value: size,
+    ...getSizeLabel(size)
+  }));
+
+  const firmnessOptions = availableFirmness.map(firmness => ({
+    value: firmness,
+    ...getFirmnessLabel(firmness)
+  }));
 
   // Update price and SKU when variant selection changes
   useEffect(() => {
@@ -67,6 +117,7 @@ export default function ProductVariantSelector({
         setCurrentSku(variant.sku);
         
         try {
+          const variantSchema = createVariantSchema(variants);
           const validatedVariant = variantSchema.parse(selectedVariant);
           onVariantChange({
             ...validatedVariant,
@@ -96,6 +147,7 @@ export default function ProductVariantSelector({
     setErrors({});
 
     try {
+      const variantSchema = createVariantSchema(variants);
       const validatedVariant = variantSchema.parse(selectedVariant);
       const variant = variants.find(v => 
         v.size === validatedVariant.size && v.firmness === validatedVariant.firmness
@@ -144,55 +196,70 @@ export default function ProductVariantSelector({
 
   return (
     <div className={`space-y-6 ${className}`}>
-      {/* Size Selection */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-3">
-          尺寸選擇 *
-        </label>
-        <div className="grid grid-cols-2 gap-3">
-          {sizeOptions.map((option) => (
-            <button
-              key={option.value}
-              type="button"
-              onClick={() => handleVariantChange('size', option.value)}
-              className={`p-3 border rounded-lg text-left transition-colors ${
-                selectedVariant.size === option.value
-                  ? 'border-black bg-black text-white'
-                  : 'border-gray-300 hover:border-gray-400'
-              }`}
-            >
-              <div className="font-medium">{option.label}</div>
-              <div className="text-sm opacity-75">{option.width}</div>
-            </button>
-          ))}
+      {/* Size Selection - only show if multiple options */}
+      {sizeOptions.length > 1 ? (
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-3">
+            尺寸選擇 *
+          </label>
+          <div className="grid grid-cols-2 gap-3">
+            {sizeOptions.map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => handleVariantChange('size', option.value)}
+                className={`p-3 border rounded-lg text-left transition-colors ${
+                  selectedVariant.size === option.value
+                    ? 'border-black bg-black text-white'
+                    : 'border-gray-300 hover:border-gray-400'
+                }`}
+              >
+                <div className="font-medium">{option.label}</div>
+                <div className="text-sm opacity-75">{option.width}</div>
+              </button>
+            ))}
+          </div>
+          {errors.size && <p className="text-red-500 text-sm mt-1">{errors.size}</p>}
         </div>
-        {errors.size && <p className="text-red-500 text-sm mt-1">{errors.size}</p>}
-      </div>
+      ) : sizeOptions.length === 1 && (
+        <div className="p-3 bg-gray-50 rounded-lg">
+          <span className="text-sm text-gray-600">尺寸: </span>
+          <span className="font-medium">{sizeOptions[0].label}</span>
+        </div>
+      )}
 
-      {/* Firmness Selection */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-3">
-          軟硬度選擇 *
-        </label>
-        <div className="grid grid-cols-3 gap-3">
-          {firmnessOptions.map((option) => (
-            <button
-              key={option.value}
-              type="button"
-              onClick={() => handleVariantChange('firmness', option.value)}
-              className={`p-3 border rounded-lg text-center transition-colors ${
-                selectedVariant.firmness === option.value
-                  ? 'border-black bg-black text-white'
-                  : 'border-gray-300 hover:border-gray-400'
-              }`}
-            >
-              <div className="font-medium">{option.label}</div>
-              <div className="text-xs opacity-75">{option.description}</div>
-            </button>
-          ))}
+      {/* Firmness Selection - only show if multiple options */}
+      {firmnessOptions.length > 1 ? (
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-3">
+            軟硬度選擇 *
+          </label>
+          <div className="grid grid-cols-3 gap-3">
+            {firmnessOptions.map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => handleVariantChange('firmness', option.value)}
+                className={`p-3 border rounded-lg text-center transition-colors ${
+                  selectedVariant.firmness === option.value
+                    ? 'border-black bg-black text-white'
+                    : 'border-gray-300 hover:border-gray-400'
+                }`}
+              >
+                <div className="font-medium">{option.label}</div>
+                <div className="text-xs opacity-75">{option.description}</div>
+              </button>
+            ))}
+          </div>
+          {errors.firmness && <p className="text-red-500 text-sm mt-1">{errors.firmness}</p>}
         </div>
-        {errors.firmness && <p className="text-red-500 text-sm mt-1">{errors.firmness}</p>}
-      </div>
+      ) : firmnessOptions.length === 1 && (
+        <div className="p-3 bg-gray-50 rounded-lg">
+          <span className="text-sm text-gray-600">軟硬度: </span>
+          <span className="font-medium">{firmnessOptions[0].label}</span>
+          <span className="text-xs text-gray-500 ml-2">({firmnessOptions[0].description})</span>
+        </div>
+      )}
 
       {/* Price Display */}
       {currentPrice && (
