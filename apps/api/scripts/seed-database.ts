@@ -1,7 +1,7 @@
 import { createDB } from '@blackliving/db';
 import { 
   users, sessions, accounts, verifications,
-  products, orders, appointments, posts, reviews, 
+  products, orders, appointments, posts, postCategories, reviews, 
   newsletters, contacts, customerProfiles, 
   customerTags, customerTagAssignments, customerInteractions
 } from '@blackliving/db/schema';
@@ -44,10 +44,13 @@ export async function seedDatabase() {
     // 5. Seed Appointments
     await seedAppointments();
     
-    // 6. Seed Posts & Reviews
+    // 6. Seed Post Categories
+    await seedPostCategories();
+    
+    // 7. Seed Posts & Reviews
     await seedContent();
     
-    // 7. Seed Contact & Newsletter
+    // 8. Seed Contact & Newsletter
     await seedCommunications();
 
     console.log('✅ Database seeding completed successfully!');
@@ -573,6 +576,40 @@ async function seedAppointments() {
   console.log('✅ Appointments seeded');
 }
 
+async function seedPostCategories() {
+  const categoryData = [
+    {
+      id: 'cat_blog',
+      name: '部落格文章',
+      slug: 'blog-post',
+      description: '睡眠知識、健康生活、產品介紹等內容文章',
+      color: '#3B82F6', // Blue
+      icon: '📝',
+      isActive: true,
+      sortOrder: 0,
+      seoTitle: '部落格文章 | 睡眠知識分享 | 黑哥家居',
+      seoDescription: '專業睡眠知識、健康生活資訊、床墊選購指南等實用內容分享'
+    },
+    {
+      id: 'cat_review',
+      name: '客戶評價',
+      slug: 'client-review',
+      description: '真實客戶購買體驗與使用心得故事分享',
+      color: '#10B981', // Green
+      icon: '💬',
+      isActive: true,
+      sortOrder: 1,
+      seoTitle: '客戶評價 | 真實使用心得 | 黑哥家居',
+      seoDescription: '真實客戶購買體驗分享，席夢思床墊使用心得與評價故事'
+    }
+  ];
+
+  for (const category of categoryData) {
+    await db.insert(postCategories).values(category);
+  }
+  console.log('✅ Post categories seeded');
+}
+
 async function seedContent() {
   // Posts
   const postData = [
@@ -583,7 +620,8 @@ async function seedContent() {
       content: '選擇床墊硬度是購買床墊時最重要的考量之一。本文將詳細介紹如何根據睡眠姿勢、體重和個人偏好來選擇最適合的床墊硬度...',
       excerpt: '專業指南：根據睡眠姿勢和體重選擇最適合的床墊硬度',
       featuredImage: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=800',
-      category: 'sleep_tips',
+      categoryId: 'cat_blog',
+      category: '部落格文章',
       tags: JSON.stringify(['床墊選購', '睡眠品質', '購買指南']),
       status: 'published',
       featured: true,
@@ -600,13 +638,32 @@ async function seedContent() {
       content: '席夢思床墊是高品質寢具的代表，正確的保養方式能延長使用壽命並維持最佳睡眠品質...',
       excerpt: '專業保養指南，讓您的席夢思床墊用得更久更舒適',
       featuredImage: 'https://images.unsplash.com/photo-1541558869434-2840d308329a?w=800',
-      category: 'product_care',
+      categoryId: 'cat_blog',
+      category: '部落格文章',
       tags: JSON.stringify(['席夢思', '床墊保養', '使用技巧']),
       status: 'published',
       featured: false,
       authorId: 'user_admin_001',
       publishedAt: new Date('2024-11-15'),
       viewCount: 890
+    },
+    {
+      id: 'post_003',
+      title: '王小明的席夢思購買心得：找到完美睡眠的旅程',
+      slug: 'wang-simmons-purchase-experience',
+      content: '身為一個長期失眠的上班族，我花了很多時間尋找適合的床墊。經過多次比較和試躺，最終選擇了席夢思黑牌Classic獨立筒床墊。使用三個月後，我的睡眠品質有了顯著改善...',
+      excerpt: '上班族王小明分享席夢思黑牌床墊使用三個月後的真實感受',
+      featuredImage: 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=800',
+      categoryId: 'cat_review',
+      category: '客戶評價',
+      tags: JSON.stringify(['客戶故事', '席夢思黑牌', '睡眠改善', '購買心得']),
+      status: 'published',
+      featured: true,
+      seoTitle: '客戶心得：王小明的席夢思購買體驗 | 黑哥家居',
+      seoDescription: '真實客戶分享席夢思黑牌床墊購買體驗，從選購到使用三個月後的睡眠改善心得',
+      authorId: 'user_admin_001',
+      publishedAt: new Date('2024-12-10'),
+      viewCount: 650
     }
   ];
 

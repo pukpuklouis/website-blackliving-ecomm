@@ -125,6 +125,24 @@ export const appointments = sqliteTable('appointments', {
   updatedAt: integer('updated_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
 });
 
+// Post Categories table - 文章分類管理
+export const postCategories = sqliteTable('post_categories', {
+  id: text('id').primaryKey().$defaultFn(() => createId()),
+  name: text('name').notNull().unique(), // 分類名稱: 部落格文章, 客戶評價
+  slug: text('slug').notNull().unique(), // URL slug: blog-post, client-review
+  description: text('description'), // 分類描述
+  color: text('color').default('#6B7280'), // 分類顏色 (用於 UI 區分)
+  icon: text('icon'), // 分類圖示 (可選)
+  isActive: integer('is_active', { mode: 'boolean' }).default(true),
+  sortOrder: integer('sort_order').default(0), // 排序順序
+  // SEO
+  seoTitle: text('seo_title'),
+  seoDescription: text('seo_description'),
+  // Metadata
+  createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
+});
+
 // Blog posts table - Enhanced for comprehensive content management
 export const posts = sqliteTable('posts', {
   id: text('id').primaryKey().$defaultFn(() => createId()),
@@ -137,7 +155,8 @@ export const posts = sqliteTable('posts', {
   authorName: text('author_name'), // Cached author name for performance
   status: text('status').default('draft'), // draft, published, scheduled, archived
   featured: integer('featured', { mode: 'boolean' }).default(false),
-  category: text('category').default('睡眠知識'), // 睡眠知識, 產品介紹, 健康生活, 門市活動
+  categoryId: text('category_id').references(() => postCategories.id), // 關聯到分類表
+  category: text('category').default('部落格文章'), // 兼容性字段，逐步遷移到 categoryId
   tags: text('tags', { mode: 'json' }).default('[]'),
   featuredImage: text('featured_image'),
   // SEO Fields
