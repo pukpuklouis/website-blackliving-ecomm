@@ -7,7 +7,7 @@ import type { createAuth } from '@blackliving/auth';
 import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
 import { eq, desc, like, and, or, count, sql } from 'drizzle-orm';
-import { posts } from '@blackliving/db/schema';
+import { posts, postCategories } from '@blackliving/db/schema';
 import { requireAuth, requireAdmin, createAuthMiddleware } from '@blackliving/auth';
 import { createId } from '@paralleldrive/cuid2';
 
@@ -125,7 +125,8 @@ const createPostSchema = z.object({
   description: z.string().min(10, '文章描述至少需要10個字元'),
   excerpt: z.string().optional(),
   content: z.string().min(50, '文章內容至少需要50個字元'),
-  category: z.enum(['睡眠知識', '產品介紹', '健康生活', '門市活動']),
+  categoryId: z.string().optional(),
+  category: z.enum(['部落格文章', '客戶評價']).optional(),
   tags: z.array(z.string()).default([]),
   status: z.enum(['draft', 'published', 'scheduled', 'archived']).default('draft'),
   featured: z.boolean().default(false),
@@ -152,7 +153,7 @@ const querySchema = z.object({
   limit: z.string().optional().default('20'),
   search: z.string().optional(),
   status: z.enum(['draft', 'published', 'scheduled', 'archived', 'all']).optional().default('all'),
-  category: z.enum(['睡眠知識', '產品介紹', '健康生活', '門市活動', 'all']).optional().default('all'),
+  category: z.enum(['部落格文章', '客戶評價', 'all']).optional().default('all'),
   featured: z.enum(['true', 'false', 'all']).optional().default('all'),
   author: z.string().optional(),
   sortBy: z.enum(['createdAt', 'publishedAt', 'title', 'viewCount']).optional().default('createdAt'),
@@ -173,6 +174,209 @@ const calculateReadingTime = (content: string): number => {
   const wordCount = content.length / 5; // Rough estimate for Chinese characters
   return Math.max(1, Math.ceil(wordCount / wordsPerMinute));
 };
+
+// POST CATEGORIES ENDPOINTS
+
+// GET /api/posts/categories - List all post categories
+postsRouter.get('/categories', async (c) => {
+  try {
+    const db = c.get('db');
+    
+    const categories = await db
+      .select()
+      .from(postCategories)
+      .where(eq(postCategories.isActive, true))
+      .orderBy(postCategories.sortOrder, postCategories.name);
+
+    return c.json({
+      success: true,
+      data: categories,
+    });
+  } catch (error) {
+    console.error('Error fetching post categories:', error);
+    return c.json({
+      success: false,
+      error: 'Failed to fetch post categories',
+    }, 500);
+  }
+});
+
+// GET /api/posts/categories/:slug - Get category by slug with posts count
+postsRouter.get('/categories/:slug', async (c) => {
+  try {
+    const db = c.get('db');
+    const slug = c.req.param('slug');
+    
+    // Get category
+    const category = await db
+      .select()
+      .from(postCategories)
+      .where(and(eq(postCategories.slug, slug), eq(postCategories.isActive, true)))
+      .limit(1);
+
+    if (category.length === 0) {
+      return c.json({
+        success: false,
+        error: 'Category not found',
+      }, 404);
+    }
+
+    // Get posts count for this category
+    const postsCount = await db
+      .select({ count: count() })
+      .from(posts)
+      .where(and(
+        eq(posts.categoryId, category[0].id),
+        eq(posts.status, 'published')
+      ));
+
+    return c.json({
+      success: true,
+      data: {
+        ...category[0],
+        postsCount: postsCount[0]?.count || 0,
+      },
+    });
+  } catch (error) {
+    console.error('Error fetching post category:', error);
+    return c.json({
+      success: false,
+      error: 'Failed to fetch post category',
+    }, 500);
+  }
+});
+
+// POSTS ENDPOINTS
+
+// GET /api/posts/by-category/:slug - Get posts by category slug (public)
+postsRouter.get('/by-category/:slug',
+  zValidator('query', querySchema.omit({ status: true, category: true })),
+  async (c) => {
+    try {
+      const db = c.get('db');
+      const categorySlug = c.req.param('slug');
+      const {
+        page,
+        limit,
+        search,
+        featured,
+        sortBy,
+        sortOrder,
+      } = c.req.valid('query');
+
+      const pageNum = parseInt(page);
+      const limitNum = parseInt(limit);
+      const offset = (pageNum - 1) * limitNum;
+
+      // Get category first
+      const category = await db
+        .select()
+        .from(postCategories)
+        .where(and(eq(postCategories.slug, categorySlug), eq(postCategories.isActive, true)))
+        .limit(1);
+
+      if (category.length === 0) {
+        return c.json({
+          success: false,
+          error: 'Category not found',
+        }, 404);
+      }
+
+      // Build where conditions (only published posts from this category)
+      const conditions = [
+        eq(posts.status, 'published'),
+        eq(posts.categoryId, category[0].id)
+      ];
+
+      if (search) {
+        conditions.push(
+          or(
+            like(posts.title, `%${search}%`),
+            like(posts.description, `%${search}%`)
+          )
+        );
+      }
+
+      if (featured !== 'all') {
+        conditions.push(eq(posts.featured, featured === 'true'));
+      }
+
+      const whereClause = and(...conditions);
+
+      // Build sort order
+      let orderBy;
+      const direction = sortOrder === 'desc' ? desc : undefined;
+
+      switch (sortBy) {
+        case 'publishedAt':
+          orderBy = direction ? desc(posts.publishedAt) : posts.publishedAt;
+          break;
+        case 'title':
+          orderBy = direction ? desc(posts.title) : posts.title;
+          break;
+        case 'viewCount':
+          orderBy = direction ? desc(posts.viewCount) : posts.viewCount;
+          break;
+        default:
+          orderBy = direction ? desc(posts.publishedAt) : posts.publishedAt;
+      }
+
+      // Get total count
+      const totalQuery = await db
+        .select({ count: count() })
+        .from(posts)
+        .where(whereClause);
+
+      const total = totalQuery[0]?.count || 0;
+
+      // Get posts (excluding content for list view)
+      const postsQuery = db
+        .select({
+          id: posts.id,
+          title: posts.title,
+          slug: posts.slug,
+          description: posts.description,
+          excerpt: posts.excerpt,
+          authorName: posts.authorName,
+          status: posts.status,
+          featured: posts.featured,
+          category: posts.category,
+          categoryId: posts.categoryId,
+          tags: posts.tags,
+          featuredImage: posts.featuredImage,
+          publishedAt: posts.publishedAt,
+          viewCount: posts.viewCount,
+          readingTime: posts.readingTime,
+          createdAt: posts.createdAt,
+        })
+        .from(posts)
+        .where(whereClause)
+        .orderBy(orderBy)
+        .limit(limitNum)
+        .offset(offset);
+
+      const postsData = await postsQuery.all();
+
+      return c.json({
+        success: true,
+        data: postsData,
+        category: category[0],
+        pagination: {
+          page: pageNum,
+          limit: limitNum,
+          total,
+          totalPages: Math.ceil(total / limitNum),
+        },
+      });
+    } catch (error) {
+      console.error('Error fetching posts by category:', error);
+      return c.json({
+        success: false,
+        error: 'Failed to fetch posts by category',
+      }, 500);
+    }
+  }
+);
 
 // GET /api/posts - List posts with filtering and pagination
 postsRouter.get('/',
@@ -215,7 +419,13 @@ postsRouter.get('/',
       }
 
       if (category !== 'all') {
-        conditions.push(eq(posts.category, category));
+        // Support both legacy category field and new categoryId
+        conditions.push(
+          or(
+            eq(posts.category, category),
+            sql`${posts.categoryId} IN (SELECT id FROM ${postCategories} WHERE name = ${category})`
+          )
+        );
       }
 
       if (featured !== 'all') {
@@ -318,7 +528,13 @@ postsRouter.get('/public',
       }
 
       if (category !== 'all') {
-        conditions.push(eq(posts.category, category));
+        // Support both legacy category field and new categoryId
+        conditions.push(
+          or(
+            eq(posts.category, category),
+            sql`${posts.categoryId} IN (SELECT id FROM ${postCategories} WHERE name = ${category})`
+          )
+        );
       }
 
       if (featured !== 'all') {
