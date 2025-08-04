@@ -7,23 +7,51 @@ const API_BASE = import.meta.env.PUBLIC_API_URL || 'http://localhost:8787';
 
 export async function getStaticPaths() {
   try {
+    console.log('Fetching static paths from:', `${API_BASE}/api/products?category=simmons-black`);
+    
     // Fetch all simmons-black products for static generation
     const response = await fetch(`${API_BASE}/api/products?category=simmons-black`);
     
     if (!response.ok) {
-      console.error('Failed to fetch products for static paths:', response.status);
-      return [];
+      console.error('Failed to fetch products for static paths:', response.status, response.statusText);
+      // Fallback to hardcoded paths during development
+      return [
+        { params: { productSlug: 'simmons-black-classic' } }
+      ];
     }
     
     const data = await response.json();
     const products = (data && data.success && data.data && data.data.products) ? data.data.products : [];
     
-    return products.map((product: any) => ({
+    // Ensure products is an array before calling map
+    if (!Array.isArray(products)) {
+      console.error('Products data is not an array:', products);
+      // Fallback to hardcoded paths
+      return [
+        { params: { productSlug: 'simmons-black-classic' } }
+      ];
+    }
+    
+    if (products.length === 0) {
+      console.warn('No products found, using fallback paths');
+      return [
+        { params: { productSlug: 'simmons-black-classic' } }
+      ];
+    }
+    
+    const paths = products.map((product: any) => ({
       params: { productSlug: product.slug }
     }));
+    
+    console.log('Generated static paths:', paths);
+    return paths;
+    
   } catch (error) {
     console.error('Error fetching static paths:', error);
-    return [];
+    // Fallback to hardcoded paths during development
+    return [
+      { params: { productSlug: 'simmons-black-classic' } }
+    ];
   }
 }
 
