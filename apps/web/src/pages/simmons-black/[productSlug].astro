@@ -2,53 +2,176 @@
 import ProductLayout from '../../layouts/ProductLayout.astro';
 import ProductVariantSelector from '../../components/ProductVariantSelector.tsx';
 
+// API configuration
+const API_BASE = import.meta.env.PUBLIC_API_URL || 'http://localhost:8787';
+
 export async function getStaticPaths() {
-  // This will be implemented to fetch products from the API
-  return [
-    { params: { productSlug: 'black-s2' } },
-    { params: { productSlug: 'black-s3' } },
-    { params: { productSlug: 'black-s4' } },
-    { params: { productSlug: 'black-l-class' } },
-  ];
+  try {
+    // Fetch all simmons-black products for static generation
+    const response = await fetch(`${API_BASE}/api/products?category=simmons-black`);
+    
+    if (!response.ok) {
+      console.error('Failed to fetch products for static paths:', response.status);
+      return [];
+    }
+    
+    const data = await response.json();
+    const products = (data && data.success && data.data && data.data.products) ? data.data.products : [];
+    
+    return products.map((product: any) => ({
+      params: { productSlug: product.slug }
+    }));
+  } catch (error) {
+    console.error('Error fetching static paths:', error);
+    return [];
+  }
 }
 
 const { productSlug } = Astro.params;
 
-// Mock product data - will be fetched from API
-const product = {
-  title: '席夢思黑標 S2 床墊',
-  description: '頂級美國原裝進口床墊，提供極致睡眠體驗',
-  image: '/images/simmons-black-s2.jpg',
-  price: '專櫃價2-3折起',
-  category: '席夢思黑標'
-};
+// Fetch individual product data
+let product: any = null;
+let error: string | null = null;
+
+try {
+  const response = await fetch(`${API_BASE}/api/products/${productSlug}`);
+  
+  if (!response.ok) {
+    if (response.status === 404) {
+      return Astro.redirect('/404');
+    }
+    throw new Error(`Failed to fetch product: ${response.status}`);
+  }
+  
+  const data = await response.json();
+  product = (data && data.success && data.data) ? data.data : null;
+} catch (err) {
+  console.error('Error fetching product:', err);
+  error = err instanceof Error ? err.message : 'Unknown error occurred';
+}
+
+// If no product found or error occurred, redirect to 404
+if (!product && !error) {
+  return Astro.redirect('/404');
+}
 ---
 
-<ProductLayout {...product}>
-  <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
-    <div>
-      <img 
-        src={product.image} 
-        alt={product.title}
-        class="w-full h-auto rounded-lg shadow-lg"
-      />
-    </div>
-    
-    <div>
-      <h1 class="text-3xl font-bold text-gray-900 mb-4">{product.title}</h1>
-      <p class="text-lg text-gray-600 mb-6">{product.description}</p>
-      
-      <ProductVariantSelector client:load />
-      
-      <div class="mt-8">
-        <h3 class="text-xl font-semibold mb-4">產品特色</h3>
-        <ul class="space-y-2 text-gray-600">
-          <li>• 美國原裝進口</li>
-          <li>• 10年品質保固</li>
-          <li>• 買貴退差價</li>
-          <li>• 全台最低價保證</li>
-        </ul>
-      </div>
+{error ? (
+  <div class="min-h-screen flex items-center justify-center">
+    <div class="text-center">
+      <h1 class="text-2xl font-bold text-gray-900 mb-4">載入產品時發生錯誤</h1>
+      <p class="text-gray-600 mb-6">{error}</p>
+      <a href="/simmons-black" class="bg-black text-white px-6 py-3 rounded-lg hover:bg-gray-800">
+        返回產品列表
+      </a>
     </div>
   </div>
-</ProductLayout>
+) : product && (
+  <ProductLayout 
+    title={product.name}
+    description={product.description}
+    image={product.images?.[0]}
+  >
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+      <div>
+        <img 
+          src={product.images?.[0] || '/images/placeholder-mattress.jpg'} 
+          alt={product.name}
+          class="w-full h-auto rounded-lg shadow-lg"
+        />
+        
+        {/* Additional images carousel - if more than one image */}
+        {product.images && product.images.length > 1 && (
+          <div class="mt-4 grid grid-cols-4 gap-2">
+            {product.images.slice(1, 5).map((image: any, index: number) => (
+              <img 
+                src={image} 
+                alt={`${product.name} - 圖片 ${index + 2}`}
+                class="w-full h-20 object-cover rounded border hover:border-black cursor-pointer"
+              />
+            ))}
+          </div>
+        )}
+      </div>
+      
+      <div>
+        <div class="mb-6">
+          <span class="inline-block bg-black text-white text-sm px-3 py-1 rounded mb-2">
+            席夢思黑標
+          </span>
+          <h1 class="text-3xl font-bold text-gray-900 mb-4">{product.name}</h1>
+          <p class="text-lg text-gray-600">{product.description}</p>
+        </div>
+        
+        {/* Product Variant Selector */}
+        {product.variants && product.variants.length > 0 ? (
+          <ProductVariantSelector 
+            productId={product.id}
+            variants={product.variants}
+            onVariantChange={(variant) => {
+              // Handle variant change in client-side
+              console.log('Variant changed:', variant);
+            }}
+            client:load 
+          />
+        ) : (
+          <div class="p-4 bg-gray-50 rounded-lg mb-6">
+            <p class="text-gray-600">請聯繫我們獲取產品價格資訊</p>
+            <a href="tel:+886-2-12345678" class="text-black font-semibold hover:underline">
+              電話: 02-1234-5678
+            </a>
+          </div>
+        )}
+        
+        {/* Product Features */}
+        <div class="mt-8">
+          <h3 class="text-xl font-semibold mb-4">產品特色</h3>
+          <ul class="space-y-2 text-gray-600">
+            {product.features && product.features.length > 0 ? (
+              product.features.map((feature: any, index: number) => (
+                <li class="flex items-start">
+                  <span class="w-1.5 h-1.5 bg-black rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                  {feature}
+                </li>
+              ))
+            ) : (
+              <>
+                <li class="flex items-start">
+                  <span class="w-1.5 h-1.5 bg-black rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                  美國原裝進口
+                </li>
+                <li class="flex items-start">
+                  <span class="w-1.5 h-1.5 bg-black rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                  10年品質保固
+                </li>
+                <li class="flex items-start">
+                  <span class="w-1.5 h-1.5 bg-black rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                  買貴退差價
+                </li>
+                <li class="flex items-start">
+                  <span class="w-1.5 h-1.5 bg-black rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                  全台最低價保證
+                </li>
+              </>
+            )}
+          </ul>
+        </div>
+
+        {/* Product Specifications */}
+        {product.specifications && Object.keys(product.specifications).length > 0 && (
+          <div class="mt-8">
+            <h3 class="text-xl font-semibold mb-4">產品規格</h3>
+            <div class="bg-gray-50 rounded-lg p-4">
+              {Object.entries(product.specifications).map(([key, value]: [string, any]) => (
+                <div class="flex justify-between items-center py-2 border-b border-gray-200 last:border-b-0">
+                  <span class="text-gray-600">{key}</span>
+                  <span class="font-semibold">{value}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  </ProductLayout>
+)}

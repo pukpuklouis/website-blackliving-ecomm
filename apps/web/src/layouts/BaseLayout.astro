@@ -4,6 +4,7 @@ import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import FloatingButtons from '../components/FloatingButtons.astro';
 import SEO from '../components/SEO.astro';
+import { Font } from 'astro:assets';
 import '@blackliving/tailwind-config/styles.css';
 
 export interface Props {
@@ -51,9 +52,8 @@ const {
     />
     
     <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Agatho&family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <Font cssVariable="--font-agatho" preload/>
+    <Font cssVariable="--font-noto-tc" preload/>
     
     <!-- Google Tag Manager (placeholder) -->
     <!-- Add GTM script here when ready -->
@@ -77,7 +77,7 @@ const {
 
 <style is:global>
   html {
-    font-family: 'Noto Sans TC', system-ui, sans-serif;
+    font-family: var(--font-agatho), var(--font-noto-tc), system-ui, sans-serif;
     scroll-behavior: smooth;
   }
   

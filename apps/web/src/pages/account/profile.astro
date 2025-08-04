@@ -3,7 +3,8 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import AccountNav from '../../components/AccountNav.astro';
 import ProfileTabs from '../../components/ui/ProfileTabs.tsx';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@blackliving/ui';
-// This page will be protected by Better Auth middleware
+
+// Client-side auth protection - API handles the real authorization
 ---
 
 <BaseLayout title="個人資料" description="管理您的帳號資訊、地址簿與偏好設定">
@@ -33,20 +34,20 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@blac
   const API_BASE = import.meta.env.PUBLIC_API_URL || 'http://localhost:8787';
 
   // UI Elements
-  const loading = document.getElementById('loading')!;
-  const notAuthenticated = document.getElementById('not-authenticated')!;
-  const profileForm = document.getElementById('profile-form') as HTMLFormElement;
-  const updateBtn = document.getElementById('update-btn') as HTMLButtonElement;
-  const updateText = document.getElementById('update-text')!;
-  const updateSpinner = document.getElementById('update-spinner')!;
-  const resetBtn = document.getElementById('reset-btn') as HTMLButtonElement;
-  const message = document.getElementById('message')!;
-  const syncIndicator = document.getElementById('sync-indicator')!;
-  const analyticsSection = document.getElementById('analytics-section')!;
+  const loading = document.getElementById('loading');
+  const notAuthenticated = document.getElementById('not-authenticated');
+  const profileForm = document.getElementById('profile-form') as HTMLFormElement | null;
+  const updateBtn = document.getElementById('update-btn') as HTMLButtonElement | null;
+  const updateText = document.getElementById('update-text');
+  const updateSpinner = document.getElementById('update-spinner');
+  const resetBtn = document.getElementById('reset-btn') as HTMLButtonElement | null;
+  const message = document.getElementById('message');
+  const syncIndicator = document.getElementById('sync-indicator');
+  const analyticsSection = document.getElementById('analytics-section');
 
   // Form validation elements
-  const nameError = document.getElementById('name-error')!;
-  const phoneError = document.getElementById('phone-error')!;
+  const nameError = document.getElementById('name-error');
+  const phoneError = document.getElementById('phone-error');
 
   // Cache configuration for stale-while-revalidate pattern
   const profileCache = {
@@ -84,7 +85,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@blac
 
   async function refreshInBackground(type: keyof typeof profileCache): Promise<void> {
     try {
-      const endpoint = type === 'basic' ? '/profile' : type === 'full' ? '/profile/full' : '/profile/analytics';
+      // Only refresh basic and full profile data, skip analytics
+      if (type === 'analytics') return;
+      
+      const endpoint = type === 'basic' ? '/profile' : '/profile/full';
       const response = await fetch(`${API_BASE}/api/customers${endpoint}`, {
         credentials: 'include',
       });
@@ -117,11 +121,22 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@blac
 
       if (response.ok) {
         const data = await response.json();
+        console.log('Auth check response:', data); // Debug log
+        
         if (data.user) {
           currentUser = data.user;
-          return true;
+          console.log('Authenticated user:', currentUser.role, currentUser.id); // Debug log
+          
+          // Allow both admin and customer users
+          if (data.user.role === 'admin' || data.user.role === 'customer') {
+            return true;
+          } else {
+            console.warn('User has unsupported role:', data.user.role);
+            return false;
+          }
         }
       }
+      console.log('No authenticated user found');
       return false;
     } catch (error) {
       console.error('Auth check failed:', error);
@@ -130,6 +145,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@blac
   }
 
   async function loadProfileData(type: 'basic' | 'full' | 'analytics'): Promise<any> {
+    // Skip analytics completely
+    if (type === 'analytics') {
+      console.warn('Analytics endpoint has been removed');
+      return null;
+    }
+
     // Try cache first
     const cachedData = getCache(type);
     if (cachedData) {
@@ -140,7 +161,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@blac
 
     // Fresh fetch if no cache
     try {
-      const endpoint = type === 'basic' ? '/profile' : type === 'full' ? '/profile/full' : '/profile/analytics';
+      const endpoint = type === 'basic' ? '/profile' : '/profile/full';
       const response = await fetch(`${API_BASE}/api/customers${endpoint}`, {
         credentials: 'include',
       });
@@ -223,6 +244,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@blac
   }
 
   function validateForm(): boolean {
+    if (!profileForm) return false;
     const formData = new FormData(profileForm);
     const name = formData.get('name') as string;
     const phone = formData.get('phone') as string;
@@ -230,26 +252,26 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@blac
     const nameErr = validateName(name);
     const phoneErr = validatePhone(phone);
 
-    showFieldError(nameError, nameErr);
-    showFieldError(phoneError, phoneErr);
+    if (nameError) showFieldError(nameError, nameErr);
+    if (phoneError) showFieldError(phoneError, phoneErr);
 
     // Add visual feedback to form fields
     const nameField = document.getElementById('name') as HTMLInputElement;
     const phoneField = document.getElementById('phone') as HTMLInputElement;
 
     // Update field border colors based on validation with shadcn classes
-    if (nameErr) {
+    if (nameErr && nameField) {
       nameField.classList.add('border-destructive', 'focus-visible:ring-destructive');
       nameField.classList.remove('border-input', 'focus-visible:ring-ring');
-    } else {
+    } else if (nameField) {
       nameField.classList.remove('border-destructive', 'focus-visible:ring-destructive');
       nameField.classList.add('border-input', 'focus-visible:ring-ring');
     }
 
-    if (phoneErr) {
+    if (phoneErr && phoneField) {
       phoneField.classList.add('border-destructive', 'focus-visible:ring-destructive');
       phoneField.classList.remove('border-input', 'focus-visible:ring-ring');
-    } else {
+    } else if (phoneField) {
       phoneField.classList.remove('border-destructive', 'focus-visible:ring-destructive');
       phoneField.classList.add('border-input', 'focus-visible:ring-ring');
     }
@@ -262,42 +284,43 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@blac
   // ======================
 
   function updateSyncIndicator(synced: boolean): void {
-    if (synced) {
+    if (synced && syncIndicator) {
       syncIndicator.classList.remove('hidden');
-      setTimeout(() => syncIndicator.classList.add('hidden'), 3000);
+      setTimeout(() => syncIndicator?.classList.add('hidden'), 3000);
     }
   }
 
   function showProfile(): void {
-    loading.classList.add('hidden');
-    notAuthenticated.classList.add('hidden');
-    profileForm.classList.remove('hidden');
+    loading?.classList.add('hidden');
+    notAuthenticated?.classList.add('hidden');
+    profileForm?.classList.remove('hidden');
   }
 
   function showNotAuthenticated(): void {
-    loading.classList.add('hidden');
-    profileForm.classList.add('hidden');
-    notAuthenticated.classList.remove('hidden');
+    loading?.classList.add('hidden');
+    profileForm?.classList.add('hidden');
+    notAuthenticated?.classList.remove('hidden');
   }
 
   function showMessage(text: string, type: 'success' | 'error'): void {
+    if (!message) return;
     message.textContent = text;
     message.className = `p-4 rounded-lg border ${type === 'success' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-red-50 text-red-700 border-red-200'}`;
     message.classList.remove('hidden');
     
     setTimeout(() => {
-      message.classList.add('hidden');
+      message?.classList.add('hidden');
     }, 5000);
   }
 
   function setLoadingState(loading: boolean): void {
-    updateBtn.disabled = loading;
+    if (updateBtn) updateBtn.disabled = loading;
     if (loading) {
-      updateText.textContent = '更新中...';
-      updateSpinner.classList.remove('hidden');
+      if (updateText) updateText.textContent = '更新中...';
+      updateSpinner?.classList.remove('hidden');
     } else {
-      updateText.textContent = '更新資料';
-      updateSpinner.classList.add('hidden');
+      if (updateText) updateText.textContent = '更新資料';
+      updateSpinner?.classList.add('hidden');
     }
   }
 
@@ -380,10 +403,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@blac
   function populateAnalytics(analyticsData: any): void {
     if (!analyticsData) return;
 
-    document.getElementById('total-orders')!.textContent = analyticsData.orderCount || '0';
-    document.getElementById('total-spent')!.textContent = analyticsData.totalSpent ? 
+    const totalOrdersEl = document.getElementById('total-orders');
+    const totalSpentEl = document.getElementById('total-spent');
+    const avgOrderValueEl = document.getElementById('avg-order-value');
+    const customerSegmentEl = document.getElementById('customer-segment');
+
+    if (totalOrdersEl) totalOrdersEl.textContent = analyticsData.orderCount || '0';
+    if (totalSpentEl) totalSpentEl.textContent = analyticsData.totalSpent ? 
       `NT$ ${analyticsData.totalSpent.toLocaleString()}` : 'NT$ 0';
-    document.getElementById('avg-order-value')!.textContent = analyticsData.avgOrderValue ? 
+    if (avgOrderValueEl) avgOrderValueEl.textContent = analyticsData.avgOrderValue ? 
       `NT$ ${Math.round(analyticsData.avgOrderValue).toLocaleString()}` : 'NT$ 0';
     
     const segmentMap: Record<string, string> = {
@@ -393,17 +421,18 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@blac
       'dormant': '休眠會員'
     };
     
-    const customerSegmentEl = document.getElementById('customer-segment')!;
-    customerSegmentEl.textContent = segmentMap[analyticsData.segment] || '新會員';
-    
-    // Update styling based on segment
-    customerSegmentEl.className = `text-lg font-semibold ${
-      analyticsData.segment === 'vip' ? 'text-yellow-600' :
-      analyticsData.segment === 'regular' ? 'text-blue-600' :
-      'text-gray-600'
-    }`;
+    if (customerSegmentEl) {
+      customerSegmentEl.textContent = segmentMap[analyticsData.segment] || '新會員';
+      
+      // Update styling based on segment
+      customerSegmentEl.className = `text-lg font-semibold ${
+        analyticsData.segment === 'vip' ? 'text-yellow-600' :
+        analyticsData.segment === 'regular' ? 'text-blue-600' :
+        'text-gray-600'
+      }`;
+    }
 
-    analyticsSection.classList.remove('hidden');
+    analyticsSection?.classList.remove('hidden');
   }
 
   function resetForm(): void {
@@ -424,12 +453,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@blac
   // ======================
 
   // Track form changes for dirty state
-  profileForm.addEventListener('input', () => {
+  profileForm?.addEventListener('input', () => {
     isFormDirty = true;
   });
 
   // Handle profile update with optimistic updates
-  profileForm.addEventListener('submit', async (e) => {
+  profileForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
     
     if (!validateForm()) {
@@ -490,7 +519,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@blac
   });
 
   // Reset button handler
-  resetBtn.addEventListener('click', () => {
+  resetBtn?.addEventListener('click', () => {
     if (isFormDirty) {
       if (confirm('確定要重設所有變更嗎？')) {
         resetForm();
@@ -500,36 +529,39 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@blac
   });
 
   // Add real-time validation with enhanced visual feedback
-  document.getElementById('name')!.addEventListener('blur', (e) => {
-    const nameField = e.target as HTMLInputElement;
-    const name = nameField.value;
+  const nameField = document.getElementById('name');
+  const phoneField = document.getElementById('phone');
+  
+  nameField?.addEventListener('blur', (e) => {
+    const target = e.target as HTMLInputElement;
+    const name = target.value;
     const error = validateName(name);
     
-    showFieldError(nameError, error);
+    if (nameError) showFieldError(nameError, error);
     
     // Visual feedback with shadcn classes
     if (error) {
-      nameField.classList.add('border-destructive', 'focus-visible:ring-destructive');
-      nameField.classList.remove('border-input', 'focus-visible:ring-ring');
+      target.classList.add('border-destructive', 'focus-visible:ring-destructive');
+      target.classList.remove('border-input', 'focus-visible:ring-ring');
     } else {
-      nameField.classList.remove('border-destructive', 'focus-visible:ring-destructive');
-      nameField.classList.add('border-input', 'focus-visible:ring-ring');
+      target.classList.remove('border-destructive', 'focus-visible:ring-destructive');
+      target.classList.add('border-input', 'focus-visible:ring-ring');
     }
   });
 
-  document.getElementById('name')!.addEventListener('input', (e) => {
-    const nameField = e.target as HTMLInputElement;
+  nameField?.addEventListener('input', (e) => {
+    const target = e.target as HTMLInputElement;
     // Clear error state on input
-    if (nameField.classList.contains('border-destructive')) {
-      nameField.classList.remove('border-destructive', 'focus-visible:ring-destructive');
-      nameField.classList.add('border-input', 'focus-visible:ring-ring');
-      nameError.classList.add('hidden');
+    if (target.classList.contains('border-destructive')) {
+      target.classList.remove('border-destructive', 'focus-visible:ring-destructive');
+      target.classList.add('border-input', 'focus-visible:ring-ring');
+      nameError?.classList.add('hidden');
     }
   });
 
-  document.getElementById('phone')!.addEventListener('input', (e) => {
-    const phoneField = e.target as HTMLInputElement;
-    let value = phoneField.value;
+  phoneField?.addEventListener('input', (e) => {
+    const target = e.target as HTMLInputElement;
+    let value = target.value;
     
     // Only allow numbers
     value = value.replace(/\D/g, '');
@@ -539,30 +571,30 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@blac
       value = value.substring(0, 10);
     }
     
-    phoneField.value = value;
+    target.value = value;
     
     // Clear error state on input
-    if (phoneField.classList.contains('border-destructive')) {
-      phoneField.classList.remove('border-destructive', 'focus-visible:ring-destructive');
-      phoneField.classList.add('border-input', 'focus-visible:ring-ring');
-      phoneError.classList.add('hidden');
+    if (target.classList.contains('border-destructive')) {
+      target.classList.remove('border-destructive', 'focus-visible:ring-destructive');
+      target.classList.add('border-input', 'focus-visible:ring-ring');
+      phoneError?.classList.add('hidden');
     }
   });
 
-  document.getElementById('phone')!.addEventListener('blur', (e) => {
-    const phoneField = e.target as HTMLInputElement;
-    const phone = phoneField.value;
+  phoneField?.addEventListener('blur', (e) => {
+    const target = e.target as HTMLInputElement;
+    const phone = target.value;
     const error = validatePhone(phone);
     
-    showFieldError(phoneError, error);
+    if (phoneError) showFieldError(phoneError, error);
     
     // Visual feedback with shadcn classes
     if (error) {
-      phoneField.classList.add('border-destructive', 'focus-visible:ring-destructive');
-      phoneField.classList.remove('border-input', 'focus-visible:ring-ring');
+      target.classList.add('border-destructive', 'focus-visible:ring-destructive');
+      target.classList.remove('border-input', 'focus-visible:ring-ring');
     } else {
-      phoneField.classList.remove('border-destructive', 'focus-visible:ring-destructive');
-      phoneField.classList.add('border-input', 'focus-visible:ring-ring');
+      target.classList.remove('border-destructive', 'focus-visible:ring-destructive');
+      target.classList.add('border-input', 'focus-visible:ring-ring');
     }
   });
 
@@ -574,25 +606,25 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@blac
   let addresses: any[] = [];
   let editingAddressId: string | null = null;
   
-  const addressModal = document.getElementById('address-modal')!;
-  const addressForm = document.getElementById('address-form') as HTMLFormElement;
-  const addressModalTitle = document.getElementById('address-modal-title')!;
-  const addressesLoading = document.getElementById('addresses-loading')!;
-  const addressesEmpty = document.getElementById('addresses-empty')!;
-  const addressesList = document.getElementById('addresses-list')!;
-  const saveAddressBtn = document.getElementById('save-address-btn')!;
-  const saveAddressText = document.getElementById('save-address-text')!;
-  const saveAddressSpinner = document.getElementById('save-address-spinner')!;
-  const addressFormMessage = document.getElementById('address-form-message')!;
+  const addressModal = document.getElementById('address-modal');
+  const addressForm = document.getElementById('address-form') as HTMLFormElement | null;
+  const addressModalTitle = document.getElementById('address-modal-title');
+  const addressesLoading = document.getElementById('addresses-loading');
+  const addressesEmpty = document.getElementById('addresses-empty');
+  const addressesList = document.getElementById('addresses-list');
+  const saveAddressBtn = document.getElementById('save-address-btn');
+  const saveAddressText = document.getElementById('save-address-text');
+  const saveAddressSpinner = document.getElementById('save-address-spinner');
+  const addressFormMessage = document.getElementById('address-form-message');
 
   // Address API Functions
   async function loadAddresses(): Promise<void> {
     try {
-      addressesLoading.classList.remove('hidden');
-      addressesEmpty.classList.add('hidden');
-      addressesList.classList.add('hidden');
+      addressesLoading?.classList.remove('hidden');
+      addressesEmpty?.classList.add('hidden');
+      addressesList?.classList.add('hidden');
 
-      const response = await fetch(`${API_BASE}/api/customers/addresses`, {
+      const response = await fetch(`${API_BASE}/api/customers/profile/addresses`, {
         credentials: 'include',
       });
 
@@ -609,14 +641,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@blac
       console.error('Error loading addresses:', error);
       showMessage('載入地址失敗', 'error');
     } finally {
-      addressesLoading.classList.add('hidden');
+      addressesLoading?.classList.add('hidden');
     }
   }
 
   async function saveAddress(addressData: any): Promise<any> {
     const url = editingAddressId 
-      ? `${API_BASE}/api/customers/addresses/${editingAddressId}`
-      : `${API_BASE}/api/customers/addresses`;
+      ? `${API_BASE}/api/customers/profile/addresses/${editingAddressId}`
+      : `${API_BASE}/api/customers/profile/addresses`;
     
     const method = editingAddressId ? 'PATCH' : 'POST';
 
@@ -638,7 +670,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@blac
   }
 
   async function deleteAddress(addressId: string): Promise<void> {
-    const response = await fetch(`${API_BASE}/api/customers/addresses/${addressId}`, {
+    const response = await fetch(`${API_BASE}/api/customers/profile/addresses/${addressId}`, {
       method: 'DELETE',
       credentials: 'include',
     });
@@ -650,7 +682,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@blac
   }
 
   async function setDefaultAddress(addressId: string): Promise<void> {
-    const response = await fetch(`${API_BASE}/api/customers/addresses/${addressId}/default`, {
+    const response = await fetch(`${API_BASE}/api/customers/profile/addresses/${addressId}/default`, {
       method: 'PATCH',
       credentials: 'include',
     });
@@ -664,28 +696,29 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@blac
   // Address UI Functions
   function renderAddresses(): void {
     if (addresses.length === 0) {
-      addressesEmpty.classList.remove('hidden');
-      addressesList.classList.add('hidden');
+      addressesEmpty?.classList.remove('hidden');
+      addressesList?.classList.add('hidden');
       return;
     }
 
-    addressesEmpty.classList.add('hidden');
-    addressesList.classList.remove('hidden');
+    addressesEmpty?.classList.add('hidden');
+    addressesList?.classList.remove('hidden');
 
-    addressesList.innerHTML = addresses.map(address => `
+    if (addressesList) {
+      addressesList.innerHTML = addresses.map(address => `
       <div class="border rounded-lg p-4 ${address.isDefault ? 'border-primary bg-primary/5' : 'border-border'}">
         <div class="flex justify-between items-start">
           <div class="flex-1">
             <div class="flex items-center gap-2 mb-2">
-              <h4 class="font-medium">${address.name}</h4>
-              <span class="text-sm text-muted-foreground">${address.phone}</span>
+              <h4 class="font-medium">${address.recipientName}</h4>
+              <span class="text-sm text-muted-foreground">${address.recipientPhone}</span>
               ${address.isDefault ? '<span class="bg-primary text-primary-foreground text-xs px-2 py-1 rounded">預設地址</span>' : ''}
             </div>
             <p class="text-sm text-muted-foreground mb-1">
               ${address.city}${address.district}${address.street}
               ${address.postalCode ? `(${address.postalCode})` : ''}
             </p>
-            ${address.notes ? `<p class="text-xs text-muted-foreground">${address.notes}</p>` : ''}
+            ${address.deliveryInstructions ? `<p class="text-xs text-muted-foreground">${address.deliveryInstructions}</p>` : ''}
           </div>
           <div class="flex gap-1 ml-4">
             <button class="edit-address-btn p-2 text-sm hover:bg-muted rounded" data-id="${address.id}">
@@ -709,42 +742,43 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@blac
         </div>
       </div>
     `).join('');
+    }
 
     // Add event listeners for address actions
     document.querySelectorAll('.edit-address-btn').forEach(btn => {
       btn.addEventListener('click', (e) => {
-        const addressId = (e.currentTarget as HTMLElement).dataset.id!;
-        editAddress(addressId);
+        const addressId = (e.currentTarget as HTMLElement).dataset.id;
+        if (addressId) editAddress(addressId);
       });
     });
 
     document.querySelectorAll('.delete-address-btn').forEach(btn => {
       btn.addEventListener('click', (e) => {
-        const addressId = (e.currentTarget as HTMLElement).dataset.id!;
-        handleDeleteAddress(addressId);
+        const addressId = (e.currentTarget as HTMLElement).dataset.id;
+        if (addressId) handleDeleteAddress(addressId);
       });
     });
 
     document.querySelectorAll('.set-default-btn').forEach(btn => {
       btn.addEventListener('click', (e) => {
-        const addressId = (e.currentTarget as HTMLElement).dataset.id!;
-        handleSetDefaultAddress(addressId);
+        const addressId = (e.currentTarget as HTMLElement).dataset.id;
+        if (addressId) handleSetDefaultAddress(addressId);
       });
     });
   }
 
   function showAddressModal(title: string = '新增地址'): void {
-    addressModalTitle.textContent = title;
-    addressModal.classList.remove('hidden');
+    if (addressModalTitle) addressModalTitle.textContent = title;
+    addressModal?.classList.remove('hidden');
     document.body.style.overflow = 'hidden';
   }
 
   function hideAddressModal(): void {
-    addressModal.classList.add('hidden');
+    addressModal?.classList.add('hidden');
     document.body.style.overflow = '';
     editingAddressId = null;
-    addressForm.reset();
-    addressFormMessage.classList.add('hidden');
+    addressForm?.reset();
+    addressFormMessage?.classList.add('hidden');
   }
 
   function editAddress(addressId: string): void {
@@ -755,13 +789,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@blac
     showAddressModal('編輯地址');
 
     // Populate form
-    (document.getElementById('address-name') as HTMLInputElement).value = address.name || '';
-    (document.getElementById('address-phone') as HTMLInputElement).value = address.phone || '';
+    (document.getElementById('address-name') as HTMLInputElement).value = address.recipientName || '';
+    (document.getElementById('address-phone') as HTMLInputElement).value = address.recipientPhone || '';
     (document.getElementById('address-district') as HTMLInputElement).value = address.district || '';
     (document.getElementById('address-postal') as HTMLInputElement).value = address.postalCode || '';
     (document.getElementById('address-street') as HTMLInputElement).value = address.street || '';
     (document.getElementById('address-default') as HTMLInputElement).checked = address.isDefault || false;
-    (document.getElementById('address-notes') as HTMLInputElement).value = address.notes || '';
+    (document.getElementById('address-notes') as HTMLInputElement).value = address.deliveryInstructions || '';
 
     // Set city select
     setTimeout(() => {
@@ -805,19 +839,21 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@blac
   }
 
   function showAddressFormMessage(text: string, type: 'success' | 'error'): void {
-    addressFormMessage.textContent = text;
-    addressFormMessage.className = `p-3 rounded border text-sm ${type === 'success' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-red-50 text-red-700 border-red-200'}`;
-    addressFormMessage.classList.remove('hidden');
+    if (addressFormMessage) {
+      addressFormMessage.textContent = text;
+      addressFormMessage.className = `p-3 rounded border text-sm ${type === 'success' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-red-50 text-red-700 border-red-200'}`;
+      addressFormMessage.classList.remove('hidden');
+    }
   }
 
   function setAddressFormLoading(loading: boolean): void {
-    saveAddressBtn.disabled = loading;
+    if (saveAddressBtn) saveAddressBtn.disabled = loading;
     if (loading) {
-      saveAddressText.textContent = editingAddressId ? '更新中...' : '儲存中...';
-      saveAddressSpinner.classList.remove('hidden');
+      if (saveAddressText) saveAddressText.textContent = editingAddressId ? '更新中...' : '儲存中...';
+      saveAddressSpinner?.classList.remove('hidden');
     } else {
-      saveAddressText.textContent = editingAddressId ? '更新地址' : '儲存地址';
-      saveAddressSpinner.classList.add('hidden');
+      if (saveAddressText) saveAddressText.textContent = editingAddressId ? '更新地址' : '儲存地址';
+      saveAddressSpinner?.classList.add('hidden');
     }
   }
 
@@ -830,14 +866,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@blac
   document.getElementById('cancel-address-btn')?.addEventListener('click', hideAddressModal);
 
   // Close modal when clicking outside
-  addressModal.addEventListener('click', (e) => {
+  addressModal?.addEventListener('click', (e) => {
     if (e.target === addressModal) {
       hideAddressModal();
     }
   });
 
   // Address form submission
-  addressForm.addEventListener('submit', async (e) => {
+  addressForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
     
     setAddressFormLoading(true);
@@ -854,13 +890,22 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@blac
         if (cityHiddenInput?.value) {
           addressData[key] = cityHiddenInput.value;
         }
+      } else if (key === 'name') {
+        // Map frontend field name to API field name
+        addressData['recipientName'] = value;
+      } else if (key === 'phone') {
+        // Map frontend field name to API field name
+        addressData['recipientPhone'] = value;
+      } else if (key === 'notes') {
+        // Map frontend field name to API field name
+        addressData['deliveryInstructions'] = value;
       } else if (value) {
         addressData[key] = value;
       }
     });
 
     // Validation
-    if (!addressData.name || !addressData.phone || !addressData.city || !addressData.district || !addressData.street) {
+    if (!addressData.recipientName || !addressData.recipientPhone || !addressData.city || !addressData.district || !addressData.street) {
       showAddressFormMessage('請填寫所有必填欄位', 'error');
       setAddressFormLoading(false);
       return;
@@ -868,7 +913,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@blac
 
     // Phone validation
     const phoneRegex = /^09\d{8}$/;
-    if (!phoneRegex.test(addressData.phone.replace(/[\s-]/g, ''))) {
+    if (!phoneRegex.test(addressData.recipientPhone.replace(/[\s-]/g, ''))) {
       showAddressFormMessage('手機號碼格式不正確', 'error');
       setAddressFormLoading(false);
       return;
@@ -903,17 +948,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@blac
   // Payment Methods - No longer needed as it now shows Line@ contact
 
   // Password Change Variables
-  const passwordModal = document.getElementById('password-modal')!;
-  const passwordForm = document.getElementById('password-form') as HTMLFormElement;
-  const savePasswordBtn = document.getElementById('save-password-btn')!;
-  const savePasswordText = document.getElementById('save-password-text')!;
-  const savePasswordSpinner = document.getElementById('save-password-spinner')!;
-  const passwordFormMessage = document.getElementById('password-form-message')!;
+  const passwordModal = document.getElementById('password-modal');
+  const passwordForm = document.getElementById('password-form') as HTMLFormElement | null;
+  const savePasswordBtn = document.getElementById('save-password-btn');
+  const savePasswordText = document.getElementById('save-password-text');
+  const savePasswordSpinner = document.getElementById('save-password-spinner');
+  const passwordFormMessage = document.getElementById('password-form-message');
   
   // Password validation error elements
-  const currentPasswordError = document.getElementById('current-password-error')!;
-  const newPasswordError = document.getElementById('new-password-error')!;
-  const confirmPasswordError = document.getElementById('confirm-password-error')!;
+  const currentPasswordError = document.getElementById('current-password-error');
+  const newPasswordError = document.getElementById('new-password-error');
+  const confirmPasswordError = document.getElementById('confirm-password-error');
 
   // Password Change API Functions
   async function changePassword(passwordData: any): Promise<any> {
@@ -989,36 +1034,38 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@blac
 
   // Password UI Functions
   function showPasswordModal(): void {
-    passwordModal.classList.remove('hidden');
+    passwordModal?.classList.remove('hidden');
     document.body.style.overflow = 'hidden';
   }
 
   function hidePasswordModal(): void {
-    passwordModal.classList.add('hidden');
+    passwordModal?.classList.add('hidden');
     document.body.style.overflow = '';
-    passwordForm.reset();
-    passwordFormMessage.classList.add('hidden');
+    passwordForm?.reset();
+    passwordFormMessage?.classList.add('hidden');
     
     // Clear all error messages
-    showPasswordFieldError(currentPasswordError, null);
-    showPasswordFieldError(newPasswordError, null);
-    showPasswordFieldError(confirmPasswordError, null);
+    if (currentPasswordError) showPasswordFieldError(currentPasswordError, null);
+    if (newPasswordError) showPasswordFieldError(newPasswordError, null);
+    if (confirmPasswordError) showPasswordFieldError(confirmPasswordError, null);
   }
 
   function showPasswordFormMessage(text: string, type: 'success' | 'error'): void {
-    passwordFormMessage.textContent = text;
-    passwordFormMessage.className = `p-3 rounded border text-sm ${type === 'success' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-red-50 text-red-700 border-red-200'}`;
-    passwordFormMessage.classList.remove('hidden');
+    if (passwordFormMessage) {
+      passwordFormMessage.textContent = text;
+      passwordFormMessage.className = `p-3 rounded border text-sm ${type === 'success' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-red-50 text-red-700 border-red-200'}`;
+      passwordFormMessage.classList.remove('hidden');
+    }
   }
 
   function setPasswordFormLoading(loading: boolean): void {
-    savePasswordBtn.disabled = loading;
+    if (savePasswordBtn) savePasswordBtn.disabled = loading;
     if (loading) {
-      savePasswordText.textContent = '更新中...';
-      savePasswordSpinner.classList.remove('hidden');
+      if (savePasswordText) savePasswordText.textContent = '更新中...';
+      savePasswordSpinner?.classList.remove('hidden');
     } else {
-      savePasswordText.textContent = '更新密碼';
-      savePasswordSpinner.classList.add('hidden');
+      if (savePasswordText) savePasswordText.textContent = '更新密碼';
+      savePasswordSpinner?.classList.add('hidden');
     }
   }
 
@@ -1031,36 +1078,40 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@blac
   document.getElementById('cancel-password-btn')?.addEventListener('click', hidePasswordModal);
 
   // Close modal when clicking outside
-  passwordModal.addEventListener('click', (e) => {
+  passwordModal?.addEventListener('click', (e) => {
     if (e.target === passwordModal) {
       hidePasswordModal();
     }
   });
 
   // Real-time password validation
-  document.getElementById('new-password')!.addEventListener('input', (e) => {
+  const newPasswordField = document.getElementById('new-password');
+  const confirmPasswordField = document.getElementById('confirm-password');
+  
+  newPasswordField?.addEventListener('input', (e) => {
     const newPassword = (e.target as HTMLInputElement).value;
-    if (newPassword) {
+    if (newPassword && newPasswordError) {
       const error = validatePassword(newPassword);
       showPasswordFieldError(newPasswordError, error);
-    } else {
+    } else if (newPasswordError) {
       showPasswordFieldError(newPasswordError, null);
     }
   });
 
-  document.getElementById('confirm-password')!.addEventListener('input', (e) => {
+  confirmPasswordField?.addEventListener('input', (e) => {
     const confirmPassword = (e.target as HTMLInputElement).value;
-    const newPassword = (document.getElementById('new-password') as HTMLInputElement).value;
-    if (confirmPassword && newPassword) {
+    const newPasswordInput = document.getElementById('new-password') as HTMLInputElement;
+    const newPassword = newPasswordInput?.value;
+    if (confirmPassword && newPassword && confirmPasswordError) {
       const error = validatePasswordConfirmation(newPassword, confirmPassword);
       showPasswordFieldError(confirmPasswordError, error);
-    } else {
+    } else if (confirmPasswordError) {
       showPasswordFieldError(confirmPasswordError, null);
     }
   });
 
   // Password form submission
-  passwordForm.addEventListener('submit', async (e) => {
+  passwordForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
     
     if (!validatePasswordForm()) {
@@ -1111,20 +1162,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@blac
   }
 
   async function loadAnalytics(): Promise<void> {
-    try {
-      const analyticsData = await loadProfileData('analytics');
-      populateAnalytics(analyticsData);
-    } catch (error) {
-      console.warn('Failed to load analytics:', error);
-      // Analytics is optional, don't show error to user
-    }
+    // Analytics section removed - no longer needed
+    console.warn('Analytics section has been removed');
   }
 
   async function initialize(): Promise<void> {
     const isAuthenticated = await checkAuth();
     
     if (!isAuthenticated) {
-      showNotAuthenticated();
+      // Redirect to login instead of showing not authenticated message
+      const returnUrl = encodeURIComponent(window.location.pathname + window.location.search);
+      window.location.href = `/login?redirect=${returnUrl}`;
       return;
     }
 
@@ -1133,8 +1181,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@blac
     // Load basic profile first (essential)
     await loadBasicProfile();
     
-    // Load analytics in background (optional)
-    loadAnalytics();
+    // Note: Analytics section removed
+    // loadAnalytics(); // Removed
     
     // Load addresses in background (optional)
     loadAddresses();
