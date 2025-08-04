@@ -1,25 +1,92 @@
 ---
-import ProductLayout from '../../layouts/ProductLayout.astro';
-import ProductVariantSelector from '../../components/ProductVariantSelector.tsx';
-import { getCategoryConfig } from '../../config/categories.ts';
-import { generateStaticPaths, fetchProduct } from '../../utils/productPaths.ts';
+import ProductLayout from '../layouts/ProductLayout.astro';
+import ProductVariantSelector from './ProductVariantSelector.tsx';
+import type { CategoryConfig } from '../config/categories.ts';
+
+export interface Props {
+  categoryConfig: CategoryConfig;
+}
+
+const { categoryConfig } = Astro.props;
+
+// API configuration
+const API_BASE = import.meta.env.PUBLIC_API_URL || 'http://localhost:8787';
 
 export async function getStaticPaths() {
-  return await generateStaticPaths('simmons-black');
+  try {
+    console.log('Fetching static paths from:', `${API_BASE}/api/products?category=${categoryConfig.category}`);
+    
+    // Fetch all products for the category for static generation
+    const response = await fetch(`${API_BASE}/api/products?category=${categoryConfig.category}`);
+    
+    if (!response.ok) {
+      console.error('Failed to fetch products for static paths:', response.status, response.statusText);
+      // Fallback to hardcoded paths during development
+      return [
+        { params: { productSlug: `${categoryConfig.category}-sample` } }
+      ];
+    }
+    
+    const data = await response.json();
+    const products = (data && data.success && data.data && data.data.products) ? data.data.products : [];
+    
+    // Ensure products is an array before calling map
+    if (!Array.isArray(products)) {
+      console.error('Products data is not an array:', products);
+      // Fallback to hardcoded paths
+      return [
+        { params: { productSlug: `${categoryConfig.category}-sample` } }
+      ];
+    }
+    
+    if (products.length === 0) {
+      console.warn('No products found, using fallback paths');
+      return [
+        { params: { productSlug: `${categoryConfig.category}-sample` } }
+      ];
+    }
+    
+    const paths = products.map((product: any) => ({
+      params: { productSlug: product.slug }
+    }));
+    
+    console.log('Generated static paths:', paths);
+    return paths;
+    
+  } catch (error) {
+    console.error('Error fetching static paths:', error);
+    // Fallback to hardcoded paths during development
+    return [
+      { params: { productSlug: `${categoryConfig.category}-sample` } }
+    ];
+  }
 }
 
 const { productSlug } = Astro.params;
-const categoryConfig = getCategoryConfig('simmons-black');
-
-if (!categoryConfig) {
-  return Astro.redirect('/404');
-}
 
 // Fetch individual product data
-const { product, error, notFound } = await fetchProduct(productSlug);
+let product: any = null;
+let error: string | null = null;
+
+try {
+  const response = await fetch(`${API_BASE}/api/products/${productSlug}`);
+  
+  if (!response.ok) {
+    if (response.status === 404) {
+      return Astro.redirect('/404');
+    }
+    throw new Error(`Failed to fetch product: ${response.status}`);
+  }
+  
+  const data = await response.json();
+  product = (data && data.success && data.data) ? data.data : null;
+} catch (err) {
+  console.error('Error fetching product:', err);
+  error = err instanceof Error ? err.message : 'Unknown error occurred';
+}
 
 // If no product found or error occurred, redirect to 404
-if (notFound) {
+if (!product && !error) {
   return Astro.redirect('/404');
 }
 ---
