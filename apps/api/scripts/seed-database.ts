@@ -110,25 +110,39 @@ async function seedProducts() {
       variants: JSON.stringify([
         {
           id: 'var_001',
-          name: '標準雙人 150x188cm',
-          sku: 'SB-CL-150',
+          name: '標準雙人偏硬',
+          sku: 'SB-CL-DBL-FIRM',
           price: 89000,
           originalPrice: 110000,
-          size: '150x188cm',
-          firmness: '中偏硬',
+          size: 'double',
+          firmness: 'firm',
+          stock: 5,
           inStock: true,
           sortOrder: 0
         },
         {
           id: 'var_002', 
-          name: '加大雙人 180x188cm',
-          sku: 'SB-CL-180',
+          name: '加大雙人偏硬',
+          sku: 'SB-CL-QEN-FIRM',
           price: 109000,
           originalPrice: 130000,
-          size: '180x188cm',
-          firmness: '中偏硬',
+          size: 'queen',
+          firmness: 'firm',
+          stock: 3,
           inStock: true,
           sortOrder: 1
+        },
+        {
+          id: 'var_003', 
+          name: '加大雙人適中',
+          sku: 'SB-CL-QEN-MED',
+          price: 109000,
+          originalPrice: 130000,
+          size: 'queen',
+          firmness: 'medium',
+          stock: 4,
+          inStock: true,
+          sortOrder: 2
         }
       ]),
       features: JSON.stringify([
@@ -162,11 +176,14 @@ async function seedProducts() {
       ]),
       variants: JSON.stringify([
         {
-          id: 'var_002',
-          name: '標準尺寸 48x74cm', 
+          id: 'var_004',
+          name: '標準尺寸套組', 
           sku: 'ACC-PP-STD',
           price: 1980,
-          size: '48x74cm',
+          originalPrice: 2500,
+          size: 'single',
+          firmness: 'medium',
+          stock: 20,
           inStock: true,
           sortOrder: 0
         }
@@ -198,13 +215,14 @@ async function seedProducts() {
       ]),
       variants: JSON.stringify([
         {
-          id: 'var_003',
-          name: '標準型',
+          id: 'var_005',
+          name: '標準型記憶枕',
           sku: 'US-TP-STD', 
           price: 4800,
           originalPrice: 5800,
-          size: '60x40cm',
-          firmness: '中等',
+          size: 'single',
+          firmness: 'medium',
+          stock: 8,
           inStock: true,
           sortOrder: 0
         }
@@ -476,9 +494,9 @@ async function seedOrders() {
       items: JSON.stringify([
         {
           productId: 'prod_002',
-          variantId: 'var_002',
+          variantId: 'var_004',
           name: '防蟎枕頭保護套組',
-          variant: '標準尺寸 48x74cm',
+          variant: '標準尺寸套組',
           price: 1980,
           quantity: 2,
           total: 3960
