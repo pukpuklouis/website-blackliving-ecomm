@@ -1,0 +1,52 @@
+---
+import { Image } from 'astro:assets';
+
+// Feature AD section for Black Living homepage
+export interface Props {
+  imageUrl?: string;
+  alt?: string;
+  href?: string;
+  title?: string;
+  description?: string;
+}
+
+const { 
+  imageUrl = '/feature-ad/black-living-special-offer.webp',
+  alt = 'Black Living 特別優惠',
+  href = '/special-offers',
+  title = '限時特惠',
+  description = '頂級席夢思床墊限時優惠，立即搶購'
+} = Astro.props;
+---
+
+<section class="py-12 bg-white">
+  <div class="container mx-auto px-4">
+    <div class="max-w-4xl mx-auto">
+      <a 
+        href={href}
+        class="block rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 group"
+      >
+        <div class="relative">
+          <Image
+            src={imageUrl}
+            alt={alt}
+            width={1200}
+            height={400}
+            loading="lazy"
+            class="w-full h-64 sm:h-80 lg:h-96 object-cover group-hover:scale-105 transition-transform duration-300"
+          />
+          
+          <!-- Optional overlay content -->
+          {title && description && (
+            <div class="absolute inset-0 bg-black bg-opacity-20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+              <div class="text-center text-white p-6">
+                <h3 class="text-2xl font-bold mb-2">{title}</h3>
+                <p class="text-lg">{description}</p>
+              </div>
+            </div>
+          )}
+        </div>
+      </a>
+    </div>
+  </div>
+</section>

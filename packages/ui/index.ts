@@ -4,7 +4,7 @@ export * from './components/ui/input';
 export * from './components/ui/label';
 export * from './components/ui/dropdown-menu';
 
-// Dashboard components  
+// Dashboard components
 export * from './components/ui/sidebar';
 export * from './components/ui/app-sidebar';
 export * from './components/ui/nav-main';

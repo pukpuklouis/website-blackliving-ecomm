@@ -1,0 +1,88 @@
+---
+// Reusable featured products component with category filtering
+import ProductCard from './ProductCard.astro';
+
+export interface Props {
+  title: string;
+  category: 'simmons-black' | 'accessories' | 'us-imports';
+  ctaText?: string;
+  ctaHref?: string;
+  limit?: number;
+  class?: string;
+}
+
+const { 
+  title, 
+  category, 
+  ctaText, 
+  ctaHref, 
+  limit = 6,
+  class: className = '' 
+} = Astro.props;
+
+// Fetch featured products from API
+let products = [];
+let error = null;
+
+try {
+  const apiUrl = `${Astro.url.origin}/api/products?category=${category}&featured=true&limit=${limit}`;
+  const response = await fetch(apiUrl);
+  
+  if (!response.ok) {
+    throw new Error(`Failed to fetch products: ${response.status}`);
+  }
+  
+  const result = await response.json();
+  
+  if (result.success && result.data?.products) {
+    // Map API data to ProductCard format
+    products = result.data.products.map((product: any) => ({
+      id: product.id,
+      name: product.name,
+      series: product.category === 'simmons-black' ? '席夢思黑標' : 
+             product.category === 'accessories' ? '周邊配件' : 
+             '美國進口',
+      image: product.images?.[0] || '/products/placeholder.jpg',
+      features: product.features || [],
+      priceFrom: product.variants?.[0]?.price || null,
+      href: `/${product.category}/${product.slug}`,
+    }));
+  }
+} catch (err) {
+  console.error('Error fetching featured products:', err);
+  error = err instanceof Error ? err.message : 'Unknown error occurred';
+}
+---
+
+<section class={`py-16 bg-white ${className}`}>
+  <div class='container mx-auto px-4'>
+    <h2 class='text-3xl font-bold text-center mb-12'>{title}</h2>
+
+    {error ? (
+      <div class='text-center text-red-600 bg-red-50 p-4 rounded-lg'>
+        載入產品時發生錯誤，請稍後再試。
+      </div>
+    ) : products.length === 0 ? (
+      <div class='text-center text-gray-600 bg-gray-50 p-8 rounded-lg'>
+        目前沒有精選產品，敬請期待。
+      </div>
+    ) : (
+      <>
+        <div class='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8'>
+          {products.map((product: any) => <ProductCard product={product} />)}
+        </div>
+
+        {ctaText && ctaHref && (
+          <div class='text-center mt-12'>
+            <a
+              href={ctaHref}
+              class='inline-block bg-black text-white px-8 py-3 text-lg font-semibold rounded hover:bg-gray-800 transition-colors'
+            >
+              {ctaText}
+            </a>
+          </div>
+        )}
+      </>
+    )}
+  </div>
+</section>

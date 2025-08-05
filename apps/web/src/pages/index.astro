@@ -4,37 +4,8 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import HeroSlider from '../components/HeroSlider.astro';
 import BrandStory from '../components/BrandStory.astro';
 import FeatureIcons from '../components/FeatureIcons.astro';
-import ProductCard from '../components/ProductCard.astro';
-
-// Sample products for homepage display
-const featuredProducts = [
-  {
-    id: 'simmons-s2',
-    name: 'Simmons Black S2',
-    series: 'S2 系列',
-    image: '/products/s2-sample.jpg',
-    features: ['獨立筒彈簧', '記憶棉層', '涼感布料'],
-    priceFrom: 45000,
-    href: '/simmons-black/s2',
-  },
-  {
-    id: 'simmons-s3',
-    name: 'Simmons Black S3',
-    series: 'S3 系列',
-    image: '/products/s3-sample.jpg',
-    features: ['多層獨立筒', '天然乳膠', '抗菌布面'],
-    priceFrom: 65000,
-    href: '/simmons-black/s3',
-  },
-  {
-    id: 'simmons-l-class',
-    name: 'Simmons Black L-Class',
-    series: 'L-Class',
-    image: '/products/l-class-sample.jpg',
-    features: ['鈦金屬彈簧', '竹炭纖維', '頂級工藝'],
-    href: '/simmons-black/l-class',
-  },
-];
+import FeatureAd from '../components/FeatureAd.astro';
+import FeaturedProducts from '../components/FeaturedProducts.astro';
 ---
 
 <BaseLayout
@@ -51,25 +22,27 @@ const featuredProducts = [
   <!-- Feature Icons -->
   <FeatureIcons />
 
-  <!-- Featured Products -->
-  <section class='py-16 bg-white'>
-    <div class='container mx-auto px-4'>
-      <h2 class='text-3xl font-bold text-center mb-12'>席夢思熱銷床墊</h2>
+  <!-- Feature AD image -->
+  <FeatureAd />
 
-      <div class='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8'>
-        {featuredProducts.map(product => <ProductCard product={product} />)}
-      </div>
+  <!-- Featured Bed Products -->
+  <FeaturedProducts 
+    title="席夢思熱銷床墊"
+    category="simmons-black"
+    ctaText="查看完整產品系列"
+    ctaHref="/simmons-black"
+    limit={6}
+  />
 
-      <div class='text-center mt-12'>
-        <a
-          href='/simmons-black'
-          class='inline-block bg-black text-white px-8 py-3 text-lg font-semibold rounded hover:bg-gray-800 transition-colors'
-        >
-          查看完整產品系列
-        </a>
-      </div>
-    </div>
-  </section>
+  <!-- Featured Accessories -->
+  <FeaturedProducts 
+    title="精選周邊配件"
+    category="accessories"
+    ctaText="查看更多配件"
+    ctaHref="/accessories"
+    limit={3}
+    class="bg-gray-50"
+  />
 
   <!-- Testimonials Preview -->
   <section class='py-16 bg-gray-50'>
