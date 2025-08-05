@@ -59,6 +59,13 @@ export default defineConfig({
         styles: ["normal"],
         subsets: ["chinese-traditional"],
         cssVariable: "--font-noto-tc"
+      },
+      {
+        provider: fontProviders.google(),
+        name: "Crimson Text",
+        weights: [400, 600, 700],
+        styles: ["normal", "italic"],
+        cssVariable: "--font-crimson-text"
       }
     ]
   },
