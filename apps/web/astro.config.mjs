@@ -12,10 +12,10 @@ export default defineConfig({
   site: process.env.NODE_ENV === 'production' ? "https://blackliving.com" : "http://localhost:4321",
   integrations: [react(), sitemap()],
 
-  output: 'static',
+  output: 'server',
   adapter: cloudflare({
-    pages: {
-      functionsDirectory: 'functions'
+    platformProxy: {
+      enabled: true
     }
   }),
 
@@ -79,7 +79,10 @@ export default defineConfig({
     resolve: {
       alias: {
         '~': new URL('./src', import.meta.url).pathname,
-        '@': new URL('../../packages/ui', import.meta.url).pathname
+        '@': new URL('../../packages/ui', import.meta.url).pathname,
+        ...(import.meta.env.PROD && {
+          "react-dom/server": "react-dom/server.edge"
+        })
       }
     },
     server: {
