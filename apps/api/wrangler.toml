@@ -22,7 +22,7 @@ name = "blackliving-api"
 [[d1_databases]]
 binding = "DB"
 database_name = "blackliving-db"
-database_id = "__PROD_DB_ID__"
+database_id = "6e8078ae-a12b-48e2-ab44-f3adf4ba3482"
 
 migrations_dir = "../../packages/db/migrations"
 
@@ -36,7 +36,9 @@ migrations_dir = "../../packages/db/migrations"
 [[env.staging.d1_databases]]
 binding = "DB"
 database_name = "blackliving-db-staging" 
-database_id = "your-staging-database-id-here"
+database_id = "6ed38bfb-6130-414b-9fcf-f9338a309a90"
+
+migrations_dir = "../../packages/db/migrations"
 
 # Cloudflare R2 Storage
 [[r2_buckets]]
@@ -54,7 +56,7 @@ bucket_name = "blackliving-images-staging"
 # Cloudflare KV Storage
 [[kv_namespaces]]
 binding = "CACHE"
-id = "__PROD_KV_NAMESPACE_ID__"
+id = "e978fa20a08b46bea9bcb31400f8e61f"
 
 [[env.development.kv_namespaces]]
 binding = "CACHE"
@@ -63,13 +65,13 @@ preview_id = "local-dev-preview-kv-id"
 
 [[env.staging.kv_namespaces]]
 binding = "CACHE"
-id = "your-staging-kv-id-here"
-preview_id = "your-staging-preview-kv-id-here"
+id = "61e654b7c0e9409ca76191411fc64b8c"
+preview_id = "61e654b7c0e9409ca76191411fc64b8c"
 
 [[env.production.kv_namespaces]]
 binding = "CACHE"
-id = "your-production-kv-id-here"
-preview_id = "your-production-preview-kv-id-here"
+id = "e978fa20a08b46bea9bcb31400f8e61f"
+preview_id = "e978fa20a08b46bea9bcb31400f8e61f"
 
 # Environment Variables
 [vars]

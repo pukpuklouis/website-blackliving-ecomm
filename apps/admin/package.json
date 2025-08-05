@@ -6,7 +6,9 @@
     "build": "react-router build",
     "dev": "react-router dev --host --port 5173",
     "start": "react-router-serve ./build/server/index.js",
-    "typecheck": "react-router typegen && tsc"
+    "typecheck": "react-router typegen && tsc",
+    "deploy": "wrangler pages deploy build/client --project-name blackliving-admin",
+    "deploy:staging": "wrangler pages deploy build/client --project-name blackliving-admin-staging"
   },
   "dependencies": {
     "@blackliving/auth": "workspace:*",
@@ -38,6 +40,7 @@
     "tailwindcss": "^4.1.11",
     "typescript": "^5.9.2",
     "vite": "^6.3.5",
-    "vite-tsconfig-paths": "^5.1.4"
+    "vite-tsconfig-paths": "^5.1.4",
+    "wrangler": "^4.26.0"
   }
 }

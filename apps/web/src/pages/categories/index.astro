@@ -1,10 +1,12 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { getCollection } from 'astro:content';
+import CTA from '../../components/CTA.astro';
 
 const categoriesEntries = await getCollection('categories');
 const categories = categoriesEntries.map(entry => entry.data);
 
+// SEO
 const seoData = {
   title: '產品分類總覽 | 黑哥家居',
   description: '瀏覽黑哥家居全系列產品分類，包含席夢思黑標床墊、精選周邊配件、美國進口床墊等優質睡眠產品。',
@@ -12,7 +14,10 @@ const seoData = {
 };
 ---
 
-<BaseLayout seoData={seoData}>
+<BaseLayout 
+  title={seoData.title}
+  description={seoData.description}
+>
   <main class="min-h-screen bg-gray-50">
     <!-- Hero Section -->
     <section class="bg-white border-b border-gray-200">
@@ -104,5 +109,6 @@ const seoData = {
         </div>
       </div>
     </section>
+    <CTA />
   </main>
 </BaseLayout>

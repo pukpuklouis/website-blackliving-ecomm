@@ -1,6 +1,6 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
-
+import CTA from '../../components/CTA.astro';
 interface PostCategory {
   id: string;
   name: string;
@@ -56,8 +56,11 @@ try {
 
 ---
 
-<BaseLayout>
-  <main class='container mx-auto px-4 py-8'>
+<BaseLayout 
+  title="顧客好評 - Black Living 黑哥家居"
+  description="來自真實客戶的睡眠體驗分享，了解 Simmons 黑牌床墊的實際使用心得與評價"
+>
+  <main class='container mx-auto px-4 py-8 mb-12'>
     <div class='text-center mb-12'>
       <h1 class='text-4xl font-bold text-gray-900 mb-4'>顧客好評</h1>
       <p class='text-xl text-gray-600'>來自真實客戶的睡眠體驗分享</p>
@@ -81,7 +84,7 @@ try {
                     <div class='flex items-center'>
                       {Array.from({ length: 5 }, (_, i) => (
                         <svg
-                          class={`w-4 h-4 ${i < review.rating ? 'text-yellow-400' : 'text-gray-300'}`}
+                          class={`w-4 h-4 ${i < (review.rating || 0) ? 'text-yellow-400' : 'text-gray-300'}`}
                           fill='currentColor'
                           viewBox='0 0 20 20'
                         >
@@ -131,6 +134,7 @@ try {
 
     </div>
   </main>
+  <CTA />
 
 
   <style>

@@ -14,6 +14,20 @@ export default defineConfig({
   optimizeDeps: {
     include: ['novel'],
   },
+  // Build optimization for tree-shaking
+  build: {
+    sourcemap: false, // Disable sourcemaps to avoid UI component errors
+    rollupOptions: {
+      external: (id) => {
+        // Don't bundle all lucide-react icons
+        if (id.includes('lucide-react/dist/esm/icons/') && 
+            !id.match(/\/(plus|search|edit|trash-2|upload|eye|filter|chevron-up|log-out|user|arrow-up-right|bar-chart-3|lock|plus-circle|users|calendar|package|more-horizontal|save|bold|italic|list|image|link|code|at-sign|phone|mail|map-pin|clock|file-image)\.js$/)) {
+          return true;
+        }
+        return false;
+      },
+    },
+  },
   // SSR 配置 - 根據你的建議
   ssr: {
     // 將 react-tweet 設為 noExternal，讓 Vite 處理其 CSS 檔案

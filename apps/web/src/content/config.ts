@@ -66,9 +66,24 @@ const navigation = defineCollection({
   }),
 });
 
+const categories = defineCollection({
+  type: 'data',
+  schema: z.object({
+    title: z.string(),
+    description: z.string(),
+    series: z.string(),
+    brand: z.string(),
+    features: z.array(z.string()),
+    seoKeywords: z.string(),
+    category: z.string(),
+    urlPath: z.string(),
+  }),
+});
+
 export const collections = {
   posts,
   products,
   'hero-slider': heroSlider,
   navigation,
+  categories,
 };

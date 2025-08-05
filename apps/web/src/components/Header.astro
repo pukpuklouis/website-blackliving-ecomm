@@ -2,6 +2,8 @@
 // Header component for Black Living website
 import { Image } from 'astro:assets';
 import { getEntry } from 'astro:content';
+import { CartIcon } from '@blackliving/ui';
+import { UserIcon } from '@blackliving/ui';
 
 export interface Props {
   class?: string;
@@ -37,9 +39,7 @@ const menuItems = navigationData?.data.items.sort((a, b) => a.order - b.order) |
             class='text-black text-sm lg:text-base font-normal hover:text-gray-600 transition-colors flex items-center gap-1'
             aria-label='購物車'
           >
-            <svg class='w-4 h-4 lg:w-5 lg:h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24' aria-hidden='true'>
-              <path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-1.5 9H5.5M7 13v0a2 2 0 104 0m6 0a2 2 0 104 0'></path>
-            </svg>
+            <CartIcon />
             購物車
           </a>
           <a
@@ -47,9 +47,7 @@ const menuItems = navigationData?.data.items.sort((a, b) => a.order - b.order) |
             class='text-black text-sm lg:text-base font-normal hover:text-gray-600 transition-colors flex items-center gap-1'
             aria-label='會員中心'
           >
-            <svg class='w-4 h-4 lg:w-5 lg:h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24' aria-hidden='true'>
-              <path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z'></path>
-            </svg>
+            <UserIcon />
             會員中心
           </a>
         </div>
@@ -144,18 +142,14 @@ const menuItems = navigationData?.data.items.sort((a, b) => a.order - b.order) |
             href='/cart'
             class='text-primary-foreground/80 text-sm font-normal hover:text-primary-foreground transition-colors flex items-center gap-2'
           >
-            <svg class='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24' aria-hidden='true'>
-              <path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-1.5 9H5.5M7 13v0a2 2 0 104 0m6 0a2 2 0 104 0'></path>
-            </svg>
+            <CartIcon />
             購物車
           </a>
           <a
             href='/account'
             class='text-primary-foreground/80 text-sm font-normal hover:text-primary-foreground transition-colors flex items-center gap-2'
           >
-            <svg class='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24' aria-hidden='true'>
-              <path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z'></path>
-            </svg>
+            <UserIcon />
             會員中心
           </a>
         </div>

@@ -9,11 +9,15 @@ import tailwindcss from '@tailwindcss/vite';
 // https://astro.build/config
 // Note: Using Tailwind v4 - no @astrojs/tailwind integration needed
 export default defineConfig({
-  site: "http://localhost:4321",
+  site: process.env.NODE_ENV === 'production' ? "https://blackliving.com" : "http://localhost:4321",
   integrations: [react(), sitemap()],
 
   output: 'static',
-  adapter: cloudflare(),
+  adapter: cloudflare({
+    pages: {
+      functionsDirectory: 'functions'
+    }
+  }),
 
   experimental: {
     fonts: [

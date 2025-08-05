@@ -74,7 +74,7 @@ try {
       if (categoryResponse.ok) {
         const categoriesData = await categoryResponse.json();
         const categories = categoriesData.data || [];
-        category = categories.find((cat: PostCategory) => cat.id === post.categoryId);
+        category = categories.find((cat: PostCategory) => cat.id === post?.categoryId);
       }
     }
 
