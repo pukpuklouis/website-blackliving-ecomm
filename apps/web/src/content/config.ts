@@ -53,8 +53,22 @@ const heroSlider = defineCollection({
   }),
 });
 
+const navigation = defineCollection({
+  type: 'data',
+  schema: z.object({
+    items: z.array(
+      z.object({
+        label: z.string(),
+        href: z.string(),
+        order: z.number(),
+      })
+    ),
+  }),
+});
+
 export const collections = {
   posts,
   products,
   'hero-slider': heroSlider,
+  navigation,
 };

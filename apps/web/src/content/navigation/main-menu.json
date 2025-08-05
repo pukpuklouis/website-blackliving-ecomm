@@ -1,0 +1,39 @@
+{
+  "items": [
+    {
+      "label": "關於黑哥",
+      "href": "/about",
+      "order": 1
+    },
+    {
+      "label": "席夢思黑標床墊",
+      "href": "/simmons-black",
+      "order": 2
+    },
+    {
+      "label": "精選周邊",
+      "href": "/accessories",
+      "order": 3
+    },
+    {
+      "label": "美國品牌代購專區",
+      "href": "/us-imports",
+      "order": 4
+    },
+    {
+      "label": "顧客好評",
+      "href": "/testimonials",
+      "order": 5
+    },
+    {
+      "label": "好文分享",
+      "href": "/posts",
+      "order": 6
+    },
+    {
+      "label": "預約試躺",
+      "href": "/appointment",
+      "order": 7
+    }
+  ]
+}
