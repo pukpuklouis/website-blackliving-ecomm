@@ -5,14 +5,17 @@
   "scripts": {
     "dev": "astro dev",
     "start": "astro dev --host --port 4321",
-    "build": "astro check && astro build",
+    "build": "astro build",
+    "build:check": "astro check && astro build",
     "preview": "astro preview",
     "astro": "astro",
     "type-check": "astro check",
     "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx}\"",
     "format:check": "prettier --check \"src/**/*.{ts,tsx,js,jsx}\"",
     "format:astro": "node ../../scripts/fix-astro-classnames.js",
-    "lint:astro": "astro check"
+    "lint:astro": "astro check",
+    "deploy": "wrangler pages deploy dist --project-name blackliving-web",
+    "deploy:staging": "wrangler pages deploy dist --project-name blackliving-web-staging"
   },
   "dependencies": {
     "@astrojs/check": "^0.9.4",
@@ -45,6 +48,7 @@
   "devDependencies": {
     "@blackliving/tailwind-config": "workspace:*",
     "@types/react": "^19.1.8",
-    "@types/react-dom": "^19.1.6"
+    "@types/react-dom": "^19.1.6",
+    "wrangler": "^4.26.0"
   }
 }

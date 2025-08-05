@@ -1,5 +1,5 @@
 import React from 'react';
-import { Editor } from 'novel';
+import { EditorContent, EditorRoot } from 'novel';
 
 interface NovelEditorProps {
   value?: string;
@@ -18,21 +18,22 @@ export default function NovelEditor({
 }: NovelEditorProps) {
   return (
     <div className={className}>
-      <Editor
-        defaultValue={value}
-        onUpdate={(editor: any) => {
-          const html = editor?.getHTML() || '';
-          onChange?.(html);
-        }}
-        disableLocalStorage={true}
-        className="min-h-[300px] w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm ring-offset-background placeholder:text-gray-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-        editorProps={{
-          attributes: {
-            class: 'prose prose-sm max-w-none focus:outline-none min-h-[300px] py-4',
-          },
-        }}
-        editable={!disabled}
-      />
+      <EditorRoot>
+        <EditorContent
+          initialContent={value ? JSON.parse(value) : undefined}
+          onUpdate={(editor: any) => {
+            const html = editor?.getHTML() || '';
+            onChange?.(html);
+          }}
+          className="min-h-[300px] w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm ring-offset-background placeholder:text-gray-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+          editorProps={{
+            attributes: {
+              class: 'prose prose-sm max-w-none focus:outline-none min-h-[300px] py-4',
+            },
+          }}
+          editable={!disabled}
+        />
+      </EditorRoot>
     </div>
   );
 }

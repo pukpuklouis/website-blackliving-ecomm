@@ -1,5 +1,7 @@
 import type { APIRoute } from 'astro';
 
+export const prerender = false;
+
 export const ALL: APIRoute = async context => {
   // Proxy all auth requests to the main API server
   const API_BASE = import.meta.env.PUBLIC_API_URL || 'http://localhost:8787';

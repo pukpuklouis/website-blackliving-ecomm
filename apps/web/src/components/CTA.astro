@@ -1,0 +1,49 @@
+---
+export interface Props {
+  title?: string;
+  description?: string;
+  primaryButtonText?: string;
+  primaryButtonHref?: string;
+  secondaryButtonText?: string;
+  secondaryButtonHref?: string;
+  secondaryButtonTarget?: string;
+  className?: string;
+}
+
+const {
+  title = "準備好體驗頂級睡眠了嗎？",
+  description = "歡迎蒞臨我們的實體展間，親自體驗席夢思黑標床墊的舒適感受",
+  primaryButtonText = "立即預約試躺",
+  primaryButtonHref = "/appointment",
+  secondaryButtonText = "Line 線上諮詢",
+  secondaryButtonHref = "https://line.me/R/ti/p/@blackking",
+  secondaryButtonTarget = "_blank",
+  className = ""
+} = Astro.props;
+---
+
+<section class={`py-16 bg-primary text-white ${className}`}>
+  <div class="container mx-auto px-4 text-center">
+    <h2 class="text-3xl font-bold mb-6">{title}</h2>
+    <p class="text-xl mb-8 text-gray-300">
+      {description}
+    </p>
+
+    <div class="flex flex-col sm:flex-row gap-4 justify-center">
+      <a
+        href={primaryButtonHref}
+        class="bg-white text-black px-8 py-3 font-semibold rounded hover:bg-gray-100 transition-colors"
+      >
+        {primaryButtonText}
+      </a>
+      <a
+        href={secondaryButtonHref}
+        target={secondaryButtonTarget}
+        rel={secondaryButtonTarget === "_blank" ? "noopener noreferrer" : undefined}
+        class="border border-white text-white px-8 py-3 font-semibold rounded hover:bg-white hover:text-black transition-colors"
+      >
+        {secondaryButtonText}
+      </a>
+    </div>
+  </div>
+</section>
