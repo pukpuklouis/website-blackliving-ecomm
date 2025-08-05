@@ -36,12 +36,29 @@ import {
   TabsTrigger,
   Switch,
 } from '@blackliving/ui';
-import { Search, Eye, Edit, Plus, Tag, TrendingUp, ShoppingBag, Calendar, Phone, Mail, MapPin, Filter, Star, Users, DollarSign, Package } from 'lucide-react';
-import { 
-  useReactTable, 
-  createColumnHelper, 
-  getCoreRowModel, 
-  getFilteredRowModel, 
+import {
+  Search,
+  Eye,
+  Edit,
+  Plus,
+  Tag,
+  TrendingUp,
+  ShoppingBag,
+  Calendar,
+  Phone,
+  Mail,
+  MapPin,
+  Filter,
+  Star,
+  Users,
+  DollarSign,
+  Package,
+} from 'lucide-react';
+import {
+  useReactTable,
+  createColumnHelper,
+  getCoreRowModel,
+  getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
   flexRender,
@@ -110,26 +127,26 @@ const segmentLabels = {
   new: '新客戶',
   regular: '一般客戶',
   vip: 'VIP客戶',
-  inactive: '非活躍客戶'
+  inactive: '非活躍客戶',
 };
 
 const segmentColors = {
   new: 'bg-blue-500',
   regular: 'bg-green-500',
   vip: 'bg-purple-500',
-  inactive: 'bg-gray-500'
+  inactive: 'bg-gray-500',
 };
 
 const churnRiskLabels = {
   low: '低風險',
   medium: '中風險',
-  high: '高風險'
+  high: '高風險',
 };
 
 const churnRiskColors = {
   low: 'bg-green-500',
   medium: 'bg-yellow-500',
-  high: 'bg-red-500'
+  high: 'bg-red-500',
 };
 
 export default function CustomersPage() {
@@ -147,11 +164,7 @@ export default function CustomersPage() {
   const columns = [
     columnHelper.accessor('customerNumber', {
       header: '客戶編號',
-      cell: info => (
-        <div className="font-mono text-sm font-medium">
-          {info.getValue()}
-        </div>
-      ),
+      cell: info => <div className="font-mono text-sm font-medium">{info.getValue()}</div>,
     }),
     columnHelper.accessor('name', {
       header: '客戶資訊',
@@ -187,10 +200,10 @@ export default function CustomersPage() {
         const tags = info.getValue();
         return (
           <div className="flex flex-wrap gap-1 max-w-32">
-            {tags.slice(0, 2).map((tag) => (
-              <Badge 
-                key={tag.id} 
-                variant="outline" 
+            {tags.slice(0, 2).map(tag => (
+              <Badge
+                key={tag.id}
+                variant="outline"
                 className="text-xs"
                 style={{ borderColor: tag.color, color: tag.color }}
               >
@@ -218,9 +231,7 @@ export default function CustomersPage() {
     columnHelper.accessor('avgOrderValue', {
       header: '平均客單價',
       cell: info => (
-        <div className="font-medium text-right">
-          NT${(info.getValue() || 0).toLocaleString()}
-        </div>
+        <div className="font-medium text-right">NT${(info.getValue() || 0).toLocaleString()}</div>
       ),
     }),
     columnHelper.accessor('lastPurchaseAt', {
@@ -228,9 +239,7 @@ export default function CustomersPage() {
       cell: info => {
         const date = info.getValue();
         return date ? (
-          <div className="text-sm">
-            {new Date(date).toLocaleDateString('zh-TW')}
-          </div>
+          <div className="text-sm">{new Date(date).toLocaleDateString('zh-TW')}</div>
         ) : (
           <span className="text-gray-400">未購買</span>
         );
@@ -249,24 +258,24 @@ export default function CustomersPage() {
       header: '操作',
       cell: ({ row }) => (
         <div className="flex gap-2">
-          <Button 
-            variant="ghost" 
+          <Button
+            variant="ghost"
             size="sm"
             onClick={() => handleViewDetails(row.original)}
             title="查看詳情"
           >
             <Eye className="h-4 w-4" />
           </Button>
-          <Button 
-            variant="ghost" 
+          <Button
+            variant="ghost"
             size="sm"
             onClick={() => handleEdit(row.original)}
             title="編輯客戶"
           >
             <Edit className="h-4 w-4" />
           </Button>
-          <Button 
-            variant="ghost" 
+          <Button
+            variant="ghost"
             size="sm"
             onClick={() => handleManageTags(row.original)}
             title="管理標籤"
@@ -303,7 +312,7 @@ export default function CustomersPage() {
     try {
       setLoading(true);
       const response = await fetch('http://localhost:8787/api/customers', {
-        credentials: 'include'
+        credentials: 'include',
       });
       if (response.ok) {
         const result = await response.json();
@@ -319,9 +328,12 @@ export default function CustomersPage() {
 
   const loadCustomerInteractions = async (customerId: string) => {
     try {
-      const response = await fetch(`http://localhost:8787/api/customers/${customerId}/interactions`, {
-        credentials: 'include'
-      });
+      const response = await fetch(
+        `http://localhost:8787/api/customers/${customerId}/interactions`,
+        {
+          credentials: 'include',
+        }
+      );
       if (response.ok) {
         const result = await response.json();
         setCustomerInteractions(result.success ? result.data.interactions : []);
@@ -391,7 +403,9 @@ export default function CustomersPage() {
               <Star className="h-8 w-8 text-purple-500" />
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">VIP客戶</p>
-                <p className="text-2xl font-bold">{customers.filter(c => c.segment === 'vip').length}</p>
+                <p className="text-2xl font-bold">
+                  {customers.filter(c => c.segment === 'vip').length}
+                </p>
               </div>
             </div>
           </CardContent>
@@ -403,7 +417,13 @@ export default function CustomersPage() {
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">平均客單價</p>
                 <p className="text-2xl font-bold">
-                  NT${customers.length > 0 ? Math.round(customers.reduce((sum, c) => sum + (c.avgOrderValue || 0), 0) / customers.length).toLocaleString() : 0}
+                  NT$
+                  {customers.length > 0
+                    ? Math.round(
+                        customers.reduce((sum, c) => sum + (c.avgOrderValue || 0), 0) /
+                          customers.length
+                      ).toLocaleString()
+                    : 0}
                 </p>
               </div>
             </div>
@@ -415,7 +435,9 @@ export default function CustomersPage() {
               <Package className="h-8 w-8 text-orange-500" />
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">回購客戶</p>
-                <p className="text-2xl font-bold">{customers.filter(c => c.orderCount > 1).length}</p>
+                <p className="text-2xl font-bold">
+                  {customers.filter(c => c.orderCount > 1).length}
+                </p>
               </div>
             </div>
           </CardContent>
@@ -438,14 +460,14 @@ export default function CustomersPage() {
                 <Input
                   placeholder="搜尋客戶編號、姓名、電話、Email..."
                   value={globalFilter}
-                  onChange={(e) => setGlobalFilter(e.target.value)}
+                  onChange={e => setGlobalFilter(e.target.value)}
                   className="pl-10"
                 />
               </div>
             </div>
             <Select
               value={(table.getColumn('segment')?.getFilterValue() as string) ?? ''}
-              onValueChange={(value) => 
+              onValueChange={value =>
                 table.getColumn('segment')?.setFilterValue(value === 'all' ? '' : value)
               }
             >
@@ -468,9 +490,7 @@ export default function CustomersPage() {
       <Card>
         <CardHeader>
           <CardTitle>客戶列表</CardTitle>
-          <CardDescription>
-            共 {table.getFilteredRowModel().rows.length} 位客戶
-          </CardDescription>
+          <CardDescription>共 {table.getFilteredRowModel().rows.length} 位客戶</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="rounded-md border">
@@ -479,16 +499,10 @@ export default function CustomersPage() {
                 {table.getHeaderGroups().map(headerGroup => (
                   <tr key={headerGroup.id} className="border-b bg-gray-50/50">
                     {headerGroup.headers.map(header => (
-                      <th 
-                        key={header.id} 
-                        className="px-4 py-3 text-left font-medium text-gray-900"
-                      >
+                      <th key={header.id} className="px-4 py-3 text-left font-medium text-gray-900">
                         {header.isPlaceholder
                           ? null
-                          : flexRender(
-                              header.column.columnDef.header,
-                              header.getContext()
-                            )}
+                          : flexRender(header.column.columnDef.header, header.getContext())}
                       </th>
                     ))}
                   </tr>
@@ -511,7 +525,8 @@ export default function CustomersPage() {
           {/* Pagination */}
           <div className="flex items-center justify-between px-2 py-4">
             <div className="text-sm text-gray-700">
-              顯示 {table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1} 到{' '}
+              顯示{' '}
+              {table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1} 到{' '}
               {Math.min(
                 (table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize,
                 table.getFilteredRowModel().rows.length
@@ -545,9 +560,7 @@ export default function CustomersPage() {
         <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>客戶詳情 - {selectedCustomer?.name}</DialogTitle>
-            <DialogDescription>
-              客戶編號：{selectedCustomer?.customerNumber}
-            </DialogDescription>
+            <DialogDescription>客戶編號：{selectedCustomer?.customerNumber}</DialogDescription>
           </DialogHeader>
 
           {selectedCustomer && (
@@ -593,14 +606,16 @@ export default function CustomersPage() {
                       )}
                     </div>
                   </div>
-                  
+
                   <div>
                     <h4 className="font-medium mb-4">客戶分級與標籤</h4>
                     <div className="space-y-3">
                       <div>
                         <Label className="text-sm text-gray-600">客戶分級</Label>
                         <div className="mt-1">
-                          <Badge className={`text-white ${segmentColors[selectedCustomer.segment]}`}>
+                          <Badge
+                            className={`text-white ${segmentColors[selectedCustomer.segment]}`}
+                          >
                             {segmentLabels[selectedCustomer.segment]}
                           </Badge>
                         </div>
@@ -608,7 +623,9 @@ export default function CustomersPage() {
                       <div>
                         <Label className="text-sm text-gray-600">流失風險</Label>
                         <div className="mt-1">
-                          <Badge className={`text-white ${churnRiskColors[selectedCustomer.churnRisk]}`}>
+                          <Badge
+                            className={`text-white ${churnRiskColors[selectedCustomer.churnRisk]}`}
+                          >
                             {churnRiskLabels[selectedCustomer.churnRisk]}
                           </Badge>
                         </div>
@@ -616,9 +633,9 @@ export default function CustomersPage() {
                       <div>
                         <Label className="text-sm text-gray-600">客戶標籤</Label>
                         <div className="flex flex-wrap gap-2 mt-1">
-                          {selectedCustomer.tags.map((tag) => (
-                            <Badge 
-                              key={tag.id} 
+                          {selectedCustomer.tags.map(tag => (
+                            <Badge
+                              key={tag.id}
                               variant="outline"
                               style={{ borderColor: tag.color, color: tag.color }}
                             >
@@ -679,7 +696,7 @@ export default function CustomersPage() {
               <TabsContent value="interactions" className="space-y-4">
                 <div className="space-y-4">
                   {customerInteractions.length > 0 ? (
-                    customerInteractions.map((interaction) => (
+                    customerInteractions.map(interaction => (
                       <div key={interaction.id} className="border rounded-lg p-4">
                         <div className="flex justify-between items-start">
                           <div>

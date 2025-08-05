@@ -16,7 +16,6 @@ interface ApiResponse<T> {
   error?: any;
 }
 
-
 // A simple helper for response assertions
 const ResponseAsserts = {
   expectSuccess: async (response: Response, status = 200) => {
@@ -46,7 +45,7 @@ describe('Enhanced Products API (Integration)', () => {
   async function createDbProduct(productData: Partial<Product> = {}): Promise<Product> {
     const db = getDb();
     const id = generateTestId('product');
-    
+
     const defaultProductData: Omit<Product, 'id' | 'createdAt' | 'updatedAt'> = {
       name: 'Test Simmons Mattress',
       slug: `test-simmons-${Date.now()}`,
@@ -63,10 +62,10 @@ describe('Enhanced Products API (Integration)', () => {
           firmness: 'Medium',
           inStock: true,
           sortOrder: 0,
-        }
+        },
       ],
       features: ['Comfortable', 'Durable'],
-      specifications: { 'Material': 'Memory Foam' },
+      specifications: { Material: 'Memory Foam' },
       inStock: true,
       featured: false,
       sortOrder: 0,
@@ -76,26 +75,33 @@ describe('Enhanced Products API (Integration)', () => {
 
     const finalProductData = { ...defaultProductData, ...productData, id };
 
-    await db.insert(productsSchema).values({
-      ...finalProductData,
-      images: JSON.stringify(finalProductData.images),
-      variants: JSON.stringify(finalProductData.variants),
-      features: JSON.stringify(finalProductData.features),
-      specifications: JSON.stringify(finalProductData.specifications),
-    } as any).execute();
+    await db
+      .insert(productsSchema)
+      .values({
+        ...finalProductData,
+        images: JSON.stringify(finalProductData.images),
+        variants: JSON.stringify(finalProductData.variants),
+        features: JSON.stringify(finalProductData.features),
+        specifications: JSON.stringify(finalProductData.specifications),
+      } as any)
+      .execute();
 
-    const result = await db.select().from(productsSchema).where(sql`${productsSchema.id} = ${id}`).get() as any;
+    const result = (await db
+      .select()
+      .from(productsSchema)
+      .where(sql`${productsSchema.id} = ${id}`)
+      .get()) as any;
 
     if (!result) {
       throw new Error('Failed to create or retrieve product in test setup');
     }
-    
+
     return {
-        ...result,
-        images: JSON.parse(result.images),
-        variants: JSON.parse(result.variants),
-        features: JSON.parse(result.features),
-        specifications: JSON.parse(result.specifications),
+      ...result,
+      images: JSON.parse(result.images),
+      variants: JSON.parse(result.variants),
+      features: JSON.parse(result.features),
+      specifications: JSON.parse(result.specifications),
     } as Product;
   }
 
@@ -186,7 +192,7 @@ describe('Enhanced Products API (Integration)', () => {
 
       const response = await app.request('/api/products/categories', {}, env);
       const data = await ResponseAsserts.expectSuccess(response);
-      
+
       const simmons = data.data.find((c: any) => c.slug === 'simmons-black');
       const usImports = data.data.find((c: any) => c.slug === 'us-imports');
 

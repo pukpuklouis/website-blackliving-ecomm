@@ -4,13 +4,11 @@ import { BlackLivingAppSidebar } from '../components/BlackLivingAppSidebar';
 import { BreadcrumbComponent } from '../components/BreadcrumbComponent';
 import { ProtectedRoute } from '../components/ProtectedRoute';
 
-
-
 export default function DashboardLayout() {
   return (
     <ProtectedRoute>
-      <SidebarProvider style={{"--sidebar-width": "12rem"} as React.CSSProperties}>
-        <BlackLivingAppSidebar variant="inset" side="left"/>
+      <SidebarProvider style={{ '--sidebar-width': '12rem' } as React.CSSProperties}>
+        <BlackLivingAppSidebar variant="inset" side="left" />
         <SidebarInset>
           <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
             <SidebarTrigger />

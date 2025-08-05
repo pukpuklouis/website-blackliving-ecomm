@@ -36,12 +36,26 @@ import {
   TabsTrigger,
   Switch,
 } from '@blackliving/ui';
-import { Search, Eye, Edit, Calendar, Clock, MapPin, User, Phone, CheckCircle, XCircle, AlertCircle, Filter, Users } from 'lucide-react';
-import { 
-  useReactTable, 
-  createColumnHelper, 
-  getCoreRowModel, 
-  getFilteredRowModel, 
+import {
+  Search,
+  Eye,
+  Edit,
+  Calendar,
+  Clock,
+  MapPin,
+  User,
+  Phone,
+  CheckCircle,
+  XCircle,
+  AlertCircle,
+  Filter,
+  Users,
+} from 'lucide-react';
+import {
+  useReactTable,
+  createColumnHelper,
+  getCoreRowModel,
+  getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
   flexRender,
@@ -84,7 +98,7 @@ const statusLabels = {
   confirmed: '已確認',
   completed: '已完成',
   cancelled: '已取消',
-  no_show: '未到場'
+  no_show: '未到場',
 };
 
 const statusColors = {
@@ -92,24 +106,24 @@ const statusColors = {
   confirmed: 'bg-blue-500',
   completed: 'bg-green-500',
   cancelled: 'bg-gray-500',
-  no_show: 'bg-red-500'
+  no_show: 'bg-red-500',
 };
 
 const storeLabels = {
   zhonghe: '中和店',
-  zhongli: '中壢店'
+  zhongli: '中壢店',
 };
 
 const timeLabels = {
   morning: '上午 (09:00-12:00)',
   afternoon: '下午 (13:00-17:00)',
-  evening: '晚上 (18:00-21:00)'
+  evening: '晚上 (18:00-21:00)',
 };
 
 const purposeLabels = {
   trial: '試躺體驗',
   consultation: '產品諮詢',
-  pricing: '價格洽談'
+  pricing: '價格洽談',
 };
 
 export default function AppointmentsPage() {
@@ -128,11 +142,7 @@ export default function AppointmentsPage() {
   const columns = [
     columnHelper.accessor('appointmentNumber', {
       header: '預約編號',
-      cell: info => (
-        <div className="font-mono text-sm font-medium">
-          {info.getValue()}
-        </div>
-      ),
+      cell: info => <div className="font-mono text-sm font-medium">{info.getValue()}</div>,
     }),
     columnHelper.accessor('customerInfo', {
       header: '客戶資訊',
@@ -148,9 +158,7 @@ export default function AppointmentsPage() {
               <Phone className="h-3 w-3" />
               {customer.phone}
             </div>
-            {customer.email && (
-              <div className="text-sm text-gray-600">{customer.email}</div>
-            )}
+            {customer.email && <div className="text-sm text-gray-600">{customer.email}</div>}
           </div>
         );
       },
@@ -185,11 +193,7 @@ export default function AppointmentsPage() {
     }),
     columnHelper.accessor('visitPurpose', {
       header: '目的',
-      cell: info => (
-        <Badge variant="secondary">
-          {purposeLabels[info.getValue()]}
-        </Badge>
-      ),
+      cell: info => <Badge variant="secondary">{purposeLabels[info.getValue()]}</Badge>,
     }),
     columnHelper.accessor('status', {
       header: '狀態',
@@ -202,34 +206,33 @@ export default function AppointmentsPage() {
     }),
     columnHelper.accessor('staffAssigned', {
       header: '服務人員',
-      cell: info => info.getValue() || (
-        <span className="text-gray-400">未指派</span>
-      ),
+      cell: info => info.getValue() || <span className="text-gray-400">未指派</span>,
     }),
     columnHelper.accessor('createdAt', {
       header: '建立時間',
-      cell: info => new Date(info.getValue()).toLocaleDateString('zh-TW', {
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit'
-      }),
+      cell: info =>
+        new Date(info.getValue()).toLocaleDateString('zh-TW', {
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+        }),
     }),
     columnHelper.display({
       id: 'actions',
       header: '操作',
       cell: ({ row }) => (
         <div className="flex gap-2">
-          <Button 
-            variant="ghost" 
+          <Button
+            variant="ghost"
             size="sm"
             onClick={() => handleViewDetails(row.original)}
             title="查看詳情"
           >
             <Eye className="h-4 w-4" />
           </Button>
-          <Button 
-            variant="ghost" 
+          <Button
+            variant="ghost"
             size="sm"
             onClick={() => handleEdit(row.original)}
             title="編輯預約"
@@ -237,8 +240,8 @@ export default function AppointmentsPage() {
             <Edit className="h-4 w-4" />
           </Button>
           {row.original.status === 'pending' && (
-            <Button 
-              variant="ghost" 
+            <Button
+              variant="ghost"
               size="sm"
               onClick={() => handleUpdateStatus(row.original.id, 'confirmed')}
               title="確認預約"
@@ -246,16 +249,17 @@ export default function AppointmentsPage() {
               <CheckCircle className="h-4 w-4" />
             </Button>
           )}
-          {row.original.status === 'confirmed' && new Date(row.original.preferredDate) <= new Date() && (
-            <Button 
-              variant="ghost" 
-              size="sm"
-              onClick={() => handleUpdateStatus(row.original.id, 'completed')}
-              title="標記完成"
-            >
-              <CheckCircle className="h-4 w-4" />
-            </Button>
-          )}
+          {row.original.status === 'confirmed' &&
+            new Date(row.original.preferredDate) <= new Date() && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => handleUpdateStatus(row.original.id, 'completed')}
+                title="標記完成"
+              >
+                <CheckCircle className="h-4 w-4" />
+              </Button>
+            )}
         </div>
       ),
     }),
@@ -311,19 +315,24 @@ export default function AppointmentsPage() {
 
   const handleUpdateStatus = async (appointmentId: string, newStatus: Appointment['status']) => {
     try {
-      const response = await fetch(`http://localhost:8787/api/appointments/${appointmentId}/status`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ status: newStatus }),
-      });
+      const response = await fetch(
+        `http://localhost:8787/api/appointments/${appointmentId}/status`,
+        {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ status: newStatus }),
+        }
+      );
 
       if (response.ok) {
-        setAppointments(prev => prev.map(appointment => 
-          appointment.id === appointmentId 
-            ? { ...appointment, status: newStatus, updatedAt: new Date() }
-            : appointment
-        ));
+        setAppointments(prev =>
+          prev.map(appointment =>
+            appointment.id === appointmentId
+              ? { ...appointment, status: newStatus, updatedAt: new Date() }
+              : appointment
+          )
+        );
         toast.success('預約狀態更新成功');
       } else {
         throw new Error('Failed to update appointment status');
@@ -336,15 +345,18 @@ export default function AppointmentsPage() {
 
   const handleConfirmAppointment = async (appointmentId: string, confirmedDateTime: string) => {
     try {
-      const response = await fetch(`http://localhost:8787/api/appointments/${appointmentId}/confirm`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ 
-          status: 'confirmed',
-          confirmedDateTime: new Date(confirmedDateTime).toISOString()
-        }),
-      });
+      const response = await fetch(
+        `http://localhost:8787/api/appointments/${appointmentId}/confirm`,
+        {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({
+            status: 'confirmed',
+            confirmedDateTime: new Date(confirmedDateTime).toISOString(),
+          }),
+        }
+      );
 
       if (response.ok) {
         await loadAppointments();
@@ -385,7 +397,9 @@ export default function AppointmentsPage() {
               <AlertCircle className="h-8 w-8 text-yellow-500" />
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">待確認</p>
-                <p className="text-2xl font-bold">{appointments.filter(a => a.status === 'pending').length}</p>
+                <p className="text-2xl font-bold">
+                  {appointments.filter(a => a.status === 'pending').length}
+                </p>
               </div>
             </div>
           </CardContent>
@@ -396,7 +410,9 @@ export default function AppointmentsPage() {
               <CheckCircle className="h-8 w-8 text-blue-500" />
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">已確認</p>
-                <p className="text-2xl font-bold">{appointments.filter(a => a.status === 'confirmed').length}</p>
+                <p className="text-2xl font-bold">
+                  {appointments.filter(a => a.status === 'confirmed').length}
+                </p>
               </div>
             </div>
           </CardContent>
@@ -407,7 +423,9 @@ export default function AppointmentsPage() {
               <CheckCircle className="h-8 w-8 text-green-500" />
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">已完成</p>
-                <p className="text-2xl font-bold">{appointments.filter(a => a.status === 'completed').length}</p>
+                <p className="text-2xl font-bold">
+                  {appointments.filter(a => a.status === 'completed').length}
+                </p>
               </div>
             </div>
           </CardContent>
@@ -418,7 +436,9 @@ export default function AppointmentsPage() {
               <XCircle className="h-8 w-8 text-red-500" />
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">未到場</p>
-                <p className="text-2xl font-bold">{appointments.filter(a => a.status === 'no_show').length}</p>
+                <p className="text-2xl font-bold">
+                  {appointments.filter(a => a.status === 'no_show').length}
+                </p>
               </div>
             </div>
           </CardContent>
@@ -429,7 +449,9 @@ export default function AppointmentsPage() {
               <Users className="h-8 w-8 text-purple-500" />
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">需追蹤</p>
-                <p className="text-2xl font-bold">{appointments.filter(a => a.followUpRequired).length}</p>
+                <p className="text-2xl font-bold">
+                  {appointments.filter(a => a.followUpRequired).length}
+                </p>
               </div>
             </div>
           </CardContent>
@@ -452,14 +474,14 @@ export default function AppointmentsPage() {
                 <Input
                   placeholder="搜尋預約編號、客戶姓名、電話..."
                   value={globalFilter}
-                  onChange={(e) => setGlobalFilter(e.target.value)}
+                  onChange={e => setGlobalFilter(e.target.value)}
                   className="pl-10"
                 />
               </div>
             </div>
             <Select
               value={(table.getColumn('status')?.getFilterValue() as string) ?? ''}
-              onValueChange={(value) => 
+              onValueChange={value =>
                 table.getColumn('status')?.setFilterValue(value === 'all' ? '' : value)
               }
             >
@@ -477,7 +499,7 @@ export default function AppointmentsPage() {
             </Select>
             <Select
               value={(table.getColumn('storeLocation')?.getFilterValue() as string) ?? ''}
-              onValueChange={(value) => 
+              onValueChange={value =>
                 table.getColumn('storeLocation')?.setFilterValue(value === 'all' ? '' : value)
               }
             >
@@ -498,9 +520,7 @@ export default function AppointmentsPage() {
       <Card>
         <CardHeader>
           <CardTitle>預約列表</CardTitle>
-          <CardDescription>
-            共 {table.getFilteredRowModel().rows.length} 筆預約
-          </CardDescription>
+          <CardDescription>共 {table.getFilteredRowModel().rows.length} 筆預約</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="rounded-md border">
@@ -509,16 +529,10 @@ export default function AppointmentsPage() {
                 {table.getHeaderGroups().map(headerGroup => (
                   <tr key={headerGroup.id} className="border-b bg-gray-50/50">
                     {headerGroup.headers.map(header => (
-                      <th 
-                        key={header.id} 
-                        className="px-4 py-3 text-left font-medium text-gray-900"
-                      >
+                      <th key={header.id} className="px-4 py-3 text-left font-medium text-gray-900">
                         {header.isPlaceholder
                           ? null
-                          : flexRender(
-                              header.column.columnDef.header,
-                              header.getContext()
-                            )}
+                          : flexRender(header.column.columnDef.header, header.getContext())}
                       </th>
                     ))}
                   </tr>
@@ -541,7 +555,8 @@ export default function AppointmentsPage() {
           {/* Pagination */}
           <div className="flex items-center justify-between px-2 py-4">
             <div className="text-sm text-gray-700">
-              顯示 {table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1} 到{' '}
+              顯示{' '}
+              {table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1} 到{' '}
               {Math.min(
                 (table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize,
                 table.getFilteredRowModel().rows.length
@@ -575,9 +590,7 @@ export default function AppointmentsPage() {
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>預約詳情 - {selectedAppointment?.appointmentNumber}</DialogTitle>
-            <DialogDescription>
-              查看完整的預約資訊與服務狀態
-            </DialogDescription>
+            <DialogDescription>查看完整的預約資訊與服務狀態</DialogDescription>
           </DialogHeader>
 
           {selectedAppointment && (
@@ -593,10 +606,19 @@ export default function AppointmentsPage() {
                   <div>
                     <h4 className="font-medium mb-2">客戶資訊</h4>
                     <div className="space-y-1 text-sm">
-                      <p><span className="text-gray-600">姓名：</span>{selectedAppointment.customerInfo.name}</p>
-                      <p><span className="text-gray-600">電話：</span>{selectedAppointment.customerInfo.phone}</p>
+                      <p>
+                        <span className="text-gray-600">姓名：</span>
+                        {selectedAppointment.customerInfo.name}
+                      </p>
+                      <p>
+                        <span className="text-gray-600">電話：</span>
+                        {selectedAppointment.customerInfo.phone}
+                      </p>
                       {selectedAppointment.customerInfo.email && (
-                        <p><span className="text-gray-600">Email：</span>{selectedAppointment.customerInfo.email}</p>
+                        <p>
+                          <span className="text-gray-600">Email：</span>
+                          {selectedAppointment.customerInfo.email}
+                        </p>
                       )}
                     </div>
                   </div>
@@ -641,10 +663,9 @@ export default function AppointmentsPage() {
                   <div>
                     <h4 className="font-medium mb-2">確認時間</h4>
                     <p className="text-sm">
-                      {selectedAppointment.confirmedDateTime 
+                      {selectedAppointment.confirmedDateTime
                         ? new Date(selectedAppointment.confirmedDateTime).toLocaleString('zh-TW')
-                        : '尚未確認'
-                      }
+                        : '尚未確認'}
                     </p>
                   </div>
                 </div>
@@ -654,7 +675,9 @@ export default function AppointmentsPage() {
                     <h4 className="font-medium mb-2">感興趣的產品</h4>
                     <div className="flex flex-wrap gap-2">
                       {selectedAppointment.productInterest.map((product, index) => (
-                        <Badge key={index} variant="outline">{product}</Badge>
+                        <Badge key={index} variant="outline">
+                          {product}
+                        </Badge>
                       ))}
                     </div>
                   </div>
@@ -663,14 +686,18 @@ export default function AppointmentsPage() {
                 {selectedAppointment.notes && (
                   <div>
                     <h4 className="font-medium mb-2">客戶備註</h4>
-                    <p className="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg">{selectedAppointment.notes}</p>
+                    <p className="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg">
+                      {selectedAppointment.notes}
+                    </p>
                   </div>
                 )}
 
                 {selectedAppointment.adminNotes && (
                   <div>
                     <h4 className="font-medium mb-2">管理員備註</h4>
-                    <p className="text-sm text-gray-600 bg-blue-50 p-3 rounded-lg">{selectedAppointment.adminNotes}</p>
+                    <p className="text-sm text-gray-600 bg-blue-50 p-3 rounded-lg">
+                      {selectedAppointment.adminNotes}
+                    </p>
                   </div>
                 )}
               </TabsContent>
@@ -684,10 +711,9 @@ export default function AppointmentsPage() {
                   <div>
                     <h4 className="font-medium mb-2">實際到店時間</h4>
                     <p className="text-sm">
-                      {selectedAppointment.actualVisitTime 
+                      {selectedAppointment.actualVisitTime
                         ? new Date(selectedAppointment.actualVisitTime).toLocaleString('zh-TW')
-                        : '尚未到店'
-                      }
+                        : '尚未到店'}
                     </p>
                   </div>
                 </div>
@@ -695,10 +721,9 @@ export default function AppointmentsPage() {
                 <div>
                   <h4 className="font-medium mb-2">完成時間</h4>
                   <p className="text-sm">
-                    {selectedAppointment.completedAt 
+                    {selectedAppointment.completedAt
                       ? new Date(selectedAppointment.completedAt).toLocaleString('zh-TW')
-                      : '尚未完成'
-                    }
+                      : '尚未完成'}
                   </p>
                 </div>
 
@@ -717,7 +742,14 @@ export default function AppointmentsPage() {
                         </AlertDialogHeader>
                         <AlertDialogFooter>
                           <AlertDialogCancel>取消</AlertDialogCancel>
-                          <AlertDialogAction onClick={() => handleConfirmAppointment(selectedAppointment.id, selectedAppointment.preferredDate)}>
+                          <AlertDialogAction
+                            onClick={() =>
+                              handleConfirmAppointment(
+                                selectedAppointment.id,
+                                selectedAppointment.preferredDate
+                              )
+                            }
+                          >
                             確認預約
                           </AlertDialogAction>
                         </AlertDialogFooter>
@@ -729,17 +761,16 @@ export default function AppointmentsPage() {
 
               <TabsContent value="followup" className="space-y-4">
                 <div className="flex items-center space-x-2">
-                  <Switch 
-                    checked={selectedAppointment.followUpRequired}
-                    readOnly
-                  />
+                  <Switch checked={selectedAppointment.followUpRequired} readOnly />
                   <Label>需要後續追蹤</Label>
                 </div>
 
                 {selectedAppointment.followUpNotes && (
                   <div>
                     <h4 className="font-medium mb-2">追蹤備註</h4>
-                    <p className="text-sm text-gray-600 bg-amber-50 p-3 rounded-lg">{selectedAppointment.followUpNotes}</p>
+                    <p className="text-sm text-gray-600 bg-amber-50 p-3 rounded-lg">
+                      {selectedAppointment.followUpNotes}
+                    </p>
                   </div>
                 )}
 

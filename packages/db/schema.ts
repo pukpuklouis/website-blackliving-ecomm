@@ -3,7 +3,9 @@ import { createId } from '@paralleldrive/cuid2';
 
 // Better Auth Tables (using plural naming with usePlural: true)
 export const users = sqliteTable('users', {
-  id: text('id').primaryKey().$defaultFn(() => createId()),
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => createId()),
   name: text('name'),
   email: text('email').notNull().unique(),
   emailVerified: integer('email_verified', { mode: 'boolean' }).default(false),
@@ -26,14 +28,20 @@ export const sessions = sqliteTable('sessions', {
   updatedAt: integer('updated_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
   ipAddress: text('ip_address'),
   userAgent: text('user_agent'),
-  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  userId: text('user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
 });
 
 export const accounts = sqliteTable('accounts', {
-  id: text('id').primaryKey().$defaultFn(() => createId()),
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => createId()),
   accountId: text('account_id').notNull(),
   providerId: text('provider_id').notNull(),
-  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  userId: text('user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
   accessToken: text('access_token'),
   refreshToken: text('refresh_token'),
   idToken: text('id_token'),
@@ -46,7 +54,9 @@ export const accounts = sqliteTable('accounts', {
 });
 
 export const verifications = sqliteTable('verifications', {
-  id: text('id').primaryKey().$defaultFn(() => createId()),
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => createId()),
   identifier: text('identifier').notNull(),
   value: text('value').notNull(),
   expiresAt: integer('expires_at', { mode: 'timestamp' }).notNull(),
@@ -56,7 +66,9 @@ export const verifications = sqliteTable('verifications', {
 
 // Products table
 export const products = sqliteTable('products', {
-  id: text('id').primaryKey().$defaultFn(() => createId()),
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => createId()),
   name: text('name').notNull(),
   slug: text('slug').notNull().unique(),
   description: text('description').notNull(),
@@ -76,7 +88,9 @@ export const products = sqliteTable('products', {
 
 // Orders table - Taiwan e-commerce order management
 export const orders = sqliteTable('orders', {
-  id: text('id').primaryKey().$defaultFn(() => createId()),
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => createId()),
   orderNumber: text('order_number').notNull().unique(), // 訂單編號 (e.g. BL2024010001)
   userId: text('user_id').references(() => users.id),
   customerInfo: text('customer_info', { mode: 'json' }).notNull(), // { name, email, phone }
@@ -103,7 +117,9 @@ export const orders = sqliteTable('orders', {
 
 // Appointments table - 預約試躺管理
 export const appointments = sqliteTable('appointments', {
-  id: text('id').primaryKey().$defaultFn(() => createId()),
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => createId()),
   appointmentNumber: text('appointment_number').notNull().unique(), // 預約編號 (e.g. AP2024010001)
   userId: text('user_id').references(() => users.id),
   customerInfo: text('customer_info', { mode: 'json' }).notNull(), // { name, phone, email }
@@ -127,7 +143,9 @@ export const appointments = sqliteTable('appointments', {
 
 // Post Categories table - 文章分類管理
 export const postCategories = sqliteTable('post_categories', {
-  id: text('id').primaryKey().$defaultFn(() => createId()),
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => createId()),
   name: text('name').notNull().unique(), // 分類名稱: 部落格文章, 客戶評價
   slug: text('slug').notNull().unique(), // URL slug: blog-post, client-review
   description: text('description'), // 分類描述
@@ -145,7 +163,9 @@ export const postCategories = sqliteTable('post_categories', {
 
 // Blog posts table - Enhanced for comprehensive content management
 export const posts = sqliteTable('posts', {
-  id: text('id').primaryKey().$defaultFn(() => createId()),
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => createId()),
   title: text('title').notNull(),
   slug: text('slug').notNull().unique(),
   description: text('description').notNull(),
@@ -184,7 +204,9 @@ export const posts = sqliteTable('posts', {
 
 // Reviews/Testimonials table
 export const reviews = sqliteTable('reviews', {
-  id: text('id').primaryKey().$defaultFn(() => createId()),
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => createId()),
   customerName: text('customer_name').notNull(),
   productId: text('product_id').references(() => products.id),
   rating: integer('rating').notNull(),
@@ -197,7 +219,9 @@ export const reviews = sqliteTable('reviews', {
 
 // Newsletter subscriptions
 export const newsletters = sqliteTable('newsletters', {
-  id: text('id').primaryKey().$defaultFn(() => createId()),
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => createId()),
   email: text('email').notNull().unique(),
   status: text('status').default('active'), // active, unsubscribed
   source: text('source').default('website'),
@@ -206,7 +230,9 @@ export const newsletters = sqliteTable('newsletters', {
 
 // Contact form submissions
 export const contacts = sqliteTable('contacts', {
-  id: text('id').primaryKey().$defaultFn(() => createId()),
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => createId()),
   name: text('name').notNull(),
   email: text('email').notNull(),
   phone: text('phone'),
@@ -218,7 +244,9 @@ export const contacts = sqliteTable('contacts', {
 
 // Customer Profiles - Enhanced customer management
 export const customerProfiles = sqliteTable('customer_profiles', {
-  id: text('id').primaryKey().$defaultFn(() => createId()),
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => createId()),
   userId: text('user_id').references(() => users.id),
   customerNumber: text('customer_number').notNull().unique(), // CU2024010001
   // Personal Information
@@ -256,7 +284,9 @@ export const customerProfiles = sqliteTable('customer_profiles', {
 
 // Customer Tags - Flexible tagging system
 export const customerTags = sqliteTable('customer_tags', {
-  id: text('id').primaryKey().$defaultFn(() => createId()),
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => createId()),
   name: text('name').notNull().unique(), // VIP客戶, 潛在客戶, 回購客戶, 高價值客戶
   color: text('color').default('#6B7280'), // Hex color for UI
   description: text('description'),
@@ -267,8 +297,12 @@ export const customerTags = sqliteTable('customer_tags', {
 
 // Customer Tag Assignments - Many-to-many relationship
 export const customerTagAssignments = sqliteTable('customer_tag_assignments', {
-  id: text('id').primaryKey().$defaultFn(() => createId()),
-  customerProfileId: text('customer_profile_id').references(() => customerProfiles.id, { onDelete: 'cascade' }),
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => createId()),
+  customerProfileId: text('customer_profile_id').references(() => customerProfiles.id, {
+    onDelete: 'cascade',
+  }),
   customerTagId: text('customer_tag_id').references(() => customerTags.id, { onDelete: 'cascade' }),
   assignedBy: text('assigned_by'), // Admin user who assigned the tag
   assignedAt: integer('assigned_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
@@ -276,8 +310,12 @@ export const customerTagAssignments = sqliteTable('customer_tag_assignments', {
 
 // Customer Interactions - Track all touchpoints
 export const customerInteractions = sqliteTable('customer_interactions', {
-  id: text('id').primaryKey().$defaultFn(() => createId()),
-  customerProfileId: text('customer_profile_id').references(() => customerProfiles.id, { onDelete: 'cascade' }),
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => createId()),
+  customerProfileId: text('customer_profile_id').references(() => customerProfiles.id, {
+    onDelete: 'cascade',
+  }),
   type: text('type').notNull(), // order, appointment, contact, support, call, email
   title: text('title').notNull(),
   description: text('description'),
@@ -290,16 +328,20 @@ export const customerInteractions = sqliteTable('customer_interactions', {
 
 // Customer Addresses - Critical: Address management system
 export const customerAddresses = sqliteTable('customer_addresses', {
-  id: text('id').primaryKey().$defaultFn(() => createId()),
-  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => createId()),
+  userId: text('user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
   type: text('type').notNull(), // shipping, billing, both
   label: text('label'), // 家裡, 公司, 其他
   isDefault: integer('is_default', { mode: 'boolean' }).default(false),
-  
+
   // Address Details
   recipientName: text('recipient_name').notNull(), // 收件人姓名
   recipientPhone: text('recipient_phone').notNull(), // 收件人電話
-  
+
   // Taiwan Address Format
   city: text('city').notNull(), // 縣市 (台北市, 新北市, 桃園市...)
   district: text('district').notNull(), // 區域 (中正區, 信義區...)
@@ -308,11 +350,11 @@ export const customerAddresses = sqliteTable('customer_addresses', {
   building: text('building'), // 大樓名稱
   floor: text('floor'), // 樓層
   room: text('room'), // 房號
-  
+
   // Delivery Instructions
   deliveryInstructions: text('delivery_instructions'), // 配送備註
   accessCode: text('access_code'), // 大樓密碼/門禁代碼
-  
+
   // Metadata
   lastUsedAt: integer('last_used_at', { mode: 'timestamp' }),
   usageCount: integer('usage_count').default(0), // 使用次數
@@ -323,38 +365,42 @@ export const customerAddresses = sqliteTable('customer_addresses', {
 
 // Payment Methods - Critical: Secure payment method storage
 export const customerPaymentMethods = sqliteTable('customer_payment_methods', {
-  id: text('id').primaryKey().$defaultFn(() => createId()),
-  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => createId()),
+  userId: text('user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
   type: text('type').notNull(), // credit_card, bank_account, digital_wallet
   provider: text('provider'), // visa, mastercard, jcb, line_pay, apple_pay
-  
+
   // Tokenized Card Information (PCI compliant)
   cardToken: text('card_token'), // Tokenized card number from payment processor
   lastFourDigits: text('last_four_digits'), // Last 4 digits for display
   expiryMonth: text('expiry_month'), // MM
   expiryYear: text('expiry_year'), // YYYY
   cardholderName: text('cardholder_name'),
-  
+
   // Bank Account Information
   bankName: text('bank_name'), // 銀行名稱
   bankCode: text('bank_code'), // 銀行代碼 (808, 822, etc.)
   accountType: text('account_type'), // checking, savings
   accountLastFour: text('account_last_four'), // 帳號後四碼
-  
+
   // Digital Wallet
   walletProvider: text('wallet_provider'), // line_pay, apple_pay, google_pay
   walletAccountId: text('wallet_account_id'), // Encrypted wallet account reference
-  
+
   // Settings
   isDefault: integer('is_default', { mode: 'boolean' }).default(false),
   isActive: integer('is_active', { mode: 'boolean' }).default(true),
   nickname: text('nickname'), // 自訂名稱 "我的信用卡", "公司卡"
-  
+
   // Security & Compliance
   encryptionKeyId: text('encryption_key_id'), // Reference to encryption key
   lastUsedAt: integer('last_used_at', { mode: 'timestamp' }),
   usageCount: integer('usage_count').default(0),
-  
+
   // Metadata
   createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
@@ -362,38 +408,42 @@ export const customerPaymentMethods = sqliteTable('customer_payment_methods', {
 
 // User Security - High Priority: Password & security management
 export const userSecurity = sqliteTable('user_security', {
-  id: text('id').primaryKey().$defaultFn(() => createId()),
-  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
-  
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => createId()),
+  userId: text('user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
+
   // Password Management
   passwordHash: text('password_hash'), // Bcrypt hash
   passwordSalt: text('password_salt'),
   passwordLastChanged: integer('password_last_changed', { mode: 'timestamp' }),
   forcePasswordChange: integer('force_password_change', { mode: 'boolean' }).default(false),
-  
+
   // Login Tracking
   lastLoginAt: integer('last_login_at', { mode: 'timestamp' }),
   lastLoginIp: text('last_login_ip'),
   lastLoginUserAgent: text('last_login_user_agent'),
   loginCount: integer('login_count').default(0),
-  
+
   // Security Settings
   twoFactorEnabled: integer('two_factor_enabled', { mode: 'boolean' }).default(false),
   twoFactorSecret: text('two_factor_secret'), // TOTP secret
   backupCodes: text('backup_codes', { mode: 'json' }).default('[]'),
-  
+
   // Account Security
   isLocked: integer('is_locked', { mode: 'boolean' }).default(false),
   lockedAt: integer('locked_at', { mode: 'timestamp' }),
   lockedReason: text('locked_reason'),
   failedLoginAttempts: integer('failed_login_attempts').default(0),
   lastFailedLoginAt: integer('last_failed_login_at', { mode: 'timestamp' }),
-  
+
   // Privacy Settings
   allowDataCollection: integer('allow_data_collection', { mode: 'boolean' }).default(true),
   allowMarketing: integer('allow_marketing', { mode: 'boolean' }).default(true),
   allowSmsMarketing: integer('allow_sms_marketing', { mode: 'boolean' }).default(false),
-  
+
   // Metadata
   createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
@@ -401,16 +451,22 @@ export const userSecurity = sqliteTable('user_security', {
 
 // Wishlist - Medium Priority: Customer personalization
 export const customerWishlists = sqliteTable('customer_wishlists', {
-  id: text('id').primaryKey().$defaultFn(() => createId()),
-  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
-  productId: text('product_id').notNull().references(() => products.id, { onDelete: 'cascade' }),
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => createId()),
+  userId: text('user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  productId: text('product_id')
+    .notNull()
+    .references(() => products.id, { onDelete: 'cascade' }),
   variantId: text('variant_id'), // Specific product variant if applicable
-  
+
   // Wishlist Details
   notes: text('notes'), // Personal notes about the product
   priority: text('priority').default('medium'), // high, medium, low
   priceAlert: real('price_alert'), // Price threshold for notifications
-  
+
   // Metadata
   addedAt: integer('added_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
   lastViewedAt: integer('last_viewed_at', { mode: 'timestamp' }),
@@ -419,56 +475,68 @@ export const customerWishlists = sqliteTable('customer_wishlists', {
 
 // Recently Viewed Products - Medium Priority: Personalization
 export const customerRecentlyViewed = sqliteTable('customer_recently_viewed', {
-  id: text('id').primaryKey().$defaultFn(() => createId()),
-  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
-  productId: text('product_id').notNull().references(() => products.id, { onDelete: 'cascade' }),
-  
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => createId()),
+  userId: text('user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  productId: text('product_id')
+    .notNull()
+    .references(() => products.id, { onDelete: 'cascade' }),
+
   // Viewing Details
   viewedAt: integer('viewed_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
   viewDurationSeconds: integer('view_duration_seconds'), // Time spent viewing
   referrerUrl: text('referrer_url'), // How they found the product
   deviceType: text('device_type'), // mobile, desktop, tablet
-  
+
   // Metadata for cleanup (keep only recent views)
   createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
 });
 
 // Customer Reviews - Medium Priority: User-generated content
 export const customerReviews = sqliteTable('customer_reviews', {
-  id: text('id').primaryKey().$defaultFn(() => createId()),
-  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
-  productId: text('product_id').notNull().references(() => products.id, { onDelete: 'cascade' }),
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => createId()),
+  userId: text('user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  productId: text('product_id')
+    .notNull()
+    .references(() => products.id, { onDelete: 'cascade' }),
   orderId: text('order_id').references(() => orders.id), // Link to purchase
-  
+
   // Review Content
   rating: integer('rating').notNull(), // 1-5 stars
   title: text('title').notNull(),
   content: text('content').notNull(),
   pros: text('pros', { mode: 'json' }).default('[]'), // Array of positive points
   cons: text('cons', { mode: 'json' }).default('[]'), // Array of negative points
-  
+
   // Review Images
   images: text('images', { mode: 'json' }).default('[]'), // User-uploaded photos
-  
+
   // Moderation
   status: text('status').default('pending'), // pending, approved, rejected, flagged
   moderatedBy: text('moderated_by'), // Admin who moderated
   moderatedAt: integer('moderated_at', { mode: 'timestamp' }),
   moderationNotes: text('moderation_notes'),
-  
+
   // Helpfulness
   helpfulCount: integer('helpful_count').default(0),
   totalVotes: integer('total_votes').default(0),
-  
+
   // Purchase Verification
   verified: integer('verified', { mode: 'boolean' }).default(false), // Verified purchase
   purchaseDate: integer('purchase_date', { mode: 'timestamp' }),
-  
+
   // Display Settings
   featured: integer('featured', { mode: 'boolean' }).default(false),
   displayName: text('display_name'), // How reviewer name appears
   showFullName: integer('show_full_name', { mode: 'boolean' }).default(false),
-  
+
   // Metadata
   createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
@@ -476,32 +544,42 @@ export const customerReviews = sqliteTable('customer_reviews', {
 
 // Notification Preferences - Medium Priority: Communication management
 export const customerNotificationPreferences = sqliteTable('customer_notification_preferences', {
-  id: text('id').primaryKey().$defaultFn(() => createId()),
-  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
-  
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => createId()),
+  userId: text('user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
+
   // Email Notifications
   emailOrderUpdates: integer('email_order_updates', { mode: 'boolean' }).default(true),
-  emailAppointmentReminders: integer('email_appointment_reminders', { mode: 'boolean' }).default(true),
+  emailAppointmentReminders: integer('email_appointment_reminders', { mode: 'boolean' }).default(
+    true
+  ),
   emailNewsletters: integer('email_newsletters', { mode: 'boolean' }).default(true),
   emailPromotions: integer('email_promotions', { mode: 'boolean' }).default(true),
   emailPriceAlerts: integer('email_price_alerts', { mode: 'boolean' }).default(true),
-  emailProductRecommendations: integer('email_product_recommendations', { mode: 'boolean' }).default(false),
-  
-  // SMS Notifications  
+  emailProductRecommendations: integer('email_product_recommendations', {
+    mode: 'boolean',
+  }).default(false),
+
+  // SMS Notifications
   smsOrderUpdates: integer('sms_order_updates', { mode: 'boolean' }).default(false),
   smsAppointmentReminders: integer('sms_appointment_reminders', { mode: 'boolean' }).default(true),
   smsPromotions: integer('sms_promotions', { mode: 'boolean' }).default(false),
   smsDeliveryUpdates: integer('sms_delivery_updates', { mode: 'boolean' }).default(true),
-  
+
   // Push Notifications (for future mobile app)
   pushOrderUpdates: integer('push_order_updates', { mode: 'boolean' }).default(true),
-  pushAppointmentReminders: integer('push_appointment_reminders', { mode: 'boolean' }).default(true),
+  pushAppointmentReminders: integer('push_appointment_reminders', { mode: 'boolean' }).default(
+    true
+  ),
   pushPromotions: integer('push_promotions', { mode: 'boolean' }).default(false),
-  
+
   // Communication Frequency
   emailFrequency: text('email_frequency').default('immediate'), // immediate, daily, weekly
   smsFrequency: text('sms_frequency').default('important_only'), // immediate, important_only, never
-  
+
   // Metadata
   createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),

@@ -1,31 +1,31 @@
-import { createAuthClient } from "better-auth/react";
+import { createAuthClient } from 'better-auth/react';
 
 // Get base URL with enhanced security validation
 const getBaseURL = () => {
   if (typeof window !== 'undefined') {
     // Browser environment with security checks
     const hostname = window.location.hostname;
-    
+
     // Validate hostname to prevent subdomain attacks
     const allowedHosts = ['localhost', 'blackliving.com', 'admin.blackliving.com'];
-    const isValidHost = allowedHosts.some(allowed => 
-      hostname === allowed || hostname.endsWith('.' + allowed)
+    const isValidHost = allowedHosts.some(
+      allowed => hostname === allowed || hostname.endsWith('.' + allowed)
     );
-    
+
     if (!isValidHost) {
       console.error('Invalid hostname detected:', hostname);
       throw new Error('Unauthorized domain access');
     }
-    
+
     if (hostname === 'localhost') {
       return 'http://localhost:8787'; // Local API server
     }
-    
+
     return 'https://api.blackliving.com'; // Production API
   }
-  
+
   // Server-side environment
-  return process.env.NODE_ENV === 'production' 
+  return process.env.NODE_ENV === 'production'
     ? 'https://api.blackliving.com'
     : 'http://localhost:8787';
 };
@@ -33,7 +33,7 @@ const getBaseURL = () => {
 // Production-ready Better Auth React client with enhanced security
 export const authClient = createAuthClient({
   baseURL: getBaseURL(),
-  
+
   // Enhanced fetch options for security
   fetchOptions: {
     credentials: 'include' as const,
@@ -42,7 +42,7 @@ export const authClient = createAuthClient({
       'X-Requested-With': 'XMLHttpRequest', // CSRF protection
     },
   },
-  
+
   // Session configuration with security
   session: {
     // Automatically refresh session when it's about to expire
@@ -50,22 +50,21 @@ export const authClient = createAuthClient({
     // Refresh 5 minutes before expiry
     refreshThreshold: 5 * 60 * 1000,
   },
-  
+
   // Enable debug logging in development only
-  logger: typeof window !== 'undefined' && window.location.hostname === 'localhost' 
-    ? console 
-    : undefined,
+  logger:
+    typeof window !== 'undefined' && window.location.hostname === 'localhost' ? console : undefined,
 });
 
 // Export the main auth methods
-export const { 
-  signIn, 
-  signOut, 
-  signUp, 
+export const {
+  signIn,
+  signOut,
+  signUp,
   useSession,
   // Additional useful hooks
   useUser,
-  useActiveSession
+  useActiveSession,
 } = authClient;
 
 // Helper functions for OAuth flows
@@ -75,14 +74,16 @@ export const {
  */
 export const signInWithGoogleAdmin = async () => {
   try {
-    const baseURL = typeof window !== 'undefined' && window.location.hostname === 'localhost' 
-      ? "http://localhost:8787" 
-      : "https://api.blackliving.com";
-    
-    const adminCallbackURL = typeof window !== 'undefined' && window.location.hostname === 'localhost' 
-      ? "http://localhost:5173/auth/callback"
-      : "https://admin.blackliving.com/auth/callback";
-    
+    const baseURL =
+      typeof window !== 'undefined' && window.location.hostname === 'localhost'
+        ? 'http://localhost:8787'
+        : 'https://api.blackliving.com';
+
+    const adminCallbackURL =
+      typeof window !== 'undefined' && window.location.hostname === 'localhost'
+        ? 'http://localhost:5173/auth/callback'
+        : 'https://admin.blackliving.com/auth/callback';
+
     // Use the same direct API approach that works for customers
     const response = await fetch(`${baseURL}/api/auth/sign-in/social`, {
       method: 'POST',
@@ -116,20 +117,21 @@ export const signInWithGoogleAdmin = async () => {
 };
 
 /**
- * Initiate Google OAuth for customer users  
+ * Initiate Google OAuth for customer users
  */
 export const signInWithGoogleCustomer = async () => {
   try {
     // Use Better Auth's built-in social sign-in with customer callback
-    const customerCallbackURL = typeof window !== 'undefined' && window.location.hostname === 'localhost' 
-      ? "http://localhost:4321/account/profile"
-      : "https://blackliving.com/account/profile";
-    
+    const customerCallbackURL =
+      typeof window !== 'undefined' && window.location.hostname === 'localhost'
+        ? 'http://localhost:4321/account/profile'
+        : 'https://blackliving.com/account/profile';
+
     await signIn.social({
-      provider: "google",
+      provider: 'google',
       callbackURL: customerCallbackURL,
     });
-    
+
     return { success: true };
   } catch (error) {
     console.error('Customer Google login error:', error);
@@ -156,7 +158,7 @@ interface SessionMetadata {
  */
 function generateBrowserFingerprint(): string {
   if (typeof window === 'undefined') return 'server';
-  
+
   const canvas = document.createElement('canvas');
   const ctx = canvas.getContext('2d');
   if (ctx) {
@@ -164,7 +166,7 @@ function generateBrowserFingerprint(): string {
     ctx.font = '14px Arial';
     ctx.fillText('Browser fingerprint', 2, 2);
   }
-  
+
   const fingerprint = [
     navigator.userAgent,
     navigator.language,
@@ -172,15 +174,15 @@ function generateBrowserFingerprint(): string {
     Intl.DateTimeFormat().resolvedOptions().timeZone,
     canvas.toDataURL(),
   ].join('|');
-  
+
   // Simple hash function
   let hash = 0;
   for (let i = 0; i < fingerprint.length; i++) {
     const char = fingerprint.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
+    hash = (hash << 5) - hash + char;
     hash = hash & hash; // Convert to 32-bit integer
   }
-  
+
   return Math.abs(hash).toString(36);
 }
 
@@ -190,36 +192,35 @@ function generateBrowserFingerprint(): string {
 export async function validateSession() {
   try {
     const session = await authClient.getSession();
-    
+
     if (!session.data) {
       clearSessionMetadata();
       return { valid: false, reason: 'no_session' };
     }
-    
+
     // Check browser fingerprint consistency
     const storedMetadata = getSessionMetadata();
     const currentFingerprint = generateBrowserFingerprint();
-    
+
     if (storedMetadata && storedMetadata.fingerprint !== currentFingerprint) {
       console.warn('Session fingerprint mismatch detected');
       await authClient.signOut();
       clearSessionMetadata();
       return { valid: false, reason: 'fingerprint_mismatch' };
     }
-    
+
     // Update last activity
     updateSessionMetadata({
       fingerprint: currentFingerprint,
       lastActivity: Date.now(),
       userAgent: navigator.userAgent,
     });
-    
-    return { 
-      valid: true, 
+
+    return {
+      valid: true,
       session: session.data,
       user: session.data.user,
     };
-    
   } catch (error) {
     console.error('Session validation error:', error);
     clearSessionMetadata();
@@ -230,20 +231,24 @@ export async function validateSession() {
 /**
  * Check current session status (legacy compatibility)
  */
-export const checkSession = async (): Promise<{ user: any; session: any; authenticated: boolean }> => {
+export const checkSession = async (): Promise<{
+  user: any;
+  session: any;
+  authenticated: boolean;
+}> => {
   try {
     const baseURL = getBaseURL();
-    
+
     const response = await fetch(`${baseURL}/api/auth/session`, {
       credentials: 'include',
       headers: {
         'X-Requested-With': 'XMLHttpRequest',
       },
     });
-    
+
     if (response.ok) {
       const data = await response.json();
-      
+
       // Initialize session metadata if user is authenticated
       if (data.authenticated && data.user) {
         updateSessionMetadata({
@@ -252,7 +257,7 @@ export const checkSession = async (): Promise<{ user: any; session: any; authent
           userAgent: navigator.userAgent,
         });
       }
-      
+
       return data;
     } else {
       clearSessionMetadata();
@@ -272,22 +277,19 @@ export async function secureSignOut() {
   try {
     await signOut();
     clearSessionMetadata();
-    
+
     // Clear any additional client-side data
     if (typeof window !== 'undefined') {
       // Only clear auth-related data, not all localStorage
-      const authKeys = Object.keys(localStorage).filter(key => 
-        key.startsWith('auth_') || 
-        key.startsWith('session_') ||
-        key.includes('better-auth')
+      const authKeys = Object.keys(localStorage).filter(
+        key => key.startsWith('auth_') || key.startsWith('session_') || key.includes('better-auth')
       );
-      
+
       authKeys.forEach(key => localStorage.removeItem(key));
       sessionStorage.clear();
     }
-    
+
     return { success: true };
-    
   } catch (error) {
     console.error('Sign out error:', error);
     clearSessionMetadata();
@@ -300,7 +302,7 @@ export async function secureSignOut() {
  */
 function getSessionMetadata(): SessionMetadata | null {
   if (typeof window === 'undefined') return null;
-  
+
   try {
     const stored = localStorage.getItem(SESSION_METADATA_KEY);
     return stored ? JSON.parse(stored) : null;
@@ -311,10 +313,10 @@ function getSessionMetadata(): SessionMetadata | null {
 
 function updateSessionMetadata(metadata: Partial<SessionMetadata>) {
   if (typeof window === 'undefined') return;
-  
-  const current = getSessionMetadata() || {} as SessionMetadata;
+
+  const current = getSessionMetadata() || ({} as SessionMetadata);
   const updated = { ...current, ...metadata };
-  
+
   try {
     localStorage.setItem(SESSION_METADATA_KEY, JSON.stringify(updated));
   } catch (error) {
@@ -324,7 +326,7 @@ function updateSessionMetadata(metadata: Partial<SessionMetadata>) {
 
 function clearSessionMetadata() {
   if (typeof window === 'undefined') return;
-  
+
   try {
     localStorage.removeItem(SESSION_METADATA_KEY);
   } catch (error) {
@@ -337,7 +339,7 @@ function clearSessionMetadata() {
  */
 export function hasRole(user: any, requiredRole: string | string[]): boolean {
   if (!user?.role) return false;
-  
+
   const roles = Array.isArray(requiredRole) ? requiredRole : [requiredRole];
   return roles.includes(user.role);
 }
@@ -355,10 +357,10 @@ export function isCustomer(user: any): boolean {
  */
 export function startSessionRefresh() {
   if (typeof window === 'undefined') return;
-  
+
   // Refresh session every 5 minutes
   const refreshInterval = 5 * 60 * 1000;
-  
+
   const intervalId = setInterval(async () => {
     try {
       await validateSession();
@@ -366,7 +368,7 @@ export function startSessionRefresh() {
       console.warn('Background session refresh failed:', error);
     }
   }, refreshInterval);
-  
+
   // Return cleanup function
   return () => clearInterval(intervalId);
 }

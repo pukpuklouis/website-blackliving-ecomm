@@ -12,12 +12,12 @@ export function createLocalDB() {
   // This will only be used in development
   const { drizzle: drizzleLocal } = require('drizzle-orm/libsql');
   const { createClient } = require('@libsql/client');
-  
+
   const client = createClient({
     url: process.env.DATABASE_URL || 'file:./dev.db',
     authToken: process.env.TURSO_AUTH_TOKEN,
   });
-  
+
   return drizzleLocal(client, { schema });
 }
 

@@ -27,21 +27,8 @@ import {
 import { Button } from '@blackliving/ui';
 import { Input } from '@blackliving/ui';
 import { Badge } from '@blackliving/ui';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@blackliving/ui';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@blackliving/ui';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@blackliving/ui';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@blackliving/ui';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -107,10 +94,10 @@ const statusConfig = {
 };
 
 const categoryConfig = {
-  '睡眠知識': { label: '睡眠知識', color: 'bg-purple-100 text-purple-800' },
-  '產品介紹': { label: '產品介紹', color: 'bg-blue-100 text-blue-800' },
-  '健康生活': { label: '健康生活', color: 'bg-green-100 text-green-800' },
-  '門市活動': { label: '門市活動', color: 'bg-orange-100 text-orange-800' },
+  睡眠知識: { label: '睡眠知識', color: 'bg-purple-100 text-purple-800' },
+  產品介紹: { label: '產品介紹', color: 'bg-blue-100 text-blue-800' },
+  健康生活: { label: '健康生活', color: 'bg-green-100 text-green-800' },
+  門市活動: { label: '門市活動', color: 'bg-orange-100 text-orange-800' },
 };
 
 const columnHelper = createColumnHelper<Post>();
@@ -188,11 +175,9 @@ export default function PostManagement() {
   const columns = [
     columnHelper.accessor('title', {
       header: '文章標題',
-      cell: (info) => (
+      cell: info => (
         <div className="space-y-1">
-          <div className="font-medium text-gray-900 line-clamp-2">
-            {info.getValue()}
-          </div>
+          <div className="font-medium text-gray-900 line-clamp-2">{info.getValue()}</div>
           {info.row.original.featured && (
             <Badge variant="secondary" className="text-xs">
               精選
@@ -207,36 +192,28 @@ export default function PostManagement() {
     }),
     columnHelper.accessor('category', {
       header: '分類',
-      cell: (info) => {
+      cell: info => {
         const category = info.getValue();
         const config = categoryConfig[category as keyof typeof categoryConfig] || {
           label: category,
           color: 'bg-gray-100 text-gray-800',
         };
-        return (
-          <Badge className={`${config.color} text-xs font-medium`}>
-            {config.label}
-          </Badge>
-        );
+        return <Badge className={`${config.color} text-xs font-medium`}>{config.label}</Badge>;
       },
       size: 120,
     }),
     columnHelper.accessor('status', {
       header: '狀態',
-      cell: (info) => {
+      cell: info => {
         const status = info.getValue();
         const config = statusConfig[status];
-        return (
-          <Badge className={`${config.color} text-xs font-medium`}>
-            {config.label}
-          </Badge>
-        );
+        return <Badge className={`${config.color} text-xs font-medium`}>{config.label}</Badge>;
       },
       size: 100,
     }),
     columnHelper.accessor('authorName', {
       header: '作者',
-      cell: (info) => (
+      cell: info => (
         <div className="flex items-center gap-2 text-sm text-gray-600">
           <User className="h-4 w-4" />
           {info.getValue() || '未知作者'}
@@ -246,7 +223,7 @@ export default function PostManagement() {
     }),
     columnHelper.accessor('viewCount', {
       header: '瀏覽數',
-      cell: (info) => (
+      cell: info => (
         <div className="flex items-center gap-2 text-sm text-gray-600">
           <EyeIcon className="h-4 w-4" />
           {info.getValue().toLocaleString()}
@@ -256,17 +233,15 @@ export default function PostManagement() {
     }),
     columnHelper.accessor('readingTime', {
       header: '閱讀時間',
-      cell: (info) => (
-        <span className="text-sm text-gray-600">{info.getValue()} 分鐘</span>
-      ),
+      cell: info => <span className="text-sm text-gray-600">{info.getValue()} 分鐘</span>,
       size: 100,
     }),
     columnHelper.accessor('publishedAt', {
       header: '發布時間',
-      cell: (info) => {
+      cell: info => {
         const publishedAt = info.getValue();
         if (!publishedAt) return <span className="text-gray-400">未發布</span>;
-        
+
         return (
           <div className="text-sm text-gray-600">
             {format(new Date(publishedAt), 'yyyy/MM/dd HH:mm', { locale: zhTW })}
@@ -278,7 +253,7 @@ export default function PostManagement() {
     columnHelper.display({
       id: 'actions',
       header: '操作',
-      cell: (info) => (
+      cell: info => (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="sm">
@@ -326,15 +301,15 @@ export default function PostManagement() {
   // Apply filters
   useEffect(() => {
     const filters: ColumnFiltersState = [];
-    
+
     if (statusFilter !== 'all') {
       filters.push({ id: 'status', value: statusFilter });
     }
-    
+
     if (categoryFilter !== 'all') {
       filters.push({ id: 'category', value: categoryFilter });
     }
-    
+
     setColumnFilters(filters);
   }, [statusFilter, categoryFilter]);
 
@@ -352,9 +327,7 @@ export default function PostManagement() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">文章管理</h1>
-          <p className="text-gray-600 mt-1">
-            管理部落格文章與內容發布
-          </p>
+          <p className="text-gray-600 mt-1">管理部落格文章與內容發布</p>
         </div>
         <Button onClick={() => openBlogComposer()}>
           <PlusIcon className="h-4 w-4 mr-2" />
@@ -397,7 +370,7 @@ export default function PostManagement() {
               <Input
                 placeholder="搜尋文章標題或內容..."
                 value={globalFilter ?? ''}
-                onChange={(e) => setGlobalFilter(e.target.value)}
+                onChange={e => setGlobalFilter(e.target.value)}
                 className="pl-10"
               />
             </div>
@@ -433,9 +406,9 @@ export default function PostManagement() {
       <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
         <Table>
           <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
+            {table.getHeaderGroups().map(headerGroup => (
               <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => (
+                {headerGroup.headers.map(header => (
                   <TableHead
                     key={header.id}
                     style={{ width: header.getSize() }}
@@ -456,9 +429,9 @@ export default function PostManagement() {
           </TableHeader>
           <TableBody>
             {table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) => (
+              table.getRowModel().rows.map(row => (
                 <TableRow key={row.id}>
-                  {row.getVisibleCells().map((cell) => (
+                  {row.getVisibleCells().map(cell => (
                     <TableCell key={cell.id}>
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </TableCell>

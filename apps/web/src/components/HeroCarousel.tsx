@@ -5,8 +5,8 @@ import {
   CarouselItem,
   CarouselNext,
   CarouselPrevious,
-} from "@blackliving/ui";
-import { Button } from "@blackliving/ui";
+} from '@blackliving/ui';
+import { Button } from '@blackliving/ui';
 import Autoplay from 'embla-carousel-autoplay';
 
 interface HeroSlide {
@@ -25,9 +25,7 @@ interface HeroCarouselProps {
 }
 
 export default function HeroCarousel({ slides }: HeroCarouselProps) {
-  const plugin = React.useRef(
-    Autoplay({ delay: 5000, stopOnInteraction: true })
-  );
+  const plugin = React.useRef(Autoplay({ delay: 5000, stopOnInteraction: true }));
 
   return (
     <Carousel

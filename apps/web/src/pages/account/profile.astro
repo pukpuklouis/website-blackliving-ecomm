@@ -7,705 +7,756 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@blac
 // Client-side auth protection - API handles the real authorization
 ---
 
-<BaseLayout title="個人資料" description="管理您的帳號資訊、地址簿與偏好設定">
+<BaseLayout title='個人資料' description='管理您的帳號資訊、地址簿與偏好設定'>
   <header>
-  <main class="container mx-auto px-4 py-8">
-    <div class="max-w-6xl mx-auto">
-      <div class="mb-8">
-        <h1 class="text-3xl font-bold tracking-tight mb-2">個人資料</h1>
-        <p class="text-muted-foreground">管理您的帳號資訊、地址簿與偏好設定</p>
-      </div>
-      
-      <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
-        <AccountNav currentPage="profile" />
-        
-        <div class="lg:col-span-3 min-w-0">
-          <div class="min-w-[600px] min-h-[400px]">
-            <ProfileTabs client:load />
+    <main class='container mx-auto px-4 py-8'>
+      <div class='max-w-6xl mx-auto'>
+        <div class='mb-8'>
+          <h1 class='text-3xl font-bold tracking-tight mb-2'>個人資料</h1>
+          <p class='text-muted-foreground'>管理您的帳號資訊、地址簿與偏好設定</p>
+        </div>
+
+        <div class='grid grid-cols-1 lg:grid-cols-4 gap-8'>
+          <AccountNav currentPage='profile' />
+
+          <div class='lg:col-span-3 min-w-0'>
+            <div class='min-w-[600px] min-h-[400px]'>
+              <ProfileTabs client:load />
+            </div>
           </div>
         </div>
       </div>
-    </div>
-  </main>
-</BaseLayout>
+    </main>
+  </header>
 
-<script>
-  // Get API base URL
-  const API_BASE = import.meta.env.PUBLIC_API_URL || 'http://localhost:8787';
+  <script>
+    // Get API base URL
+    const API_BASE = import.meta.env.PUBLIC_API_URL || 'http://localhost:8787';
 
-  // UI Elements
-  const loading = document.getElementById('loading');
-  const notAuthenticated = document.getElementById('not-authenticated');
-  const profileForm = document.getElementById('profile-form') as HTMLFormElement | null;
-  const updateBtn = document.getElementById('update-btn') as HTMLButtonElement | null;
-  const updateText = document.getElementById('update-text');
-  const updateSpinner = document.getElementById('update-spinner');
-  const resetBtn = document.getElementById('reset-btn') as HTMLButtonElement | null;
-  const message = document.getElementById('message');
-  const syncIndicator = document.getElementById('sync-indicator');
-  const analyticsSection = document.getElementById('analytics-section');
+    // UI Elements
+    const loading = document.getElementById('loading');
+    const notAuthenticated = document.getElementById('not-authenticated');
+    const profileForm = document.getElementById('profile-form') as HTMLFormElement | null;
+    const updateBtn = document.getElementById('update-btn') as HTMLButtonElement | null;
+    const updateText = document.getElementById('update-text');
+    const updateSpinner = document.getElementById('update-spinner');
+    const resetBtn = document.getElementById('reset-btn') as HTMLButtonElement | null;
+    const message = document.getElementById('message');
+    const syncIndicator = document.getElementById('sync-indicator');
+    const analyticsSection = document.getElementById('analytics-section');
 
-  // Form validation elements
-  const nameError = document.getElementById('name-error');
-  const phoneError = document.getElementById('phone-error');
+    // Form validation elements
+    const nameError = document.getElementById('name-error');
+    const phoneError = document.getElementById('phone-error');
 
-  // Cache configuration for stale-while-revalidate pattern
-  const profileCache = {
-    basic: { data: null as any, timestamp: null as number | null, ttl: 300000 }, // 5 min
-    full: { data: null as any, timestamp: null as number | null, ttl: 600000 },  // 10 min
-    analytics: { data: null as any, timestamp: null as number | null, ttl: 900000 } // 15 min
-  };
-
-  let currentUser: any = null; // Used by auth check
-  let originalFormData: any = null;
-  let isFormDirty = false;
-
-  // ======================
-  // CACHING UTILITIES
-  // ======================
-
-  function isExpired(cacheEntry: typeof profileCache.basic): boolean {
-    if (!cacheEntry.timestamp) return true;
-    return Date.now() - cacheEntry.timestamp > cacheEntry.ttl;
-  }
-
-  function setCache(type: keyof typeof profileCache, data: any): void {
-    profileCache[type] = {
-      data,
-      timestamp: Date.now(),
-      ttl: profileCache[type].ttl
+    // Cache configuration for stale-while-revalidate pattern
+    const profileCache = {
+      basic: { data: null as any, timestamp: null as number | null, ttl: 300000 }, // 5 min
+      full: { data: null as any, timestamp: null as number | null, ttl: 600000 }, // 10 min
+      analytics: { data: null as any, timestamp: null as number | null, ttl: 900000 }, // 15 min
     };
-  }
 
-  function getCache(type: keyof typeof profileCache): any | null {
-    const entry = profileCache[type];
-    if (!entry.data || isExpired(entry)) return null;
-    return entry.data;
-  }
+    let currentUser: any = null; // Used by auth check
+    let originalFormData: any = null;
+    let isFormDirty = false;
 
-  async function refreshInBackground(type: keyof typeof profileCache): Promise<void> {
-    try {
-      // Only refresh basic and full profile data, skip analytics
-      if (type === 'analytics') return;
-      
-      const endpoint = type === 'basic' ? '/profile' : '/profile/full';
-      const response = await fetch(`${API_BASE}/api/customers${endpoint}`, {
-        credentials: 'include',
-      });
+    // ======================
+    // CACHING UTILITIES
+    // ======================
 
-      if (response.ok) {
-        const result = await response.json();
-        if (result.success) {
-          setCache(type, result.data);
-          
-          // Update UI if basic profile was refreshed
-          if (type === 'basic' && result.data) {
-            updateSyncIndicator(true);
+    function isExpired(cacheEntry: typeof profileCache.basic): boolean {
+      if (!cacheEntry.timestamp) return true;
+      return Date.now() - cacheEntry.timestamp > cacheEntry.ttl;
+    }
+
+    function setCache(type: keyof typeof profileCache, data: any): void {
+      profileCache[type] = {
+        data,
+        timestamp: Date.now(),
+        ttl: profileCache[type].ttl,
+      };
+    }
+
+    function getCache(type: keyof typeof profileCache): any | null {
+      const entry = profileCache[type];
+      if (!entry.data || isExpired(entry)) return null;
+      return entry.data;
+    }
+
+    async function refreshInBackground(type: keyof typeof profileCache): Promise<void> {
+      try {
+        // Only refresh basic and full profile data, skip analytics
+        if (type === 'analytics') return;
+
+        const endpoint = type === 'basic' ? '/profile' : '/profile/full';
+        const response = await fetch(`${API_BASE}/api/customers${endpoint}`, {
+          credentials: 'include',
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          if (result.success) {
+            setCache(type, result.data);
+
+            // Update UI if basic profile was refreshed
+            if (type === 'basic' && result.data) {
+              updateSyncIndicator(true);
+            }
           }
         }
+      } catch (error) {
+        console.warn(`Background refresh failed for ${type}:`, error);
       }
-    } catch (error) {
-      console.warn(`Background refresh failed for ${type}:`, error);
     }
-  }
 
-  // ======================
-  // API FUNCTIONS
-  // ======================
+    // ======================
+    // API FUNCTIONS
+    // ======================
 
-  async function checkAuth(): Promise<boolean> {
-    try {
-      const response = await fetch(`${API_BASE}/api/auth/session`, {
-        credentials: 'include',
-      });
+    async function checkAuth(): Promise<boolean> {
+      try {
+        const response = await fetch(`${API_BASE}/api/auth/session`, {
+          credentials: 'include',
+        });
 
-      if (response.ok) {
-        const data = await response.json();
-        console.log('Auth check response:', data); // Debug log
-        
-        if (data.user) {
-          currentUser = data.user;
-          console.log('Authenticated user:', currentUser.role, currentUser.id); // Debug log
-          
-          // Allow both admin and customer users
-          if (data.user.role === 'admin' || data.user.role === 'customer') {
-            return true;
-          } else {
-            console.warn('User has unsupported role:', data.user.role);
-            return false;
+        if (response.ok) {
+          const data = await response.json();
+          console.log('Auth check response:', data); // Debug log
+
+          if (data.user) {
+            currentUser = data.user;
+            console.log('Authenticated user:', currentUser.role, currentUser.id); // Debug log
+
+            // Allow both admin and customer users
+            if (data.user.role === 'admin' || data.user.role === 'customer') {
+              return true;
+            } else {
+              console.warn('User has unsupported role:', data.user.role);
+              return false;
+            }
           }
         }
+        console.log('No authenticated user found');
+        return false;
+      } catch (error) {
+        console.error('Auth check failed:', error);
+        return false;
       }
-      console.log('No authenticated user found');
-      return false;
-    } catch (error) {
-      console.error('Auth check failed:', error);
-      return false;
     }
-  }
 
-  async function loadProfileData(type: 'basic' | 'full' | 'analytics'): Promise<any> {
-    // Skip analytics completely
-    if (type === 'analytics') {
-      console.warn('Analytics endpoint has been removed');
+    async function loadProfileData(type: 'basic' | 'full' | 'analytics'): Promise<any> {
+      // Skip analytics completely
+      if (type === 'analytics') {
+        console.warn('Analytics endpoint has been removed');
+        return null;
+      }
+
+      // Try cache first
+      const cachedData = getCache(type);
+      if (cachedData) {
+        // Serve cached data immediately, refresh in background
+        refreshInBackground(type);
+        return cachedData;
+      }
+
+      // Fresh fetch if no cache
+      try {
+        const endpoint = type === 'basic' ? '/profile' : '/profile/full';
+        const response = await fetch(`${API_BASE}/api/customers${endpoint}`, {
+          credentials: 'include',
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          if (result.success) {
+            setCache(type, result.data);
+            return result.data;
+          }
+        }
+        throw new Error(`Failed to load ${type} profile`);
+      } catch (error) {
+        console.error(`Error loading ${type} profile:`, error);
+        throw error;
+      }
+    }
+
+    async function updateProfile(formData: Record<string, any>): Promise<any> {
+      const response = await fetch(`${API_BASE}/api/customers/profile`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify(formData),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Update failed');
+      }
+
+      const result = await response.json();
+
+      // Clear cache to force fresh data
+      profileCache.basic.data = null;
+      profileCache.full.data = null;
+
+      return result;
+    }
+
+    // ======================
+    // VALIDATION FUNCTIONS
+    // ======================
+
+    function validateName(name: string): string | null {
+      if (!name || name.trim().length === 0) {
+        return '姓名為必填項目';
+      }
+      if (name.length > 100) {
+        return '姓名不能超過 100 個字符';
+      }
       return null;
     }
 
-    // Try cache first
-    const cachedData = getCache(type);
-    if (cachedData) {
-      // Serve cached data immediately, refresh in background
-      refreshInBackground(type);
-      return cachedData;
-    }
+    function validatePhone(phone: string): string | null {
+      if (!phone || phone.trim() === '') return null; // Phone is optional
 
-    // Fresh fetch if no cache
-    try {
-      const endpoint = type === 'basic' ? '/profile' : '/profile/full';
-      const response = await fetch(`${API_BASE}/api/customers${endpoint}`, {
-        credentials: 'include',
-      });
+      // Remove any spaces or dashes
+      const cleanPhone = phone.replace(/[\s-]/g, '');
 
-      if (response.ok) {
-        const result = await response.json();
-        if (result.success) {
-          setCache(type, result.data);
-          return result.data;
-        }
+      // Taiwan mobile number validation: starts with 09 and has 10 digits total
+      const phoneRegex = /^09\d{8}$/;
+      if (!phoneRegex.test(cleanPhone)) {
+        return '手機號碼格式不正確，請輸入 10 位數字（例：0912345678）';
       }
-      throw new Error(`Failed to load ${type} profile`);
-    } catch (error) {
-      console.error(`Error loading ${type} profile:`, error);
-      throw error;
+      return null;
     }
-  }
 
-  async function updateProfile(formData: Record<string, any>): Promise<any> {
-    const response = await fetch(`${API_BASE}/api/customers/profile`, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      credentials: 'include',
-      body: JSON.stringify(formData),
+    // Email validation removed as email is read-only
+
+    function showFieldError(errorElement: HTMLElement, error: string | null): void {
+      if (error) {
+        errorElement.textContent = error;
+        errorElement.classList.remove('hidden');
+      } else {
+        errorElement.classList.add('hidden');
+      }
+    }
+
+    function validateForm(): boolean {
+      if (!profileForm) return false;
+      const formData = new FormData(profileForm);
+      const name = formData.get('name') as string;
+      const phone = formData.get('phone') as string;
+
+      const nameErr = validateName(name);
+      const phoneErr = validatePhone(phone);
+
+      if (nameError) showFieldError(nameError, nameErr);
+      if (phoneError) showFieldError(phoneError, phoneErr);
+
+      // Add visual feedback to form fields
+      const nameField = document.getElementById('name') as HTMLInputElement;
+      const phoneField = document.getElementById('phone') as HTMLInputElement;
+
+      // Update field border colors based on validation with shadcn classes
+      if (nameErr && nameField) {
+        nameField.classList.add('border-destructive', 'focus-visible:ring-destructive');
+        nameField.classList.remove('border-input', 'focus-visible:ring-ring');
+      } else if (nameField) {
+        nameField.classList.remove('border-destructive', 'focus-visible:ring-destructive');
+        nameField.classList.add('border-input', 'focus-visible:ring-ring');
+      }
+
+      if (phoneErr && phoneField) {
+        phoneField.classList.add('border-destructive', 'focus-visible:ring-destructive');
+        phoneField.classList.remove('border-input', 'focus-visible:ring-ring');
+      } else if (phoneField) {
+        phoneField.classList.remove('border-destructive', 'focus-visible:ring-destructive');
+        phoneField.classList.add('border-input', 'focus-visible:ring-ring');
+      }
+
+      return !nameErr && !phoneErr;
+    }
+
+    // ======================
+    // UI FUNCTIONS
+    // ======================
+
+    function updateSyncIndicator(synced: boolean): void {
+      if (synced && syncIndicator) {
+        syncIndicator.classList.remove('hidden');
+        setTimeout(() => syncIndicator?.classList.add('hidden'), 3000);
+      }
+    }
+
+    function showProfile(): void {
+      loading?.classList.add('hidden');
+      notAuthenticated?.classList.add('hidden');
+      profileForm?.classList.remove('hidden');
+    }
+
+    function showNotAuthenticated(): void {
+      loading?.classList.add('hidden');
+      profileForm?.classList.add('hidden');
+      notAuthenticated?.classList.remove('hidden');
+    }
+
+    function showMessage(text: string, type: 'success' | 'error'): void {
+      if (!message) return;
+      message.textContent = text;
+      message.className = `p-4 rounded-lg border ${type === 'success' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-red-50 text-red-700 border-red-200'}`;
+      message.classList.remove('hidden');
+
+      setTimeout(() => {
+        message?.classList.add('hidden');
+      }, 5000);
+    }
+
+    function setLoadingState(loading: boolean): void {
+      if (updateBtn) updateBtn.disabled = loading;
+      if (loading) {
+        if (updateText) updateText.textContent = '更新中...';
+        updateSpinner?.classList.remove('hidden');
+      } else {
+        if (updateText) updateText.textContent = '更新資料';
+        updateSpinner?.classList.add('hidden');
+      }
+    }
+
+    function populateForm(profileData: any): void {
+      (document.getElementById('name') as HTMLInputElement).value = profileData.name || '';
+      (document.getElementById('email') as HTMLInputElement).value = profileData.email || '';
+      (document.getElementById('phone') as HTMLInputElement).value = profileData.phone || '';
+
+      // Extended fields from customer profile
+      if (profileData.customerProfile) {
+        const cp = profileData.customerProfile;
+        (document.getElementById('birthday') as HTMLInputElement).value = cp.birthday || '';
+
+        // Handle shadcn Select components with delay to ensure they're rendered
+        setTimeout(() => {
+          if (cp.gender) {
+            const genderOptions: Record<string, string> = {
+              male: '男性',
+              female: '女性',
+              other: '其他',
+            };
+            const genderTrigger = document.querySelector(
+              '[name="gender"] button[role="combobox"]'
+            ) as HTMLButtonElement;
+            const genderHiddenInput = document.querySelector(
+              '[name="gender"] input[type="hidden"]'
+            ) as HTMLInputElement;
+
+            if (genderTrigger && genderHiddenInput) {
+              genderHiddenInput.value = cp.gender;
+              genderTrigger.textContent = genderOptions[cp.gender as string] || '請選擇性別';
+              genderTrigger.setAttribute('data-value', cp.gender);
+            }
+          }
+
+          if (cp.contactPreference) {
+            const contactOptions: Record<string, string> = {
+              email: '電子郵件',
+              phone: '電話',
+              sms: '簡訊',
+            };
+            const contactTrigger = document.querySelector(
+              '[name="contactPreference"] button[role="combobox"]'
+            ) as HTMLButtonElement;
+            const contactHiddenInput = document.querySelector(
+              '[name="contactPreference"] input[type="hidden"]'
+            ) as HTMLInputElement;
+
+            if (contactTrigger && contactHiddenInput) {
+              contactHiddenInput.value = cp.contactPreference;
+              contactTrigger.textContent =
+                contactOptions[cp.contactPreference as string] || '選擇聯絡方式';
+              contactTrigger.setAttribute('data-value', cp.contactPreference);
+            }
+          }
+        }, 100);
+      } else {
+        // If no customerProfile, check if these fields exist directly on user
+        if (profileData.birthday) {
+          (document.getElementById('birthday') as HTMLInputElement).value =
+            profileData.birthday || '';
+        }
+
+        setTimeout(() => {
+          if (profileData.gender) {
+            const genderOptions: Record<string, string> = {
+              male: '男性',
+              female: '女性',
+              other: '其他',
+            };
+            const genderTrigger = document.querySelector(
+              '[name="gender"] button[role="combobox"]'
+            ) as HTMLButtonElement;
+            const genderHiddenInput = document.querySelector(
+              '[name="gender"] input[type="hidden"]'
+            ) as HTMLInputElement;
+
+            if (genderTrigger && genderHiddenInput) {
+              genderHiddenInput.value = profileData.gender;
+              genderTrigger.textContent =
+                genderOptions[profileData.gender as string] || '請選擇性別';
+              genderTrigger.setAttribute('data-value', profileData.gender);
+            }
+          }
+
+          if (profileData.contactPreference) {
+            const contactOptions: Record<string, string> = {
+              email: '電子郵件',
+              phone: '電話',
+              sms: '簡訊',
+            };
+            const contactTrigger = document.querySelector(
+              '[name="contactPreference"] button[role="combobox"]'
+            ) as HTMLButtonElement;
+            const contactHiddenInput = document.querySelector(
+              '[name="contactPreference"] input[type="hidden"]'
+            ) as HTMLInputElement;
+
+            if (contactTrigger && contactHiddenInput) {
+              contactHiddenInput.value = profileData.contactPreference;
+              contactTrigger.textContent =
+                contactOptions[profileData.contactPreference as string] || '選擇聯絡方式';
+              contactTrigger.setAttribute('data-value', profileData.contactPreference);
+            }
+          }
+        }, 100);
+      }
+
+      // Store original data for reset functionality - also delay to ensure selects are set
+      setTimeout(() => {
+        originalFormData = new FormData(profileForm);
+        isFormDirty = false;
+      }, 150);
+    }
+
+    function populateAnalytics(analyticsData: any): void {
+      if (!analyticsData) return;
+
+      const totalOrdersEl = document.getElementById('total-orders');
+      const totalSpentEl = document.getElementById('total-spent');
+      const avgOrderValueEl = document.getElementById('avg-order-value');
+      const customerSegmentEl = document.getElementById('customer-segment');
+
+      if (totalOrdersEl) totalOrdersEl.textContent = analyticsData.orderCount || '0';
+      if (totalSpentEl)
+        totalSpentEl.textContent = analyticsData.totalSpent
+          ? `NT$ ${analyticsData.totalSpent.toLocaleString()}`
+          : 'NT$ 0';
+      if (avgOrderValueEl)
+        avgOrderValueEl.textContent = analyticsData.avgOrderValue
+          ? `NT$ ${Math.round(analyticsData.avgOrderValue).toLocaleString()}`
+          : 'NT$ 0';
+
+      const segmentMap: Record<string, string> = {
+        vip: 'VIP 會員',
+        regular: '一般會員',
+        new: '新會員',
+        dormant: '休眠會員',
+      };
+
+      if (customerSegmentEl) {
+        customerSegmentEl.textContent = segmentMap[analyticsData.segment] || '新會員';
+
+        // Update styling based on segment
+        customerSegmentEl.className = `text-lg font-semibold ${
+          analyticsData.segment === 'vip'
+            ? 'text-yellow-600'
+            : analyticsData.segment === 'regular'
+              ? 'text-blue-600'
+              : 'text-gray-600'
+        }`;
+      }
+
+      analyticsSection?.classList.remove('hidden');
+    }
+
+    function resetForm(): void {
+      if (originalFormData) {
+        // Reset all form fields to original values
+        for (const [key, value] of originalFormData.entries()) {
+          const element = document.querySelector(`[name="${key}"]`) as
+            | HTMLInputElement
+            | HTMLSelectElement;
+          if (element) {
+            element.value = value as string;
+          }
+        }
+        isFormDirty = false;
+      }
+    }
+
+    // ======================
+    // EVENT HANDLERS
+    // ======================
+
+    // Track form changes for dirty state
+    profileForm?.addEventListener('input', () => {
+      isFormDirty = true;
     });
 
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Update failed');
-    }
+    // Handle profile update with optimistic updates
+    profileForm?.addEventListener('submit', async e => {
+      e.preventDefault();
 
-    const result = await response.json();
-    
-    // Clear cache to force fresh data
-    profileCache.basic.data = null;
-    profileCache.full.data = null;
-    
-    return result;
-  }
-
-  // ======================
-  // VALIDATION FUNCTIONS
-  // ======================
-
-  function validateName(name: string): string | null {
-    if (!name || name.trim().length === 0) {
-      return '姓名為必填項目';
-    }
-    if (name.length > 100) {
-      return '姓名不能超過 100 個字符';
-    }
-    return null;
-  }
-
-  function validatePhone(phone: string): string | null {
-    if (!phone || phone.trim() === '') return null; // Phone is optional
-    
-    // Remove any spaces or dashes
-    const cleanPhone = phone.replace(/[\s-]/g, '');
-    
-    // Taiwan mobile number validation: starts with 09 and has 10 digits total
-    const phoneRegex = /^09\d{8}$/;
-    if (!phoneRegex.test(cleanPhone)) {
-      return '手機號碼格式不正確，請輸入 10 位數字（例：0912345678）';
-    }
-    return null;
-  }
-
-  // Email validation removed as email is read-only
-
-  function showFieldError(errorElement: HTMLElement, error: string | null): void {
-    if (error) {
-      errorElement.textContent = error;
-      errorElement.classList.remove('hidden');
-    } else {
-      errorElement.classList.add('hidden');
-    }
-  }
-
-  function validateForm(): boolean {
-    if (!profileForm) return false;
-    const formData = new FormData(profileForm);
-    const name = formData.get('name') as string;
-    const phone = formData.get('phone') as string;
-
-    const nameErr = validateName(name);
-    const phoneErr = validatePhone(phone);
-
-    if (nameError) showFieldError(nameError, nameErr);
-    if (phoneError) showFieldError(phoneError, phoneErr);
-
-    // Add visual feedback to form fields
-    const nameField = document.getElementById('name') as HTMLInputElement;
-    const phoneField = document.getElementById('phone') as HTMLInputElement;
-
-    // Update field border colors based on validation with shadcn classes
-    if (nameErr && nameField) {
-      nameField.classList.add('border-destructive', 'focus-visible:ring-destructive');
-      nameField.classList.remove('border-input', 'focus-visible:ring-ring');
-    } else if (nameField) {
-      nameField.classList.remove('border-destructive', 'focus-visible:ring-destructive');
-      nameField.classList.add('border-input', 'focus-visible:ring-ring');
-    }
-
-    if (phoneErr && phoneField) {
-      phoneField.classList.add('border-destructive', 'focus-visible:ring-destructive');
-      phoneField.classList.remove('border-input', 'focus-visible:ring-ring');
-    } else if (phoneField) {
-      phoneField.classList.remove('border-destructive', 'focus-visible:ring-destructive');
-      phoneField.classList.add('border-input', 'focus-visible:ring-ring');
-    }
-
-    return !nameErr && !phoneErr;
-  }
-
-  // ======================
-  // UI FUNCTIONS
-  // ======================
-
-  function updateSyncIndicator(synced: boolean): void {
-    if (synced && syncIndicator) {
-      syncIndicator.classList.remove('hidden');
-      setTimeout(() => syncIndicator?.classList.add('hidden'), 3000);
-    }
-  }
-
-  function showProfile(): void {
-    loading?.classList.add('hidden');
-    notAuthenticated?.classList.add('hidden');
-    profileForm?.classList.remove('hidden');
-  }
-
-  function showNotAuthenticated(): void {
-    loading?.classList.add('hidden');
-    profileForm?.classList.add('hidden');
-    notAuthenticated?.classList.remove('hidden');
-  }
-
-  function showMessage(text: string, type: 'success' | 'error'): void {
-    if (!message) return;
-    message.textContent = text;
-    message.className = `p-4 rounded-lg border ${type === 'success' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-red-50 text-red-700 border-red-200'}`;
-    message.classList.remove('hidden');
-    
-    setTimeout(() => {
-      message?.classList.add('hidden');
-    }, 5000);
-  }
-
-  function setLoadingState(loading: boolean): void {
-    if (updateBtn) updateBtn.disabled = loading;
-    if (loading) {
-      if (updateText) updateText.textContent = '更新中...';
-      updateSpinner?.classList.remove('hidden');
-    } else {
-      if (updateText) updateText.textContent = '更新資料';
-      updateSpinner?.classList.add('hidden');
-    }
-  }
-
-  function populateForm(profileData: any): void {
-    (document.getElementById('name') as HTMLInputElement).value = profileData.name || '';
-    (document.getElementById('email') as HTMLInputElement).value = profileData.email || '';
-    (document.getElementById('phone') as HTMLInputElement).value = profileData.phone || '';
-    
-    // Extended fields from customer profile
-    if (profileData.customerProfile) {
-      const cp = profileData.customerProfile;
-      (document.getElementById('birthday') as HTMLInputElement).value = cp.birthday || '';
-      
-      // Handle shadcn Select components with delay to ensure they're rendered
-      setTimeout(() => {
-        if (cp.gender) {
-          const genderOptions: Record<string, string> = { 'male': '男性', 'female': '女性', 'other': '其他' };
-          const genderTrigger = document.querySelector('[name="gender"] button[role="combobox"]') as HTMLButtonElement;
-          const genderHiddenInput = document.querySelector('[name="gender"] input[type="hidden"]') as HTMLInputElement;
-          
-          if (genderTrigger && genderHiddenInput) {
-            genderHiddenInput.value = cp.gender;
-            genderTrigger.textContent = genderOptions[cp.gender as string] || '請選擇性別';
-            genderTrigger.setAttribute('data-value', cp.gender);
-          }
-        }
-        
-        if (cp.contactPreference) {
-          const contactOptions: Record<string, string> = { 'email': '電子郵件', 'phone': '電話', 'sms': '簡訊' };
-          const contactTrigger = document.querySelector('[name="contactPreference"] button[role="combobox"]') as HTMLButtonElement;
-          const contactHiddenInput = document.querySelector('[name="contactPreference"] input[type="hidden"]') as HTMLInputElement;
-          
-          if (contactTrigger && contactHiddenInput) {
-            contactHiddenInput.value = cp.contactPreference;
-            contactTrigger.textContent = contactOptions[cp.contactPreference as string] || '選擇聯絡方式';
-            contactTrigger.setAttribute('data-value', cp.contactPreference);
-          }
-        }
-      }, 100);
-    } else {
-      // If no customerProfile, check if these fields exist directly on user
-      if (profileData.birthday) {
-        (document.getElementById('birthday') as HTMLInputElement).value = profileData.birthday || '';
+      if (!validateForm()) {
+        return;
       }
-      
-      setTimeout(() => {
-        if (profileData.gender) {
-          const genderOptions: Record<string, string> = { 'male': '男性', 'female': '女性', 'other': '其他' };
-          const genderTrigger = document.querySelector('[name="gender"] button[role="combobox"]') as HTMLButtonElement;
-          const genderHiddenInput = document.querySelector('[name="gender"] input[type="hidden"]') as HTMLInputElement;
-          
-          if (genderTrigger && genderHiddenInput) {
-            genderHiddenInput.value = profileData.gender;
-            genderTrigger.textContent = genderOptions[profileData.gender as string] || '請選擇性別';
-            genderTrigger.setAttribute('data-value', profileData.gender);
+
+      setLoadingState(true);
+
+      const formData = new FormData(profileForm);
+      const updateData: Record<string, any> = {};
+
+      // Only include non-empty values
+      formData.forEach((value, key) => {
+        if (value && key !== 'email') {
+          // Email is readonly
+          if (key === 'phone') {
+            // Clean phone number before sending
+            const cleanPhone = (value as string).replace(/[\s-]/g, '');
+            if (cleanPhone) {
+              updateData[key] = cleanPhone;
+            }
+          } else if (key === 'gender' || key === 'contactPreference') {
+            // Handle shadcn Select values
+            const selectInput = document.querySelector(
+              `[name="${key}"] input[type="hidden"]`
+            ) as HTMLInputElement;
+            if (selectInput?.value) {
+              updateData[key] = selectInput.value;
+            }
+          } else {
+            updateData[key] = value;
           }
         }
-        
-        if (profileData.contactPreference) {
-          const contactOptions: Record<string, string> = { 'email': '電子郵件', 'phone': '電話', 'sms': '簡訊' };
-          const contactTrigger = document.querySelector('[name="contactPreference"] button[role="combobox"]') as HTMLButtonElement;
-          const contactHiddenInput = document.querySelector('[name="contactPreference"] input[type="hidden"]') as HTMLInputElement;
-          
-          if (contactTrigger && contactHiddenInput) {
-            contactHiddenInput.value = profileData.contactPreference;
-            contactTrigger.textContent = contactOptions[profileData.contactPreference as string] || '選擇聯絡方式';
-            contactTrigger.setAttribute('data-value', profileData.contactPreference);
-          }
+      });
+
+      try {
+        // Optimistic update - show success immediately
+        const currentData = getCache('basic');
+        if (currentData) {
+          Object.assign(currentData, updateData);
+          updateSyncIndicator(true);
         }
-      }, 100);
-    }
 
-    // Store original data for reset functionality - also delay to ensure selects are set
-    setTimeout(() => {
-      originalFormData = new FormData(profileForm);
-      isFormDirty = false;
-    }, 150);
-  }
+        await updateProfile(updateData);
 
-  function populateAnalytics(analyticsData: any): void {
-    if (!analyticsData) return;
+        showMessage('個人資料更新成功', 'success');
+        isFormDirty = false;
 
-    const totalOrdersEl = document.getElementById('total-orders');
-    const totalSpentEl = document.getElementById('total-spent');
-    const avgOrderValueEl = document.getElementById('avg-order-value');
-    const customerSegmentEl = document.getElementById('customer-segment');
+        // Refresh profile data in background
+        setTimeout(() => refreshInBackground('basic'), 1000);
+      } catch (error) {
+        console.error('Profile update failed:', error);
+        showMessage(error instanceof Error ? error.message : '更新失敗，請稍後再試', 'error');
 
-    if (totalOrdersEl) totalOrdersEl.textContent = analyticsData.orderCount || '0';
-    if (totalSpentEl) totalSpentEl.textContent = analyticsData.totalSpent ? 
-      `NT$ ${analyticsData.totalSpent.toLocaleString()}` : 'NT$ 0';
-    if (avgOrderValueEl) avgOrderValueEl.textContent = analyticsData.avgOrderValue ? 
-      `NT$ ${Math.round(analyticsData.avgOrderValue).toLocaleString()}` : 'NT$ 0';
-    
-    const segmentMap: Record<string, string> = {
-      'vip': 'VIP 會員',
-      'regular': '一般會員', 
-      'new': '新會員',
-      'dormant': '休眠會員'
-    };
-    
-    if (customerSegmentEl) {
-      customerSegmentEl.textContent = segmentMap[analyticsData.segment] || '新會員';
-      
-      // Update styling based on segment
-      customerSegmentEl.className = `text-lg font-semibold ${
-        analyticsData.segment === 'vip' ? 'text-yellow-600' :
-        analyticsData.segment === 'regular' ? 'text-blue-600' :
-        'text-gray-600'
-      }`;
-    }
+        // Revert optimistic update on error
+        await loadBasicProfile();
+      } finally {
+        setLoadingState(false);
+      }
+    });
 
-    analyticsSection?.classList.remove('hidden');
-  }
-
-  function resetForm(): void {
-    if (originalFormData) {
-      // Reset all form fields to original values
-      for (const [key, value] of originalFormData.entries()) {
-        const element = document.querySelector(`[name="${key}"]`) as HTMLInputElement | HTMLSelectElement;
-        if (element) {
-          element.value = value as string;
+    // Reset button handler
+    resetBtn?.addEventListener('click', () => {
+      if (isFormDirty) {
+        if (confirm('確定要重設所有變更嗎？')) {
+          resetForm();
+          showMessage('表單已重設', 'success');
         }
       }
-      isFormDirty = false;
-    }
-  }
+    });
 
-  // ======================
-  // EVENT HANDLERS
-  // ======================
+    // Add real-time validation with enhanced visual feedback
+    const nameField = document.getElementById('name');
+    const phoneField = document.getElementById('phone');
 
-  // Track form changes for dirty state
-  profileForm?.addEventListener('input', () => {
-    isFormDirty = true;
-  });
+    nameField?.addEventListener('blur', e => {
+      const target = e.target as HTMLInputElement;
+      const name = target.value;
+      const error = validateName(name);
 
-  // Handle profile update with optimistic updates
-  profileForm?.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    
-    if (!validateForm()) {
-      return;
-    }
+      if (nameError) showFieldError(nameError, error);
 
-    setLoadingState(true);
+      // Visual feedback with shadcn classes
+      if (error) {
+        target.classList.add('border-destructive', 'focus-visible:ring-destructive');
+        target.classList.remove('border-input', 'focus-visible:ring-ring');
+      } else {
+        target.classList.remove('border-destructive', 'focus-visible:ring-destructive');
+        target.classList.add('border-input', 'focus-visible:ring-ring');
+      }
+    });
 
-    const formData = new FormData(profileForm);
-    const updateData: Record<string, any> = {};
-    
-    // Only include non-empty values
-    formData.forEach((value, key) => {
-      if (value && key !== 'email') { // Email is readonly
-        if (key === 'phone') {
-          // Clean phone number before sending
-          const cleanPhone = (value as string).replace(/[\s-]/g, '');
-          if (cleanPhone) {
-            updateData[key] = cleanPhone;
-          }
-        } else if (key === 'gender' || key === 'contactPreference') {
-          // Handle shadcn Select values
-          const selectInput = document.querySelector(`[name="${key}"] input[type="hidden"]`) as HTMLInputElement;
-          if (selectInput?.value) {
-            updateData[key] = selectInput.value;
+    nameField?.addEventListener('input', e => {
+      const target = e.target as HTMLInputElement;
+      // Clear error state on input
+      if (target.classList.contains('border-destructive')) {
+        target.classList.remove('border-destructive', 'focus-visible:ring-destructive');
+        target.classList.add('border-input', 'focus-visible:ring-ring');
+        nameError?.classList.add('hidden');
+      }
+    });
+
+    phoneField?.addEventListener('input', e => {
+      const target = e.target as HTMLInputElement;
+      let value = target.value;
+
+      // Only allow numbers
+      value = value.replace(/\D/g, '');
+
+      // Limit to 10 digits
+      if (value.length > 10) {
+        value = value.substring(0, 10);
+      }
+
+      target.value = value;
+
+      // Clear error state on input
+      if (target.classList.contains('border-destructive')) {
+        target.classList.remove('border-destructive', 'focus-visible:ring-destructive');
+        target.classList.add('border-input', 'focus-visible:ring-ring');
+        phoneError?.classList.add('hidden');
+      }
+    });
+
+    phoneField?.addEventListener('blur', e => {
+      const target = e.target as HTMLInputElement;
+      const phone = target.value;
+      const error = validatePhone(phone);
+
+      if (phoneError) showFieldError(phoneError, error);
+
+      // Visual feedback with shadcn classes
+      if (error) {
+        target.classList.add('border-destructive', 'focus-visible:ring-destructive');
+        target.classList.remove('border-input', 'focus-visible:ring-ring');
+      } else {
+        target.classList.remove('border-destructive', 'focus-visible:ring-destructive');
+        target.classList.add('border-input', 'focus-visible:ring-ring');
+      }
+    });
+
+    // ======================
+    // NEW FEATURE HANDLERS
+    // ======================
+
+    // Address Management Variables
+    let addresses: any[] = [];
+    let editingAddressId: string | null = null;
+
+    const addressModal = document.getElementById('address-modal');
+    const addressForm = document.getElementById('address-form') as HTMLFormElement | null;
+    const addressModalTitle = document.getElementById('address-modal-title');
+    const addressesLoading = document.getElementById('addresses-loading');
+    const addressesEmpty = document.getElementById('addresses-empty');
+    const addressesList = document.getElementById('addresses-list');
+    const saveAddressBtn = document.getElementById('save-address-btn');
+    const saveAddressText = document.getElementById('save-address-text');
+    const saveAddressSpinner = document.getElementById('save-address-spinner');
+    const addressFormMessage = document.getElementById('address-form-message');
+
+    // Address API Functions
+    async function loadAddresses(): Promise<void> {
+      try {
+        addressesLoading?.classList.remove('hidden');
+        addressesEmpty?.classList.add('hidden');
+        addressesList?.classList.add('hidden');
+
+        const response = await fetch(`${API_BASE}/api/customers/profile/addresses`, {
+          credentials: 'include',
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          if (result.success) {
+            addresses = result.data || [];
+            renderAddresses();
           }
         } else {
-          updateData[key] = value;
+          throw new Error('Failed to load addresses');
         }
-      }
-    });
-
-    try {
-      // Optimistic update - show success immediately
-      const currentData = getCache('basic');
-      if (currentData) {
-        Object.assign(currentData, updateData);
-        updateSyncIndicator(true);
-      }
-
-      await updateProfile(updateData);
-      
-      showMessage('個人資料更新成功', 'success');
-      isFormDirty = false;
-      
-      // Refresh profile data in background
-      setTimeout(() => refreshInBackground('basic'), 1000);
-      
-    } catch (error) {
-      console.error('Profile update failed:', error);
-      showMessage(error instanceof Error ? error.message : '更新失敗，請稍後再試', 'error');
-      
-      // Revert optimistic update on error
-      await loadBasicProfile();
-    } finally {
-      setLoadingState(false);
-    }
-  });
-
-  // Reset button handler
-  resetBtn?.addEventListener('click', () => {
-    if (isFormDirty) {
-      if (confirm('確定要重設所有變更嗎？')) {
-        resetForm();
-        showMessage('表單已重設', 'success');
+      } catch (error) {
+        console.error('Error loading addresses:', error);
+        showMessage('載入地址失敗', 'error');
+      } finally {
+        addressesLoading?.classList.add('hidden');
       }
     }
-  });
 
-  // Add real-time validation with enhanced visual feedback
-  const nameField = document.getElementById('name');
-  const phoneField = document.getElementById('phone');
-  
-  nameField?.addEventListener('blur', (e) => {
-    const target = e.target as HTMLInputElement;
-    const name = target.value;
-    const error = validateName(name);
-    
-    if (nameError) showFieldError(nameError, error);
-    
-    // Visual feedback with shadcn classes
-    if (error) {
-      target.classList.add('border-destructive', 'focus-visible:ring-destructive');
-      target.classList.remove('border-input', 'focus-visible:ring-ring');
-    } else {
-      target.classList.remove('border-destructive', 'focus-visible:ring-destructive');
-      target.classList.add('border-input', 'focus-visible:ring-ring');
+    async function saveAddress(addressData: any): Promise<any> {
+      const url = editingAddressId
+        ? `${API_BASE}/api/customers/profile/addresses/${editingAddressId}`
+        : `${API_BASE}/api/customers/profile/addresses`;
+
+      const method = editingAddressId ? 'PATCH' : 'POST';
+
+      const response = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify(addressData),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Save address failed');
+      }
+
+      return await response.json();
     }
-  });
 
-  nameField?.addEventListener('input', (e) => {
-    const target = e.target as HTMLInputElement;
-    // Clear error state on input
-    if (target.classList.contains('border-destructive')) {
-      target.classList.remove('border-destructive', 'focus-visible:ring-destructive');
-      target.classList.add('border-input', 'focus-visible:ring-ring');
-      nameError?.classList.add('hidden');
-    }
-  });
-
-  phoneField?.addEventListener('input', (e) => {
-    const target = e.target as HTMLInputElement;
-    let value = target.value;
-    
-    // Only allow numbers
-    value = value.replace(/\D/g, '');
-    
-    // Limit to 10 digits
-    if (value.length > 10) {
-      value = value.substring(0, 10);
-    }
-    
-    target.value = value;
-    
-    // Clear error state on input
-    if (target.classList.contains('border-destructive')) {
-      target.classList.remove('border-destructive', 'focus-visible:ring-destructive');
-      target.classList.add('border-input', 'focus-visible:ring-ring');
-      phoneError?.classList.add('hidden');
-    }
-  });
-
-  phoneField?.addEventListener('blur', (e) => {
-    const target = e.target as HTMLInputElement;
-    const phone = target.value;
-    const error = validatePhone(phone);
-    
-    if (phoneError) showFieldError(phoneError, error);
-    
-    // Visual feedback with shadcn classes
-    if (error) {
-      target.classList.add('border-destructive', 'focus-visible:ring-destructive');
-      target.classList.remove('border-input', 'focus-visible:ring-ring');
-    } else {
-      target.classList.remove('border-destructive', 'focus-visible:ring-destructive');
-      target.classList.add('border-input', 'focus-visible:ring-ring');
-    }
-  });
-
-  // ======================
-  // NEW FEATURE HANDLERS
-  // ======================
-
-  // Address Management Variables
-  let addresses: any[] = [];
-  let editingAddressId: string | null = null;
-  
-  const addressModal = document.getElementById('address-modal');
-  const addressForm = document.getElementById('address-form') as HTMLFormElement | null;
-  const addressModalTitle = document.getElementById('address-modal-title');
-  const addressesLoading = document.getElementById('addresses-loading');
-  const addressesEmpty = document.getElementById('addresses-empty');
-  const addressesList = document.getElementById('addresses-list');
-  const saveAddressBtn = document.getElementById('save-address-btn');
-  const saveAddressText = document.getElementById('save-address-text');
-  const saveAddressSpinner = document.getElementById('save-address-spinner');
-  const addressFormMessage = document.getElementById('address-form-message');
-
-  // Address API Functions
-  async function loadAddresses(): Promise<void> {
-    try {
-      addressesLoading?.classList.remove('hidden');
-      addressesEmpty?.classList.add('hidden');
-      addressesList?.classList.add('hidden');
-
-      const response = await fetch(`${API_BASE}/api/customers/profile/addresses`, {
+    async function deleteAddress(addressId: string): Promise<void> {
+      const response = await fetch(`${API_BASE}/api/customers/profile/addresses/${addressId}`, {
+        method: 'DELETE',
         credentials: 'include',
       });
 
-      if (response.ok) {
-        const result = await response.json();
-        if (result.success) {
-          addresses = result.data || [];
-          renderAddresses();
-        }
-      } else {
-        throw new Error('Failed to load addresses');
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Delete address failed');
       }
-    } catch (error) {
-      console.error('Error loading addresses:', error);
-      showMessage('載入地址失敗', 'error');
-    } finally {
-      addressesLoading?.classList.add('hidden');
-    }
-  }
-
-  async function saveAddress(addressData: any): Promise<any> {
-    const url = editingAddressId 
-      ? `${API_BASE}/api/customers/profile/addresses/${editingAddressId}`
-      : `${API_BASE}/api/customers/profile/addresses`;
-    
-    const method = editingAddressId ? 'PATCH' : 'POST';
-
-    const response = await fetch(url, {
-      method,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      credentials: 'include',
-      body: JSON.stringify(addressData),
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Save address failed');
     }
 
-    return await response.json();
-  }
+    async function setDefaultAddress(addressId: string): Promise<void> {
+      const response = await fetch(
+        `${API_BASE}/api/customers/profile/addresses/${addressId}/default`,
+        {
+          method: 'PATCH',
+          credentials: 'include',
+        }
+      );
 
-  async function deleteAddress(addressId: string): Promise<void> {
-    const response = await fetch(`${API_BASE}/api/customers/profile/addresses/${addressId}`, {
-      method: 'DELETE',
-      credentials: 'include',
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Delete address failed');
-    }
-  }
-
-  async function setDefaultAddress(addressId: string): Promise<void> {
-    const response = await fetch(`${API_BASE}/api/customers/profile/addresses/${addressId}/default`, {
-      method: 'PATCH',
-      credentials: 'include',
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Set default address failed');
-    }
-  }
-
-  // Address UI Functions
-  function renderAddresses(): void {
-    if (addresses.length === 0) {
-      addressesEmpty?.classList.remove('hidden');
-      addressesList?.classList.add('hidden');
-      return;
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Set default address failed');
+      }
     }
 
-    addressesEmpty?.classList.add('hidden');
-    addressesList?.classList.remove('hidden');
+    // Address UI Functions
+    function renderAddresses(): void {
+      if (addresses.length === 0) {
+        addressesEmpty?.classList.remove('hidden');
+        addressesList?.classList.add('hidden');
+        return;
+      }
 
-    if (addressesList) {
-      addressesList.innerHTML = addresses.map(address => `
+      addressesEmpty?.classList.add('hidden');
+      addressesList?.classList.remove('hidden');
+
+      if (addressesList) {
+        addressesList.innerHTML = addresses
+          .map(
+            address => `
       <div class="border rounded-lg p-4 ${address.isDefault ? 'border-primary bg-primary/5' : 'border-border'}">
         <div class="flex justify-between items-start">
           <div class="flex-1">
@@ -726,13 +777,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@blac
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
               </svg>
             </button>
-            ${!address.isDefault ? `
+            ${
+              !address.isDefault
+                ? `
               <button class="set-default-btn p-2 text-sm hover:bg-muted rounded" data-id="${address.id}" title="設為預設">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                 </svg>
               </button>
-            ` : ''}
+            `
+                : ''
+            }
             <button class="delete-address-btn p-2 text-sm hover:bg-destructive hover:text-destructive-foreground rounded" data-id="${address.id}">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
@@ -741,490 +796,518 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@blac
           </div>
         </div>
       </div>
-    `).join('');
-    }
-
-    // Add event listeners for address actions
-    document.querySelectorAll('.edit-address-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        const addressId = (e.currentTarget as HTMLElement).dataset.id;
-        if (addressId) editAddress(addressId);
-      });
-    });
-
-    document.querySelectorAll('.delete-address-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        const addressId = (e.currentTarget as HTMLElement).dataset.id;
-        if (addressId) handleDeleteAddress(addressId);
-      });
-    });
-
-    document.querySelectorAll('.set-default-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        const addressId = (e.currentTarget as HTMLElement).dataset.id;
-        if (addressId) handleSetDefaultAddress(addressId);
-      });
-    });
-  }
-
-  function showAddressModal(title: string = '新增地址'): void {
-    if (addressModalTitle) addressModalTitle.textContent = title;
-    addressModal?.classList.remove('hidden');
-    document.body.style.overflow = 'hidden';
-  }
-
-  function hideAddressModal(): void {
-    addressModal?.classList.add('hidden');
-    document.body.style.overflow = '';
-    editingAddressId = null;
-    addressForm?.reset();
-    addressFormMessage?.classList.add('hidden');
-  }
-
-  function editAddress(addressId: string): void {
-    const address = addresses.find(a => a.id === addressId);
-    if (!address) return;
-
-    editingAddressId = addressId;
-    showAddressModal('編輯地址');
-
-    // Populate form
-    (document.getElementById('address-name') as HTMLInputElement).value = address.recipientName || '';
-    (document.getElementById('address-phone') as HTMLInputElement).value = address.recipientPhone || '';
-    (document.getElementById('address-district') as HTMLInputElement).value = address.district || '';
-    (document.getElementById('address-postal') as HTMLInputElement).value = address.postalCode || '';
-    (document.getElementById('address-street') as HTMLInputElement).value = address.street || '';
-    (document.getElementById('address-default') as HTMLInputElement).checked = address.isDefault || false;
-    (document.getElementById('address-notes') as HTMLInputElement).value = address.deliveryInstructions || '';
-
-    // Set city select
-    setTimeout(() => {
-      const cityTrigger = document.querySelector('[name="city"] button[role="combobox"]') as HTMLButtonElement;
-      const cityHiddenInput = document.querySelector('[name="city"] input[type="hidden"]') as HTMLInputElement;
-      
-      if (cityTrigger && cityHiddenInput && address.city) {
-        cityHiddenInput.value = address.city;
-        cityTrigger.textContent = address.city;
-        cityTrigger.setAttribute('data-value', address.city);
+    `
+          )
+          .join('');
       }
-    }, 100);
-  }
 
-  async function handleDeleteAddress(addressId: string): Promise<void> {
-    if (!confirm('確定要刪除這個地址嗎？')) return;
+      // Add event listeners for address actions
+      document.querySelectorAll('.edit-address-btn').forEach(btn => {
+        btn.addEventListener('click', e => {
+          const addressId = (e.currentTarget as HTMLElement).dataset.id;
+          if (addressId) editAddress(addressId);
+        });
+      });
 
-    try {
-      await deleteAddress(addressId);
-      addresses = addresses.filter(a => a.id !== addressId);
-      renderAddresses();
-      showMessage('地址已刪除', 'success');
-    } catch (error) {
-      console.error('Delete address failed:', error);
-      showMessage(error instanceof Error ? error.message : '刪除地址失敗', 'error');
+      document.querySelectorAll('.delete-address-btn').forEach(btn => {
+        btn.addEventListener('click', e => {
+          const addressId = (e.currentTarget as HTMLElement).dataset.id;
+          if (addressId) handleDeleteAddress(addressId);
+        });
+      });
+
+      document.querySelectorAll('.set-default-btn').forEach(btn => {
+        btn.addEventListener('click', e => {
+          const addressId = (e.currentTarget as HTMLElement).dataset.id;
+          if (addressId) handleSetDefaultAddress(addressId);
+        });
+      });
     }
-  }
 
-  async function handleSetDefaultAddress(addressId: string): Promise<void> {
-    try {
-      await setDefaultAddress(addressId);
-      
-      // Update local state
-      addresses = addresses.map(a => ({ ...a, isDefault: a.id === addressId }));
-      renderAddresses();
-      showMessage('已設為預設地址', 'success');
-    } catch (error) {
-      console.error('Set default address failed:', error);
-      showMessage(error instanceof Error ? error.message : '設定預設地址失敗', 'error');
+    function showAddressModal(title: string = '新增地址'): void {
+      if (addressModalTitle) addressModalTitle.textContent = title;
+      addressModal?.classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
     }
-  }
 
-  function showAddressFormMessage(text: string, type: 'success' | 'error'): void {
-    if (addressFormMessage) {
-      addressFormMessage.textContent = text;
-      addressFormMessage.className = `p-3 rounded border text-sm ${type === 'success' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-red-50 text-red-700 border-red-200'}`;
-      addressFormMessage.classList.remove('hidden');
+    function hideAddressModal(): void {
+      addressModal?.classList.add('hidden');
+      document.body.style.overflow = '';
+      editingAddressId = null;
+      addressForm?.reset();
+      addressFormMessage?.classList.add('hidden');
     }
-  }
 
-  function setAddressFormLoading(loading: boolean): void {
-    if (saveAddressBtn) saveAddressBtn.disabled = loading;
-    if (loading) {
-      if (saveAddressText) saveAddressText.textContent = editingAddressId ? '更新中...' : '儲存中...';
-      saveAddressSpinner?.classList.remove('hidden');
-    } else {
-      if (saveAddressText) saveAddressText.textContent = editingAddressId ? '更新地址' : '儲存地址';
-      saveAddressSpinner?.classList.add('hidden');
-    }
-  }
+    function editAddress(addressId: string): void {
+      const address = addresses.find(a => a.id === addressId);
+      if (!address) return;
 
-  // Address Event Listeners
-  document.getElementById('add-address-btn')?.addEventListener('click', () => {
-    showAddressModal();
-  });
+      editingAddressId = addressId;
+      showAddressModal('編輯地址');
 
-  document.getElementById('close-address-modal')?.addEventListener('click', hideAddressModal);
-  document.getElementById('cancel-address-btn')?.addEventListener('click', hideAddressModal);
+      // Populate form
+      (document.getElementById('address-name') as HTMLInputElement).value =
+        address.recipientName || '';
+      (document.getElementById('address-phone') as HTMLInputElement).value =
+        address.recipientPhone || '';
+      (document.getElementById('address-district') as HTMLInputElement).value =
+        address.district || '';
+      (document.getElementById('address-postal') as HTMLInputElement).value =
+        address.postalCode || '';
+      (document.getElementById('address-street') as HTMLInputElement).value = address.street || '';
+      (document.getElementById('address-default') as HTMLInputElement).checked =
+        address.isDefault || false;
+      (document.getElementById('address-notes') as HTMLInputElement).value =
+        address.deliveryInstructions || '';
 
-  // Close modal when clicking outside
-  addressModal?.addEventListener('click', (e) => {
-    if (e.target === addressModal) {
-      hideAddressModal();
-    }
-  });
+      // Set city select
+      setTimeout(() => {
+        const cityTrigger = document.querySelector(
+          '[name="city"] button[role="combobox"]'
+        ) as HTMLButtonElement;
+        const cityHiddenInput = document.querySelector(
+          '[name="city"] input[type="hidden"]'
+        ) as HTMLInputElement;
 
-  // Address form submission
-  addressForm?.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    
-    setAddressFormLoading(true);
-    addressFormMessage.classList.add('hidden');
-
-    const formData = new FormData(addressForm);
-    const addressData: any = {};
-    
-    formData.forEach((value, key) => {
-      if (key === 'isDefault') {
-        addressData[key] = (document.getElementById('address-default') as HTMLInputElement).checked;
-      } else if (key === 'city') {
-        const cityHiddenInput = document.querySelector('[name="city"] input[type="hidden"]') as HTMLInputElement;
-        if (cityHiddenInput?.value) {
-          addressData[key] = cityHiddenInput.value;
+        if (cityTrigger && cityHiddenInput && address.city) {
+          cityHiddenInput.value = address.city;
+          cityTrigger.textContent = address.city;
+          cityTrigger.setAttribute('data-value', address.city);
         }
-      } else if (key === 'name') {
-        // Map frontend field name to API field name
-        addressData['recipientName'] = value;
-      } else if (key === 'phone') {
-        // Map frontend field name to API field name
-        addressData['recipientPhone'] = value;
-      } else if (key === 'notes') {
-        // Map frontend field name to API field name
-        addressData['deliveryInstructions'] = value;
-      } else if (value) {
-        addressData[key] = value;
+      }, 100);
+    }
+
+    async function handleDeleteAddress(addressId: string): Promise<void> {
+      if (!confirm('確定要刪除這個地址嗎？')) return;
+
+      try {
+        await deleteAddress(addressId);
+        addresses = addresses.filter(a => a.id !== addressId);
+        renderAddresses();
+        showMessage('地址已刪除', 'success');
+      } catch (error) {
+        console.error('Delete address failed:', error);
+        showMessage(error instanceof Error ? error.message : '刪除地址失敗', 'error');
       }
-    });
-
-    // Validation
-    if (!addressData.recipientName || !addressData.recipientPhone || !addressData.city || !addressData.district || !addressData.street) {
-      showAddressFormMessage('請填寫所有必填欄位', 'error');
-      setAddressFormLoading(false);
-      return;
     }
 
-    // Phone validation
-    const phoneRegex = /^09\d{8}$/;
-    if (!phoneRegex.test(addressData.recipientPhone.replace(/[\s-]/g, ''))) {
-      showAddressFormMessage('手機號碼格式不正確', 'error');
-      setAddressFormLoading(false);
-      return;
+    async function handleSetDefaultAddress(addressId: string): Promise<void> {
+      try {
+        await setDefaultAddress(addressId);
+
+        // Update local state
+        addresses = addresses.map(a => ({ ...a, isDefault: a.id === addressId }));
+        renderAddresses();
+        showMessage('已設為預設地址', 'success');
+      } catch (error) {
+        console.error('Set default address failed:', error);
+        showMessage(error instanceof Error ? error.message : '設定預設地址失敗', 'error');
+      }
     }
 
-    try {
-      const result = await saveAddress(addressData);
-      
-      if (editingAddressId) {
-        // Update existing address
-        const index = addresses.findIndex(a => a.id === editingAddressId);
-        if (index !== -1) {
-          addresses[index] = { ...addresses[index], ...addressData };
-        }
+    function showAddressFormMessage(text: string, type: 'success' | 'error'): void {
+      if (addressFormMessage) {
+        addressFormMessage.textContent = text;
+        addressFormMessage.className = `p-3 rounded border text-sm ${type === 'success' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-red-50 text-red-700 border-red-200'}`;
+        addressFormMessage.classList.remove('hidden');
+      }
+    }
+
+    function setAddressFormLoading(loading: boolean): void {
+      if (saveAddressBtn) saveAddressBtn.disabled = loading;
+      if (loading) {
+        if (saveAddressText)
+          saveAddressText.textContent = editingAddressId ? '更新中...' : '儲存中...';
+        saveAddressSpinner?.classList.remove('hidden');
       } else {
-        // Add new address
-        addresses.push(result.data);
+        if (saveAddressText)
+          saveAddressText.textContent = editingAddressId ? '更新地址' : '儲存地址';
+        saveAddressSpinner?.classList.add('hidden');
+      }
+    }
+
+    // Address Event Listeners
+    document.getElementById('add-address-btn')?.addEventListener('click', () => {
+      showAddressModal();
+    });
+
+    document.getElementById('close-address-modal')?.addEventListener('click', hideAddressModal);
+    document.getElementById('cancel-address-btn')?.addEventListener('click', hideAddressModal);
+
+    // Close modal when clicking outside
+    addressModal?.addEventListener('click', e => {
+      if (e.target === addressModal) {
+        hideAddressModal();
+      }
+    });
+
+    // Address form submission
+    addressForm?.addEventListener('submit', async e => {
+      e.preventDefault();
+
+      setAddressFormLoading(true);
+      addressFormMessage.classList.add('hidden');
+
+      const formData = new FormData(addressForm);
+      const addressData: any = {};
+
+      formData.forEach((value, key) => {
+        if (key === 'isDefault') {
+          addressData[key] = (
+            document.getElementById('address-default') as HTMLInputElement
+          ).checked;
+        } else if (key === 'city') {
+          const cityHiddenInput = document.querySelector(
+            '[name="city"] input[type="hidden"]'
+          ) as HTMLInputElement;
+          if (cityHiddenInput?.value) {
+            addressData[key] = cityHiddenInput.value;
+          }
+        } else if (key === 'name') {
+          // Map frontend field name to API field name
+          addressData['recipientName'] = value;
+        } else if (key === 'phone') {
+          // Map frontend field name to API field name
+          addressData['recipientPhone'] = value;
+        } else if (key === 'notes') {
+          // Map frontend field name to API field name
+          addressData['deliveryInstructions'] = value;
+        } else if (value) {
+          addressData[key] = value;
+        }
+      });
+
+      // Validation
+      if (
+        !addressData.recipientName ||
+        !addressData.recipientPhone ||
+        !addressData.city ||
+        !addressData.district ||
+        !addressData.street
+      ) {
+        showAddressFormMessage('請填寫所有必填欄位', 'error');
+        setAddressFormLoading(false);
+        return;
       }
 
-      renderAddresses();
-      hideAddressModal();
-      showMessage(editingAddressId ? '地址已更新' : '地址已新增', 'success');
+      // Phone validation
+      const phoneRegex = /^09\d{8}$/;
+      if (!phoneRegex.test(addressData.recipientPhone.replace(/[\s-]/g, ''))) {
+        showAddressFormMessage('手機號碼格式不正確', 'error');
+        setAddressFormLoading(false);
+        return;
+      }
 
-    } catch (error) {
-      console.error('Save address failed:', error);
-      showAddressFormMessage(error instanceof Error ? error.message : '儲存地址失敗', 'error');
-    } finally {
-      setAddressFormLoading(false);
-    }
-  });
+      try {
+        const result = await saveAddress(addressData);
 
-  // Payment Methods - No longer needed as it now shows Line@ contact
+        if (editingAddressId) {
+          // Update existing address
+          const index = addresses.findIndex(a => a.id === editingAddressId);
+          if (index !== -1) {
+            addresses[index] = { ...addresses[index], ...addressData };
+          }
+        } else {
+          // Add new address
+          addresses.push(result.data);
+        }
 
-  // Password Change Variables
-  const passwordModal = document.getElementById('password-modal');
-  const passwordForm = document.getElementById('password-form') as HTMLFormElement | null;
-  const savePasswordBtn = document.getElementById('save-password-btn');
-  const savePasswordText = document.getElementById('save-password-text');
-  const savePasswordSpinner = document.getElementById('save-password-spinner');
-  const passwordFormMessage = document.getElementById('password-form-message');
-  
-  // Password validation error elements
-  const currentPasswordError = document.getElementById('current-password-error');
-  const newPasswordError = document.getElementById('new-password-error');
-  const confirmPasswordError = document.getElementById('confirm-password-error');
-
-  // Password Change API Functions
-  async function changePassword(passwordData: any): Promise<any> {
-    const response = await fetch(`${API_BASE}/api/auth/change-password`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      credentials: 'include',
-      body: JSON.stringify(passwordData),
+        renderAddresses();
+        hideAddressModal();
+        showMessage(editingAddressId ? '地址已更新' : '地址已新增', 'success');
+      } catch (error) {
+        console.error('Save address failed:', error);
+        showAddressFormMessage(error instanceof Error ? error.message : '儲存地址失敗', 'error');
+      } finally {
+        setAddressFormLoading(false);
+      }
     });
 
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Change password failed');
+    // Payment Methods - No longer needed as it now shows Line@ contact
+
+    // Password Change Variables
+    const passwordModal = document.getElementById('password-modal');
+    const passwordForm = document.getElementById('password-form') as HTMLFormElement | null;
+    const savePasswordBtn = document.getElementById('save-password-btn');
+    const savePasswordText = document.getElementById('save-password-text');
+    const savePasswordSpinner = document.getElementById('save-password-spinner');
+    const passwordFormMessage = document.getElementById('password-form-message');
+
+    // Password validation error elements
+    const currentPasswordError = document.getElementById('current-password-error');
+    const newPasswordError = document.getElementById('new-password-error');
+    const confirmPasswordError = document.getElementById('confirm-password-error');
+
+    // Password Change API Functions
+    async function changePassword(passwordData: any): Promise<any> {
+      const response = await fetch(`${API_BASE}/api/auth/change-password`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify(passwordData),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Change password failed');
+      }
+
+      return await response.json();
     }
 
-    return await response.json();
-  }
+    // Password Validation Functions
+    function validatePassword(password: string): string | null {
+      if (!password || password.length < 8) {
+        return '密碼必須至少 8 個字符';
+      }
 
-  // Password Validation Functions
-  function validatePassword(password: string): string | null {
-    if (!password || password.length < 8) {
-      return '密碼必須至少 8 個字符';
-    }
-    
-    if (!/(?=.*[a-z])/.test(password)) {
-      return '密碼必須包含至少一個小寫字母';
-    }
-    
-    if (!/(?=.*[A-Z])/.test(password)) {
-      return '密碼必須包含至少一個大寫字母';
-    }
-    
-    if (!/(?=.*\d)/.test(password)) {
-      return '密碼必須包含至少一個數字';
-    }
-    
-    return null;
-  }
+      if (!/(?=.*[a-z])/.test(password)) {
+        return '密碼必須包含至少一個小寫字母';
+      }
 
-  function validatePasswordConfirmation(password: string, confirmPassword: string): string | null {
-    if (password !== confirmPassword) {
-      return '密碼確認不匹配';
-    }
-    return null;
-  }
+      if (!/(?=.*[A-Z])/.test(password)) {
+        return '密碼必須包含至少一個大寫字母';
+      }
 
-  function showPasswordFieldError(errorElement: HTMLElement, error: string | null): void {
-    if (error) {
-      errorElement.textContent = error;
-      errorElement.classList.remove('hidden');
-    } else {
-      errorElement.classList.add('hidden');
-    }
-  }
+      if (!/(?=.*\d)/.test(password)) {
+        return '密碼必須包含至少一個數字';
+      }
 
-  function validatePasswordForm(): boolean {
-    const currentPassword = (document.getElementById('current-password') as HTMLInputElement).value;
-    const newPassword = (document.getElementById('new-password') as HTMLInputElement).value;
-    const confirmPassword = (document.getElementById('confirm-password') as HTMLInputElement).value;
-
-    const currentErr = !currentPassword ? '請輸入目前密碼' : null;
-    const newErr = validatePassword(newPassword);
-    const confirmErr = validatePasswordConfirmation(newPassword, confirmPassword);
-
-    showPasswordFieldError(currentPasswordError, currentErr);
-    showPasswordFieldError(newPasswordError, newErr);
-    showPasswordFieldError(confirmPasswordError, confirmErr);
-
-    return !currentErr && !newErr && !confirmErr;
-  }
-
-  // Password UI Functions
-  function showPasswordModal(): void {
-    passwordModal?.classList.remove('hidden');
-    document.body.style.overflow = 'hidden';
-  }
-
-  function hidePasswordModal(): void {
-    passwordModal?.classList.add('hidden');
-    document.body.style.overflow = '';
-    passwordForm?.reset();
-    passwordFormMessage?.classList.add('hidden');
-    
-    // Clear all error messages
-    if (currentPasswordError) showPasswordFieldError(currentPasswordError, null);
-    if (newPasswordError) showPasswordFieldError(newPasswordError, null);
-    if (confirmPasswordError) showPasswordFieldError(confirmPasswordError, null);
-  }
-
-  function showPasswordFormMessage(text: string, type: 'success' | 'error'): void {
-    if (passwordFormMessage) {
-      passwordFormMessage.textContent = text;
-      passwordFormMessage.className = `p-3 rounded border text-sm ${type === 'success' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-red-50 text-red-700 border-red-200'}`;
-      passwordFormMessage.classList.remove('hidden');
-    }
-  }
-
-  function setPasswordFormLoading(loading: boolean): void {
-    if (savePasswordBtn) savePasswordBtn.disabled = loading;
-    if (loading) {
-      if (savePasswordText) savePasswordText.textContent = '更新中...';
-      savePasswordSpinner?.classList.remove('hidden');
-    } else {
-      if (savePasswordText) savePasswordText.textContent = '更新密碼';
-      savePasswordSpinner?.classList.add('hidden');
-    }
-  }
-
-  // Security Settings Event Listeners
-  document.getElementById('change-password-btn')?.addEventListener('click', () => {
-    showPasswordModal();
-  });
-
-  document.getElementById('close-password-modal')?.addEventListener('click', hidePasswordModal);
-  document.getElementById('cancel-password-btn')?.addEventListener('click', hidePasswordModal);
-
-  // Close modal when clicking outside
-  passwordModal?.addEventListener('click', (e) => {
-    if (e.target === passwordModal) {
-      hidePasswordModal();
-    }
-  });
-
-  // Real-time password validation
-  const newPasswordField = document.getElementById('new-password');
-  const confirmPasswordField = document.getElementById('confirm-password');
-  
-  newPasswordField?.addEventListener('input', (e) => {
-    const newPassword = (e.target as HTMLInputElement).value;
-    if (newPassword && newPasswordError) {
-      const error = validatePassword(newPassword);
-      showPasswordFieldError(newPasswordError, error);
-    } else if (newPasswordError) {
-      showPasswordFieldError(newPasswordError, null);
-    }
-  });
-
-  confirmPasswordField?.addEventListener('input', (e) => {
-    const confirmPassword = (e.target as HTMLInputElement).value;
-    const newPasswordInput = document.getElementById('new-password') as HTMLInputElement;
-    const newPassword = newPasswordInput?.value;
-    if (confirmPassword && newPassword && confirmPasswordError) {
-      const error = validatePasswordConfirmation(newPassword, confirmPassword);
-      showPasswordFieldError(confirmPasswordError, error);
-    } else if (confirmPasswordError) {
-      showPasswordFieldError(confirmPasswordError, null);
-    }
-  });
-
-  // Password form submission
-  passwordForm?.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    
-    if (!validatePasswordForm()) {
-      return;
+      return null;
     }
 
-    setPasswordFormLoading(true);
-    passwordFormMessage.classList.add('hidden');
+    function validatePasswordConfirmation(
+      password: string,
+      confirmPassword: string
+    ): string | null {
+      if (password !== confirmPassword) {
+        return '密碼確認不匹配';
+      }
+      return null;
+    }
 
-    const formData = new FormData(passwordForm);
-    const passwordData = {
-      currentPassword: formData.get('currentPassword') as string,
-      newPassword: formData.get('newPassword') as string,
-    };
+    function showPasswordFieldError(errorElement: HTMLElement, error: string | null): void {
+      if (error) {
+        errorElement.textContent = error;
+        errorElement.classList.remove('hidden');
+      } else {
+        errorElement.classList.add('hidden');
+      }
+    }
 
-    try {
-      await changePassword(passwordData);
-      
-      showPasswordFormMessage('密碼已成功更新', 'success');
-      
-      // Auto-close modal after success
-      setTimeout(() => {
+    function validatePasswordForm(): boolean {
+      const currentPassword = (document.getElementById('current-password') as HTMLInputElement)
+        .value;
+      const newPassword = (document.getElementById('new-password') as HTMLInputElement).value;
+      const confirmPassword = (document.getElementById('confirm-password') as HTMLInputElement)
+        .value;
+
+      const currentErr = !currentPassword ? '請輸入目前密碼' : null;
+      const newErr = validatePassword(newPassword);
+      const confirmErr = validatePasswordConfirmation(newPassword, confirmPassword);
+
+      showPasswordFieldError(currentPasswordError, currentErr);
+      showPasswordFieldError(newPasswordError, newErr);
+      showPasswordFieldError(confirmPasswordError, confirmErr);
+
+      return !currentErr && !newErr && !confirmErr;
+    }
+
+    // Password UI Functions
+    function showPasswordModal(): void {
+      passwordModal?.classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function hidePasswordModal(): void {
+      passwordModal?.classList.add('hidden');
+      document.body.style.overflow = '';
+      passwordForm?.reset();
+      passwordFormMessage?.classList.add('hidden');
+
+      // Clear all error messages
+      if (currentPasswordError) showPasswordFieldError(currentPasswordError, null);
+      if (newPasswordError) showPasswordFieldError(newPasswordError, null);
+      if (confirmPasswordError) showPasswordFieldError(confirmPasswordError, null);
+    }
+
+    function showPasswordFormMessage(text: string, type: 'success' | 'error'): void {
+      if (passwordFormMessage) {
+        passwordFormMessage.textContent = text;
+        passwordFormMessage.className = `p-3 rounded border text-sm ${type === 'success' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-red-50 text-red-700 border-red-200'}`;
+        passwordFormMessage.classList.remove('hidden');
+      }
+    }
+
+    function setPasswordFormLoading(loading: boolean): void {
+      if (savePasswordBtn) savePasswordBtn.disabled = loading;
+      if (loading) {
+        if (savePasswordText) savePasswordText.textContent = '更新中...';
+        savePasswordSpinner?.classList.remove('hidden');
+      } else {
+        if (savePasswordText) savePasswordText.textContent = '更新密碼';
+        savePasswordSpinner?.classList.add('hidden');
+      }
+    }
+
+    // Security Settings Event Listeners
+    document.getElementById('change-password-btn')?.addEventListener('click', () => {
+      showPasswordModal();
+    });
+
+    document.getElementById('close-password-modal')?.addEventListener('click', hidePasswordModal);
+    document.getElementById('cancel-password-btn')?.addEventListener('click', hidePasswordModal);
+
+    // Close modal when clicking outside
+    passwordModal?.addEventListener('click', e => {
+      if (e.target === passwordModal) {
         hidePasswordModal();
-        showMessage('密碼已成功更新，請使用新密碼登入', 'success');
-      }, 2000);
-
-    } catch (error) {
-      console.error('Change password failed:', error);
-      const errorMessage = error instanceof Error ? error.message : '密碼變更失敗，請稍後再試';
-      showPasswordFormMessage(errorMessage, 'error');
-    } finally {
-      setPasswordFormLoading(false);
-    }
-  });
-
-  // ======================
-  // INITIALIZATION
-  // ======================
-
-  async function loadBasicProfile(): Promise<void> {
-    try {
-      const profileData = await loadProfileData('basic');
-      populateForm(profileData);
-    } catch (error) {
-      console.error('Failed to load basic profile:', error);
-      showMessage('載入個人資料失敗', 'error');
-    }
-  }
-
-  async function loadAnalytics(): Promise<void> {
-    // Analytics section removed - no longer needed
-    console.warn('Analytics section has been removed');
-  }
-
-  async function initialize(): Promise<void> {
-    const isAuthenticated = await checkAuth();
-    
-    if (!isAuthenticated) {
-      // Redirect to login instead of showing not authenticated message
-      const returnUrl = encodeURIComponent(window.location.pathname + window.location.search);
-      window.location.href = `/login?redirect=${returnUrl}`;
-      return;
-    }
-
-    showProfile();
-    
-    // Load basic profile first (essential)
-    await loadBasicProfile();
-    
-    // Note: Analytics section removed
-    // loadAnalytics(); // Removed
-    
-    // Load addresses in background (optional)
-    loadAddresses();
-  }
-
-  // Start initialization
-  initialize();
-
-  // Auto-save functionality (optional enhancement)
-  setInterval(() => {
-    if (isFormDirty && validateForm()) {
-      // Could implement auto-save here if desired
-      console.log('Form has unsaved changes');
-    }
-  }, 30000); // Check every 30 seconds
-  
-  // Enhanced UI interactions
-  document.addEventListener('DOMContentLoaded', () => {
-    // Animate cards on load
-    const cards = document.querySelectorAll('div[class*="space-y-6"] > div');
-    cards.forEach((card, index) => {
-      const htmlCard = card as HTMLElement;
-      htmlCard.style.opacity = '0';
-      htmlCard.style.transform = 'translateY(20px)';
-      setTimeout(() => {
-        htmlCard.style.transition = 'all 0.3s ease-out';
-        htmlCard.style.opacity = '1';
-        htmlCard.style.transform = 'translateY(0)';
-      }, index * 100);
+      }
     });
-    
-    // Add subtle hover effects to interactive elements
-    const buttons = document.querySelectorAll('button');
-    buttons.forEach(button => {
-      const htmlButton = button as HTMLButtonElement;
-      htmlButton.style.transition = 'transform 0.2s ease';
-      htmlButton.addEventListener('mouseenter', () => {
-        htmlButton.style.transform = 'translateY(-1px)';
+
+    // Real-time password validation
+    const newPasswordField = document.getElementById('new-password');
+    const confirmPasswordField = document.getElementById('confirm-password');
+
+    newPasswordField?.addEventListener('input', e => {
+      const newPassword = (e.target as HTMLInputElement).value;
+      if (newPassword && newPasswordError) {
+        const error = validatePassword(newPassword);
+        showPasswordFieldError(newPasswordError, error);
+      } else if (newPasswordError) {
+        showPasswordFieldError(newPasswordError, null);
+      }
+    });
+
+    confirmPasswordField?.addEventListener('input', e => {
+      const confirmPassword = (e.target as HTMLInputElement).value;
+      const newPasswordInput = document.getElementById('new-password') as HTMLInputElement;
+      const newPassword = newPasswordInput?.value;
+      if (confirmPassword && newPassword && confirmPasswordError) {
+        const error = validatePasswordConfirmation(newPassword, confirmPassword);
+        showPasswordFieldError(confirmPasswordError, error);
+      } else if (confirmPasswordError) {
+        showPasswordFieldError(confirmPasswordError, null);
+      }
+    });
+
+    // Password form submission
+    passwordForm?.addEventListener('submit', async e => {
+      e.preventDefault();
+
+      if (!validatePasswordForm()) {
+        return;
+      }
+
+      setPasswordFormLoading(true);
+      passwordFormMessage.classList.add('hidden');
+
+      const formData = new FormData(passwordForm);
+      const passwordData = {
+        currentPassword: formData.get('currentPassword') as string,
+        newPassword: formData.get('newPassword') as string,
+      };
+
+      try {
+        await changePassword(passwordData);
+
+        showPasswordFormMessage('密碼已成功更新', 'success');
+
+        // Auto-close modal after success
+        setTimeout(() => {
+          hidePasswordModal();
+          showMessage('密碼已成功更新，請使用新密碼登入', 'success');
+        }, 2000);
+      } catch (error) {
+        console.error('Change password failed:', error);
+        const errorMessage = error instanceof Error ? error.message : '密碼變更失敗，請稍後再試';
+        showPasswordFormMessage(errorMessage, 'error');
+      } finally {
+        setPasswordFormLoading(false);
+      }
+    });
+
+    // ======================
+    // INITIALIZATION
+    // ======================
+
+    async function loadBasicProfile(): Promise<void> {
+      try {
+        const profileData = await loadProfileData('basic');
+        populateForm(profileData);
+      } catch (error) {
+        console.error('Failed to load basic profile:', error);
+        showMessage('載入個人資料失敗', 'error');
+      }
+    }
+
+    async function loadAnalytics(): Promise<void> {
+      // Analytics section removed - no longer needed
+      console.warn('Analytics section has been removed');
+    }
+
+    async function initialize(): Promise<void> {
+      const isAuthenticated = await checkAuth();
+
+      if (!isAuthenticated) {
+        // Redirect to login instead of showing not authenticated message
+        const returnUrl = encodeURIComponent(window.location.pathname + window.location.search);
+        window.location.href = `/login?redirect=${returnUrl}`;
+        return;
+      }
+
+      showProfile();
+
+      // Load basic profile first (essential)
+      await loadBasicProfile();
+
+      // Note: Analytics section removed
+      // loadAnalytics(); // Removed
+
+      // Load addresses in background (optional)
+      loadAddresses();
+    }
+
+    // Start initialization
+    initialize();
+
+    // Auto-save functionality (optional enhancement)
+    setInterval(() => {
+      if (isFormDirty && validateForm()) {
+        // Could implement auto-save here if desired
+        console.log('Form has unsaved changes');
+      }
+    }, 30000); // Check every 30 seconds
+
+    // Enhanced UI interactions
+    document.addEventListener('DOMContentLoaded', () => {
+      // Animate cards on load
+      const cards = document.querySelectorAll('div[class*="space-y-6"] > div');
+      cards.forEach((card, index) => {
+        const htmlCard = card as HTMLElement;
+        htmlCard.style.opacity = '0';
+        htmlCard.style.transform = 'translateY(20px)';
+        setTimeout(() => {
+          htmlCard.style.transition = 'all 0.3s ease-out';
+          htmlCard.style.opacity = '1';
+          htmlCard.style.transform = 'translateY(0)';
+        }, index * 100);
       });
-      htmlButton.addEventListener('mouseleave', () => {
-        htmlButton.style.transform = 'translateY(0)';
+
+      // Add subtle hover effects to interactive elements
+      const buttons = document.querySelectorAll('button');
+      buttons.forEach(button => {
+        const htmlButton = button as HTMLButtonElement;
+        htmlButton.style.transition = 'transform 0.2s ease';
+        htmlButton.addEventListener('mouseenter', () => {
+          htmlButton.style.transform = 'translateY(-1px)';
+        });
+        htmlButton.addEventListener('mouseleave', () => {
+          htmlButton.style.transform = 'translateY(0)';
+        });
       });
     });
-  });
-</script>
+  </script></BaseLayout
+>

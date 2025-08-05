@@ -23,26 +23,9 @@ import { Button } from '@blackliving/ui';
 import { Input } from '@blackliving/ui';
 import { Label } from '@blackliving/ui';
 import { Textarea } from '@blackliving/ui';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@blackliving/ui';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@blackliving/ui';
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from '@blackliving/ui';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@blackliving/ui';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@blackliving/ui';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@blackliving/ui';
 import { Switch } from '@blackliving/ui';
 import { Badge } from '@blackliving/ui';
 import { Separator } from '@blackliving/ui';
@@ -52,7 +35,8 @@ import { NovelEditor } from './editor';
 // Blog post validation schema
 const blogPostSchema = z.object({
   title: z.string().min(1, '文章標題為必填').max(100, '標題不能超過100個字元'),
-  slug: z.string()
+  slug: z
+    .string()
     .min(1, 'URL slug 為必填')
     .regex(/^[a-z0-9-]+$/, 'URL slug 只能包含小寫字母、數字和連字符'),
   description: z.string().min(10, '文章描述至少需要10個字元').max(300, '描述不能超過300個字元'),
@@ -261,7 +245,11 @@ export default function BlogComposer() {
 
   const removeTag = (tagToRemove: string) => {
     const currentTags = getValues('tags');
-    setValue('tags', currentTags.filter(tag => tag !== tagToRemove), { shouldDirty: true });
+    setValue(
+      'tags',
+      currentTags.filter(tag => tag !== tagToRemove),
+      { shouldDirty: true }
+    );
   };
 
   const addKeyword = () => {
@@ -275,7 +263,11 @@ export default function BlogComposer() {
 
   const removeKeyword = (keywordToRemove: string) => {
     const currentKeywords = getValues('seoKeywords');
-    setValue('seoKeywords', currentKeywords.filter(kw => kw !== keywordToRemove), { shouldDirty: true });
+    setValue(
+      'seoKeywords',
+      currentKeywords.filter(kw => kw !== keywordToRemove),
+      { shouldDirty: true }
+    );
   };
 
   if (loading) {
@@ -291,11 +283,7 @@ export default function BlogComposer() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigate('/dashboard/posts')}
-          >
+          <Button variant="ghost" size="sm" onClick={() => navigate('/dashboard/posts')}>
             <ArrowLeftIcon className="h-4 w-4 mr-2" />
             返回文章列表
           </Button>
@@ -309,18 +297,14 @@ export default function BlogComposer() {
           <Button
             type="button"
             variant="outline"
-            onClick={handleSubmit((data) => onSubmit({ ...data, status: 'draft' }))}
+            onClick={handleSubmit(data => onSubmit({ ...data, status: 'draft' }))}
             disabled={saving}
           >
             <SaveIcon className="h-4 w-4 mr-2" />
             儲存草稿
           </Button>
-          <Button
-            type="submit"
-            onClick={handleSubmit(onSubmit)}
-            disabled={saving}
-          >
-            {saving ? '儲存中...' : (watchedFields[2] === 'published' ? '發布文章' : '儲存')}
+          <Button type="submit" onClick={handleSubmit(onSubmit)} disabled={saving}>
+            {saving ? '儲存中...' : watchedFields[2] === 'published' ? '發布文章' : '儲存'}
           </Button>
         </div>
       </div>
@@ -426,7 +410,16 @@ export default function BlogComposer() {
                 <div className="mt-2 text-sm text-gray-500 flex items-center gap-4">
                   <span className="flex items-center gap-1">
                     <Clock className="h-4 w-4" />
-                    預估閱讀時間：{watchedFields[1] ? Math.max(1, Math.ceil(((watchedFields[1] || '').replace(/<[^>]*>/g, '').length / 5) / 200)) : 0} 分鐘
+                    預估閱讀時間：
+                    {watchedFields[1]
+                      ? Math.max(
+                          1,
+                          Math.ceil(
+                            (watchedFields[1] || '').replace(/<[^>]*>/g, '').length / 5 / 200
+                          )
+                        )
+                      : 0}{' '}
+                    分鐘
                   </span>
                   <span>字數：{(watchedFields[1] || '').replace(/<[^>]*>/g, '').length || 0}</span>
                 </div>
@@ -440,9 +433,7 @@ export default function BlogComposer() {
                   <Globe className="h-5 w-5" />
                   SEO 設定
                 </CardTitle>
-                <CardDescription>
-                  優化搜尋引擎和社交媒體的顯示效果
-                </CardDescription>
+                <CardDescription>優化搜尋引擎和社交媒體的顯示效果</CardDescription>
               </CardHeader>
               <CardContent>
                 <Tabs defaultValue="seo" className="w-full">
@@ -450,7 +441,7 @@ export default function BlogComposer() {
                     <TabsTrigger value="seo">搜尋引擎</TabsTrigger>
                     <TabsTrigger value="social">社交媒體</TabsTrigger>
                   </TabsList>
-                  
+
                   <TabsContent value="seo" className="space-y-4 mt-4">
                     <div>
                       <Label htmlFor="seoTitle">SEO 標題</Label>
@@ -482,9 +473,9 @@ export default function BlogComposer() {
                       <div className="flex gap-2 mt-1">
                         <Input
                           value={keywordInput}
-                          onChange={(e) => setKeywordInput(e.target.value)}
+                          onChange={e => setKeywordInput(e.target.value)}
                           placeholder="輸入關鍵字"
-                          onKeyPress={(e) => {
+                          onKeyPress={e => {
                             if (e.key === 'Enter') {
                               e.preventDefault();
                               addKeyword();
@@ -575,7 +566,7 @@ export default function BlogComposer() {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          {statusOptions.map((option) => (
+                          {statusOptions.map(option => (
                             <SelectItem key={option.value} value={option.value}>
                               <div>
                                 <div className="font-medium">{option.label}</div>
@@ -592,11 +583,7 @@ export default function BlogComposer() {
                 {watch('status') === 'scheduled' && (
                   <div>
                     <Label htmlFor="scheduledAt">排程時間</Label>
-                    <Input
-                      id="scheduledAt"
-                      type="datetime-local"
-                      {...register('scheduledAt')}
-                    />
+                    <Input id="scheduledAt" type="datetime-local" {...register('scheduledAt')} />
                   </div>
                 )}
 
@@ -652,7 +639,7 @@ export default function BlogComposer() {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          {categoryOptions.map((option) => (
+                          {categoryOptions.map(option => (
                             <SelectItem key={option.value} value={option.value}>
                               <div>
                                 <div className="font-medium">{option.label}</div>
@@ -671,9 +658,9 @@ export default function BlogComposer() {
                   <div className="flex gap-2 mt-1">
                     <Input
                       value={tagInput}
-                      onChange={(e) => setTagInput(e.target.value)}
+                      onChange={e => setTagInput(e.target.value)}
                       placeholder="新增標籤"
-                      onKeyPress={(e) => {
+                      onKeyPress={e => {
                         if (e.key === 'Enter') {
                           e.preventDefault();
                           addTag();
@@ -710,10 +697,7 @@ export default function BlogComposer() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
-                  <Input
-                    {...register('featuredImage')}
-                    placeholder="圖片 URL 或上傳圖片"
-                  />
+                  <Input {...register('featuredImage')} placeholder="圖片 URL 或上傳圖片" />
                   <p className="text-xs text-gray-500">
                     建議尺寸：1200x630px，用於文章列表和社交媒體分享
                   </p>

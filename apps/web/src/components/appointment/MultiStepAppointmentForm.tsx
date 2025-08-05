@@ -19,9 +19,9 @@ const steps = [
 
 export default function MultiStepAppointmentForm() {
   const { currentStep, nextStep, prevStep } = useAppointmentStore();
-  
+
   const CurrentStepComponent = steps[currentStep]?.component;
-  
+
   if (!CurrentStepComponent) {
     return <div>步驟不存在</div>;
   }
@@ -31,12 +31,14 @@ export default function MultiStepAppointmentForm() {
       {/* Progress indicator */}
       <div className="mb-8">
         <div className="flex items-center justify-between text-sm text-gray-500 mb-2">
-          <span>步驟 {currentStep + 1} / {steps.length}</span>
+          <span>
+            步驟 {currentStep + 1} / {steps.length}
+          </span>
           <span>{steps[currentStep]?.title}</span>
         </div>
-        
+
         <div className="w-full bg-gray-200 rounded-full h-2">
-          <div 
+          <div
             className="bg-black h-2 rounded-full transition-all duration-300"
             style={{ width: `${((currentStep + 1) / steps.length) * 100}%` }}
           />
@@ -50,24 +52,14 @@ export default function MultiStepAppointmentForm() {
 
       {/* Navigation buttons */}
       <div className="flex justify-between mt-6">
-        <Button
-          variant="outline"
-          onClick={prevStep}
-          disabled={currentStep === 0}
-          className="px-6"
-        >
+        <Button variant="outline" onClick={prevStep} disabled={currentStep === 0} className="px-6">
           上一步
         </Button>
-        
-        <div className="text-sm text-gray-500 self-center">
-          按 Enter 繼續
-        </div>
-        
+
+        <div className="text-sm text-gray-500 self-center">按 Enter 繼續</div>
+
         {currentStep < steps.length - 1 && (
-          <Button
-            onClick={nextStep}
-            className="px-6"
-          >
+          <Button onClick={nextStep} className="px-6">
             下一步
           </Button>
         )}

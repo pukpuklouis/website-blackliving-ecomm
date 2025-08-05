@@ -35,12 +35,24 @@ import {
   TabsList,
   TabsTrigger,
 } from '@blackliving/ui';
-import { Search, Eye, Edit, Package, Truck, CheckCircle, XCircle, Clock, Filter, DollarSign, FileImage } from 'lucide-react';
-import { 
-  useReactTable, 
-  createColumnHelper, 
-  getCoreRowModel, 
-  getFilteredRowModel, 
+import {
+  Search,
+  Eye,
+  Edit,
+  Package,
+  Truck,
+  CheckCircle,
+  XCircle,
+  Clock,
+  Filter,
+  DollarSign,
+  FileImage,
+} from 'lucide-react';
+import {
+  useReactTable,
+  createColumnHelper,
+  getCoreRowModel,
+  getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
   flexRender,
@@ -105,7 +117,7 @@ const statusLabels = {
   processing: '處理中',
   shipped: '配送中',
   delivered: '已完成',
-  cancelled: '已取消'
+  cancelled: '已取消',
 };
 
 const statusColors = {
@@ -114,19 +126,19 @@ const statusColors = {
   processing: 'bg-purple-500',
   shipped: 'bg-orange-500',
   delivered: 'bg-green-500',
-  cancelled: 'bg-gray-500'
+  cancelled: 'bg-gray-500',
 };
 
 const paymentStatusLabels = {
   unpaid: '未付款',
   paid: '已付款',
-  refunded: '已退款'
+  refunded: '已退款',
 };
 
 const paymentMethodLabels = {
   bank_transfer: '銀行轉帳',
   credit_card: '信用卡',
-  cash_on_delivery: '貨到付款'
+  cash_on_delivery: '貨到付款',
 };
 
 export default function OrdersPage() {
@@ -145,11 +157,7 @@ export default function OrdersPage() {
   const columns = [
     columnHelper.accessor('orderNumber', {
       header: '訂單編號',
-      cell: info => (
-        <div className="font-mono text-sm font-medium">
-          {info.getValue()}
-        </div>
-      ),
+      cell: info => <div className="font-mono text-sm font-medium">{info.getValue()}</div>,
     }),
     columnHelper.accessor('customerInfo', {
       header: '客戶資訊',
@@ -166,19 +174,11 @@ export default function OrdersPage() {
     }),
     columnHelper.accessor('totalAmount', {
       header: '總金額',
-      cell: info => (
-        <div className="font-medium">
-          NT${info.getValue().toLocaleString()}
-        </div>
-      ),
+      cell: info => <div className="font-medium">NT${info.getValue().toLocaleString()}</div>,
     }),
     columnHelper.accessor('paymentMethod', {
       header: '付款方式',
-      cell: info => (
-        <Badge variant="outline">
-          {paymentMethodLabels[info.getValue()]}
-        </Badge>
-      ),
+      cell: info => <Badge variant="outline">{paymentMethodLabels[info.getValue()]}</Badge>,
     }),
     columnHelper.accessor('status', {
       header: '訂單狀態',
@@ -192,9 +192,11 @@ export default function OrdersPage() {
     columnHelper.accessor('paymentStatus', {
       header: '付款狀態',
       cell: info => (
-        <Badge 
+        <Badge
           variant={info.getValue() === 'paid' ? 'default' : 'secondary'}
-          className={info.getValue() === 'paid' ? 'bg-green-500 text-white hover:bg-green-500/90' : ''}
+          className={
+            info.getValue() === 'paid' ? 'bg-green-500 text-white hover:bg-green-500/90' : ''
+          }
         >
           {paymentStatusLabels[info.getValue()]}
         </Badge>
@@ -202,29 +204,30 @@ export default function OrdersPage() {
     }),
     columnHelper.accessor('createdAt', {
       header: '建立時間',
-      cell: info => new Date(info.getValue()).toLocaleDateString('zh-TW', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit'
-      }),
+      cell: info =>
+        new Date(info.getValue()).toLocaleDateString('zh-TW', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+        }),
     }),
     columnHelper.display({
       id: 'actions',
       header: '操作',
       cell: ({ row }) => (
         <div className="flex gap-2">
-          <Button 
-            variant="ghost" 
+          <Button
+            variant="ghost"
             size="sm"
             onClick={() => handleViewDetails(row.original)}
             title="查看詳情"
           >
             <Eye className="h-4 w-4" />
           </Button>
-          <Button 
-            variant="ghost" 
+          <Button
+            variant="ghost"
             size="sm"
             onClick={() => handleEdit(row.original)}
             title="編輯訂單"
@@ -232,8 +235,8 @@ export default function OrdersPage() {
             <Edit className="h-4 w-4" />
           </Button>
           {row.original.status === 'paid' && (
-            <Button 
-              variant="ghost" 
+            <Button
+              variant="ghost"
               size="sm"
               onClick={() => handleUpdateStatus(row.original.id, 'processing')}
               title="標記為處理中"
@@ -242,8 +245,8 @@ export default function OrdersPage() {
             </Button>
           )}
           {row.original.status === 'processing' && (
-            <Button 
-              variant="ghost" 
+            <Button
+              variant="ghost"
               size="sm"
               onClick={() => handleUpdateStatus(row.original.id, 'shipped')}
               title="標記為已出貨"
@@ -314,11 +317,11 @@ export default function OrdersPage() {
       });
 
       if (response.ok) {
-        setOrders(prev => prev.map(order => 
-          order.id === orderId 
-            ? { ...order, status: newStatus, updatedAt: new Date() }
-            : order
-        ));
+        setOrders(prev =>
+          prev.map(order =>
+            order.id === orderId ? { ...order, status: newStatus, updatedAt: new Date() } : order
+          )
+        );
         toast.success('訂單狀態更新成功');
       } else {
         throw new Error('Failed to update order status');
@@ -335,11 +338,11 @@ export default function OrdersPage() {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           paymentStatus: 'paid',
           status: 'paid',
           paymentVerifiedAt: new Date(),
-          paymentVerifiedBy: 'admin' // This should be from auth context
+          paymentVerifiedBy: 'admin', // This should be from auth context
         }),
       });
 
@@ -382,7 +385,9 @@ export default function OrdersPage() {
               <Clock className="h-8 w-8 text-yellow-500" />
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">待付款</p>
-                <p className="text-2xl font-bold">{orders.filter(o => o.status === 'pending_payment').length}</p>
+                <p className="text-2xl font-bold">
+                  {orders.filter(o => o.status === 'pending_payment').length}
+                </p>
               </div>
             </div>
           </CardContent>
@@ -393,7 +398,9 @@ export default function OrdersPage() {
               <DollarSign className="h-8 w-8 text-blue-500" />
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">已付款</p>
-                <p className="text-2xl font-bold">{orders.filter(o => o.status === 'paid').length}</p>
+                <p className="text-2xl font-bold">
+                  {orders.filter(o => o.status === 'paid').length}
+                </p>
               </div>
             </div>
           </CardContent>
@@ -404,7 +411,9 @@ export default function OrdersPage() {
               <Truck className="h-8 w-8 text-orange-500" />
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">配送中</p>
-                <p className="text-2xl font-bold">{orders.filter(o => o.status === 'shipped').length}</p>
+                <p className="text-2xl font-bold">
+                  {orders.filter(o => o.status === 'shipped').length}
+                </p>
               </div>
             </div>
           </CardContent>
@@ -415,7 +424,9 @@ export default function OrdersPage() {
               <CheckCircle className="h-8 w-8 text-green-500" />
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">已完成</p>
-                <p className="text-2xl font-bold">{orders.filter(o => o.status === 'delivered').length}</p>
+                <p className="text-2xl font-bold">
+                  {orders.filter(o => o.status === 'delivered').length}
+                </p>
               </div>
             </div>
           </CardContent>
@@ -438,14 +449,14 @@ export default function OrdersPage() {
                 <Input
                   placeholder="搜尋訂單編號、客戶姓名、電話..."
                   value={globalFilter}
-                  onChange={(e) => setGlobalFilter(e.target.value)}
+                  onChange={e => setGlobalFilter(e.target.value)}
                   className="pl-10"
                 />
               </div>
             </div>
             <Select
               value={(table.getColumn('status')?.getFilterValue() as string) ?? ''}
-              onValueChange={(value) => 
+              onValueChange={value =>
                 table.getColumn('status')?.setFilterValue(value === 'all' ? '' : value)
               }
             >
@@ -470,9 +481,7 @@ export default function OrdersPage() {
       <Card>
         <CardHeader>
           <CardTitle>訂單列表</CardTitle>
-          <CardDescription>
-            共 {table.getFilteredRowModel().rows.length} 筆訂單
-          </CardDescription>
+          <CardDescription>共 {table.getFilteredRowModel().rows.length} 筆訂單</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="rounded-md border">
@@ -481,16 +490,10 @@ export default function OrdersPage() {
                 {table.getHeaderGroups().map(headerGroup => (
                   <tr key={headerGroup.id} className="border-b bg-gray-50/50">
                     {headerGroup.headers.map(header => (
-                      <th 
-                        key={header.id} 
-                        className="px-4 py-3 text-left font-medium text-gray-900"
-                      >
+                      <th key={header.id} className="px-4 py-3 text-left font-medium text-gray-900">
                         {header.isPlaceholder
                           ? null
-                          : flexRender(
-                              header.column.columnDef.header,
-                              header.getContext()
-                            )}
+                          : flexRender(header.column.columnDef.header, header.getContext())}
                       </th>
                     ))}
                   </tr>
@@ -513,7 +516,8 @@ export default function OrdersPage() {
           {/* Pagination */}
           <div className="flex items-center justify-between px-2 py-4">
             <div className="text-sm text-gray-700">
-              顯示 {table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1} 到{' '}
+              顯示{' '}
+              {table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1} 到{' '}
               {Math.min(
                 (table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize,
                 table.getFilteredRowModel().rows.length
@@ -547,9 +551,7 @@ export default function OrdersPage() {
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>訂單詳情 - {selectedOrder?.orderNumber}</DialogTitle>
-            <DialogDescription>
-              查看完整的訂單資訊與處理狀態
-            </DialogDescription>
+            <DialogDescription>查看完整的訂單資訊與處理狀態</DialogDescription>
           </DialogHeader>
 
           {selectedOrder && (
@@ -565,9 +567,18 @@ export default function OrdersPage() {
                   <div>
                     <h4 className="font-medium mb-2">客戶資訊</h4>
                     <div className="space-y-1 text-sm">
-                      <p><span className="text-gray-600">姓名：</span>{selectedOrder.customerInfo.name}</p>
-                      <p><span className="text-gray-600">電話：</span>{selectedOrder.customerInfo.phone}</p>
-                      <p><span className="text-gray-600">Email：</span>{selectedOrder.customerInfo.email}</p>
+                      <p>
+                        <span className="text-gray-600">姓名：</span>
+                        {selectedOrder.customerInfo.name}
+                      </p>
+                      <p>
+                        <span className="text-gray-600">電話：</span>
+                        {selectedOrder.customerInfo.phone}
+                      </p>
+                      <p>
+                        <span className="text-gray-600">Email：</span>
+                        {selectedOrder.customerInfo.email}
+                      </p>
                     </div>
                   </div>
                   <div>
@@ -576,9 +587,11 @@ export default function OrdersPage() {
                       <Badge className={`text-white ${statusColors[selectedOrder.status]}`}>
                         {statusLabels[selectedOrder.status]}
                       </Badge>
-                      <Badge 
+                      <Badge
                         variant={selectedOrder.paymentStatus === 'paid' ? 'default' : 'secondary'}
-                        className={selectedOrder.paymentStatus === 'paid' ? 'bg-green-500 text-white' : ''}
+                        className={
+                          selectedOrder.paymentStatus === 'paid' ? 'bg-green-500 text-white' : ''
+                        }
                       >
                         {paymentStatusLabels[selectedOrder.paymentStatus]}
                       </Badge>
@@ -590,13 +603,18 @@ export default function OrdersPage() {
                   <h4 className="font-medium mb-2">訂單商品</h4>
                   <div className="border rounded-lg">
                     {selectedOrder.items.map((item, index) => (
-                      <div key={index} className="flex justify-between items-center p-3 border-b last:border-b-0">
+                      <div
+                        key={index}
+                        className="flex justify-between items-center p-3 border-b last:border-b-0"
+                      >
                         <div>
                           <p className="font-medium">{item.name}</p>
                           {item.size && <p className="text-sm text-gray-600">規格：{item.size}</p>}
                           <p className="text-sm text-gray-600">數量：{item.quantity}</p>
                         </div>
-                        <p className="font-medium">NT${(item.price * item.quantity).toLocaleString()}</p>
+                        <p className="font-medium">
+                          NT${(item.price * item.quantity).toLocaleString()}
+                        </p>
                       </div>
                     ))}
                     <div className="p-3 bg-gray-50">
@@ -619,14 +637,18 @@ export default function OrdersPage() {
                 {selectedOrder.notes && (
                   <div>
                     <h4 className="font-medium mb-2">客戶備註</h4>
-                    <p className="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg">{selectedOrder.notes}</p>
+                    <p className="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg">
+                      {selectedOrder.notes}
+                    </p>
                   </div>
                 )}
 
                 {selectedOrder.adminNotes && (
                   <div>
                     <h4 className="font-medium mb-2">管理員備註</h4>
-                    <p className="text-sm text-gray-600 bg-blue-50 p-3 rounded-lg">{selectedOrder.adminNotes}</p>
+                    <p className="text-sm text-gray-600 bg-blue-50 p-3 rounded-lg">
+                      {selectedOrder.adminNotes}
+                    </p>
                   </div>
                 )}
               </TabsContent>
@@ -641,9 +663,11 @@ export default function OrdersPage() {
                   </div>
                   <div>
                     <h4 className="font-medium mb-2">付款狀態</h4>
-                    <Badge 
+                    <Badge
                       variant={selectedOrder.paymentStatus === 'paid' ? 'default' : 'secondary'}
-                      className={selectedOrder.paymentStatus === 'paid' ? 'bg-green-500 text-white' : ''}
+                      className={
+                        selectedOrder.paymentStatus === 'paid' ? 'bg-green-500 text-white' : ''
+                      }
                     >
                       {paymentStatusLabels[selectedOrder.paymentStatus]}
                     </Badge>
@@ -654,8 +678,8 @@ export default function OrdersPage() {
                   <div>
                     <h4 className="font-medium mb-2">付款證明</h4>
                     <div className="border rounded-lg p-4">
-                      <img 
-                        src={selectedOrder.paymentProof} 
+                      <img
+                        src={selectedOrder.paymentProof}
                         alt="付款證明"
                         className="max-w-full h-auto max-h-64 rounded"
                       />
@@ -663,29 +687,32 @@ export default function OrdersPage() {
                   </div>
                 )}
 
-                {selectedOrder.paymentStatus === 'unpaid' && selectedOrder.paymentMethod === 'bank_transfer' && (
-                  <div className="flex justify-end">
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button>確認收到付款</Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>確認付款</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            確定已收到客戶的銀行轉帳付款嗎？此操作會將訂單狀態更新為「已付款」。
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>取消</AlertDialogCancel>
-                          <AlertDialogAction onClick={() => handleConfirmPayment(selectedOrder.id)}>
-                            確認付款
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  </div>
-                )}
+                {selectedOrder.paymentStatus === 'unpaid' &&
+                  selectedOrder.paymentMethod === 'bank_transfer' && (
+                    <div className="flex justify-end">
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button>確認收到付款</Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>確認付款</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              確定已收到客戶的銀行轉帳付款嗎？此操作會將訂單狀態更新為「已付款」。
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>取消</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => handleConfirmPayment(selectedOrder.id)}
+                            >
+                              確認付款
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
+                  )}
               </TabsContent>
 
               <TabsContent value="shipping" className="space-y-4">
@@ -693,11 +720,20 @@ export default function OrdersPage() {
                   <div>
                     <h4 className="font-medium mb-2">配送地址</h4>
                     <div className="bg-gray-50 p-3 rounded-lg text-sm">
-                      <p><span className="text-gray-600">收件人：</span>{selectedOrder.shippingAddress.name}</p>
-                      <p><span className="text-gray-600">電話：</span>{selectedOrder.shippingAddress.phone}</p>
-                      <p><span className="text-gray-600">地址：</span>
-                        {selectedOrder.shippingAddress.postalCode} {selectedOrder.shippingAddress.city}
-                        {selectedOrder.shippingAddress.district} {selectedOrder.shippingAddress.address}
+                      <p>
+                        <span className="text-gray-600">收件人：</span>
+                        {selectedOrder.shippingAddress.name}
+                      </p>
+                      <p>
+                        <span className="text-gray-600">電話：</span>
+                        {selectedOrder.shippingAddress.phone}
+                      </p>
+                      <p>
+                        <span className="text-gray-600">地址：</span>
+                        {selectedOrder.shippingAddress.postalCode}{' '}
+                        {selectedOrder.shippingAddress.city}
+                        {selectedOrder.shippingAddress.district}{' '}
+                        {selectedOrder.shippingAddress.address}
                       </p>
                     </div>
                   </div>
@@ -710,7 +746,9 @@ export default function OrdersPage() {
                   </div>
                   <div>
                     <h4 className="font-medium mb-2">追蹤號碼</h4>
-                    <p className="text-sm font-mono">{selectedOrder.trackingNumber || '尚未設定'}</p>
+                    <p className="text-sm font-mono">
+                      {selectedOrder.trackingNumber || '尚未設定'}
+                    </p>
                   </div>
                 </div>
 
@@ -718,19 +756,17 @@ export default function OrdersPage() {
                   <div>
                     <h4 className="font-medium mb-2">出貨時間</h4>
                     <p className="text-sm">
-                      {selectedOrder.shippedAt 
+                      {selectedOrder.shippedAt
                         ? new Date(selectedOrder.shippedAt).toLocaleString('zh-TW')
-                        : '尚未出貨'
-                      }
+                        : '尚未出貨'}
                     </p>
                   </div>
                   <div>
                     <h4 className="font-medium mb-2">送達時間</h4>
                     <p className="text-sm">
-                      {selectedOrder.deliveredAt 
+                      {selectedOrder.deliveredAt
                         ? new Date(selectedOrder.deliveredAt).toLocaleString('zh-TW')
-                        : '尚未送達'
-                      }
+                        : '尚未送達'}
                     </p>
                   </div>
                 </div>

@@ -34,11 +34,11 @@ import {
   AlertDialogTrigger,
 } from '@blackliving/ui';
 import { Plus, Search, Edit, Trash2, Upload, Eye, Filter } from 'lucide-react';
-import { 
-  useReactTable, 
-  createColumnHelper, 
-  getCoreRowModel, 
-  getFilteredRowModel, 
+import {
+  useReactTable,
+  createColumnHelper,
+  getCoreRowModel,
+  getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
   flexRender,
@@ -77,18 +77,25 @@ interface Product {
 // Validation schema
 const productSchema = z.object({
   name: z.string().min(1, '產品名稱為必填'),
-  slug: z.string().min(1, 'URL slug 為必填').regex(/^[a-z0-9-]+$/, '只能包含小寫字母、數字和連字符'),
+  slug: z
+    .string()
+    .min(1, 'URL slug 為必填')
+    .regex(/^[a-z0-9-]+$/, '只能包含小寫字母、數字和連字符'),
   description: z.string().min(10, '產品描述至少需要 10 個字元'),
   category: z.enum(['simmons-black', 'accessories', 'us-imports'], {
-    errorMap: () => ({ message: '請選擇產品分類' })
+    errorMap: () => ({ message: '請選擇產品分類' }),
   }),
   images: z.array(z.string().url()).min(1, '至少需要一張產品圖片'),
-  variants: z.array(z.object({
-    name: z.string().min(1),
-    price: z.number().min(0),
-    sku: z.string().optional(),
-    size: z.string().optional(),
-  })).min(1, '至少需要一個產品變體'),
+  variants: z
+    .array(
+      z.object({
+        name: z.string().min(1),
+        price: z.number().min(0),
+        sku: z.string().optional(),
+        size: z.string().optional(),
+      })
+    )
+    .min(1, '至少需要一個產品變體'),
   features: z.array(z.string()).default([]),
   specifications: z.record(z.string()).default({}),
   inStock: z.boolean().default(true),
@@ -102,8 +109,8 @@ type ProductFormData = z.infer<typeof productSchema>;
 
 const categoryLabels = {
   'simmons-black': '席夢思黑牌',
-  'accessories': '配件',
-  'us-imports': '美國進口'
+  accessories: '配件',
+  'us-imports': '美國進口',
 };
 
 export default function ProductManagement() {
@@ -127,18 +134,16 @@ export default function ProductManagement() {
         <div className="font-medium">
           {info.getValue()}
           {info.row.original.featured && (
-            <Badge variant="secondary" className="ml-2">精選</Badge>
+            <Badge variant="secondary" className="ml-2">
+              精選
+            </Badge>
           )}
         </div>
       ),
     }),
     columnHelper.accessor('category', {
       header: '分類',
-      cell: info => (
-        <Badge variant="outline">
-          {categoryLabels[info.getValue()]}
-        </Badge>
-      ),
+      cell: info => <Badge variant="outline">{categoryLabels[info.getValue()]}</Badge>,
       filterFn: 'equals',
     }),
     columnHelper.accessor('variants', {
@@ -149,13 +154,15 @@ export default function ProductManagement() {
         const prices = variants.map(v => v.price);
         const min = Math.min(...prices);
         const max = Math.max(...prices);
-        return min === max ? `NT$${min.toLocaleString()}` : `NT$${min.toLocaleString()} - NT$${max.toLocaleString()}`;
+        return min === max
+          ? `NT$${min.toLocaleString()}`
+          : `NT$${min.toLocaleString()} - NT$${max.toLocaleString()}`;
       },
     }),
     columnHelper.accessor('inStock', {
       header: '庫存狀態',
       cell: info => (
-        <Badge 
+        <Badge
           variant={info.getValue() ? 'secondary' : 'destructive'}
           className={info.getValue() ? 'bg-green-500 text-white hover:bg-green-500/90' : ''}
         >
@@ -172,11 +179,7 @@ export default function ProductManagement() {
       header: '操作',
       cell: ({ row }) => (
         <div className="flex gap-2">
-          <Button 
-            variant="ghost" 
-            size="sm"
-            onClick={() => handleEdit(row.original)}
-          >
+          <Button variant="ghost" size="sm" onClick={() => handleEdit(row.original)}>
             <Edit className="h-4 w-4" />
           </Button>
           <AlertDialog>
@@ -286,12 +289,12 @@ export default function ProductManagement() {
   const handleSubmit = async (isEdit: boolean) => {
     try {
       const validatedData = productSchema.parse(formData);
-      
-      const url = isEdit 
-        ? `http://localhost:8787/api/products/${selectedProduct?.id}` 
+
+      const url = isEdit
+        ? `http://localhost:8787/api/products/${selectedProduct?.id}`
         : 'http://localhost:8787/api/products';
       const method = isEdit ? 'PUT' : 'POST';
-      
+
       const response = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
@@ -302,15 +305,15 @@ export default function ProductManagement() {
       if (response.ok) {
         const result = await response.json();
         const savedProduct = result.data;
-        
+
         if (isEdit) {
-          setProducts(prev => prev.map(p => p.id === selectedProduct?.id ? savedProduct : p));
+          setProducts(prev => prev.map(p => (p.id === selectedProduct?.id ? savedProduct : p)));
           setIsEditDialogOpen(false);
         } else {
           setProducts(prev => [...prev, savedProduct]);
           setIsCreateDialogOpen(false);
         }
-        
+
         toast.success(isEdit ? '產品更新成功' : '產品建立成功');
         setFormData({});
         setFormErrors({});
@@ -373,14 +376,14 @@ export default function ProductManagement() {
                 <Input
                   placeholder="搜尋產品名稱、描述..."
                   value={globalFilter}
-                  onChange={(e) => setGlobalFilter(e.target.value)}
+                  onChange={e => setGlobalFilter(e.target.value)}
                   className="pl-10"
                 />
               </div>
             </div>
             <Select
               value={(table.getColumn('category')?.getFilterValue() as string) ?? ''}
-              onValueChange={(value) => 
+              onValueChange={value =>
                 table.getColumn('category')?.setFilterValue(value === 'all' ? '' : value)
               }
             >
@@ -402,9 +405,7 @@ export default function ProductManagement() {
       <Card>
         <CardHeader>
           <CardTitle>產品列表</CardTitle>
-          <CardDescription>
-            共 {table.getFilteredRowModel().rows.length} 個產品
-          </CardDescription>
+          <CardDescription>共 {table.getFilteredRowModel().rows.length} 個產品</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="rounded-md border">
@@ -413,16 +414,10 @@ export default function ProductManagement() {
                 {table.getHeaderGroups().map(headerGroup => (
                   <tr key={headerGroup.id} className="border-b bg-gray-50/50">
                     {headerGroup.headers.map(header => (
-                      <th 
-                        key={header.id} 
-                        className="px-4 py-3 text-left font-medium text-gray-900"
-                      >
+                      <th key={header.id} className="px-4 py-3 text-left font-medium text-gray-900">
                         {header.isPlaceholder
                           ? null
-                          : flexRender(
-                              header.column.columnDef.header,
-                              header.getContext()
-                            )}
+                          : flexRender(header.column.columnDef.header, header.getContext())}
                       </th>
                     ))}
                   </tr>
@@ -445,7 +440,8 @@ export default function ProductManagement() {
           {/* Pagination */}
           <div className="flex items-center justify-between px-2 py-4">
             <div className="text-sm text-gray-700">
-              顯示 {table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1} 到{' '}
+              顯示{' '}
+              {table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1} 到{' '}
               {Math.min(
                 (table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize,
                 table.getFilteredRowModel().rows.length
@@ -475,19 +471,20 @@ export default function ProductManagement() {
       </Card>
 
       {/* Create/Edit Product Dialog */}
-      <Dialog open={isCreateDialogOpen || isEditDialogOpen} onOpenChange={(open) => {
-        if (!open) {
-          setIsCreateDialogOpen(false);
-          setIsEditDialogOpen(false);
-          setFormData({});
-          setFormErrors({});
-        }
-      }}>
+      <Dialog
+        open={isCreateDialogOpen || isEditDialogOpen}
+        onOpenChange={open => {
+          if (!open) {
+            setIsCreateDialogOpen(false);
+            setIsEditDialogOpen(false);
+            setFormData({});
+            setFormErrors({});
+          }
+        }}
+      >
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>
-              {isEditDialogOpen ? '編輯產品' : '新增產品'}
-            </DialogTitle>
+            <DialogTitle>{isEditDialogOpen ? '編輯產品' : '新增產品'}</DialogTitle>
             <DialogDescription>
               填寫產品資訊以{isEditDialogOpen ? '更新' : '建立'}產品。
             </DialogDescription>
@@ -503,7 +500,7 @@ export default function ProductManagement() {
                   <Input
                     id="name"
                     value={formData.name || ''}
-                    onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                    onChange={e => setFormData(prev => ({ ...prev, name: e.target.value }))}
                     className={formErrors.name ? 'border-red-500' : ''}
                   />
                   {formErrors.name && (
@@ -515,7 +512,7 @@ export default function ProductManagement() {
                   <Input
                     id="slug"
                     value={formData.slug || ''}
-                    onChange={(e) => setFormData(prev => ({ ...prev, slug: e.target.value }))}
+                    onChange={e => setFormData(prev => ({ ...prev, slug: e.target.value }))}
                     className={formErrors.slug ? 'border-red-500' : ''}
                   />
                   {formErrors.slug && (
@@ -523,13 +520,13 @@ export default function ProductManagement() {
                   )}
                 </div>
               </div>
-              
+
               <div>
                 <Label htmlFor="description">產品描述 *</Label>
                 <Textarea
                   id="description"
                   value={formData.description || ''}
-                  onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                  onChange={e => setFormData(prev => ({ ...prev, description: e.target.value }))}
                   className={formErrors.description ? 'border-red-500' : ''}
                   rows={4}
                 />
@@ -542,7 +539,9 @@ export default function ProductManagement() {
                 <Label htmlFor="category">產品分類 *</Label>
                 <Select
                   value={formData.category || ''}
-                  onValueChange={(value) => setFormData(prev => ({ ...prev, category: value as any }))}
+                  onValueChange={value =>
+                    setFormData(prev => ({ ...prev, category: value as any }))
+                  }
                 >
                   <SelectTrigger className={formErrors.category ? 'border-red-500' : ''}>
                     <SelectValue placeholder="選擇分類" />
@@ -568,14 +567,18 @@ export default function ProductManagement() {
                 <div className="flex items-center space-x-2">
                   <Switch
                     checked={formData.inStock ?? true}
-                    onCheckedChange={(checked) => setFormData(prev => ({ ...prev, inStock: checked }))}
+                    onCheckedChange={checked =>
+                      setFormData(prev => ({ ...prev, inStock: checked }))
+                    }
                   />
                   <Label>有庫存</Label>
                 </div>
                 <div className="flex items-center space-x-2">
                   <Switch
                     checked={formData.featured ?? false}
-                    onCheckedChange={(checked) => setFormData(prev => ({ ...prev, featured: checked }))}
+                    onCheckedChange={checked =>
+                      setFormData(prev => ({ ...prev, featured: checked }))
+                    }
                   />
                   <Label>精選產品</Label>
                 </div>
@@ -596,10 +599,13 @@ export default function ProductManagement() {
           </div>
 
           <div className="flex justify-end space-x-2">
-            <Button variant="outline" onClick={() => {
-              setIsCreateDialogOpen(false);
-              setIsEditDialogOpen(false);
-            }}>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsCreateDialogOpen(false);
+                setIsEditDialogOpen(false);
+              }}
+            >
               取消
             </Button>
             <Button onClick={() => handleSubmit(isEditDialogOpen)}>

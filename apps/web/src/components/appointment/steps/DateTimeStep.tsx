@@ -57,31 +57,25 @@ export default function DateTimeStep() {
     const month = date.getMonth() + 1;
     const day = date.getDate();
     const weekday = weekdays[date.getDay()];
-    
+
     return `${month}月${day}日 (週${weekday})`;
   };
 
   return (
     <div className="text-center">
       <div className="mb-8">
-        <h2 className="text-3xl font-bold text-gray-900 mb-4">
-          選擇預約時間
-        </h2>
-        <p className="text-lg text-gray-600">
-          請選擇您方便的日期和時段
-        </p>
+        <h2 className="text-3xl font-bold text-gray-900 mb-4">選擇預約時間</h2>
+        <p className="text-lg text-gray-600">請選擇您方便的日期和時段</p>
       </div>
 
       <div className="max-w-lg mx-auto space-y-8">
         {/* Date selection */}
         <div className="text-left">
-          <label className="block text-lg font-medium text-gray-900 mb-4">
-            選擇日期
-          </label>
+          <label className="block text-lg font-medium text-gray-900 mb-4">選擇日期</label>
           <input
             type="date"
             value={selectedDate}
-            onChange={(e) => handleDateChange(e.target.value)}
+            onChange={e => handleDateChange(e.target.value)}
             min={minDate}
             max={maxDateStr}
             className="w-full px-4 py-3 text-lg border-2 border-gray-300 rounded-lg focus:border-black focus:outline-none"
@@ -103,24 +97,23 @@ export default function DateTimeStep() {
 
         {/* Time slot selection */}
         <div className="text-left">
-          <label className="block text-lg font-medium text-gray-900 mb-4">
-            選擇時段
-          </label>
+          <label className="block text-lg font-medium text-gray-900 mb-4">選擇時段</label>
           <div className="grid gap-3">
-            {timeSlots.map((slot) => (
+            {timeSlots.map(slot => (
               <div
                 key={slot.id}
                 onClick={() => handleTimeSelect(slot.id)}
                 className={`
                   p-4 rounded-lg border-2 cursor-pointer transition-all duration-200
                   hover:border-black hover:shadow-md focus:outline-none focus:border-black
-                  ${selectedTime === slot.id 
-                    ? 'border-black bg-gray-50 shadow-md' 
-                    : 'border-gray-200 hover:bg-gray-50'
+                  ${
+                    selectedTime === slot.id
+                      ? 'border-black bg-gray-50 shadow-md'
+                      : 'border-gray-200 hover:bg-gray-50'
                   }
                 `}
                 tabIndex={0}
-                onKeyPress={(e) => {
+                onKeyPress={e => {
                   if (e.key === 'Enter' || e.key === ' ') {
                     e.preventDefault();
                     handleTimeSelect(slot.id);
@@ -135,10 +128,14 @@ export default function DateTimeStep() {
                       <div className="text-sm text-gray-600">{slot.time}</div>
                     </div>
                   </div>
-                  
+
                   {selectedTime === slot.id && (
                     <svg className="h-6 w-6 text-black" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                      <path
+                        fillRule="evenodd"
+                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                        clipRule="evenodd"
+                      />
                     </svg>
                   )}
                 </div>
@@ -149,12 +146,10 @@ export default function DateTimeStep() {
 
         {/* Optional message */}
         <div className="text-left">
-          <label className="block text-lg font-medium text-gray-900 mb-4">
-            備註說明 (選填)
-          </label>
+          <label className="block text-lg font-medium text-gray-900 mb-4">備註說明 (選填)</label>
           <textarea
             value={message}
-            onChange={(e) => handleMessageChange(e.target.value)}
+            onChange={e => handleMessageChange(e.target.value)}
             placeholder="如有特殊需求或想了解的產品細節，請告訴我們..."
             rows={3}
             className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-black focus:outline-none resize-none"

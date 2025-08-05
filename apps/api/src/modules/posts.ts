@@ -26,7 +26,7 @@ interface Env {
   GOOGLE_CUSTOMER_CLIENT_SECRET: string;
 }
 
-const postsRouter = new Hono<{ 
+const postsRouter = new Hono<{
   Bindings: Env;
   Variables: {
     db: ReturnType<typeof createDB>;
@@ -44,14 +44,14 @@ postsRouter.use('*', async (c, next) => {
   try {
     const auth = c.get('auth');
     const cookieHeader = c.req.header('Cookie');
-    
+
     if (!cookieHeader) {
       c.set('user', null);
       c.set('session', null);
       await next();
       return;
     }
-    
+
     // Extract session token from cookie (same logic as main app)
     const sessionTokenMatch = cookieHeader.match(/better-auth\.session_token=([^;]+)/);
     if (!sessionTokenMatch) {
@@ -60,41 +60,42 @@ postsRouter.use('*', async (c, next) => {
       await next();
       return;
     }
-    
+
     const sessionToken = sessionTokenMatch[1];
-    
+
     const db = c.get('db');
     const { users, sessions } = await import('@blackliving/db/schema');
     const { eq } = await import('drizzle-orm');
-    
+
     // Query session directly (same as main app)
-    const sessionResult = await db.select({
-      id: sessions.id,
-      token: sessions.token,
-      userId: sessions.userId,
-      expiresAt: sessions.expiresAt,
-      user: {
-        id: users.id,
-        email: users.email,
-        name: users.name,
-        role: users.role,
-        image: users.image,
-      }
-    })
-    .from(sessions)
-    .innerJoin(users, eq(sessions.userId, users.id))
-    .where(eq(sessions.token, sessionToken))
-    .limit(1);
-    
+    const sessionResult = await db
+      .select({
+        id: sessions.id,
+        token: sessions.token,
+        userId: sessions.userId,
+        expiresAt: sessions.expiresAt,
+        user: {
+          id: users.id,
+          email: users.email,
+          name: users.name,
+          role: users.role,
+          image: users.image,
+        },
+      })
+      .from(sessions)
+      .innerJoin(users, eq(sessions.userId, users.id))
+      .where(eq(sessions.token, sessionToken))
+      .limit(1);
+
     if (sessionResult.length === 0) {
       c.set('user', null);
       c.set('session', null);
       await next();
       return;
     }
-    
+
     const session = sessionResult[0];
-    
+
     // Check if session is expired
     if (session.expiresAt < new Date()) {
       c.set('user', null);
@@ -102,26 +103,28 @@ postsRouter.use('*', async (c, next) => {
       await next();
       return;
     }
-    
+
     c.set('user', session.user);
     c.set('session', {
       id: session.id,
       expiresAt: session.expiresAt,
     });
-    
   } catch (error) {
     console.error('Posts router session check error:', error);
     c.set('user', null);
     c.set('session', null);
   }
-  
+
   await next();
 });
 
 // Validation schemas
 const createPostSchema = z.object({
   title: z.string().min(1, '文章標題為必填'),
-  slug: z.string().min(1, 'URL slug 為必填').regex(/^[a-z0-9-]+$/, 'URL slug 格式不正確'),
+  slug: z
+    .string()
+    .min(1, 'URL slug 為必填')
+    .regex(/^[a-z0-9-]+$/, 'URL slug 格式不正確'),
   description: z.string().min(10, '文章描述至少需要10個字元'),
   excerpt: z.string().optional(),
   content: z.string().min(50, '文章內容至少需要50個字元'),
@@ -156,7 +159,10 @@ const querySchema = z.object({
   category: z.enum(['部落格文章', '客戶評價', 'all']).optional().default('all'),
   featured: z.enum(['true', 'false', 'all']).optional().default('all'),
   author: z.string().optional(),
-  sortBy: z.enum(['createdAt', 'publishedAt', 'title', 'viewCount']).optional().default('createdAt'),
+  sortBy: z
+    .enum(['createdAt', 'publishedAt', 'title', 'viewCount'])
+    .optional()
+    .default('createdAt'),
   sortOrder: z.enum(['asc', 'desc']).optional().default('desc'),
 });
 
@@ -178,10 +184,10 @@ const calculateReadingTime = (content: string): number => {
 // POST CATEGORIES ENDPOINTS
 
 // GET /api/posts/categories - List all post categories
-postsRouter.get('/categories', async (c) => {
+postsRouter.get('/categories', async c => {
   try {
     const db = c.get('db');
-    
+
     const categories = await db
       .select()
       .from(postCategories)
@@ -194,19 +200,22 @@ postsRouter.get('/categories', async (c) => {
     });
   } catch (error) {
     console.error('Error fetching post categories:', error);
-    return c.json({
-      success: false,
-      error: 'Failed to fetch post categories',
-    }, 500);
+    return c.json(
+      {
+        success: false,
+        error: 'Failed to fetch post categories',
+      },
+      500
+    );
   }
 });
 
 // GET /api/posts/categories/:slug - Get category by slug with posts count
-postsRouter.get('/categories/:slug', async (c) => {
+postsRouter.get('/categories/:slug', async c => {
   try {
     const db = c.get('db');
     const slug = c.req.param('slug');
-    
+
     // Get category
     const category = await db
       .select()
@@ -215,20 +224,20 @@ postsRouter.get('/categories/:slug', async (c) => {
       .limit(1);
 
     if (category.length === 0) {
-      return c.json({
-        success: false,
-        error: 'Category not found',
-      }, 404);
+      return c.json(
+        {
+          success: false,
+          error: 'Category not found',
+        },
+        404
+      );
     }
 
     // Get posts count for this category
     const postsCount = await db
       .select({ count: count() })
       .from(posts)
-      .where(and(
-        eq(posts.categoryId, category[0].id),
-        eq(posts.status, 'published')
-      ));
+      .where(and(eq(posts.categoryId, category[0].id), eq(posts.status, 'published')));
 
     return c.json({
       success: true,
@@ -239,30 +248,27 @@ postsRouter.get('/categories/:slug', async (c) => {
     });
   } catch (error) {
     console.error('Error fetching post category:', error);
-    return c.json({
-      success: false,
-      error: 'Failed to fetch post category',
-    }, 500);
+    return c.json(
+      {
+        success: false,
+        error: 'Failed to fetch post category',
+      },
+      500
+    );
   }
 });
 
 // POSTS ENDPOINTS
 
 // GET /api/posts/by-category/:slug - Get posts by category slug (public)
-postsRouter.get('/by-category/:slug',
+postsRouter.get(
+  '/by-category/:slug',
   zValidator('query', querySchema.omit({ status: true, category: true })),
-  async (c) => {
+  async c => {
     try {
       const db = c.get('db');
       const categorySlug = c.req.param('slug');
-      const {
-        page,
-        limit,
-        search,
-        featured,
-        sortBy,
-        sortOrder,
-      } = c.req.valid('query');
+      const { page, limit, search, featured, sortBy, sortOrder } = c.req.valid('query');
 
       const pageNum = parseInt(page);
       const limitNum = parseInt(limit);
@@ -276,24 +282,21 @@ postsRouter.get('/by-category/:slug',
         .limit(1);
 
       if (category.length === 0) {
-        return c.json({
-          success: false,
-          error: 'Category not found',
-        }, 404);
+        return c.json(
+          {
+            success: false,
+            error: 'Category not found',
+          },
+          404
+        );
       }
 
       // Build where conditions (only published posts from this category)
-      const conditions = [
-        eq(posts.status, 'published'),
-        eq(posts.categoryId, category[0].id)
-      ];
+      const conditions = [eq(posts.status, 'published'), eq(posts.categoryId, category[0].id)];
 
       if (search) {
         conditions.push(
-          or(
-            like(posts.title, `%${search}%`),
-            like(posts.description, `%${search}%`)
-          )
+          or(like(posts.title, `%${search}%`), like(posts.description, `%${search}%`))
         );
       }
 
@@ -322,10 +325,7 @@ postsRouter.get('/by-category/:slug',
       }
 
       // Get total count
-      const totalQuery = await db
-        .select({ count: count() })
-        .from(posts)
-        .where(whereClause);
+      const totalQuery = await db.select({ count: count() }).from(posts).where(whereClause);
 
       const total = totalQuery[0]?.count || 0;
 
@@ -370,254 +370,228 @@ postsRouter.get('/by-category/:slug',
       });
     } catch (error) {
       console.error('Error fetching posts by category:', error);
-      return c.json({
-        success: false,
-        error: 'Failed to fetch posts by category',
-      }, 500);
+      return c.json(
+        {
+          success: false,
+          error: 'Failed to fetch posts by category',
+        },
+        500
+      );
     }
   }
 );
 
 // GET /api/posts - List posts with filtering and pagination
-postsRouter.get('/',
-  requireAdmin(),
-  zValidator('query', querySchema),
-  async (c) => {
-    try {
-      const db = c.get('db');
-      const {
-        page,
-        limit,
-        search,
-        status,
-        category,
-        featured,
-        author,
-        sortBy,
-        sortOrder,
-      } = c.req.valid('query');
+postsRouter.get('/', requireAdmin(), zValidator('query', querySchema), async c => {
+  try {
+    const db = c.get('db');
+    const { page, limit, search, status, category, featured, author, sortBy, sortOrder } =
+      c.req.valid('query');
 
-      const pageNum = parseInt(page);
-      const limitNum = parseInt(limit);
-      const offset = (pageNum - 1) * limitNum;
+    const pageNum = parseInt(page);
+    const limitNum = parseInt(limit);
+    const offset = (pageNum - 1) * limitNum;
 
-      // Build where conditions
-      const conditions = [];
+    // Build where conditions
+    const conditions = [];
 
-      if (search) {
-        conditions.push(
-          or(
-            like(posts.title, `%${search}%`),
-            like(posts.description, `%${search}%`),
-            like(posts.content, `%${search}%`)
-          )
-        );
-      }
+    if (search) {
+      conditions.push(
+        or(
+          like(posts.title, `%${search}%`),
+          like(posts.description, `%${search}%`),
+          like(posts.content, `%${search}%`)
+        )
+      );
+    }
 
-      if (status !== 'all') {
-        conditions.push(eq(posts.status, status));
-      }
+    if (status !== 'all') {
+      conditions.push(eq(posts.status, status));
+    }
 
-      if (category !== 'all') {
-        // Support both legacy category field and new categoryId
-        conditions.push(
-          or(
-            eq(posts.category, category),
-            sql`${posts.categoryId} IN (SELECT id FROM ${postCategories} WHERE name = ${category})`
-          )
-        );
-      }
+    if (category !== 'all') {
+      // Support both legacy category field and new categoryId
+      conditions.push(
+        or(
+          eq(posts.category, category),
+          sql`${posts.categoryId} IN (SELECT id FROM ${postCategories} WHERE name = ${category})`
+        )
+      );
+    }
 
-      if (featured !== 'all') {
-        conditions.push(eq(posts.featured, featured === 'true'));
-      }
+    if (featured !== 'all') {
+      conditions.push(eq(posts.featured, featured === 'true'));
+    }
 
-      if (author) {
-        conditions.push(eq(posts.authorId, author));
-      }
+    if (author) {
+      conditions.push(eq(posts.authorId, author));
+    }
 
-      const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
-      // Build sort order
-      let orderBy;
-      const direction = sortOrder === 'desc' ? desc : undefined;
+    // Build sort order
+    let orderBy;
+    const direction = sortOrder === 'desc' ? desc : undefined;
 
-      switch (sortBy) {
-        case 'publishedAt':
-          orderBy = direction ? desc(posts.publishedAt) : posts.publishedAt;
-          break;
-        case 'title':
-          orderBy = direction ? desc(posts.title) : posts.title;
-          break;
-        case 'viewCount':
-          orderBy = direction ? desc(posts.viewCount) : posts.viewCount;
-          break;
-        default:
-          orderBy = direction ? desc(posts.createdAt) : posts.createdAt;
-      }
+    switch (sortBy) {
+      case 'publishedAt':
+        orderBy = direction ? desc(posts.publishedAt) : posts.publishedAt;
+        break;
+      case 'title':
+        orderBy = direction ? desc(posts.title) : posts.title;
+        break;
+      case 'viewCount':
+        orderBy = direction ? desc(posts.viewCount) : posts.viewCount;
+        break;
+      default:
+        orderBy = direction ? desc(posts.createdAt) : posts.createdAt;
+    }
 
-      // Get total count
-      const totalQuery = await db
-        .select({ count: count() })
-        .from(posts)
-        .where(whereClause);
+    // Get total count
+    const totalQuery = await db.select({ count: count() }).from(posts).where(whereClause);
 
-      const total = totalQuery[0]?.count || 0;
+    const total = totalQuery[0]?.count || 0;
 
-      // Get posts
-      const postsQuery = db
-        .select()
-        .from(posts)
-        .where(whereClause)
-        .orderBy(orderBy)
-        .limit(limitNum)
-        .offset(offset);
+    // Get posts
+    const postsQuery = db
+      .select()
+      .from(posts)
+      .where(whereClause)
+      .orderBy(orderBy)
+      .limit(limitNum)
+      .offset(offset);
 
-      const postsData = await postsQuery.all();
+    const postsData = await postsQuery.all();
 
-      return c.json({
-        success: true,
-        data: postsData,
-        pagination: {
-          page: pageNum,
-          limit: limitNum,
-          total,
-          totalPages: Math.ceil(total / limitNum),
-        },
-      });
-    } catch (error) {
-      console.error('Error fetching posts:', error);
-      return c.json({
+    return c.json({
+      success: true,
+      data: postsData,
+      pagination: {
+        page: pageNum,
+        limit: limitNum,
+        total,
+        totalPages: Math.ceil(total / limitNum),
+      },
+    });
+  } catch (error) {
+    console.error('Error fetching posts:', error);
+    return c.json(
+      {
         success: false,
         error: 'Failed to fetch posts',
-      }, 500);
-    }
+      },
+      500
+    );
   }
-);
+});
 
 // GET /api/posts/public - Public posts for website (published only)
-postsRouter.get('/public',
-  zValidator('query', querySchema.omit({ status: true })),
-  async (c) => {
-    try {
-      const db = c.get('db');
-      const {
-        page,
-        limit,
-        search,
-        category,
-        featured,
-        sortBy,
-        sortOrder,
-      } = c.req.valid('query');
+postsRouter.get('/public', zValidator('query', querySchema.omit({ status: true })), async c => {
+  try {
+    const db = c.get('db');
+    const { page, limit, search, category, featured, sortBy, sortOrder } = c.req.valid('query');
 
-      const pageNum = parseInt(page);
-      const limitNum = parseInt(limit);
-      const offset = (pageNum - 1) * limitNum;
+    const pageNum = parseInt(page);
+    const limitNum = parseInt(limit);
+    const offset = (pageNum - 1) * limitNum;
 
-      // Build where conditions (only published posts)
-      const conditions = [eq(posts.status, 'published')];
+    // Build where conditions (only published posts)
+    const conditions = [eq(posts.status, 'published')];
 
-      if (search) {
-        conditions.push(
-          or(
-            like(posts.title, `%${search}%`),
-            like(posts.description, `%${search}%`)
-          )
-        );
-      }
+    if (search) {
+      conditions.push(or(like(posts.title, `%${search}%`), like(posts.description, `%${search}%`)));
+    }
 
-      if (category !== 'all') {
-        // Support both legacy category field and new categoryId
-        conditions.push(
-          or(
-            eq(posts.category, category),
-            sql`${posts.categoryId} IN (SELECT id FROM ${postCategories} WHERE name = ${category})`
-          )
-        );
-      }
+    if (category !== 'all') {
+      // Support both legacy category field and new categoryId
+      conditions.push(
+        or(
+          eq(posts.category, category),
+          sql`${posts.categoryId} IN (SELECT id FROM ${postCategories} WHERE name = ${category})`
+        )
+      );
+    }
 
-      if (featured !== 'all') {
-        conditions.push(eq(posts.featured, featured === 'true'));
-      }
+    if (featured !== 'all') {
+      conditions.push(eq(posts.featured, featured === 'true'));
+    }
 
-      const whereClause = and(...conditions);
+    const whereClause = and(...conditions);
 
-      // Build sort order
-      let orderBy;
-      const direction = sortOrder === 'desc' ? desc : undefined;
+    // Build sort order
+    let orderBy;
+    const direction = sortOrder === 'desc' ? desc : undefined;
 
-      switch (sortBy) {
-        case 'publishedAt':
-          orderBy = direction ? desc(posts.publishedAt) : posts.publishedAt;
-          break;
-        case 'title':
-          orderBy = direction ? desc(posts.title) : posts.title;
-          break;
-        case 'viewCount':
-          orderBy = direction ? desc(posts.viewCount) : posts.viewCount;
-          break;
-        default:
-          orderBy = direction ? desc(posts.publishedAt) : posts.publishedAt;
-      }
+    switch (sortBy) {
+      case 'publishedAt':
+        orderBy = direction ? desc(posts.publishedAt) : posts.publishedAt;
+        break;
+      case 'title':
+        orderBy = direction ? desc(posts.title) : posts.title;
+        break;
+      case 'viewCount':
+        orderBy = direction ? desc(posts.viewCount) : posts.viewCount;
+        break;
+      default:
+        orderBy = direction ? desc(posts.publishedAt) : posts.publishedAt;
+    }
 
-      // Get total count
-      const totalQuery = await db
-        .select({ count: count() })
-        .from(posts)
-        .where(whereClause);
+    // Get total count
+    const totalQuery = await db.select({ count: count() }).from(posts).where(whereClause);
 
-      const total = totalQuery[0]?.count || 0;
+    const total = totalQuery[0]?.count || 0;
 
-      // Get posts (excluding content for list view)
-      const postsQuery = db
-        .select({
-          id: posts.id,
-          title: posts.title,
-          slug: posts.slug,
-          description: posts.description,
-          excerpt: posts.excerpt,
-          authorName: posts.authorName,
-          status: posts.status,
-          featured: posts.featured,
-          category: posts.category,
-          tags: posts.tags,
-          featuredImage: posts.featuredImage,
-          publishedAt: posts.publishedAt,
-          viewCount: posts.viewCount,
-          readingTime: posts.readingTime,
-          createdAt: posts.createdAt,
-        })
-        .from(posts)
-        .where(whereClause)
-        .orderBy(orderBy)
-        .limit(limitNum)
-        .offset(offset);
+    // Get posts (excluding content for list view)
+    const postsQuery = db
+      .select({
+        id: posts.id,
+        title: posts.title,
+        slug: posts.slug,
+        description: posts.description,
+        excerpt: posts.excerpt,
+        authorName: posts.authorName,
+        status: posts.status,
+        featured: posts.featured,
+        category: posts.category,
+        tags: posts.tags,
+        featuredImage: posts.featuredImage,
+        publishedAt: posts.publishedAt,
+        viewCount: posts.viewCount,
+        readingTime: posts.readingTime,
+        createdAt: posts.createdAt,
+      })
+      .from(posts)
+      .where(whereClause)
+      .orderBy(orderBy)
+      .limit(limitNum)
+      .offset(offset);
 
-      const postsData = await postsQuery.all();
+    const postsData = await postsQuery.all();
 
-      return c.json({
-        success: true,
-        data: postsData,
-        pagination: {
-          page: pageNum,
-          limit: limitNum,
-          total,
-          totalPages: Math.ceil(total / limitNum),
-        },
-      });
-    } catch (error) {
-      console.error('Error fetching public posts:', error);
-      return c.json({
+    return c.json({
+      success: true,
+      data: postsData,
+      pagination: {
+        page: pageNum,
+        limit: limitNum,
+        total,
+        totalPages: Math.ceil(total / limitNum),
+      },
+    });
+  } catch (error) {
+    console.error('Error fetching public posts:', error);
+    return c.json(
+      {
         success: false,
         error: 'Failed to fetch posts',
-      }, 500);
-    }
+      },
+      500
+    );
   }
-);
+});
 
 // GET /api/posts/:id - Get single post
-postsRouter.get('/:id', async (c) => {
+postsRouter.get('/:id', async c => {
   try {
     const db = c.get('db');
     const postId = c.req.param('id');
@@ -632,17 +606,16 @@ postsRouter.get('/:id', async (c) => {
       whereCondition = eq(posts.slug, postId);
     }
 
-    const post = await db
-      .select()
-      .from(posts)
-      .where(whereCondition)
-      .limit(1);
+    const post = await db.select().from(posts).where(whereCondition).limit(1);
 
     if (post.length === 0) {
-      return c.json({
-        success: false,
-        error: 'Post not found',
-      }, 404);
+      return c.json(
+        {
+          success: false,
+          error: 'Post not found',
+        },
+        404
+      );
     }
 
     // Increment view count if this is a public request (not admin)
@@ -655,7 +628,7 @@ postsRouter.get('/:id', async (c) => {
           updatedAt: new Date(),
         })
         .where(whereCondition);
-      
+
       // Update the returned post data
       post[0].viewCount += 1;
     }
@@ -666,348 +639,353 @@ postsRouter.get('/:id', async (c) => {
     });
   } catch (error) {
     console.error('Error fetching post:', error);
-    return c.json({
-      success: false,
-      error: 'Failed to fetch post',
-    }, 500);
+    return c.json(
+      {
+        success: false,
+        error: 'Failed to fetch post',
+      },
+      500
+    );
   }
 });
 
 // POST /api/posts - Create new post
-postsRouter.post('/',
-  requireAdmin(),
-  zValidator('json', createPostSchema),
-  async (c) => {
-    try {
-      const db = c.get('db');
-      const user = c.get('user');
-      const postData = c.req.valid('json');
+postsRouter.post('/', requireAdmin(), zValidator('json', createPostSchema), async c => {
+  try {
+    const db = c.get('db');
+    const user = c.get('user');
+    const postData = c.req.valid('json');
 
-      // Check if slug already exists
-      const existingPost = await db
-        .select({ id: posts.id })
-        .from(posts)
-        .where(eq(posts.slug, postData.slug))
-        .limit(1);
+    // Check if slug already exists
+    const existingPost = await db
+      .select({ id: posts.id })
+      .from(posts)
+      .where(eq(posts.slug, postData.slug))
+      .limit(1);
 
-      if (existingPost.length > 0) {
-        return c.json({
+    if (existingPost.length > 0) {
+      return c.json(
+        {
           success: false,
           error: 'URL slug already exists',
-        }, 409);
-      }
+        },
+        409
+      );
+    }
 
-      // Calculate reading time if not provided
-      const readingTime = postData.readingTime || calculateReadingTime(postData.content);
+    // Calculate reading time if not provided
+    const readingTime = postData.readingTime || calculateReadingTime(postData.content);
 
-      const newPost = {
-        id: createId(),
-        ...postData,
-        authorId: user.id,
-        authorName: user.name || user.email,
-        readingTime,
-        publishedAt: postData.status === 'published' ? new Date() : null,
-        viewCount: 0,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
+    const newPost = {
+      id: createId(),
+      ...postData,
+      authorId: user.id,
+      authorName: user.name || user.email,
+      readingTime,
+      publishedAt: postData.status === 'published' ? new Date() : null,
+      viewCount: 0,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
 
-      await db.insert(posts).values(newPost);
+    await db.insert(posts).values(newPost);
 
-      return c.json({
+    return c.json(
+      {
         success: true,
         data: newPost,
-      }, 201);
-    } catch (error) {
-      console.error('Error creating post:', error);
-      return c.json({
+      },
+      201
+    );
+  } catch (error) {
+    console.error('Error creating post:', error);
+    return c.json(
+      {
         success: false,
         error: 'Failed to create post',
-      }, 500);
-    }
+      },
+      500
+    );
   }
-);
+});
 
 // PUT /api/posts/:id - Update post
-postsRouter.put('/:id',
-  requireAdmin(),
-  zValidator('json', updatePostSchema),
-  async (c) => {
-    try {
-      const db = c.get('db');
-      const postId = c.req.param('id');
-      const updates = c.req.valid('json');
+postsRouter.put('/:id', requireAdmin(), zValidator('json', updatePostSchema), async c => {
+  try {
+    const db = c.get('db');
+    const postId = c.req.param('id');
+    const updates = c.req.valid('json');
 
-      // Check if post exists
-      const existingPost = await db
-        .select()
-        .from(posts)
-        .where(eq(posts.id, postId))
-        .limit(1);
+    // Check if post exists
+    const existingPost = await db.select().from(posts).where(eq(posts.id, postId)).limit(1);
 
-      if (existingPost.length === 0) {
-        return c.json({
+    if (existingPost.length === 0) {
+      return c.json(
+        {
           success: false,
           error: 'Post not found',
-        }, 404);
-      }
-
-      // Check if slug is being updated and doesn't conflict
-      if (updates.slug && updates.slug !== existingPost[0].slug) {
-        const slugConflict = await db
-          .select({ id: posts.id })
-          .from(posts)
-          .where(and(eq(posts.slug, updates.slug), sql`${posts.id} != ${postId}`))
-          .limit(1);
-
-        if (slugConflict.length > 0) {
-          return c.json({
-            success: false,
-            error: 'URL slug already exists',
-          }, 409);
-        }
-      }
-
-      // Calculate reading time if content is updated
-      if (updates.content && !updates.readingTime) {
-        updates.readingTime = calculateReadingTime(updates.content);
-      }
-
-      // Set published date if status is changing to published
-      if (updates.status === 'published' && existingPost[0].status !== 'published') {
-        updates.publishedAt = new Date();
-      }
-
-      const updatedPost = {
-        ...updates,
-        updatedAt: new Date(),
-      };
-
-      await db
-        .update(posts)
-        .set(updatedPost)
-        .where(eq(posts.id, postId));
-
-      // Fetch and return updated post
-      const result = await db
-        .select()
-        .from(posts)
-        .where(eq(posts.id, postId))
-        .limit(1);
-
-      return c.json({
-        success: true,
-        data: result[0],
-      });
-    } catch (error) {
-      console.error('Error updating post:', error);
-      return c.json({
-        success: false,
-        error: 'Failed to update post',
-      }, 500);
+        },
+        404
+      );
     }
-  }
-);
 
-// DELETE /api/posts/:id - Delete post
-postsRouter.delete('/:id',
-  requireAdmin(),
-  async (c) => {
-    try {
-      const db = c.get('db');
-      const postId = c.req.param('id');
-
-      // Check if post exists
-      const existingPost = await db
+    // Check if slug is being updated and doesn't conflict
+    if (updates.slug && updates.slug !== existingPost[0].slug) {
+      const slugConflict = await db
         .select({ id: posts.id })
         .from(posts)
-        .where(eq(posts.id, postId))
+        .where(and(eq(posts.slug, updates.slug), sql`${posts.id} != ${postId}`))
         .limit(1);
 
-      if (existingPost.length === 0) {
-        return c.json({
+      if (slugConflict.length > 0) {
+        return c.json(
+          {
+            success: false,
+            error: 'URL slug already exists',
+          },
+          409
+        );
+      }
+    }
+
+    // Calculate reading time if content is updated
+    if (updates.content && !updates.readingTime) {
+      updates.readingTime = calculateReadingTime(updates.content);
+    }
+
+    // Set published date if status is changing to published
+    if (updates.status === 'published' && existingPost[0].status !== 'published') {
+      updates.publishedAt = new Date();
+    }
+
+    const updatedPost = {
+      ...updates,
+      updatedAt: new Date(),
+    };
+
+    await db.update(posts).set(updatedPost).where(eq(posts.id, postId));
+
+    // Fetch and return updated post
+    const result = await db.select().from(posts).where(eq(posts.id, postId)).limit(1);
+
+    return c.json({
+      success: true,
+      data: result[0],
+    });
+  } catch (error) {
+    console.error('Error updating post:', error);
+    return c.json(
+      {
+        success: false,
+        error: 'Failed to update post',
+      },
+      500
+    );
+  }
+});
+
+// DELETE /api/posts/:id - Delete post
+postsRouter.delete('/:id', requireAdmin(), async c => {
+  try {
+    const db = c.get('db');
+    const postId = c.req.param('id');
+
+    // Check if post exists
+    const existingPost = await db
+      .select({ id: posts.id })
+      .from(posts)
+      .where(eq(posts.id, postId))
+      .limit(1);
+
+    if (existingPost.length === 0) {
+      return c.json(
+        {
           success: false,
           error: 'Post not found',
-        }, 404);
-      }
+        },
+        404
+      );
+    }
 
-      await db.delete(posts).where(eq(posts.id, postId));
+    await db.delete(posts).where(eq(posts.id, postId));
 
-      return c.json({
-        success: true,
-        message: 'Post deleted successfully',
-      });
-    } catch (error) {
-      console.error('Error deleting post:', error);
-      return c.json({
+    return c.json({
+      success: true,
+      message: 'Post deleted successfully',
+    });
+  } catch (error) {
+    console.error('Error deleting post:', error);
+    return c.json(
+      {
         success: false,
         error: 'Failed to delete post',
-      }, 500);
-    }
+      },
+      500
+    );
   }
-);
+});
 
 // GET /api/posts/analytics/stats - Get blog analytics
-postsRouter.get('/analytics/stats',
-  requireAdmin(),
-  async (c) => {
-    try {
-      const db = c.get('db');
+postsRouter.get('/analytics/stats', requireAdmin(), async c => {
+  try {
+    const db = c.get('db');
 
-      // Get basic stats
-      const totalPosts = await db.select({ count: count() }).from(posts);
-      const publishedPosts = await db
-        .select({ count: count() })
-        .from(posts)
-        .where(eq(posts.status, 'published'));
-      const draftPosts = await db
-        .select({ count: count() })
-        .from(posts)
-        .where(eq(posts.status, 'draft'));
-      const featuredPosts = await db
-        .select({ count: count() })
-        .from(posts)
-        .where(eq(posts.featured, true));
+    // Get basic stats
+    const totalPosts = await db.select({ count: count() }).from(posts);
+    const publishedPosts = await db
+      .select({ count: count() })
+      .from(posts)
+      .where(eq(posts.status, 'published'));
+    const draftPosts = await db
+      .select({ count: count() })
+      .from(posts)
+      .where(eq(posts.status, 'draft'));
+    const featuredPosts = await db
+      .select({ count: count() })
+      .from(posts)
+      .where(eq(posts.featured, true));
 
-      // Get total views
-      const totalViews = await db
-        .select({ sum: sql<number>`sum(${posts.viewCount})` })
-        .from(posts);
+    // Get total views
+    const totalViews = await db.select({ sum: sql<number>`sum(${posts.viewCount})` }).from(posts);
 
-      // Get category distribution
-      const categoryStats = await db
-        .select({
-          category: posts.category,
-          count: count(),
-          totalViews: sql<number>`sum(${posts.viewCount})`,
-        })
-        .from(posts)
-        .groupBy(posts.category);
+    // Get category distribution
+    const categoryStats = await db
+      .select({
+        category: posts.category,
+        count: count(),
+        totalViews: sql<number>`sum(${posts.viewCount})`,
+      })
+      .from(posts)
+      .groupBy(posts.category);
 
-      // Get top posts by views
-      const topPosts = await db
-        .select({
-          id: posts.id,
-          title: posts.title,
-          slug: posts.slug,
-          viewCount: posts.viewCount,
-          publishedAt: posts.publishedAt,
-        })
-        .from(posts)
-        .where(eq(posts.status, 'published'))
-        .orderBy(desc(posts.viewCount))
-        .limit(10);
+    // Get top posts by views
+    const topPosts = await db
+      .select({
+        id: posts.id,
+        title: posts.title,
+        slug: posts.slug,
+        viewCount: posts.viewCount,
+        publishedAt: posts.publishedAt,
+      })
+      .from(posts)
+      .where(eq(posts.status, 'published'))
+      .orderBy(desc(posts.viewCount))
+      .limit(10);
 
-      // Get recent posts
-      const recentPosts = await db
-        .select({
-          id: posts.id,
-          title: posts.title,
-          slug: posts.slug,
-          status: posts.status,
-          createdAt: posts.createdAt,
-          publishedAt: posts.publishedAt,
-        })
-        .from(posts)
-        .orderBy(desc(posts.createdAt))
-        .limit(10);
+    // Get recent posts
+    const recentPosts = await db
+      .select({
+        id: posts.id,
+        title: posts.title,
+        slug: posts.slug,
+        status: posts.status,
+        createdAt: posts.createdAt,
+        publishedAt: posts.publishedAt,
+      })
+      .from(posts)
+      .orderBy(desc(posts.createdAt))
+      .limit(10);
 
-      return c.json({
-        success: true,
-        data: {
-          summary: {
-            totalPosts: totalPosts[0]?.count || 0,
-            publishedPosts: publishedPosts[0]?.count || 0,
-            draftPosts: draftPosts[0]?.count || 0,
-            featuredPosts: featuredPosts[0]?.count || 0,
-            totalViews: totalViews[0]?.sum || 0,
-          },
-          categories: categoryStats,
-          topPosts,
-          recentPosts,
+    return c.json({
+      success: true,
+      data: {
+        summary: {
+          totalPosts: totalPosts[0]?.count || 0,
+          publishedPosts: publishedPosts[0]?.count || 0,
+          draftPosts: draftPosts[0]?.count || 0,
+          featuredPosts: featuredPosts[0]?.count || 0,
+          totalViews: totalViews[0]?.sum || 0,
         },
-      });
-    } catch (error) {
-      console.error('Error fetching blog analytics:', error);
-      return c.json({
+        categories: categoryStats,
+        topPosts,
+        recentPosts,
+      },
+    });
+  } catch (error) {
+    console.error('Error fetching blog analytics:', error);
+    return c.json(
+      {
         success: false,
         error: 'Failed to fetch blog analytics',
-      }, 500);
-    }
+      },
+      500
+    );
   }
-);
+});
 
 // POST /api/posts/:id/duplicate - Duplicate post
-postsRouter.post('/:id/duplicate',
-  requireAdmin(),
-  async (c) => {
-    try {
-      const db = c.get('db');
-      const user = c.get('user');
-      const postId = c.req.param('id');
+postsRouter.post('/:id/duplicate', requireAdmin(), async c => {
+  try {
+    const db = c.get('db');
+    const user = c.get('user');
+    const postId = c.req.param('id');
 
-      // Get original post
-      const originalPost = await db
-        .select()
-        .from(posts)
-        .where(eq(posts.id, postId))
-        .limit(1);
+    // Get original post
+    const originalPost = await db.select().from(posts).where(eq(posts.id, postId)).limit(1);
 
-      if (originalPost.length === 0) {
-        return c.json({
+    if (originalPost.length === 0) {
+      return c.json(
+        {
           success: false,
           error: 'Post not found',
-        }, 404);
-      }
+        },
+        404
+      );
+    }
 
-      const original = originalPost[0];
+    const original = originalPost[0];
 
-      // Create duplicate with modified title and slug
-      const duplicateTitle = `${original.title} - 副本`;
-      const duplicateSlug = `${original.slug}-copy-${Date.now()}`;
+    // Create duplicate with modified title and slug
+    const duplicateTitle = `${original.title} - 副本`;
+    const duplicateSlug = `${original.slug}-copy-${Date.now()}`;
 
-      const duplicatePost = {
-        id: createId(),
-        title: duplicateTitle,
-        slug: duplicateSlug,
-        description: original.description,
-        excerpt: original.excerpt,
-        content: original.content,
-        authorId: user.id,
-        authorName: user.name || user.email,
-        status: 'draft' as const,
-        featured: false,
-        category: original.category,
-        tags: original.tags,
-        featuredImage: original.featuredImage,
-        seoTitle: original.seoTitle,
-        seoDescription: original.seoDescription,
-        seoKeywords: original.seoKeywords,
-        canonicalUrl: original.canonicalUrl,
-        ogTitle: original.ogTitle,
-        ogDescription: original.ogDescription,
-        ogImage: original.ogImage,
-        readingTime: original.readingTime,
-        allowComments: original.allowComments,
-        viewCount: 0,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
+    const duplicatePost = {
+      id: createId(),
+      title: duplicateTitle,
+      slug: duplicateSlug,
+      description: original.description,
+      excerpt: original.excerpt,
+      content: original.content,
+      authorId: user.id,
+      authorName: user.name || user.email,
+      status: 'draft' as const,
+      featured: false,
+      category: original.category,
+      tags: original.tags,
+      featuredImage: original.featuredImage,
+      seoTitle: original.seoTitle,
+      seoDescription: original.seoDescription,
+      seoKeywords: original.seoKeywords,
+      canonicalUrl: original.canonicalUrl,
+      ogTitle: original.ogTitle,
+      ogDescription: original.ogDescription,
+      ogImage: original.ogImage,
+      readingTime: original.readingTime,
+      allowComments: original.allowComments,
+      viewCount: 0,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
 
-      await db.insert(posts).values(duplicatePost);
+    await db.insert(posts).values(duplicatePost);
 
-      return c.json({
+    return c.json(
+      {
         success: true,
         data: duplicatePost,
-      }, 201);
-    } catch (error) {
-      console.error('Error duplicating post:', error);
-      return c.json({
+      },
+      201
+    );
+  } catch (error) {
+    console.error('Error duplicating post:', error);
+    return c.json(
+      {
         success: false,
         error: 'Failed to duplicate post',
-      }, 500);
-    }
+      },
+      500
+    );
   }
-);
+});
 
 export { postsRouter };

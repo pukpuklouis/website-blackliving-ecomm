@@ -71,18 +71,22 @@ The API uses **Better Auth** for secure authentication with the following featur
 ### Admin CMS APIs
 
 #### Dashboard
+
 - `GET /api/admin/dashboard/stats` - Get dashboard analytics
 
 #### Product Management
+
 - `GET /api/admin/products` - List products with filters
 - `POST /api/admin/products` - Create new product
 - `PUT /api/admin/products/:id` - Update product
 - `DELETE /api/admin/products/:id` - Delete product
 
 #### File Upload
+
 - `POST /api/admin/upload` - Upload files to R2 storage
 
 #### Blog Management
+
 - `GET /api/admin/posts` - List blog posts
 - `POST /api/admin/posts` - Create new post
 - `PUT /api/admin/posts/:id` - Update post
@@ -91,18 +95,22 @@ The API uses **Better Auth** for secure authentication with the following featur
 ### Public APIs
 
 #### Products
+
 - `GET /api/products` - List products (cached)
 - `GET /api/products/:id` - Get product details (cached)
 
 #### Orders
+
 - `POST /api/orders` - Create new order (auth required)
 - `GET /api/orders` - Get user orders (auth required)
 
 #### Appointments
+
 - `POST /api/appointments` - Book appointment (auth required)
 - `GET /api/appointments` - Get user appointments (auth required)
 
 ### Authentication
+
 - `POST /api/auth/sign-in` - User login
 - `POST /api/auth/sign-up` - User registration
 - `POST /api/auth/sign-out` - User logout
@@ -141,6 +149,7 @@ The database uses **Drizzle ORM** with the following main tables:
 ## 🚀 Deployment
 
 ### Development
+
 ```bash
 # Start development server
 pnpm dev
@@ -151,29 +160,32 @@ pnpm db:migrate
 ```
 
 ### Staging/Production
+
 ```bash
 # Deploy to staging
 wrangler deploy --env staging
 
-# Deploy to production  
+# Deploy to production
 wrangler deploy --env production
 ```
 
 ### Environment Setup
 
 1. **Create Cloudflare Resources**:
+
    ```bash
    # Create D1 database
    wrangler d1 create blackliving-db
-   
+
    # Create R2 bucket
    wrangler r2 bucket create blackliving-images
-   
+
    # Create KV namespace
    wrangler kv:namespace create "CACHE"
    ```
 
 2. **Set Environment Secrets**:
+
    ```bash
    wrangler secret put BETTER_AUTH_SECRET --env production
    wrangler secret put GOOGLE_CLIENT_ID --env production
@@ -185,11 +197,13 @@ wrangler deploy --env production
 ## 🔧 Configuration
 
 ### Environment Variables
+
 - `NODE_ENV` - Environment mode (development/staging/production)
 - `API_BASE_URL` - API base URL for CORS
 - `WEB_BASE_URL` - Frontend URL for CORS
 
 ### Secrets (via Wrangler)
+
 - `BETTER_AUTH_SECRET` - Authentication encryption key
 - `GOOGLE_CLIENT_ID` - Google OAuth client ID
 - `GOOGLE_CLIENT_SECRET` - Google OAuth client secret
@@ -205,6 +219,7 @@ wrangler deploy --env production
 ## 🔍 Monitoring
 
 Monitor API performance through:
+
 - Cloudflare Workers Analytics
 - Real-time error tracking
 - Performance metrics dashboard

@@ -1,7 +1,7 @@
 {
   "name": "席夢思黑標 S2 床墊",
   "description": "頂級美國原裝進口床墊，採用獨立筒彈簧系統搭配高級記憶泡棉，提供極致睡眠體驗",
-  "category": "simmons-black", 
+  "category": "simmons-black",
   "images": [
     "/images/simmons-black-s2-1.jpg",
     "/images/simmons-black-s2-2.jpg",
@@ -15,14 +15,14 @@
       "originalPrice": 98000
     },
     {
-      "size": "標準雙人 152cm", 
+      "size": "標準雙人 152cm",
       "firmness": "中等偏軟",
       "price": 45000,
       "originalPrice": 128000
     },
     {
       "size": "加大雙人 182cm",
-      "firmness": "中等偏軟", 
+      "firmness": "中等偏軟",
       "price": 55000,
       "originalPrice": 158000
     }

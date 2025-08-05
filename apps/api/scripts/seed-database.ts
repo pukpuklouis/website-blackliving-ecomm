@@ -1,9 +1,21 @@
 import { createDB } from '@blackliving/db';
-import { 
-  users, sessions, accounts, verifications,
-  products, orders, appointments, posts, postCategories, reviews, 
-  newsletters, contacts, customerProfiles, 
-  customerTags, customerTagAssignments, customerInteractions
+import {
+  users,
+  sessions,
+  accounts,
+  verifications,
+  products,
+  orders,
+  appointments,
+  posts,
+  postCategories,
+  reviews,
+  newsletters,
+  contacts,
+  customerProfiles,
+  customerTags,
+  customerTagAssignments,
+  customerInteractions,
 } from '@blackliving/db/schema';
 
 // Mock D1 database for seeding
@@ -31,25 +43,25 @@ export async function seedDatabase() {
   try {
     // 1. Seed Users (Better Auth)
     await seedUsers();
-    
-    // 2. Seed Products  
+
+    // 2. Seed Products
     await seedProducts();
-    
+
     // 3. Seed Customer Profiles & Tags
     await seedCustomers();
-    
+
     // 4. Seed Orders
     await seedOrders();
-    
+
     // 5. Seed Appointments
     await seedAppointments();
-    
+
     // 6. Seed Post Categories
     await seedPostCategories();
-    
+
     // 7. Seed Posts & Reviews
     await seedContent();
-    
+
     // 8. Seed Contact & Newsletter
     await seedCommunications();
 
@@ -69,7 +81,8 @@ async function seedUsers() {
       emailVerified: true,
       role: 'admin',
       phone: '+886-912-345-678',
-      image: 'https://lh3.googleusercontent.com/a/ACg8ocJZWZvXJZ4YyeVNF9tD-V553wXeGPOn3hXM-lvst-p15Jg-d4oQ=s96-c',
+      image:
+        'https://lh3.googleusercontent.com/a/ACg8ocJZWZvXJZ4YyeVNF9tD-V553wXeGPOn3hXM-lvst-p15Jg-d4oQ=s96-c',
       preferences: JSON.stringify({ theme: 'light', notifications: true }),
     },
     {
@@ -82,14 +95,14 @@ async function seedUsers() {
       preferences: JSON.stringify({ theme: 'light', emailUpdates: true }),
     },
     {
-      id: 'user_customer_002', 
+      id: 'user_customer_002',
       name: '李美華',
       email: 'lee@example.com',
       emailVerified: true,
       role: 'customer',
       phone: '+886-912-888-999',
       preferences: JSON.stringify({ emailUpdates: false }),
-    }
+    },
   ];
 
   for (const user of userData) {
@@ -104,11 +117,12 @@ async function seedProducts() {
       id: 'prod_001',
       name: '席夢思黑牌 Classic 獨立筒床墊',
       slug: 'simmons-black-classic',
-      description: '席夢思頂級黑牌系列，採用獨立筒彈簧技術，提供絕佳的支撐與舒適度。適合各種睡眠姿勢，讓您享受一夜好眠。',
+      description:
+        '席夢思頂級黑牌系列，採用獨立筒彈簧技術，提供絕佳的支撐與舒適度。適合各種睡眠姿勢，讓您享受一夜好眠。',
       category: 'simmons-black',
       images: JSON.stringify([
         'https://images.unsplash.com/photo-1541558869434-2840d308329a?w=800',
-        'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=800'
+        'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=800',
       ]),
       variants: JSON.stringify([
         {
@@ -121,10 +135,10 @@ async function seedProducts() {
           firmness: 'firm',
           stock: 5,
           inStock: true,
-          sortOrder: 0
+          sortOrder: 0,
         },
         {
-          id: 'var_002', 
+          id: 'var_002',
           name: '加大雙人偏硬',
           sku: 'SB-CL-QEN-FIRM',
           price: 109000,
@@ -133,10 +147,10 @@ async function seedProducts() {
           firmness: 'firm',
           stock: 3,
           inStock: true,
-          sortOrder: 1
+          sortOrder: 1,
         },
         {
-          id: 'var_003', 
+          id: 'var_003',
           name: '加大雙人適中',
           sku: 'SB-CL-QEN-MED',
           price: 109000,
@@ -145,42 +159,44 @@ async function seedProducts() {
           firmness: 'medium',
           stock: 4,
           inStock: true,
-          sortOrder: 2
-        }
+          sortOrder: 2,
+        },
       ]),
       features: JSON.stringify([
         '獨立筒彈簧支撐系統',
         '天然乳膠舒適層',
         '透氣竹炭纖維面料',
         '十年品質保證',
-        '免費到府安裝'
+        '免費到府安裝',
       ]),
       specifications: JSON.stringify({
-        '彈簧數量': '1000+ 獨立筒',
-        '厚度': '32cm',
-        '硬度': '中偏硬',
-        '保固': '10年',
-        '產地': '台灣製造'
+        彈簧數量: '1000+ 獨立筒',
+        厚度: '32cm',
+        硬度: '中偏硬',
+        保固: '10年',
+        產地: '台灣製造',
       }),
       inStock: true,
       featured: true,
       sortOrder: 0,
       seoTitle: '席夢思黑牌Classic床墊 | 台灣總代理 | 黑哥家居',
-      seoDescription: '席夢思頂級黑牌Classic獨立筒床墊，提供極致睡眠品質。十年保固，免費到府安裝，分期0利率。'
+      seoDescription:
+        '席夢思頂級黑牌Classic獨立筒床墊，提供極致睡眠品質。十年保固，免費到府安裝，分期0利率。',
     },
     {
       id: 'prod_002',
       name: '防蟎枕頭保護套組',
-      slug: 'pillow-protector-set', 
-      description: '高品質防蟎枕頭保護套，有效防止塵蟎孳生，保護您的健康睡眠環境。一組包含2個枕頭套。',
+      slug: 'pillow-protector-set',
+      description:
+        '高品質防蟎枕頭保護套，有效防止塵蟎孳生，保護您的健康睡眠環境。一組包含2個枕頭套。',
       category: 'accessories',
       images: JSON.stringify([
-        'https://images.unsplash.com/photo-1584464491033-06628f3a6b7b?w=800'
+        'https://images.unsplash.com/photo-1584464491033-06628f3a6b7b?w=800',
       ]),
       variants: JSON.stringify([
         {
           id: 'var_004',
-          name: '標準尺寸套組', 
+          name: '標準尺寸套組',
           sku: 'ACC-PP-STD',
           price: 1980,
           originalPrice: 2500,
@@ -188,24 +204,19 @@ async function seedProducts() {
           firmness: 'medium',
           stock: 20,
           inStock: true,
-          sortOrder: 0
-        }
+          sortOrder: 0,
+        },
       ]),
-      features: JSON.stringify([
-        '防蟎抗菌材質',
-        '透氣不悶熱',
-        '可機洗清潔',
-        '包裝附贈2個'
-      ]),
+      features: JSON.stringify(['防蟎抗菌材質', '透氣不悶熱', '可機洗清潔', '包裝附贈2個']),
       specifications: JSON.stringify({
-        '材質': '聚酯纖維',
-        '尺寸': '48x74cm',
-        '數量': '2個/組',
-        '清潔': '可機洗'
+        材質: '聚酯纖維',
+        尺寸: '48x74cm',
+        數量: '2個/組',
+        清潔: '可機洗',
       }),
       inStock: true,
       featured: false,
-      sortOrder: 0
+      sortOrder: 0,
     },
     {
       id: 'prod_003',
@@ -213,40 +224,33 @@ async function seedProducts() {
       slug: 'tempur-pedic-pillow',
       description: '美國原裝進口Tempur-Pedic記憶枕，NASA太空科技材質，完美貼合頭頸曲線。',
       category: 'us-imports',
-      images: JSON.stringify([
-        'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=800'
-      ]),
+      images: JSON.stringify(['https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=800']),
       variants: JSON.stringify([
         {
           id: 'var_005',
           name: '標準型記憶枕',
-          sku: 'US-TP-STD', 
+          sku: 'US-TP-STD',
           price: 4800,
           originalPrice: 5800,
           size: 'single',
           firmness: 'medium',
           stock: 8,
           inStock: true,
-          sortOrder: 0
-        }
+          sortOrder: 0,
+        },
       ]),
-      features: JSON.stringify([
-        'NASA太空記憶棉',
-        '美國原裝進口',
-        '完美支撐頭頸',
-        '5年品質保證'
-      ]),
+      features: JSON.stringify(['NASA太空記憶棉', '美國原裝進口', '完美支撐頭頸', '5年品質保證']),
       specifications: JSON.stringify({
-        '尺寸': '60x40x12cm',
-        '材質': 'Tempur記憶棉',
-        '密度': '50kg/m³',
-        '保固': '5年',
-        '產地': '美國'
+        尺寸: '60x40x12cm',
+        材質: 'Tempur記憶棉',
+        密度: '50kg/m³',
+        保固: '5年',
+        產地: '美國',
       }),
       inStock: true,
       featured: true,
-      sortOrder: 1
-    }
+      sortOrder: 1,
+    },
   ];
 
   for (const product of productData) {
@@ -263,29 +267,29 @@ async function seedCustomers() {
       name: 'VIP客戶',
       color: '#8B5CF6',
       description: '消費金額超過50萬的頂級客戶',
-      category: 'behavioral'
+      category: 'behavioral',
     },
     {
-      id: 'tag_002', 
+      id: 'tag_002',
       name: '回購客戶',
       color: '#10B981',
       description: '有多次購買記錄的忠實客戶',
-      category: 'behavioral'
+      category: 'behavioral',
     },
     {
       id: 'tag_003',
       name: '年輕族群',
       color: '#F59E0B',
       description: '25-35歲的年輕消費族群',
-      category: 'demographic'
+      category: 'demographic',
     },
     {
       id: 'tag_004',
       name: '企業採購',
       color: '#EF4444',
       description: '企業大量採購客戶',
-      category: 'custom'
-    }
+      category: 'custom',
+    },
   ];
 
   for (const tag of tagData) {
@@ -307,15 +311,15 @@ async function seedCustomers() {
         city: '台北市',
         district: '信義區',
         street: '信義路五段7號',
-        postalCode: '110'
+        postalCode: '110',
       }),
       shippingAddresses: JSON.stringify([
         {
           city: '台北市',
-          district: '信義區', 
+          district: '信義區',
           street: '信義路五段7號',
-          postalCode: '110'
-        }
+          postalCode: '110',
+        },
       ]),
       totalSpent: 150000,
       orderCount: 3,
@@ -329,12 +333,12 @@ async function seedCustomers() {
       lastContactAt: new Date('2024-12-20'),
       contactPreference: 'email',
       notes: '重要VIP客戶，對品質要求極高，推薦高端產品',
-      source: 'google_ads'
+      source: 'google_ads',
     },
     {
       id: 'customer_002',
       userId: 'user_customer_002',
-      customerNumber: 'CU202501002', 
+      customerNumber: 'CU202501002',
       name: '李美華',
       email: 'lee@example.com',
       phone: '+886-912-888-999',
@@ -344,7 +348,7 @@ async function seedCustomers() {
         city: '新北市',
         district: '板橋區',
         street: '文化路一段188號',
-        postalCode: '220'
+        postalCode: '220',
       }),
       totalSpent: 45000,
       orderCount: 1,
@@ -357,13 +361,13 @@ async function seedCustomers() {
       churnRisk: 'medium',
       contactPreference: 'phone',
       notes: '首次購買客戶，對價格較敏感',
-      source: 'facebook_ads'
+      source: 'facebook_ads',
     },
     {
       id: 'customer_003',
       customerNumber: 'CU202501003',
       name: '陳志強',
-      email: 'chen@example.com', 
+      email: 'chen@example.com',
       phone: '+886-955-123-456',
       birthday: '1978-12-05',
       gender: 'male',
@@ -371,7 +375,7 @@ async function seedCustomers() {
         city: '台中市',
         district: '西屯區',
         street: '台灣大道三段99號',
-        postalCode: '407'
+        postalCode: '407',
       }),
       totalSpent: 280000,
       orderCount: 4,
@@ -384,8 +388,8 @@ async function seedCustomers() {
       churnRisk: 'low',
       contactPreference: 'email',
       notes: '穩定回購客戶，偏好美國進口產品',
-      source: 'referral'
-    }
+      source: 'referral',
+    },
   ];
 
   for (const customer of customerData) {
@@ -394,11 +398,41 @@ async function seedCustomers() {
 
   // Tag Assignments
   const tagAssignments = [
-    { id: 'assign_001', customerProfileId: 'customer_001', customerTagId: 'tag_001', assignedBy: 'admin', assignedAt: Date.now() },
-    { id: 'assign_002', customerProfileId: 'customer_001', customerTagId: 'tag_002', assignedBy: 'admin', assignedAt: Date.now() },
-    { id: 'assign_003', customerProfileId: 'customer_002', customerTagId: 'tag_003', assignedBy: 'admin', assignedAt: Date.now() },
-    { id: 'assign_004', customerProfileId: 'customer_003', customerTagId: 'tag_002', assignedBy: 'admin', assignedAt: Date.now() },
-    { id: 'assign_005', customerProfileId: 'customer_003', customerTagId: 'tag_004', assignedBy: 'admin', assignedAt: Date.now() },
+    {
+      id: 'assign_001',
+      customerProfileId: 'customer_001',
+      customerTagId: 'tag_001',
+      assignedBy: 'admin',
+      assignedAt: Date.now(),
+    },
+    {
+      id: 'assign_002',
+      customerProfileId: 'customer_001',
+      customerTagId: 'tag_002',
+      assignedBy: 'admin',
+      assignedAt: Date.now(),
+    },
+    {
+      id: 'assign_003',
+      customerProfileId: 'customer_002',
+      customerTagId: 'tag_003',
+      assignedBy: 'admin',
+      assignedAt: Date.now(),
+    },
+    {
+      id: 'assign_004',
+      customerProfileId: 'customer_003',
+      customerTagId: 'tag_002',
+      assignedBy: 'admin',
+      assignedAt: Date.now(),
+    },
+    {
+      id: 'assign_005',
+      customerProfileId: 'customer_003',
+      customerTagId: 'tag_004',
+      assignedBy: 'admin',
+      assignedAt: Date.now(),
+    },
   ];
 
   for (const assignment of tagAssignments) {
@@ -415,20 +449,20 @@ async function seedCustomers() {
       description: '客戶詢問新款床墊規格與價格',
       performedBy: 'Louis Chen',
       metadata: JSON.stringify({ duration: '15分鐘', outcome: '已發送報價單' }),
-      createdAt: Date.now() - 86400000 * 2 // 2 days ago
+      createdAt: Date.now() - 86400000 * 2, // 2 days ago
     },
     {
       id: 'interaction_002',
       customerProfileId: 'customer_001',
-      type: 'purchase', 
+      type: 'purchase',
       title: '完成訂單 ORD-001',
       description: '購買席夢思黑牌Classic床墊',
       performedBy: 'system',
       relatedId: 'ORD-001',
       relatedType: 'order',
       metadata: JSON.stringify({ amount: 89000, method: '信用卡' }),
-      createdAt: Date.now() - 86400000 * 7 // 1 week ago
-    }
+      createdAt: Date.now() - 86400000 * 7, // 1 week ago
+    },
   ];
 
   for (const interaction of interactions) {
@@ -455,8 +489,8 @@ async function seedOrders() {
           variant: '標準雙人 150x188cm',
           price: 89000,
           quantity: 1,
-          total: 89000
-        }
+          total: 89000,
+        },
       ]),
       subtotal: 89000,
       shippingFee: 0,
@@ -468,15 +502,15 @@ async function seedOrders() {
         city: '台北市',
         district: '信義區',
         street: '信義路五段7號',
-        postalCode: '110'
+        postalCode: '110',
       }),
       billingAddress: JSON.stringify({
         name: '王小明',
         phone: '+886-987-654-321',
-        city: '台北市', 
+        city: '台北市',
         district: '信義區',
         street: '信義路五段7號',
-        postalCode: '110'
+        postalCode: '110',
       }),
       paymentMethod: 'credit_card',
       paymentStatus: 'paid',
@@ -485,7 +519,7 @@ async function seedOrders() {
       deliveryDate: new Date('2024-12-20'),
       paidAt: new Date('2024-12-15'),
       shippedAt: new Date('2024-12-18'),
-      deliveredAt: new Date('2024-12-20')
+      deliveredAt: new Date('2024-12-20'),
     },
     {
       id: 'ORD-002',
@@ -502,8 +536,8 @@ async function seedOrders() {
           variant: '標準尺寸套組',
           price: 1980,
           quantity: 2,
-          total: 3960
-        }
+          total: 3960,
+        },
       ]),
       subtotal: 3960,
       shippingFee: 150,
@@ -515,14 +549,14 @@ async function seedOrders() {
         city: '新北市',
         district: '板橋區',
         street: '文化路一段188號',
-        postalCode: '220'
+        postalCode: '220',
       }),
       paymentMethod: 'bank_transfer',
       paymentStatus: 'pending',
       orderStatus: 'processing',
       notes: '',
-      deliveryDate: new Date('2025-01-10')
-    }
+      deliveryDate: new Date('2025-01-10'),
+    },
   ];
 
   for (const order of orderData) {
@@ -546,10 +580,10 @@ async function seedAppointments() {
       preferredProducts: JSON.stringify(['席夢思黑牌', '美國進口枕頭']),
       assignedStaff: 'Louis Chen',
       createdAt: new Date(),
-      updatedAt: new Date()
+      updatedAt: new Date(),
     },
     {
-      id: 'apt_002', 
+      id: 'apt_002',
       customerName: '林小雨',
       customerEmail: 'lin@example.com',
       customerPhone: '+886-933-666-777',
@@ -562,12 +596,12 @@ async function seedAppointments() {
         city: '高雄市',
         district: '左營區',
         street: '博愛二路777號',
-        postalCode: '813'
+        postalCode: '813',
       }),
       assignedStaff: '',
       createdAt: new Date(),
-      updatedAt: new Date()
-    }
+      updatedAt: new Date(),
+    },
   ];
 
   for (const appointment of appointmentData) {
@@ -588,7 +622,7 @@ async function seedPostCategories() {
       isActive: true,
       sortOrder: 0,
       seoTitle: '部落格文章 | 睡眠知識分享 | 黑哥家居',
-      seoDescription: '專業睡眠知識、健康生活資訊、床墊選購指南等實用內容分享'
+      seoDescription: '專業睡眠知識、健康生活資訊、床墊選購指南等實用內容分享',
     },
     {
       id: 'cat_review',
@@ -600,8 +634,8 @@ async function seedPostCategories() {
       isActive: true,
       sortOrder: 1,
       seoTitle: '客戶評價 | 真實使用心得 | 黑哥家居',
-      seoDescription: '真實客戶購買體驗分享，席夢思床墊使用心得與評價故事'
-    }
+      seoDescription: '真實客戶購買體驗分享，席夢思床墊使用心得與評價故事',
+    },
   ];
 
   for (const category of categoryData) {
@@ -617,7 +651,8 @@ async function seedContent() {
       id: 'post_001',
       title: '如何選擇適合的床墊硬度？',
       slug: 'how-to-choose-mattress-firmness',
-      content: '選擇床墊硬度是購買床墊時最重要的考量之一。本文將詳細介紹如何根據睡眠姿勢、體重和個人偏好來選擇最適合的床墊硬度...',
+      content:
+        '選擇床墊硬度是購買床墊時最重要的考量之一。本文將詳細介紹如何根據睡眠姿勢、體重和個人偏好來選擇最適合的床墊硬度...',
       excerpt: '專業指南：根據睡眠姿勢和體重選擇最適合的床墊硬度',
       featuredImage: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=800',
       categoryId: 'cat_blog',
@@ -626,10 +661,11 @@ async function seedContent() {
       status: 'published',
       featured: true,
       seoTitle: '床墊硬度選購指南 | 如何選擇適合的床墊 | 黑哥家居',
-      seoDescription: '專業床墊硬度選購指南，教您根據睡眠習慣選擇最適合的床墊。提升睡眠品質從選對床墊開始。',
+      seoDescription:
+        '專業床墊硬度選購指南，教您根據睡眠習慣選擇最適合的床墊。提升睡眠品質從選對床墊開始。',
       authorId: 'user_admin_001',
       publishedAt: new Date('2024-12-01'),
-      viewCount: 1250
+      viewCount: 1250,
     },
     {
       id: 'post_002',
@@ -645,13 +681,14 @@ async function seedContent() {
       featured: false,
       authorId: 'user_admin_001',
       publishedAt: new Date('2024-11-15'),
-      viewCount: 890
+      viewCount: 890,
     },
     {
       id: 'post_003',
       title: '王小明的席夢思購買心得：找到完美睡眠的旅程',
       slug: 'wang-simmons-purchase-experience',
-      content: '身為一個長期失眠的上班族，我花了很多時間尋找適合的床墊。經過多次比較和試躺，最終選擇了席夢思黑牌Classic獨立筒床墊。使用三個月後，我的睡眠品質有了顯著改善...',
+      content:
+        '身為一個長期失眠的上班族，我花了很多時間尋找適合的床墊。經過多次比較和試躺，最終選擇了席夢思黑牌Classic獨立筒床墊。使用三個月後，我的睡眠品質有了顯著改善...',
       excerpt: '上班族王小明分享席夢思黑牌床墊使用三個月後的真實感受',
       featuredImage: 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=800',
       categoryId: 'cat_review',
@@ -663,8 +700,8 @@ async function seedContent() {
       seoDescription: '真實客戶分享席夢思黑牌床墊購買體驗，從選購到使用三個月後的睡眠改善心得',
       authorId: 'user_admin_001',
       publishedAt: new Date('2024-12-10'),
-      viewCount: 650
-    }
+      viewCount: 650,
+    },
   ];
 
   for (const post of postData) {
@@ -683,7 +720,7 @@ async function seedContent() {
       content: '床墊品質確實很好，睡起來很舒適，客服服務也很棒！配送人員很專業，安裝也很仔細。',
       verified: true,
       helpful: 8,
-      status: 'approved'
+      status: 'approved',
     },
     {
       id: 'review_002',
@@ -695,8 +732,8 @@ async function seedContent() {
       content: '枕頭品質確實很好，支撐性也不錯，但價格相對較高。整體來說還是值得購買的。',
       verified: true,
       helpful: 5,
-      status: 'approved'
-    }
+      status: 'approved',
+    },
   ];
 
   for (const review of reviewData) {
@@ -716,24 +753,24 @@ async function seedCommunications() {
       preferences: JSON.stringify({
         productUpdates: true,
         promotions: true,
-        tips: false
+        tips: false,
       }),
       source: 'website_footer',
-      confirmedAt: new Date()
+      confirmedAt: new Date(),
     },
     {
       id: 'newsletter_002',
-      email: 'subscriber2@example.com', 
+      email: 'subscriber2@example.com',
       name: '訂閱者二',
       status: 'active',
       preferences: JSON.stringify({
         productUpdates: false,
         promotions: true,
-        tips: true
+        tips: true,
       }),
       source: 'checkout_page',
-      confirmedAt: new Date()
-    }
+      confirmedAt: new Date(),
+    },
   ];
 
   for (const newsletter of newsletterData) {
@@ -751,7 +788,7 @@ async function seedCommunications() {
       message: '想了解席夢思床墊的價格和規格，可否提供詳細資料？',
       type: 'inquiry',
       status: 'new',
-      source: 'contact_form'
+      source: 'contact_form',
     },
     {
       id: 'contact_002',
@@ -764,8 +801,8 @@ async function seedCommunications() {
       status: 'in_progress',
       source: 'phone',
       assignedTo: 'user_admin_001',
-      responseAt: new Date()
-    }
+      responseAt: new Date(),
+    },
   ];
 
   for (const contact of contactData) {

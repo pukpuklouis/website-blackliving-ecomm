@@ -26,7 +26,7 @@ describe('Orders API Standalone Integration Tests', () => {
       name: '測試客戶',
       email: 'test.customer@example.com',
       phone: '0987-123-456',
-      address: '台北市信義區信義路五段7號'
+      address: '台北市信義區信義路五段7號',
     },
     items: [
       {
@@ -34,12 +34,12 @@ describe('Orders API Standalone Integration Tests', () => {
         productName: 'Test Simmons Mattress',
         variant: 'Queen - Medium',
         quantity: 1,
-        price: 89900
-      }
+        price: 89900,
+      },
     ],
     totalAmount: 89900,
     paymentMethod: 'bank_transfer' as const,
-    notes: '希望週末配送'
+    notes: '希望週末配送',
   };
 
   let createdOrderIds: string[] = [];
@@ -47,7 +47,8 @@ describe('Orders API Standalone Integration Tests', () => {
   beforeEach(async () => {
     // Ensure we have the orders table (create if not exists)
     try {
-      await env.DB.prepare(`
+      await env.DB.prepare(
+        `
         CREATE TABLE IF NOT EXISTS orders (
           id TEXT PRIMARY KEY,
           user_id TEXT,
@@ -62,7 +63,8 @@ describe('Orders API Standalone Integration Tests', () => {
           created_at TEXT NOT NULL,
           updated_at TEXT NOT NULL
         )
-      `).run();
+      `
+      ).run();
     } catch (error) {
       // Table might already exist, continue
     }
@@ -85,7 +87,7 @@ describe('Orders API Standalone Integration Tests', () => {
   describe('Database and Basic Operations', () => {
     it('should have access to D1 database', async () => {
       expect(env.DB).toBeDefined();
-      
+
       // Test basic database operation
       const result = await env.DB.prepare('SELECT 1 as test').first();
       expect(result).toEqual({ test: 1 });
@@ -101,7 +103,7 @@ describe('Orders API Standalone Integration Tests', () => {
   describe('GET /api/orders - List Orders', () => {
     it('should return empty list when no orders exist', async () => {
       const response = await app.request('/api/orders', {}, env);
-      
+
       expect(response.status).toBe(200);
       const body = await response.json();
       expect(body.success).toBe(true);
@@ -113,11 +115,15 @@ describe('Orders API Standalone Integration Tests', () => {
 
   describe('POST /api/orders - Create Order', () => {
     it('should create new order with valid data', async () => {
-      const response = await app.request('/api/orders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(validOrderData)
-      }, env);
+      const response = await app.request(
+        '/api/orders',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(validOrderData),
+        },
+        env
+      );
 
       expect(response.status).toBe(201);
       const body = await response.json();
@@ -125,7 +131,7 @@ describe('Orders API Standalone Integration Tests', () => {
       expect(body.data.id).toMatch(/^BL\d+[A-Z0-9]{4}$/);
       expect(body.data.status).toBe('pending');
       expect(body.data.message).toBe('訂單已建立成功，我們將盡快與您聯繫確認付款資訊');
-      
+
       createdOrderIds.push(body.data.id);
     });
 
@@ -134,15 +140,19 @@ describe('Orders API Standalone Integration Tests', () => {
         ...validOrderData,
         customerInfo: {
           ...validOrderData.customerInfo,
-          email: 'not-an-email'
-        }
+          email: 'not-an-email',
+        },
       };
 
-      const response = await app.request('/api/orders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(invalidData)
-      }, env);
+      const response = await app.request(
+        '/api/orders',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(invalidData),
+        },
+        env
+      );
 
       expect(response.status).toBe(400);
     });
@@ -150,14 +160,18 @@ describe('Orders API Standalone Integration Tests', () => {
     it('should validate positive total amount', async () => {
       const invalidData = {
         ...validOrderData,
-        totalAmount: -1000
+        totalAmount: -1000,
       };
 
-      const response = await app.request('/api/orders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(invalidData)
-      }, env);
+      const response = await app.request(
+        '/api/orders',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(invalidData),
+        },
+        env
+      );
 
       expect(response.status).toBe(400);
     });
@@ -166,25 +180,29 @@ describe('Orders API Standalone Integration Tests', () => {
   describe('GET /api/orders/:id - Get Single Order', () => {
     it('should return specific order by ID', async () => {
       // Create a test order first
-      const createResponse = await app.request('/api/orders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(validOrderData)
-      }, env);
-      
+      const createResponse = await app.request(
+        '/api/orders',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(validOrderData),
+        },
+        env
+      );
+
       const createData = await createResponse.json();
       const orderId = createData.data.id;
       createdOrderIds.push(orderId);
 
       // Retrieve the order
       const response = await app.request(`/api/orders/${orderId}`, {}, env);
-      
+
       expect(response.status).toBe(200);
       const body = await response.json();
       expect(body.success).toBe(true);
       expect(body.data.id).toBe(orderId);
       expect(body.data.status).toBe('pending');
-      
+
       // Verify customer info is stored as JSON string
       const customerInfo = JSON.parse(body.data.customer_info);
       expect(customerInfo.name).toBe(validOrderData.customerInfo.name);
@@ -193,7 +211,7 @@ describe('Orders API Standalone Integration Tests', () => {
 
     it('should return 404 for non-existent order', async () => {
       const response = await app.request('/api/orders/non-existent-id', {}, env);
-      
+
       expect(response.status).toBe(404);
       const body = await response.json();
       expect(body.error).toBe('Order not found');
@@ -205,26 +223,34 @@ describe('Orders API Standalone Integration Tests', () => {
 
     beforeEach(async () => {
       // Create a test order for status updates
-      const response = await app.request('/api/orders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(validOrderData)
-      }, env);
-      
+      const response = await app.request(
+        '/api/orders',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(validOrderData),
+        },
+        env
+      );
+
       const data = await response.json();
       testOrderId = data.data.id;
       createdOrderIds.push(testOrderId);
     });
 
     it('should update order status successfully', async () => {
-      const response = await app.request(`/api/orders/${testOrderId}/status`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          status: 'confirmed',
-          notes: '已確認付款'
-        })
-      }, env);
+      const response = await app.request(
+        `/api/orders/${testOrderId}/status`,
+        {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            status: 'confirmed',
+            notes: '已確認付款',
+          }),
+        },
+        env
+      );
 
       expect(response.status).toBe(200);
       const body = await response.json();
@@ -239,17 +265,28 @@ describe('Orders API Standalone Integration Tests', () => {
     });
 
     it('should accept all valid status values', async () => {
-      const validStatuses = ['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled'];
-      
+      const validStatuses = [
+        'pending',
+        'confirmed',
+        'processing',
+        'shipped',
+        'delivered',
+        'cancelled',
+      ];
+
       for (const status of validStatuses) {
-        const response = await app.request(`/api/orders/${testOrderId}/status`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ status })
-        }, env);
+        const response = await app.request(
+          `/api/orders/${testOrderId}/status`,
+          {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status }),
+          },
+          env
+        );
 
         expect(response.status).toBe(200);
-        
+
         // Verify status was updated
         const checkResponse = await app.request(`/api/orders/${testOrderId}`, {}, env);
         const checkBody = await checkResponse.json();
@@ -258,21 +295,29 @@ describe('Orders API Standalone Integration Tests', () => {
     });
 
     it('should validate status enum values', async () => {
-      const response = await app.request(`/api/orders/${testOrderId}/status`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'invalid-status' })
-      }, env);
+      const response = await app.request(
+        `/api/orders/${testOrderId}/status`,
+        {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: 'invalid-status' }),
+        },
+        env
+      );
 
       expect(response.status).toBe(400);
     });
 
     it('should return 404 for non-existent order', async () => {
-      const response = await app.request('/api/orders/non-existent/status', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'confirmed' })
-      }, env);
+      const response = await app.request(
+        '/api/orders/non-existent/status',
+        {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: 'confirmed' }),
+        },
+        env
+      );
 
       expect(response.status).toBe(404);
       const body = await response.json();
@@ -283,27 +328,35 @@ describe('Orders API Standalone Integration Tests', () => {
   describe('GET /api/orders/customer/:email - Customer Orders', () => {
     it('should return orders for specific customer email', async () => {
       const customerEmail = 'customer.test@example.com';
-      
+
       // Create order for this customer
       const orderData = {
         ...validOrderData,
         customerInfo: {
           ...validOrderData.customerInfo,
-          email: customerEmail
-        }
+          email: customerEmail,
+        },
       };
 
-      const response1 = await app.request('/api/orders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(orderData)
-      }, env);
+      const response1 = await app.request(
+        '/api/orders',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(orderData),
+        },
+        env
+      );
       const data1 = await response1.json();
       createdOrderIds.push(data1.data.id);
 
       // Fetch orders for specific customer
-      const response = await app.request(`/api/orders/customer/${encodeURIComponent(customerEmail)}`, {}, env);
-      
+      const response = await app.request(
+        `/api/orders/customer/${encodeURIComponent(customerEmail)}`,
+        {},
+        env
+      );
+
       expect(response.status).toBe(200);
       const body = await response.json();
       expect(body.success).toBe(true);
@@ -317,7 +370,7 @@ describe('Orders API Standalone Integration Tests', () => {
 
     it('should return empty array for email with no orders', async () => {
       const response = await app.request('/api/orders/customer/no-orders@example.com', {}, env);
-      
+
       expect(response.status).toBe(200);
       const body = await response.json();
       expect(body.success).toBe(true);
@@ -330,19 +383,23 @@ describe('Orders API Standalone Integration Tests', () => {
     it('should generate unique order IDs', async () => {
       // Create multiple orders sequentially
       const orderIds: string[] = [];
-      
+
       for (let i = 0; i < 3; i++) {
-        const response = await app.request('/api/orders', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            ...validOrderData,
-            customerInfo: {
-              ...validOrderData.customerInfo,
-              email: `test${i}@example.com`
-            }
-          })
-        }, env);
+        const response = await app.request(
+          '/api/orders',
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              ...validOrderData,
+              customerInfo: {
+                ...validOrderData.customerInfo,
+                email: `test${i}@example.com`,
+              },
+            }),
+          },
+          env
+        );
 
         expect(response.status).toBe(201);
         const data = await response.json();
@@ -352,7 +409,7 @@ describe('Orders API Standalone Integration Tests', () => {
 
       // Verify all IDs are unique
       expect(new Set(orderIds).size).toBe(3);
-      
+
       // All IDs should match expected format
       orderIds.forEach(id => {
         expect(id).toMatch(/^BL\d+[A-Z0-9]{4}$/);
@@ -365,7 +422,7 @@ describe('Orders API Standalone Integration Tests', () => {
           name: '測試客戶 with "quotes" & special chars',
           email: 'complex.test@example.com',
           phone: '(02)1234-5678',
-          address: '台北市信義區信義路五段7號 10樓'
+          address: '台北市信義區信義路五段7號 10樓',
         },
         items: [
           {
@@ -373,19 +430,23 @@ describe('Orders API Standalone Integration Tests', () => {
             productName: 'Product with "特殊字符" & symbols',
             variant: 'Size: Queen (5尺), Firmness: 中軟式',
             quantity: 1,
-            price: 89900
-          }
+            price: 89900,
+          },
         ],
         totalAmount: 89900,
         paymentMethod: 'bank_transfer' as const,
-        notes: 'Instructions: 請於 2024/12/31 前配送'
+        notes: 'Instructions: 請於 2024/12/31 前配送',
       };
 
-      const response = await app.request('/api/orders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(complexOrderData)
-      }, env);
+      const response = await app.request(
+        '/api/orders',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(complexOrderData),
+        },
+        env
+      );
 
       expect(response.status).toBe(201);
       const createData = await response.json();

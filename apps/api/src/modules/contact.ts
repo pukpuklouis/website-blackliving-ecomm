@@ -48,17 +48,20 @@ const contactQuerySchema = z.object({
 const requireAdmin = async (c: any, next: any) => {
   const user = c.get('user');
   if (!user || user.role !== 'admin') {
-    return c.json({ 
-      success: false, 
-      error: 'Unauthorized', 
-      message: 'Admin access required' 
-    }, 403);
+    return c.json(
+      {
+        success: false,
+        error: 'Unauthorized',
+        message: 'Admin access required',
+      },
+      403
+    );
   }
   await next();
 };
 
 // POST /api/contact - Submit contact form
-app.post('/', zValidator('json', contactCreateSchema), async (c) => {
+app.post('/', zValidator('json', contactCreateSchema), async c => {
   try {
     const db = c.get('db');
     const cache = c.get('cache');
@@ -71,11 +74,14 @@ app.post('/', zValidator('json', contactCreateSchema), async (c) => {
       .where(eq(contacts.email, contactData.email));
 
     if (recentContacts[0].count > 5) {
-      return c.json({
-        success: false,
-        error: 'Too Many Requests',
-        message: 'Too many contact submissions from this email. Please try again later.'
-      }, 429);
+      return c.json(
+        {
+          success: false,
+          error: 'Too Many Requests',
+          message: 'Too many contact submissions from this email. Please try again later.',
+        },
+        429
+      );
     }
 
     const contactId = createId();
@@ -89,35 +95,40 @@ app.post('/', zValidator('json', contactCreateSchema), async (c) => {
         subject: contactData.subject,
         message: contactData.message,
         status: 'new',
-        createdAt: new Date()
+        createdAt: new Date(),
       })
       .returning();
 
     // Clear admin cache
     await cache.delete('contacts:stats');
 
-    return c.json({
-      success: true,
-      data: {
-        id: newContact.id,
-        status: newContact.status,
-        createdAt: newContact.createdAt
+    return c.json(
+      {
+        success: true,
+        data: {
+          id: newContact.id,
+          status: newContact.status,
+          createdAt: newContact.createdAt,
+        },
+        message: 'Contact form submitted successfully. We will get back to you soon!',
       },
-      message: 'Contact form submitted successfully. We will get back to you soon!'
-    }, 201);
-
+      201
+    );
   } catch (error) {
     console.error('Error submitting contact form:', error);
-    return c.json({
-      success: false,
-      error: 'Internal Server Error',
-      message: 'Failed to submit contact form'
-    }, 500);
+    return c.json(
+      {
+        success: false,
+        error: 'Internal Server Error',
+        message: 'Failed to submit contact form',
+      },
+      500
+    );
   }
 });
 
 // GET /api/contact/admin - List contact submissions (admin only)
-app.get('/admin', requireAdmin, zValidator('query', contactQuerySchema), async (c) => {
+app.get('/admin', requireAdmin, zValidator('query', contactQuerySchema), async c => {
   try {
     const db = c.get('db');
     const cache = c.get('cache');
@@ -125,20 +136,20 @@ app.get('/admin', requireAdmin, zValidator('query', contactQuerySchema), async (
 
     // Build cache key
     const cacheKey = `contacts:list:${JSON.stringify(query)}`;
-    
+
     // Try cache first
     const cached = await cache.get(cacheKey);
     if (cached) {
       return c.json({
         success: true,
         data: JSON.parse(cached),
-        cached: true
+        cached: true,
       });
     }
 
     // Build query conditions
     const conditions = [];
-    
+
     if (query.status) {
       conditions.push(eq(contacts.status, query.status));
     }
@@ -154,7 +165,7 @@ app.get('/admin', requireAdmin, zValidator('query', contactQuerySchema), async (
       // If search is provided, we need to use LIKE queries
       // Note: This is a simplified search - in production you might want full-text search
       const searchTerm = `%${query.search}%`;
-      
+
       // For SQLite, we'll use a more basic approach since Drizzle's like might not work as expected
       result = await db
         .select()
@@ -166,11 +177,12 @@ app.get('/admin', requireAdmin, zValidator('query', contactQuerySchema), async (
 
       // Filter results in application layer for search (not ideal for large datasets)
       if (query.search) {
-        result = result.filter(contact => 
-          contact.name.toLowerCase().includes(query.search!.toLowerCase()) ||
-          contact.email.toLowerCase().includes(query.search!.toLowerCase()) ||
-          contact.subject.toLowerCase().includes(query.search!.toLowerCase()) ||
-          contact.message.toLowerCase().includes(query.search!.toLowerCase())
+        result = result.filter(
+          contact =>
+            contact.name.toLowerCase().includes(query.search!.toLowerCase()) ||
+            contact.email.toLowerCase().includes(query.search!.toLowerCase()) ||
+            contact.subject.toLowerCase().includes(query.search!.toLowerCase()) ||
+            contact.message.toLowerCase().includes(query.search!.toLowerCase())
         );
       }
 
@@ -196,8 +208,8 @@ app.get('/admin', requireAdmin, zValidator('query', contactQuerySchema), async (
         limit,
         offset,
         total: totalResult[0].count,
-        hasMore: offset + result.length < totalResult[0].count
-      }
+        hasMore: offset + result.length < totalResult[0].count,
+      },
     };
 
     // Cache the result for 2 minutes (shorter cache for admin data)
@@ -205,41 +217,41 @@ app.get('/admin', requireAdmin, zValidator('query', contactQuerySchema), async (
 
     return c.json({
       success: true,
-      data: responseData
+      data: responseData,
     });
-
   } catch (error) {
     console.error('Error fetching contact submissions:', error);
-    return c.json({
-      success: false,
-      error: 'Internal Server Error',
-      message: 'Failed to fetch contact submissions'
-    }, 500);
+    return c.json(
+      {
+        success: false,
+        error: 'Internal Server Error',
+        message: 'Failed to fetch contact submissions',
+      },
+      500
+    );
   }
 });
 
 // GET /api/contact/admin/stats - Get contact statistics (admin only)
-app.get('/admin/stats', requireAdmin, async (c) => {
+app.get('/admin/stats', requireAdmin, async c => {
   try {
     const db = c.get('db');
     const cache = c.get('cache');
 
     const cacheKey = 'contacts:stats';
-    
+
     // Try cache first
     const cached = await cache.get(cacheKey);
     if (cached) {
       return c.json({
         success: true,
         data: JSON.parse(cached),
-        cached: true
+        cached: true,
       });
     }
 
     // Get contact statistics by status
-    const [totalStats] = await db
-      .select({ total: count() })
-      .from(contacts);
+    const [totalStats] = await db.select({ total: count() }).from(contacts);
 
     const [newStats] = await db
       .select({ new: count() })
@@ -260,10 +272,8 @@ app.get('/admin/stats', requireAdmin, async (c) => {
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
-    const [recentStats] = await db
-      .select({ recent: count() })
-      .from(contacts);
-      // Note: Date filtering would need to be implemented based on your timestamp handling
+    const [recentStats] = await db.select({ recent: count() }).from(contacts);
+    // Note: Date filtering would need to be implemented based on your timestamp handling
 
     const stats = {
       total: totalStats.total || 0,
@@ -271,8 +281,10 @@ app.get('/admin/stats', requireAdmin, async (c) => {
       replied: repliedStats.replied || 0,
       closed: closedStats.closed || 0,
       recentContacts: recentStats.recent || 0,
-      responseRate: totalStats.total > 0 ? 
-        Math.round(((repliedStats.replied + closedStats.closed) / totalStats.total) * 100) : 0
+      responseRate:
+        totalStats.total > 0
+          ? Math.round(((repliedStats.replied + closedStats.closed) / totalStats.total) * 100)
+          : 0,
     };
 
     // Cache for 5 minutes
@@ -280,55 +292,59 @@ app.get('/admin/stats', requireAdmin, async (c) => {
 
     return c.json({
       success: true,
-      data: stats
+      data: stats,
     });
-
   } catch (error) {
     console.error('Error fetching contact stats:', error);
-    return c.json({
-      success: false,
-      error: 'Internal Server Error',
-      message: 'Failed to fetch contact statistics'
-    }, 500);
+    return c.json(
+      {
+        success: false,
+        error: 'Internal Server Error',
+        message: 'Failed to fetch contact statistics',
+      },
+      500
+    );
   }
 });
 
 // GET /api/contact/admin/:id - Get single contact (admin only)
-app.get('/admin/:id', requireAdmin, async (c) => {
+app.get('/admin/:id', requireAdmin, async c => {
   try {
     const db = c.get('db');
     const id = c.req.param('id');
 
-    const [contact] = await db
-      .select()
-      .from(contacts)
-      .where(eq(contacts.id, id));
+    const [contact] = await db.select().from(contacts).where(eq(contacts.id, id));
 
     if (!contact) {
-      return c.json({
-        success: false,
-        error: 'Not Found',
-        message: 'Contact submission not found'
-      }, 404);
+      return c.json(
+        {
+          success: false,
+          error: 'Not Found',
+          message: 'Contact submission not found',
+        },
+        404
+      );
     }
 
     return c.json({
       success: true,
-      data: contact
+      data: contact,
     });
-
   } catch (error) {
     console.error('Error fetching contact:', error);
-    return c.json({
-      success: false,
-      error: 'Internal Server Error',
-      message: 'Failed to fetch contact submission'
-    }, 500);
+    return c.json(
+      {
+        success: false,
+        error: 'Internal Server Error',
+        message: 'Failed to fetch contact submission',
+      },
+      500
+    );
   }
 });
 
 // PUT /api/contact/admin/:id - Update contact status (admin only)
-app.put('/admin/:id', requireAdmin, zValidator('json', contactUpdateSchema), async (c) => {
+app.put('/admin/:id', requireAdmin, zValidator('json', contactUpdateSchema), async c => {
   try {
     const db = c.get('db');
     const cache = c.get('cache');
@@ -336,17 +352,17 @@ app.put('/admin/:id', requireAdmin, zValidator('json', contactUpdateSchema), asy
     const updateData = c.req.valid('json');
 
     // Check if contact exists
-    const [existingContact] = await db
-      .select()
-      .from(contacts)
-      .where(eq(contacts.id, id));
+    const [existingContact] = await db.select().from(contacts).where(eq(contacts.id, id));
 
     if (!existingContact) {
-      return c.json({
-        success: false,
-        error: 'Not Found',
-        message: 'Contact submission not found'
-      }, 404);
+      return c.json(
+        {
+          success: false,
+          error: 'Not Found',
+          message: 'Contact submission not found',
+        },
+        404
+      );
     }
 
     const [updatedContact] = await db
@@ -364,59 +380,61 @@ app.put('/admin/:id', requireAdmin, zValidator('json', contactUpdateSchema), asy
     return c.json({
       success: true,
       data: updatedContact,
-      message: 'Contact status updated successfully'
+      message: 'Contact status updated successfully',
     });
-
   } catch (error) {
     console.error('Error updating contact:', error);
-    return c.json({
-      success: false,
-      error: 'Internal Server Error',
-      message: 'Failed to update contact submission'
-    }, 500);
+    return c.json(
+      {
+        success: false,
+        error: 'Internal Server Error',
+        message: 'Failed to update contact submission',
+      },
+      500
+    );
   }
 });
 
 // DELETE /api/contact/admin/:id - Delete contact (admin only)
-app.delete('/admin/:id', requireAdmin, async (c) => {
+app.delete('/admin/:id', requireAdmin, async c => {
   try {
     const db = c.get('db');
     const cache = c.get('cache');
     const id = c.req.param('id');
 
     // Check if contact exists
-    const [existingContact] = await db
-      .select()
-      .from(contacts)
-      .where(eq(contacts.id, id));
+    const [existingContact] = await db.select().from(contacts).where(eq(contacts.id, id));
 
     if (!existingContact) {
-      return c.json({
-        success: false,
-        error: 'Not Found',
-        message: 'Contact submission not found'
-      }, 404);
+      return c.json(
+        {
+          success: false,
+          error: 'Not Found',
+          message: 'Contact submission not found',
+        },
+        404
+      );
     }
 
-    await db
-      .delete(contacts)
-      .where(eq(contacts.id, id));
+    await db.delete(contacts).where(eq(contacts.id, id));
 
     // Clear relevant caches
     await cache.delete('contacts:stats');
 
     return c.json({
       success: true,
-      message: 'Contact submission deleted successfully'
+      message: 'Contact submission deleted successfully',
     });
-
   } catch (error) {
     console.error('Error deleting contact:', error);
-    return c.json({
-      success: false,
-      error: 'Internal Server Error',
-      message: 'Failed to delete contact submission'
-    }, 500);
+    return c.json(
+      {
+        success: false,
+        error: 'Internal Server Error',
+        message: 'Failed to delete contact submission',
+      },
+      500
+    );
   }
 });
 

@@ -1,7 +1,7 @@
-import { reactRouter } from "@react-router/dev/vite";
-import { defineConfig } from "vite";
-import tsconfigPaths from "vite-tsconfig-paths";
-import tailwindcss from "@tailwindcss/vite";
+import { reactRouter } from '@react-router/dev/vite';
+import { defineConfig } from 'vite';
+import tsconfigPaths from 'vite-tsconfig-paths';
+import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig({
   plugins: [tailwindcss(), reactRouter(), tsconfigPaths()],
@@ -12,12 +12,12 @@ export default defineConfig({
   },
   // 優化依賴處理
   optimizeDeps: {
-    include: ["novel"],
+    include: ['novel'],
   },
   // SSR 配置 - 根據你的建議
   ssr: {
     // 將 react-tweet 設為 noExternal，讓 Vite 處理其 CSS 檔案
-    noExternal: ["novel", "react-tweet"],
+    noExternal: ['novel', 'react-tweet'],
   },
   // 測試環境配置（如果使用 Vitest）
   test: {

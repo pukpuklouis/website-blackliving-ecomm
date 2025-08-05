@@ -8,7 +8,11 @@
     "build": "astro check && astro build",
     "preview": "astro preview",
     "astro": "astro",
-    "type-check": "astro check"
+    "type-check": "astro check",
+    "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx}\"",
+    "format:check": "prettier --check \"src/**/*.{ts,tsx,js,jsx}\"",
+    "format:astro": "node ../../scripts/fix-astro-classnames.js",
+    "lint:astro": "astro check"
   },
   "dependencies": {
     "@astrojs/check": "^0.9.4",
