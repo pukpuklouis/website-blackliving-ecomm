@@ -51,3 +51,134 @@
     @apply bg-background text-foreground font-sans;
   }
 }
+
+/* Blog-specific styles */
+.blog {
+  /* Enhanced blog content styling */
+  .blog-content {
+    /* Typography improvements */
+    & h1, & h2, & h3, & h4, & h5, & h6 {
+      @apply scroll-mt-20 font-bold leading-tight;
+      margin-top: theme('spacing.8');
+      margin-bottom: theme('spacing.4');
+    }
+    
+    & h1 { @apply text-4xl; }
+    & h2 { @apply text-3xl; }
+    & h3 { @apply text-2xl; }
+    & h4 { @apply text-xl; }
+    & h5 { @apply text-lg; }
+    & h6 { @apply text-base; }
+    
+    & p {
+      @apply mb-6 leading-relaxed text-gray-700;
+    }
+    
+    /* Enhanced links */
+    & a {
+      @apply text-blue-600 hover:text-blue-800 underline decoration-blue-200 hover:decoration-blue-400 decoration-2 underline-offset-2 transition-colors;
+    }
+    
+    /* Lists styling */
+    & ul, & ol {
+      @apply mb-6 pl-6;
+    }
+    
+    & ul {
+      @apply list-disc;
+    }
+    
+    & ol {
+      @apply list-decimal;
+    }
+    
+    & li {
+      @apply mb-2;
+    }
+    
+    /* Blockquotes */
+    & blockquote {
+      @apply border-l-4 border-blue-200 bg-blue-50 pl-6 py-4 mb-6 italic text-gray-800;
+    }
+    
+    /* Code blocks */
+    & pre {
+      @apply bg-gray-900 text-gray-100 rounded-lg p-4 mb-6 overflow-x-auto;
+    }
+    
+    & code {
+      @apply bg-gray-100 text-gray-800 px-2 py-1 text-sm rounded;
+    }
+    
+    & pre code {
+      @apply bg-transparent text-gray-100 px-0 py-0;
+    }
+    
+    /* Tables */
+    & table {
+      @apply w-full mb-6 border-collapse;
+    }
+    
+    & th, & td {
+      @apply border border-gray-300 px-4 py-2 text-left;
+    }
+    
+    & th {
+      @apply bg-gray-100 font-semibold;
+    }
+    
+    /* Images */
+    & img {
+      @apply rounded-lg shadow-md mb-6 max-w-full h-auto;
+    }
+    
+    /* Horizontal rules */
+    & hr {
+      @apply border-t border-gray-300 my-8;
+    }
+    
+    /* Enhanced first paragraph */
+    & > p:first-of-type {
+      @apply text-lg font-medium text-gray-800 leading-relaxed;
+    }
+  }
+  
+  /* Blog navigation and UI elements */
+  .blog-breadcrumb a {
+    @apply transition-colors duration-200;
+  }
+  
+  .blog-category-tag {
+    @apply transition-all duration-200 hover:scale-105;
+  }
+  
+  .blog-share-button {
+    @apply transition-all duration-200 hover:scale-105 hover:shadow-lg;
+  }
+  
+  .blog-tag {
+    @apply transition-colors duration-200 hover:bg-gray-200;
+  }
+  
+  .blog-related-post {
+    @apply transition-all duration-300 hover:transform hover:scale-105;
+  }
+  
+  /* Reading experience enhancements */
+  .blog-content {
+    /* Better text selection */
+    & ::selection {
+      @apply bg-blue-200 text-blue-900;
+    }
+    
+    /* Improved focus styles for accessibility */
+    & a:focus {
+      @apply outline-2 outline-blue-500 outline-offset-2;
+    }
+    
+    /* Better spacing for nested lists */
+    & ul ul, & ul ol, & ol ul, & ol ol {
+      @apply mt-2 mb-2;
+    }
+  }
+}

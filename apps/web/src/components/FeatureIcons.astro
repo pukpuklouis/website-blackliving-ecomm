@@ -42,18 +42,20 @@ const featuresToShow = features.length > 0 ? features : defaultFeatures;
   <div class='container mx-auto px-4'>
     <h2 class='text-3xl font-bold text-center mb-12'>四大堅持</h2>
 
-    <div class='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8'>
+    <div class='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mx-auto'>
       {
         featuresToShow.map(feature => (
           <div class='text-center'>
-            <Image
-              src={feature.icon3d}
-              alt={feature.title}
-              width={400}
-              height={400}
-              loading='eager'
-              class='size-48'
-            />
+            {feature.icon3d && (
+              <Image
+                src={feature.icon3d}
+                alt={feature.title}
+                width={400}
+                height={400}
+                loading='eager'
+                class='size-48 mx-auto'
+              />
+            )}
             <h3 class='text-xl font-semibold mb-3'>{feature.title}</h3>
             <p class='text-gray-600'>{feature.description}</p>
           </div>
