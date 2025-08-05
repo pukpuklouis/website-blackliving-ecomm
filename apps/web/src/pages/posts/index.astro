@@ -41,8 +41,8 @@ try {
     categories = categoriesData.data || [];
   }
 
-  // Fetch all published posts
-  const postsResponse = await fetch(`${apiUrl}/api/posts/public`);
+  // Fetch only blog posts
+  const postsResponse = await fetch(`${apiUrl}/api/posts/public?category=blog-post`);
   if (postsResponse.ok) {
     const postsData = await postsResponse.json();
     posts = postsData.data || [];
