@@ -1,5 +1,11 @@
 ---
 import BaseLayout from './BaseLayout.astro';
+import { unified } from 'unified';
+import remarkParse from 'remark-parse';
+import remarkGfm from 'remark-gfm';
+import remarkSmartypants from 'remark-smartypants';
+import remarkRehype from 'remark-rehype';
+import rehypeStringify from 'rehype-stringify';
 
 interface BlogPost {
   id: string;
@@ -39,6 +45,17 @@ export interface Props {
 }
 
 const { post, category, relatedPosts = [], seoTitle, seoDescription, ogImage } = Astro.props;
+
+// Process markdown content using Astro's internal processing approach
+const processor = unified()
+  .use(remarkParse)
+  .use(remarkGfm) // GitHub-flavored markdown (enabled by default in Astro)
+  .use(remarkSmartypants) // Smart punctuation (enabled by default in Astro)
+  .use(remarkRehype)
+  .use(rehypeStringify);
+
+const processedContent = await processor.process(post.content);
+const htmlContent = processedContent.toString();
 ---
 
 <BaseLayout title={seoTitle} description={seoDescription} image={ogImage} type="article" publishedTime={post.publishedAt} class="blog">
@@ -125,7 +142,7 @@ const { post, category, relatedPosts = [], seoTitle, seoDescription, ogImage } =
 
       <!-- Article Content -->
       <div class='blog-content prose prose-lg max-w-none mb-12'>
-        <div set:html={post.content} />
+        <div set:html={htmlContent} />
       </div>
 
       <!-- Tags -->
