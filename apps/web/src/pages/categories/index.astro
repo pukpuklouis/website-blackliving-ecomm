@@ -1,8 +1,9 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import { getAllCategories } from '../../config/categories.ts';
+import { getCollection } from 'astro:content';
 
-const categories = getAllCategories();
+const categoriesEntries = await getCollection('categories');
+const categories = categoriesEntries.map(entry => entry.data);
 
 const seoData = {
   title: '產品分類總覽 | 黑哥家居',

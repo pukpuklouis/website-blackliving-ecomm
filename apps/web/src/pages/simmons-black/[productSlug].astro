@@ -1,7 +1,7 @@
 ---
 import ProductLayout from '../../layouts/ProductLayout.astro';
 import ProductVariantSelector from '../../components/ProductVariantSelector.tsx';
-import { getCategoryConfig } from '../../config/categories.ts';
+import { getEntry } from 'astro:content';
 import { generateStaticPaths, fetchProduct } from '../../utils/productPaths.ts';
 
 export async function getStaticPaths() {
@@ -9,11 +9,13 @@ export async function getStaticPaths() {
 }
 
 const { productSlug } = Astro.params;
-const categoryConfig = getCategoryConfig('simmons-black');
+const categoryEntry = await getEntry('categories', 'simmons-black');
 
-if (!categoryConfig) {
+if (!categoryEntry) {
   return Astro.redirect('/404');
 }
+
+const categoryConfig = categoryEntry.data;
 
 // Fetch individual product data
 const { product, error, notFound } = await fetchProduct(productSlug);

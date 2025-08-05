@@ -1,11 +1,17 @@
 ---
 // Header component for Black Living website
 import { Image } from 'astro:assets';
+import { getEntry } from 'astro:content';
+
 export interface Props {
   class?: string;
 }
 
 const { class: className } = Astro.props;
+
+// Get navigation data from content collection
+const navigationData = await getEntry('navigation', 'main-menu');
+const menuItems = navigationData?.data.items.sort((a, b) => a.order - b.order) || [];
 ---
 
 <header class={`bg-white shadow-lg sticky top-0 z-50 ${className}`}>
@@ -69,62 +75,16 @@ const { class: className } = Astro.props;
     <div class='container mx-auto px-4 lg:px-6'>
       <nav class='flex justify-center py-3 lg:py-4' role='navigation' aria-label='主導航'>
         <ul class='flex items-center gap-4 lg:gap-6 flex-wrap justify-center'>
-          <li>
-            <a
-              href='/about'
-              class='text-white text-sm lg:text-base font-normal hover:text-gray-200 transition-colors whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-[#C69C6D] rounded px-2 py-1'
-            >
-              關於黑哥
-            </a>
-          </li>
-          <li>
-            <a
-              href='/simmons-black'
-              class='text-white text-sm lg:text-base font-normal hover:text-gray-200 transition-colors whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-[#C69C6D] rounded px-2 py-1'
-            >
-              席夢思黑標床墊
-            </a>
-          </li>
-          <li>
-            <a
-              href='/accessories'
-              class='text-white text-sm lg:text-base font-normal hover:text-gray-200 transition-colors whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-[#C69C6D] rounded px-2 py-1'
-            >
-              精選周邊
-            </a>
-          </li>
-          <li>
-            <a
-              href='/us-imports'
-              class='text-white text-sm lg:text-base font-normal hover:text-gray-200 transition-colors whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-[#C69C6D] rounded px-2 py-1'
-            >
-              美國品牌代購專區
-            </a>
-          </li>
-          <li>
-            <a
-              href='/testimonials'
-              class='text-white text-sm lg:text-base font-normal hover:text-gray-200 transition-colors whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-[#C69C6D] rounded px-2 py-1'
-            >
-              顧客好評
-            </a>
-          </li>
-          <li>
-            <a
-              href='/posts'
-              class='text-white text-sm lg:text-base font-normal hover:text-gray-200 transition-colors whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-[#C69C6D] rounded px-2 py-1'
-            >
-              好文分享
-            </a>
-          </li>
-          <li>
-            <a
-              href='/appointment'
-              class='text-white text-sm lg:text-base font-normal hover:text-gray-200 transition-colors whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-[#C69C6D] rounded px-2 py-1'
-            >
-              預約試躺
-            </a>
-          </li>
+          {menuItems.map((item) => (
+            <li>
+              <a
+                href={item.href}
+                class='text-white text-sm lg:text-base font-normal hover:text-gray-200 transition-colors whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-[#C69C6D] rounded px-2 py-1'
+              >
+                {item.label}
+              </a>
+            </li>
+          ))}
         </ul>
       </nav>
     </div>
@@ -201,48 +161,14 @@ const { class: className } = Astro.props;
         </div>
         
         <!-- Mobile Navigation Links -->
-        <a
-          href='/about'
-          class='block px-6 py-3 text-primary-foreground text-base font-normal hover:bg-primary-foreground/10 hover:text-primary-foreground transition-colors rounded-md focus:outline-none focus:ring-2 focus:ring-primary-foreground/50'
-        >
-          關於黑哥
-        </a>
-        <a
-          href='/simmons-black'
-          class='block px-6 py-3 text-primary-foreground text-base font-normal hover:bg-primary-foreground/10 hover:text-primary-foreground transition-colors rounded-md focus:outline-none focus:ring-2 focus:ring-primary-foreground/50'
-        >
-          席夢思黑標床墊
-        </a>
-        <a
-          href='/accessories'
-          class='block px-6 py-3 text-primary-foreground text-base font-normal hover:bg-primary-foreground/10 hover:text-primary-foreground transition-colors rounded-md focus:outline-none focus:ring-2 focus:ring-primary-foreground/50'
-        >
-          精選周邊
-        </a>
-        <a
-          href='/us-imports'
-          class='block px-6 py-3 text-primary-foreground text-base font-normal hover:bg-primary-foreground/10 hover:text-primary-foreground transition-colors rounded-md focus:outline-none focus:ring-2 focus:ring-primary-foreground/50'
-        >
-          美國品牌代購專區
-        </a>
-        <a
-          href='/testimonials'
-          class='block px-6 py-3 text-primary-foreground text-base font-normal hover:bg-primary-foreground/10 hover:text-primary-foreground transition-colors rounded-md focus:outline-none focus:ring-2 focus:ring-primary-foreground/50'
-        >
-          顧客好評
-        </a>
-        <a
-          href='/posts'
-          class='block px-6 py-3 text-primary-foreground text-base font-normal hover:bg-primary-foreground/10 hover:text-primary-foreground transition-colors rounded-md focus:outline-none focus:ring-2 focus:ring-primary-foreground/50'
-        >
-          好文分享
-        </a>
-        <a
-          href='/appointment'
-          class='block px-6 mb-3 py-3 text-primary-foreground text-base font-normal hover:bg-primary-foreground/10 hover:text-primary-foreground transition-colors rounded-md focus:outline-none focus:ring-2 focus:ring-primary-foreground/50'
-        >
-          預約試躺
-        </a>
+        {menuItems.map((item, index) => (
+          <a
+            href={item.href}
+            class={`block px-6 py-3 text-primary-foreground text-base font-normal hover:bg-primary-foreground/10 hover:text-primary-foreground transition-colors rounded-md focus:outline-none focus:ring-2 focus:ring-primary-foreground/50${index === menuItems.length - 1 ? ' mb-3' : ''}`}
+          >
+            {item.label}
+          </a>
+        ))}
       </div>
     </div>
   </div>
