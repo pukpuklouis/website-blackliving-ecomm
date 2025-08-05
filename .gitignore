@@ -83,4 +83,7 @@ dev-debug.log
 # Note: _journal.json should be tracked in git for proper migration state
 
 # research
-research/*
+research/*/*
+
+# claude  command
+.claude/*/*    
