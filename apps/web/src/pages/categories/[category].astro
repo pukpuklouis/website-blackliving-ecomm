@@ -1,16 +1,16 @@
 ---
 import CategoryPageLayout from '../../components/CategoryPageLayout.astro';
-import { getCategoryConfig, getAllCategories } from '../../config/categories.ts';
+import { getCollection, getEntry } from 'astro:content';
 
 export async function getStaticPaths() {
-  const categories = getAllCategories();
+  const categoriesEntries = await getCollection('categories');
   
-  return categories.map((categoryConfig) => ({
+  return categoriesEntries.map((entry) => ({
     params: { 
-      category: categoryConfig.category 
+      category: entry.data.category 
     },
     props: { 
-      categoryConfig 
+      categoryConfig: entry.data 
     }
   }));
 }
@@ -19,14 +19,14 @@ const { category } = Astro.params;
 const { categoryConfig } = Astro.props;
 
 // Fallback check for dynamic routes
+let finalConfig = categoryConfig;
 if (!categoryConfig) {
-  const fallbackConfig = getCategoryConfig(category);
-  if (!fallbackConfig) {
+  const categoryEntry = await getEntry('categories', category);
+  if (!categoryEntry) {
     return Astro.redirect('/404');
   }
+  finalConfig = categoryEntry.data;
 }
-
-const finalConfig = categoryConfig || getCategoryConfig(category);
 ---
 
 <CategoryPageLayout categoryConfig={finalConfig} />

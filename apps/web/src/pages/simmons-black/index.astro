@@ -1,12 +1,14 @@
 ---
 import CategoryPageLayout from '../../components/CategoryPageLayout.astro';
-import { getCategoryConfig } from '../../config/categories.ts';
+import { getEntry } from 'astro:content';
 
-const categoryConfig = getCategoryConfig('simmons-black');
+const categoryEntry = await getEntry('categories', 'simmons-black');
 
-if (!categoryConfig) {
+if (!categoryEntry) {
   return Astro.redirect('/404');
 }
+
+const categoryConfig = categoryEntry.data;
 ---
 
 <CategoryPageLayout {categoryConfig} />
