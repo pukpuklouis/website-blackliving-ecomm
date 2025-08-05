@@ -20,12 +20,14 @@ const products = defineCollection({
     description: z.string(),
     category: z.enum(['simmons-black', 'accessories', 'us-imports']),
     images: z.array(z.string()),
-    variants: z.array(z.object({
-      size: z.string(),
-      firmness: z.string().optional(),
-      price: z.number(),
-      originalPrice: z.number().optional(),
-    })),
+    variants: z.array(
+      z.object({
+        size: z.string(),
+        firmness: z.string().optional(),
+        price: z.number(),
+        originalPrice: z.number().optional(),
+      })
+    ),
     features: z.array(z.string()),
     specifications: z.record(z.string()),
     inStock: z.boolean().default(true),
@@ -45,7 +47,7 @@ const heroSlider = defineCollection({
           buttonText: z.string(),
           buttonLink: z.string(),
           order: z.number(),
-        }),
+        })
       ),
     }),
   }),

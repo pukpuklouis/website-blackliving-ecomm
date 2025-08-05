@@ -1,66 +1,72 @@
-import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarRail } from '@blackliving/ui';
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarHeader,
+  SidebarRail,
+} from '@blackliving/ui';
 import { AdminNavMain } from './AdminNavMain';
 import { AdminNavSecondary } from './AdminNavSecondary';
 import { AdminNavUser } from './AdminNavUser';
-import { 
-  Home, 
-  Package, 
-  ShoppingCart, 
-  FileText, 
+import {
+  Home,
+  Package,
+  ShoppingCart,
+  FileText,
   PenTool,
   Settings,
   Calendar,
   BarChart3,
-  Users
+  Users,
 } from 'lucide-react';
 
 const data = {
   user: {
-    name: "黑哥家居管理員",
-    email: "admin@blackliving.com.tw",
-    avatar: "/avatars/admin.jpg",
+    name: '黑哥家居管理員',
+    email: 'admin@blackliving.com.tw',
+    avatar: '/avatars/admin.jpg',
   },
   navMain: [
     {
-      title: "主控台",
-      url: "/dashboard",
+      title: '主控台',
+      url: '/dashboard',
       icon: Home,
     },
     {
-      title: "產品管理",
-      url: "/dashboard/products",
+      title: '產品管理',
+      url: '/dashboard/products',
       icon: Package,
     },
     {
-      title: "訂單管理",
-      url: "/dashboard/orders",
+      title: '訂單管理',
+      url: '/dashboard/orders',
       icon: ShoppingCart,
     },
     {
-      title: "文章管理",
-      url: "/dashboard/posts",
+      title: '文章管理',
+      url: '/dashboard/posts',
       icon: FileText,
     },
     {
-      title: "預約管理",
-      url: "/dashboard/appointments",
+      title: '預約管理',
+      url: '/dashboard/appointments',
       icon: Calendar,
     },
     {
-      title: "客戶管理",
-      url: "/dashboard/customers",
+      title: '客戶管理',
+      url: '/dashboard/customers',
       icon: Users,
     },
     {
-      title: "分析報表",
-      url: "/dashboard/analytics",
+      title: '分析報表',
+      url: '/dashboard/analytics',
       icon: BarChart3,
     },
   ],
   navSecondary: [
     {
-      title: "系統設定",
-      url: "/dashboard/settings",
+      title: '系統設定',
+      url: '/dashboard/settings',
       icon: Settings,
     },
   ],

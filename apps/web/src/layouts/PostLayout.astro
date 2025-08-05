@@ -14,15 +14,9 @@ export interface Props {
 const { title, description, image, publishedTime, modifiedTime } = Astro.props;
 ---
 
-<BaseLayout 
-  title={title}
-  description={description}
-  image={image}
-  publishedTime={publishedTime}
-  modifiedTime={modifiedTime}
->
-  <main class="container mx-auto px-4 py-8 max-w-4xl">
-    <article class="prose prose-lg mx-auto">
+<BaseLayout {title} {description} {image} {publishedTime} {modifiedTime}>
+  <main class='container mx-auto px-4 py-8 max-w-4xl'>
+    <article class='prose prose-lg mx-auto'>
       <slot />
     </article>
   </main>

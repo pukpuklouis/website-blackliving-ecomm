@@ -40,7 +40,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const checkAuth = useCallback(async () => {
     try {
       const data = await checkSession();
-      
+
       if (data.user && data.user.role === 'admin') {
         setUser(data.user);
       } else {
@@ -79,12 +79,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const loginWithGoogle = async (): Promise<boolean> => {
     try {
       const result = await signInWithGoogleAdmin();
-      
+
       if (!result.success) {
         console.error('Google login failed:', result.error);
         return false;
       }
-      
+
       return true;
     } catch (error) {
       console.error('Google login failed:', error);
@@ -100,22 +100,22 @@ export function AuthProvider({ children }: AuthProviderProps) {
           onSuccess: () => {
             console.log('Better Auth logout successful');
           },
-          onError: (error) => {
+          onError: error => {
             console.warn('Better Auth logout error:', error);
           },
         },
       });
-      
+
       // Clear any local storage
-      if (typeof(Storage) !== "undefined") {
+      if (typeof Storage !== 'undefined') {
         localStorage.clear();
         sessionStorage.clear();
       }
-      
     } catch (error) {
       console.error('Logout failed:', error);
       // Fallback: clear session cookies manually
-      document.cookie = 'better-auth.session_token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+      document.cookie =
+        'better-auth.session_token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
     } finally {
       // Always clear user state locally
       setUser(null);
@@ -135,9 +135,5 @@ export function AuthProvider({ children }: AuthProviderProps) {
     checkAuth,
   };
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

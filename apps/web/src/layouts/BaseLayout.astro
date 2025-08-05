@@ -28,49 +28,40 @@ const {
   publishedTime,
   modifiedTime,
   schema,
-  class: className = ''
+  class: className = '',
 } = Astro.props;
 ---
 
 <!doctype html>
-<html lang="zh-TW" class="theme-web-blackliving">
+<html lang='zh-TW' class='theme-web-blackliving'>
   <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    
+    <meta charset='UTF-8' />
+    <meta name='viewport' content='width=device-width, initial-scale=1.0' />
+    <link rel='icon' type='image/svg+xml' href='/favicon.svg' />
+
     <!-- SEO -->
-    <SEO 
-      title={title}
-      description={description}
-      canonical={canonical}
-      image={image}
-      type={type}
-      publishedTime={publishedTime}
-      modifiedTime={modifiedTime}
-      schema={schema}
-    />
-    
+    <SEO {title} {description} {canonical} {image} {type} {publishedTime} {modifiedTime} {schema} />
+
     <!-- Fonts -->
-    <Font cssVariable="--font-agatho" preload/>
-    <Font cssVariable="--font-noto-tc" preload/>
-    
+    <Font cssVariable='--font-agatho' preload />
+    <Font cssVariable='--font-noto-tc' preload />
+
     <!-- Google Tag Manager (placeholder) -->
     <!-- Add GTM script here when ready -->
   </head>
-  
+
   <body class={`font-sans antialiased ${className}`}>
     <!-- Google Tag Manager (noscript) -->
     <!-- Add GTM noscript here when ready -->
-    
+
     <Header />
-    
+
     <main>
       <slot />
     </main>
-    
+
     <Footer />
-    
+
     <FloatingButtons />
   </body>
 </html>
@@ -80,25 +71,25 @@ const {
     font-family: var(--font-agatho), var(--font-noto-tc), system-ui, sans-serif;
     scroll-behavior: smooth;
   }
-  
+
   body {
     line-height: 1.6;
   }
-  
+
   /* Custom scrollbar */
   ::-webkit-scrollbar {
     width: 8px;
   }
-  
+
   ::-webkit-scrollbar-track {
     background: #f1f1f1;
   }
-  
+
   ::-webkit-scrollbar-thumb {
     background: #888;
     border-radius: 4px;
   }
-  
+
   ::-webkit-scrollbar-thumb:hover {
     background: #555;
   }

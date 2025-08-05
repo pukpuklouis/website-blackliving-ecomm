@@ -1,16 +1,16 @@
 import { eq, sql, and, desc, asc } from 'drizzle-orm';
 import { createId } from '@paralleldrive/cuid2';
 import type { D1Database } from '@cloudflare/workers-types';
-import { 
-  users, 
-  customerProfiles, 
-  customerAddresses, 
+import {
+  users,
+  customerProfiles,
+  customerAddresses,
   customerPaymentMethods,
   customerWishlists,
   customerReviews,
   customerNotificationPreferences,
   userSecurity,
-  customerRecentlyViewed
+  customerRecentlyViewed,
 } from './schema';
 import { createDB } from './client';
 
@@ -68,11 +68,11 @@ export interface ProfileAnalytics {
  */
 export class CustomerProfileService {
   private db: ReturnType<typeof createDB>;
-  
+
   constructor(d1: D1Database) {
     this.db = createDB(d1);
   }
-  
+
   // Factory function for convenience
   static create(d1: D1Database) {
     return new CustomerProfileService(d1);
@@ -156,21 +156,23 @@ export class CustomerProfileService {
         image: data.image,
         preferences: data.preferences,
         role: data.role,
-        customerProfile: data.customerNumber ? {
-          customerNumber: data.customerNumber,
-          birthday: data.birthday,
-          gender: data.gender,
-          totalSpent: data.totalSpent,
-          orderCount: data.orderCount,
-          avgOrderValue: data.avgOrderValue,
-          segment: data.segment,
-          lifetimeValue: data.lifetimeValue,
-          churnRisk: data.churnRisk,
-          lastContactAt: data.lastContactAt,
-          contactPreference: data.contactPreference,
-          notes: data.notes,
-          source: data.source,
-        } : undefined,
+        customerProfile: data.customerNumber
+          ? {
+              customerNumber: data.customerNumber,
+              birthday: data.birthday,
+              gender: data.gender,
+              totalSpent: data.totalSpent,
+              orderCount: data.orderCount,
+              avgOrderValue: data.avgOrderValue,
+              segment: data.segment,
+              lifetimeValue: data.lifetimeValue,
+              churnRisk: data.churnRisk,
+              lastContactAt: data.lastContactAt,
+              contactPreference: data.contactPreference,
+              notes: data.notes,
+              source: data.source,
+            }
+          : undefined,
       };
     } catch (error) {
       console.error('Error fetching full profile:', error);
@@ -258,14 +260,14 @@ export class CustomerProfileService {
         .limit(1);
 
       let userId: string;
-      
+
       if (existingUser[0]) {
         userId = existingUser[0].id;
-        
+
         // Step 2a: Update existing user with batch operation
         const customerNumber = await this.generateCustomerNumber();
         const customerProfileId = createId();
-        
+
         const batchOperations = [
           this.db
             .update(users)
@@ -276,27 +278,25 @@ export class CustomerProfileService {
               updatedAt: new Date(),
             })
             .where(eq(users.id, userId)),
-          
-          this.db
-            .insert(customerProfiles)
-            .values({
-              id: customerProfileId,
-              userId: userId,
-              customerNumber,
-              name: userData.name,
-              email: userData.email,
-              phone: userData.phone || '',
-              birthday: userData.birthday,
-              gender: userData.gender,
-              source: userData.source || 'website',
-              contactPreference: 'email',
-              createdAt: new Date(),
-              updatedAt: new Date(),
-            })
+
+          this.db.insert(customerProfiles).values({
+            id: customerProfileId,
+            userId: userId,
+            customerNumber,
+            name: userData.name,
+            email: userData.email,
+            phone: userData.phone || '',
+            birthday: userData.birthday,
+            gender: userData.gender,
+            source: userData.source || 'website',
+            contactPreference: 'email',
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          }),
         ];
-        
+
         await this.db.batch(batchOperations);
-        
+
         return {
           userId,
           customerProfileId,
@@ -307,85 +307,77 @@ export class CustomerProfileService {
         const newUserId = createId();
         const customerNumber = await this.generateCustomerNumber();
         const customerProfileId = createId();
-        
+
         const batchOperations = [
-          this.db
-            .insert(users)
-            .values({
-              id: newUserId,
-              name: userData.name,
-              email: userData.email,
-              phone: userData.phone,
-              role: 'customer',
-              preferences: userData.preferences || {},
-              createdAt: new Date(),
-              updatedAt: new Date(),
-            }),
-          
-          this.db
-            .insert(customerProfiles)
-            .values({
-              id: customerProfileId,
-              userId: newUserId,
-              customerNumber,
-              name: userData.name,
-              email: userData.email,
-              phone: userData.phone || '',
-              birthday: userData.birthday,
-              gender: userData.gender,
-              source: userData.source || 'website',
-              segment: 'new',
-              totalSpent: 0,
-              orderCount: 0,
-              avgOrderValue: 0,
-              lifetimeValue: 0,
-              churnRisk: 'low',
-              contactPreference: 'email',
-              notes: '',
-              createdAt: new Date(),
-              updatedAt: new Date(),
-            }),
-          
-          this.db
-            .insert(customerNotificationPreferences)
-            .values({
-              id: createId(),
-              userId: newUserId,
-              emailOrderUpdates: true,
-              emailAppointmentReminders: true,
-              emailNewsletters: true,
-              emailPromotions: false,
-              emailPriceAlerts: false,
-              emailProductRecommendations: false,
-              smsOrderUpdates: false,
-              smsAppointmentReminders: true,
-              smsPromotions: false,
-              smsDeliveryUpdates: true,
-              emailFrequency: 'immediate',
-              smsFrequency: 'important_only',
-              createdAt: new Date(),
-              updatedAt: new Date(),
-            }),
-          
-          this.db
-            .insert(userSecurity)
-            .values({
-              id: createId(),
-              userId: newUserId,
-              loginCount: 0,
-              twoFactorEnabled: false,
-              isLocked: false,
-              failedLoginAttempts: 0,
-              allowDataCollection: true,
-              allowMarketing: true,
-              allowSmsMarketing: false,
-              createdAt: new Date(),
-              updatedAt: new Date(),
-            })
+          this.db.insert(users).values({
+            id: newUserId,
+            name: userData.name,
+            email: userData.email,
+            phone: userData.phone,
+            role: 'customer',
+            preferences: userData.preferences || {},
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          }),
+
+          this.db.insert(customerProfiles).values({
+            id: customerProfileId,
+            userId: newUserId,
+            customerNumber,
+            name: userData.name,
+            email: userData.email,
+            phone: userData.phone || '',
+            birthday: userData.birthday,
+            gender: userData.gender,
+            source: userData.source || 'website',
+            segment: 'new',
+            totalSpent: 0,
+            orderCount: 0,
+            avgOrderValue: 0,
+            lifetimeValue: 0,
+            churnRisk: 'low',
+            contactPreference: 'email',
+            notes: '',
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          }),
+
+          this.db.insert(customerNotificationPreferences).values({
+            id: createId(),
+            userId: newUserId,
+            emailOrderUpdates: true,
+            emailAppointmentReminders: true,
+            emailNewsletters: true,
+            emailPromotions: false,
+            emailPriceAlerts: false,
+            emailProductRecommendations: false,
+            smsOrderUpdates: false,
+            smsAppointmentReminders: true,
+            smsPromotions: false,
+            smsDeliveryUpdates: true,
+            emailFrequency: 'immediate',
+            smsFrequency: 'important_only',
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          }),
+
+          this.db.insert(userSecurity).values({
+            id: createId(),
+            userId: newUserId,
+            loginCount: 0,
+            twoFactorEnabled: false,
+            isLocked: false,
+            failedLoginAttempts: 0,
+            allowDataCollection: true,
+            allowMarketing: true,
+            allowSmsMarketing: false,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          }),
         ];
-        
+
         await this.db.batch(batchOperations);
-        
+
         return {
           userId: newUserId,
           customerProfileId,
@@ -409,39 +401,37 @@ export class CustomerProfileService {
   async updateBasicInfo(userId: string, data: ProfileUpdate) {
     try {
       const batchOperations = [];
-      
+
       // Prepare user table update
       const userUpdate: any = {
         updatedAt: new Date(),
       };
-      
+
       if (data.name !== undefined) userUpdate.name = data.name;
       if (data.phone !== undefined) userUpdate.phone = data.phone;
       if (data.preferences !== undefined) userUpdate.preferences = data.preferences;
 
-      if (Object.keys(userUpdate).length > 1) { // More than just updatedAt
-        batchOperations.push(
-          this.db
-            .update(users)
-            .set(userUpdate)
-            .where(eq(users.id, userId))
-        );
+      if (Object.keys(userUpdate).length > 1) {
+        // More than just updatedAt
+        batchOperations.push(this.db.update(users).set(userUpdate).where(eq(users.id, userId)));
       }
 
       // Prepare customer profile table update
       const profileUpdate: any = {
         updatedAt: new Date(),
       };
-      
+
       if (data.name !== undefined) profileUpdate.name = data.name;
       if (data.phone !== undefined) profileUpdate.phone = data.phone;
       if (data.birthday !== undefined) profileUpdate.birthday = data.birthday;
       if (data.gender !== undefined) profileUpdate.gender = data.gender;
-      if (data.contactPreference !== undefined) profileUpdate.contactPreference = data.contactPreference;
+      if (data.contactPreference !== undefined)
+        profileUpdate.contactPreference = data.contactPreference;
       if (data.notes !== undefined) profileUpdate.notes = data.notes;
 
       // Only update profile if it exists and we have updates
-      if (Object.keys(profileUpdate).length > 1) { // More than just updatedAt
+      if (Object.keys(profileUpdate).length > 1) {
+        // More than just updatedAt
         const profileExists = await this.hasExtendedProfile(userId);
         if (profileExists) {
           batchOperations.push(
@@ -469,13 +459,16 @@ export class CustomerProfileService {
    * Update profile analytics (background process)
    * Optimized for order completion triggers
    */
-  async updateAnalytics(userId: string, orderData: {
-    amount: number;
-    isFirstPurchase?: boolean;
-  }) {
+  async updateAnalytics(
+    userId: string,
+    orderData: {
+      amount: number;
+      isFirstPurchase?: boolean;
+    }
+  ) {
     try {
       const now = new Date();
-      
+
       return await this.db
         .update(customerProfiles)
         .set({
@@ -517,7 +510,7 @@ export class CustomerProfileService {
       }
 
       // Churn risk calculation
-      const daysSinceLastOrder = analytics.lastOrderAt 
+      const daysSinceLastOrder = analytics.lastOrderAt
         ? Math.floor((Date.now() - analytics.lastOrderAt.getTime()) / (1000 * 60 * 60 * 24))
         : 0;
 
@@ -572,7 +565,7 @@ export class CustomerProfileService {
   async softDeleteProfile(userId: string) {
     try {
       const timestamp = Date.now();
-      
+
       // Prepare batch operations for atomic anonymization
       const batchOperations = [
         // Anonymize user data
@@ -602,7 +595,7 @@ export class CustomerProfileService {
             contactPreference: 'email',
             updatedAt: new Date(),
           })
-          .where(eq(customerProfiles.userId, userId))
+          .where(eq(customerProfiles.userId, userId)),
       ];
 
       // Execute atomic batch operation
@@ -626,12 +619,14 @@ export class CustomerProfileService {
         this.db.delete(customerRecentlyViewed).where(eq(customerRecentlyViewed.userId, userId)),
         this.db.delete(customerWishlists).where(eq(customerWishlists.userId, userId)),
         this.db.delete(customerReviews).where(eq(customerReviews.userId, userId)),
-        this.db.delete(customerNotificationPreferences).where(eq(customerNotificationPreferences.userId, userId)),
+        this.db
+          .delete(customerNotificationPreferences)
+          .where(eq(customerNotificationPreferences.userId, userId)),
         this.db.delete(customerPaymentMethods).where(eq(customerPaymentMethods.userId, userId)),
         this.db.delete(customerAddresses).where(eq(customerAddresses.userId, userId)),
         this.db.delete(userSecurity).where(eq(userSecurity.userId, userId)),
         this.db.delete(customerProfiles).where(eq(customerProfiles.userId, userId)),
-        this.db.delete(users).where(eq(users.id, userId))
+        this.db.delete(users).where(eq(users.id, userId)),
       ];
 
       // Execute atomic batch operation
@@ -656,11 +651,11 @@ export class CustomerProfileService {
     const now = new Date();
     const year = now.getFullYear();
     const month = String(now.getMonth() + 1).padStart(2, '0');
-    
+
     // Get the count of customers created this month
     const startOfMonth = new Date(year, now.getMonth(), 1);
     const endOfMonth = new Date(year, now.getMonth() + 1, 0);
-    
+
     const count = await this.db
       .select({ count: sql<number>`count(*)` })
       .from(customerProfiles)
@@ -672,7 +667,7 @@ export class CustomerProfileService {
       );
 
     const sequence = String((count[0]?.count || 0) + 1).padStart(4, '0');
-    
+
     return `CU${year}${month}${sequence}`;
   }
 
@@ -683,7 +678,7 @@ export class CustomerProfileService {
   async batchUpdateProfiles(updates: Array<{ userId: string; data: ProfileUpdate }>) {
     try {
       const chunks = this.chunkArray(updates, 50); // Process in chunks of 50
-      
+
       for (const chunk of chunks) {
         // Process each chunk with individual updateBasicInfo calls
         // Each updateBasicInfo already uses batch operations internally
@@ -691,7 +686,7 @@ export class CustomerProfileService {
           await this.updateBasicInfo(update.userId, update.data);
         }
       }
-      
+
       return { success: true, updated: updates.length };
     } catch (error) {
       console.error('Error batch updating profiles:', error);

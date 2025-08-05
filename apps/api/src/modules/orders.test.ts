@@ -28,7 +28,7 @@ const validOrderData = {
     name: '測試客戶',
     email: 'test.customer@example.com',
     phone: '0987-123-456',
-    address: '台北市信義區信義路五段7號'
+    address: '台北市信義區信義路五段7號',
   },
   items: [
     {
@@ -36,12 +36,12 @@ const validOrderData = {
       productName: 'Test Simmons Mattress',
       variant: 'Queen - Medium',
       quantity: 1,
-      price: 89900
-    }
+      price: 89900,
+    },
   ],
   totalAmount: 89900,
   paymentMethod: 'bank_transfer' as const,
-  notes: '希望週末配送'
+  notes: '希望週末配送',
 };
 
 const mockOrderData = {
@@ -56,12 +56,12 @@ const mockOrderData = {
   shipping_address: null,
   tracking_number: null,
   created_at: Date.now(),
-  updated_at: Date.now()
+  updated_at: Date.now(),
 };
 
 // Create test app with auth context
 function createTestApp(userType: 'admin' | 'customer' | 'none' = 'none') {
-  const app = new Hono<{ 
+  const app = new Hono<{
     Bindings: Env;
     Variables: {
       db: any;
@@ -72,18 +72,21 @@ function createTestApp(userType: 'admin' | 'customer' | 'none' = 'none') {
       session: any;
     };
   }>();
-  
+
   // Mock services middleware
   app.use('*', async (c, next) => {
     c.set('db', mockEnv.services.db);
     c.set('cache', mockEnv.services.cache);
     c.set('storage', mockEnv.services.storage);
     c.set('auth', { api: { getSession: vi.fn() } });
-    c.set('user', userType === 'admin' ? mockAdminUser : userType === 'customer' ? mockCustomerUser : null);
+    c.set(
+      'user',
+      userType === 'admin' ? mockAdminUser : userType === 'customer' ? mockCustomerUser : null
+    );
     c.set('session', userType !== 'none' ? { user: c.get('user') } : null);
     await next();
   });
-  
+
   app.route('/api/orders', orders);
   return app;
 }
@@ -97,10 +100,10 @@ describe('Orders API Module', () => {
   describe('GET /api/orders (List Orders)', () => {
     it('should return all orders with default pagination', async () => {
       const app = createTestApp('admin'); // Use admin user for protected endpoints
-      
+
       mockPreparedStatement.all.mockResolvedValue({
         results: [mockOrderData],
-        success: true
+        success: true,
       });
 
       const req = new Request('http://localhost/api/orders');
@@ -116,10 +119,10 @@ describe('Orders API Module', () => {
 
     it('should filter orders by status', async () => {
       const app = createTestApp('admin');
-      
+
       mockPreparedStatement.all.mockResolvedValue({
         results: [mockOrderData],
-        success: true
+        success: true,
       });
 
       const req = new Request('http://localhost/api/orders?status=pending');
@@ -135,10 +138,10 @@ describe('Orders API Module', () => {
 
     it('should support pagination', async () => {
       const app = createTestApp('admin');
-      
+
       mockPreparedStatement.all.mockResolvedValue({
         results: [],
-        success: true
+        success: true,
       });
 
       const req = new Request('http://localhost/api/orders?limit=10&offset=20');
@@ -149,7 +152,7 @@ describe('Orders API Module', () => {
 
     it('should handle database errors', async () => {
       const app = createTestApp('admin');
-      
+
       mockPreparedStatement.all.mockRejectedValue(new Error('Database error'));
 
       const req = new Request('http://localhost/api/orders');
@@ -164,7 +167,7 @@ describe('Orders API Module', () => {
   describe('GET /api/orders/:id (Get Single Order)', () => {
     it('should return specific order by ID', async () => {
       const app = createTestApp('admin');
-      
+
       mockPreparedStatement.first.mockResolvedValue(mockOrderData);
 
       const req = new Request('http://localhost/api/orders/BL1234567890ABCD');
@@ -180,7 +183,7 @@ describe('Orders API Module', () => {
 
     it('should return 404 for non-existent order', async () => {
       const app = createTestApp('admin');
-      
+
       mockPreparedStatement.first.mockResolvedValue(null);
 
       const req = new Request('http://localhost/api/orders/non-existent');
@@ -193,7 +196,7 @@ describe('Orders API Module', () => {
 
     it('should handle database errors', async () => {
       const app = createTestApp('admin');
-      
+
       mockPreparedStatement.first.mockRejectedValue(new Error('Database error'));
 
       const req = new Request('http://localhost/api/orders/test-id');
@@ -208,16 +211,16 @@ describe('Orders API Module', () => {
   describe('POST /api/orders (Create Order)', () => {
     it('should create new order with valid data', async () => {
       const app = createTestApp('none'); // Order creation doesn't require auth
-      
+
       mockPreparedStatement.run.mockResolvedValue({
         success: true,
-        changes: 1
+        changes: 1,
       });
 
       const req = new Request('http://localhost/api/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(validOrderData)
+        body: JSON.stringify(validOrderData),
       });
 
       const res = await app.request(req);
@@ -232,21 +235,21 @@ describe('Orders API Module', () => {
 
     it('should validate required customer info fields', async () => {
       const app = createTestApp('admin');
-      
+
       const invalidData = {
         ...validOrderData,
         customerInfo: {
           name: '',
           email: 'invalid-email',
           phone: '',
-          address: ''
-        }
+          address: '',
+        },
       };
 
       const req = new Request('http://localhost/api/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(invalidData)
+        body: JSON.stringify(invalidData),
       });
 
       const res = await app.request(req);
@@ -256,19 +259,19 @@ describe('Orders API Module', () => {
 
     it('should validate email format', async () => {
       const app = createTestApp('admin');
-      
+
       const invalidData = {
         ...validOrderData,
         customerInfo: {
           ...validOrderData.customerInfo,
-          email: 'not-an-email'
-        }
+          email: 'not-an-email',
+        },
       };
 
       const req = new Request('http://localhost/api/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(invalidData)
+        body: JSON.stringify(invalidData),
       });
 
       const res = await app.request(req);
@@ -278,16 +281,16 @@ describe('Orders API Module', () => {
 
     it('should validate items array', async () => {
       const app = createTestApp('admin');
-      
+
       const invalidData = {
         ...validOrderData,
-        items: []
+        items: [],
       };
 
       const req = new Request('http://localhost/api/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(invalidData)
+        body: JSON.stringify(invalidData),
       });
 
       const res = await app.request(req);
@@ -297,16 +300,16 @@ describe('Orders API Module', () => {
 
     it('should validate positive total amount', async () => {
       const app = createTestApp('admin');
-      
+
       const invalidData = {
         ...validOrderData,
-        totalAmount: -1000
+        totalAmount: -1000,
       };
 
       const req = new Request('http://localhost/api/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(invalidData)
+        body: JSON.stringify(invalidData),
       });
 
       const res = await app.request(req);
@@ -316,13 +319,13 @@ describe('Orders API Module', () => {
 
     it('should handle database errors', async () => {
       const app = createTestApp('admin');
-      
+
       mockPreparedStatement.run.mockRejectedValue(new Error('Database error'));
 
       const req = new Request('http://localhost/api/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(validOrderData)
+        body: JSON.stringify(validOrderData),
       });
 
       const res = await app.request(req);
@@ -336,21 +339,21 @@ describe('Orders API Module', () => {
   describe('PUT /api/orders/:id/status (Update Order Status)', () => {
     it('should update order status', async () => {
       const app = createTestApp('admin');
-      
+
       mockPreparedStatement.run.mockResolvedValue({
         success: true,
-        changes: 1
+        changes: 1,
       });
 
       const updateData = {
         status: 'confirmed' as const,
-        notes: '已確認付款'
+        notes: '已確認付款',
       };
 
       const req = new Request('http://localhost/api/orders/BL1234567890ABCD/status', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updateData)
+        body: JSON.stringify(updateData),
       });
 
       const res = await app.request(req);
@@ -369,15 +372,15 @@ describe('Orders API Module', () => {
 
     it('should validate status enum values', async () => {
       const app = createTestApp('admin');
-      
+
       const invalidData = {
-        status: 'invalid-status'
+        status: 'invalid-status',
       };
 
       const req = new Request('http://localhost/api/orders/test-id/status', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(invalidData)
+        body: JSON.stringify(invalidData),
       });
 
       const res = await app.request(req);
@@ -387,19 +390,26 @@ describe('Orders API Module', () => {
 
     it('should accept all valid status values', async () => {
       const app = createTestApp('admin');
-      
-      const validStatuses = ['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled'];
-      
+
+      const validStatuses = [
+        'pending',
+        'confirmed',
+        'processing',
+        'shipped',
+        'delivered',
+        'cancelled',
+      ];
+
       mockPreparedStatement.run.mockResolvedValue({
         success: true,
-        changes: 1
+        changes: 1,
       });
 
       for (const status of validStatuses) {
         const req = new Request('http://localhost/api/orders/test-id/status', {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ status })
+          body: JSON.stringify({ status }),
         });
 
         const res = await app.request(req);
@@ -409,16 +419,16 @@ describe('Orders API Module', () => {
 
     it('should return 404 for non-existent order', async () => {
       const app = createTestApp('admin');
-      
+
       mockPreparedStatement.run.mockResolvedValue({
         success: true,
-        changes: 0
+        changes: 0,
       });
 
       const req = new Request('http://localhost/api/orders/non-existent/status', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'confirmed' })
+        body: JSON.stringify({ status: 'confirmed' }),
       });
 
       const res = await app.request(req);
@@ -430,13 +440,13 @@ describe('Orders API Module', () => {
 
     it('should handle database errors', async () => {
       const app = createTestApp('admin');
-      
+
       mockPreparedStatement.run.mockRejectedValue(new Error('Database error'));
 
       const req = new Request('http://localhost/api/orders/test-id/status', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'confirmed' })
+        body: JSON.stringify({ status: 'confirmed' }),
       });
 
       const res = await app.request(req);
@@ -450,10 +460,10 @@ describe('Orders API Module', () => {
   describe('GET /api/orders/customer/:email (Get Customer Orders)', () => {
     it('should return orders for specific customer email (admin access)', async () => {
       const app = createTestApp('admin');
-      
+
       mockPreparedStatement.all.mockResolvedValue({
         results: [mockOrderData],
-        success: true
+        success: true,
       });
 
       const req = new Request('http://localhost/api/orders/customer/test@example.com');
@@ -471,10 +481,10 @@ describe('Orders API Module', () => {
 
     it('should return orders for customer accessing their own email', async () => {
       const app = createTestApp('customer');
-      
+
       mockPreparedStatement.all.mockResolvedValue({
         results: [mockOrderData],
-        success: true
+        success: true,
       });
 
       // Customer can access their own email (mockCustomerUser.email is 'customer@example.com')
@@ -501,10 +511,10 @@ describe('Orders API Module', () => {
 
     it('should return empty array for email with no orders', async () => {
       const app = createTestApp('admin');
-      
+
       mockPreparedStatement.all.mockResolvedValue({
         results: [],
-        success: true
+        success: true,
       });
 
       const req = new Request('http://localhost/api/orders/customer/no-orders@example.com');
@@ -519,10 +529,10 @@ describe('Orders API Module', () => {
 
     it('should handle special characters in email', async () => {
       const app = createTestApp('admin');
-      
+
       mockPreparedStatement.all.mockResolvedValue({
         results: [],
-        success: true
+        success: true,
       });
 
       const req = new Request('http://localhost/api/orders/customer/test%2Bspecial%40example.com');
@@ -534,7 +544,7 @@ describe('Orders API Module', () => {
 
     it('should handle database errors', async () => {
       const app = createTestApp('admin');
-      
+
       mockPreparedStatement.all.mockRejectedValue(new Error('Database error'));
 
       const req = new Request('http://localhost/api/orders/customer/test@example.com');
@@ -549,24 +559,25 @@ describe('Orders API Module', () => {
   describe('Order Business Logic', () => {
     it('should generate unique order IDs', async () => {
       const app = createTestApp('admin');
-      
+
       mockPreparedStatement.run.mockResolvedValue({
         success: true,
-        changes: 1
+        changes: 1,
       });
 
       // Create multiple orders quickly
-      const requests = Array(3).fill(null).map(() => 
-        new Request('http://localhost/api/orders', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(validOrderData)
-        })
-      );
+      const requests = Array(3)
+        .fill(null)
+        .map(
+          () =>
+            new Request('http://localhost/api/orders', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(validOrderData),
+            })
+        );
 
-      const responses = await Promise.all(
-        requests.map(req => app.request(req, mockEnv))
-      );
+      const responses = await Promise.all(requests.map(req => app.request(req, mockEnv)));
 
       const orderIds = await Promise.all(
         responses.map(async res => {
@@ -577,7 +588,7 @@ describe('Orders API Module', () => {
 
       // All IDs should be unique
       expect(new Set(orderIds).size).toBe(3);
-      
+
       // All IDs should match the expected format
       orderIds.forEach(id => {
         expect(id).toMatch(/^BL\d+[A-Z0-9]{4}$/);
@@ -586,10 +597,10 @@ describe('Orders API Module', () => {
 
     it('should handle payment method defaulting', async () => {
       const app = createTestApp('admin');
-      
+
       mockPreparedStatement.run.mockResolvedValue({
         success: true,
-        changes: 1
+        changes: 1,
       });
 
       const dataWithoutPaymentMethod = { ...validOrderData };
@@ -598,11 +609,11 @@ describe('Orders API Module', () => {
       const req = new Request('http://localhost/api/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(dataWithoutPaymentMethod)
+        body: JSON.stringify(dataWithoutPaymentMethod),
       });
 
       const res = await app.request(req);
-      
+
       expect(res.status).toBe(201);
       expect(mockPreparedStatement.bind).toHaveBeenCalledWith(
         expect.any(String), // id
@@ -613,16 +624,16 @@ describe('Orders API Module', () => {
         'pending',
         '希望週末配送',
         expect.any(String), // created_at
-        expect.any(String)  // updated_at
+        expect.any(String) // updated_at
       );
     });
 
     it('should store JSON data correctly', async () => {
       const app = createTestApp('admin');
-      
+
       mockPreparedStatement.run.mockResolvedValue({
         success: true,
-        changes: 1
+        changes: 1,
       });
 
       const complexOrderData = {
@@ -633,29 +644,29 @@ describe('Orders API Module', () => {
             productName: 'Test Product with "Quotes" & Special chars',
             variant: 'Size: Queen (5尺), Firmness: 中式',
             quantity: 2,
-            price: 45000
+            price: 45000,
           },
           {
             productId: 'product-2',
             productName: 'Another Product',
             variant: 'Standard',
             quantity: 1,
-            price: 3000
-          }
+            price: 3000,
+          },
         ],
-        totalAmount: 93000
+        totalAmount: 93000,
       };
 
       const req = new Request('http://localhost/api/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(complexOrderData)
+        body: JSON.stringify(complexOrderData),
       });
 
       const res = await app.request(req);
-      
+
       expect(res.status).toBe(201);
-      
+
       // Verify JSON data is properly stringified
       expect(mockPreparedStatement.bind).toHaveBeenCalledWith(
         expect.any(String),
@@ -674,19 +685,21 @@ describe('Orders API Module', () => {
   describe('Input Validation', () => {
     it('should validate item quantity is positive', async () => {
       const app = createTestApp('admin');
-      
+
       const invalidData = {
         ...validOrderData,
-        items: [{
-          ...validOrderData.items[0],
-          quantity: 0
-        }]
+        items: [
+          {
+            ...validOrderData.items[0],
+            quantity: 0,
+          },
+        ],
       };
 
       const req = new Request('http://localhost/api/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(invalidData)
+        body: JSON.stringify(invalidData),
       });
 
       const res = await app.request(req);
@@ -695,19 +708,21 @@ describe('Orders API Module', () => {
 
     it('should validate item price is positive', async () => {
       const app = createTestApp('admin');
-      
+
       const invalidData = {
         ...validOrderData,
-        items: [{
-          ...validOrderData.items[0],
-          price: -100
-        }]
+        items: [
+          {
+            ...validOrderData.items[0],
+            price: -100,
+          },
+        ],
       };
 
       const req = new Request('http://localhost/api/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(invalidData)
+        body: JSON.stringify(invalidData),
       });
 
       const res = await app.request(req);
@@ -716,11 +731,11 @@ describe('Orders API Module', () => {
 
     it('should handle malformed JSON', async () => {
       const app = createTestApp('admin');
-      
+
       const req = new Request('http://localhost/api/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: 'invalid json{'
+        body: 'invalid json{',
       });
 
       const res = await app.request(req);
@@ -729,20 +744,20 @@ describe('Orders API Module', () => {
 
     it('should validate required fields exist', async () => {
       const app = createTestApp('admin');
-      
+
       const incompleteData = {
         customerInfo: {
-          name: 'Test User'
+          name: 'Test User',
           // missing email, phone, address
         },
         items: validOrderData.items,
-        totalAmount: 89900
+        totalAmount: 89900,
       };
 
       const req = new Request('http://localhost/api/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(incompleteData)
+        body: JSON.stringify(incompleteData),
       });
 
       const res = await app.request(req);

@@ -26,22 +26,29 @@ const app = new Hono<Env>();
 // Validation schemas
 const createProductSchema = z.object({
   name: z.string().min(1, 'Product name is required'),
-  slug: z.string().min(1, 'Product slug is required').regex(/^[a-z0-9-]+$/, 'Slug must contain only lowercase letters, numbers, and hyphens'),
+  slug: z
+    .string()
+    .min(1, 'Product slug is required')
+    .regex(/^[a-z0-9-]+$/, 'Slug must contain only lowercase letters, numbers, and hyphens'),
   description: z.string().min(10, 'Description must be at least 10 characters'),
   category: z.enum(['simmons-black', 'accessories', 'us-imports']),
   images: z.array(z.string().url()).default([]),
-  variants: z.array(z.object({
-    id: z.string(),
-    name: z.string(),
-    sku: z.string(),
-    price: z.number().positive(),
-    originalPrice: z.number().positive().optional(),
-    size: z.enum(['single', 'double', 'queen', 'king']),
-    firmness: z.enum(['soft', 'medium', 'firm']),
-    stock: z.number().int().min(0),
-    inStock: z.boolean().default(true),
-    sortOrder: z.number().default(0),
-  })).min(1, 'At least one variant is required'),
+  variants: z
+    .array(
+      z.object({
+        id: z.string(),
+        name: z.string(),
+        sku: z.string(),
+        price: z.number().positive(),
+        originalPrice: z.number().positive().optional(),
+        size: z.enum(['single', 'double', 'queen', 'king']),
+        firmness: z.enum(['soft', 'medium', 'firm']),
+        stock: z.number().int().min(0),
+        inStock: z.boolean().default(true),
+        sortOrder: z.number().default(0),
+      })
+    )
+    .min(1, 'At least one variant is required'),
   features: z.array(z.string()).default([]),
   specifications: z.record(z.string()).default({}),
   inStock: z.boolean().default(true),
@@ -68,17 +75,20 @@ const productQuerySchema = z.object({
 const requireAdmin = async (c: any, next: any) => {
   const user = c.get('user');
   if (!user || user.role !== 'admin') {
-    return c.json({ 
-      success: false, 
-      error: 'Unauthorized', 
-      message: 'Admin access required' 
-    }, 403);
+    return c.json(
+      {
+        success: false,
+        error: 'Unauthorized',
+        message: 'Admin access required',
+      },
+      403
+    );
   }
   await next();
 };
 
 // GET /api/products - List all products with advanced filtering and search
-app.get('/', zValidator('query', productQuerySchema), async (c) => {
+app.get('/', zValidator('query', productQuerySchema), async c => {
   try {
     const db = c.get('db');
     const cache = c.get('cache');
@@ -86,28 +96,28 @@ app.get('/', zValidator('query', productQuerySchema), async (c) => {
 
     // Build cache key
     const cacheKey = `products:list:${JSON.stringify(query)}`;
-    
+
     // Try cache first
     const cached = await cache.get(cacheKey);
     if (cached) {
       return c.json({
         success: true,
         data: JSON.parse(cached),
-        cached: true
+        cached: true,
       });
     }
 
     // Build query conditions
     const conditions = [];
-    
+
     if (query.category) {
       conditions.push(eq(products.category, query.category));
     }
-    
+
     if (query.featured) {
       conditions.push(eq(products.featured, query.featured === 'true'));
     }
-    
+
     if (query.inStock) {
       conditions.push(eq(products.inStock, query.inStock === 'true'));
     }
@@ -115,18 +125,13 @@ app.get('/', zValidator('query', productQuerySchema), async (c) => {
     // Handle search
     if (query.search) {
       const searchTerm = `%${query.search}%`;
-      conditions.push(
-        or(
-          like(products.name, searchTerm),
-          like(products.description, searchTerm)
-        )
-      );
+      conditions.push(or(like(products.name, searchTerm), like(products.description, searchTerm)));
     }
 
     // Handle sorting
     let orderBy;
     const sortDirection = query.sortOrder === 'asc' ? asc : desc;
-    
+
     switch (query.sortBy) {
       case 'name':
         orderBy = sortDirection(products.name);
@@ -162,8 +167,8 @@ app.get('/', zValidator('query', productQuerySchema), async (c) => {
         limit,
         offset,
         total: totalResult.count,
-        hasMore: offset + result.length < totalResult.count
-      }
+        hasMore: offset + result.length < totalResult.count,
+      },
     };
 
     // Cache the result for 10 minutes
@@ -171,34 +176,36 @@ app.get('/', zValidator('query', productQuerySchema), async (c) => {
 
     return c.json({
       success: true,
-      data: responseData
+      data: responseData,
     });
-
   } catch (error) {
     console.error('Error fetching products:', error);
-    return c.json({
-      success: false,
-      error: 'Internal Server Error',
-      message: 'Failed to fetch products'
-    }, 500);
+    return c.json(
+      {
+        success: false,
+        error: 'Internal Server Error',
+        message: 'Failed to fetch products',
+      },
+      500
+    );
   }
 });
 
 // GET /api/products/featured - Get featured products for homepage
-app.get('/featured', async (c) => {
+app.get('/featured', async c => {
   try {
     const db = c.get('db');
     const cache = c.get('cache');
-    
+
     const cacheKey = 'products:featured';
-    
+
     // Try cache first
     const cached = await cache.get(cacheKey);
     if (cached) {
       return c.json({
         success: true,
         data: JSON.parse(cached),
-        cached: true
+        cached: true,
       });
     }
 
@@ -214,34 +221,36 @@ app.get('/featured', async (c) => {
 
     return c.json({
       success: true,
-      data: featuredProducts
+      data: featuredProducts,
     });
-
   } catch (error) {
     console.error('Error fetching featured products:', error);
-    return c.json({
-      success: false,
-      error: 'Internal Server Error',
-      message: 'Failed to fetch featured products'
-    }, 500);
+    return c.json(
+      {
+        success: false,
+        error: 'Internal Server Error',
+        message: 'Failed to fetch featured products',
+      },
+      500
+    );
   }
 });
 
 // GET /api/products/categories - Get products grouped by category
-app.get('/categories', async (c) => {
+app.get('/categories', async c => {
   try {
     const db = c.get('db');
     const cache = c.get('cache');
-    
+
     const cacheKey = 'products:categories';
-    
+
     // Try cache first
     const cached = await cache.get(cacheKey);
     if (cached) {
       return c.json({
         success: true,
         data: JSON.parse(cached),
-        cached: true
+        cached: true,
       });
     }
 
@@ -267,7 +276,7 @@ app.get('/categories', async (c) => {
 
       categories[stat.category] = {
         ...stat,
-        sampleProducts
+        sampleProducts,
       };
     }
 
@@ -276,118 +285,123 @@ app.get('/categories', async (c) => {
 
     return c.json({
       success: true,
-      data: categories
+      data: categories,
     });
-
   } catch (error) {
     console.error('Error fetching product categories:', error);
-    return c.json({
-      success: false,
-      error: 'Internal Server Error',
-      message: 'Failed to fetch product categories'
-    }, 500);
+    return c.json(
+      {
+        success: false,
+        error: 'Internal Server Error',
+        message: 'Failed to fetch product categories',
+      },
+      500
+    );
   }
 });
 
 // GET /api/products/search - Advanced product search
-app.get('/search', zValidator('query', z.object({
-  q: z.string().min(1, 'Search query is required'),
-  category: z.enum(['simmons-black', 'accessories', 'us-imports']).optional(),
-  limit: z.string().optional(),
-  offset: z.string().optional(),
-})), async (c) => {
-  try {
-    const db = c.get('db');
-    const query = c.req.valid('query');
+app.get(
+  '/search',
+  zValidator(
+    'query',
+    z.object({
+      q: z.string().min(1, 'Search query is required'),
+      category: z.enum(['simmons-black', 'accessories', 'us-imports']).optional(),
+      limit: z.string().optional(),
+      offset: z.string().optional(),
+    })
+  ),
+  async c => {
+    try {
+      const db = c.get('db');
+      const query = c.req.valid('query');
 
-    const searchTerm = `%${query.q}%`;
-    const conditions = [
-      or(
-        like(products.name, searchTerm),
-        like(products.description, searchTerm)
-      )
-    ];
+      const searchTerm = `%${query.q}%`;
+      const conditions = [
+        or(like(products.name, searchTerm), like(products.description, searchTerm)),
+      ];
 
-    if (query.category) {
-      conditions.push(eq(products.category, query.category));
-    }
-
-    const limit = parseInt(query.limit || '10');
-    const offset = parseInt(query.offset || '0');
-
-    const results = await db
-      .select()
-      .from(products)
-      .where(and(...conditions))
-      .orderBy(desc(products.featured), desc(products.createdAt))
-      .limit(limit)
-      .offset(offset);
-
-    return c.json({
-      success: true,
-      data: {
-        query: query.q,
-        results,
-        total: results.length
+      if (query.category) {
+        conditions.push(eq(products.category, query.category));
       }
-    });
 
-  } catch (error) {
-    console.error('Error searching products:', error);
-    return c.json({
-      success: false,
-      error: 'Internal Server Error',
-      message: 'Failed to search products'
-    }, 500);
+      const limit = parseInt(query.limit || '10');
+      const offset = parseInt(query.offset || '0');
+
+      const results = await db
+        .select()
+        .from(products)
+        .where(and(...conditions))
+        .orderBy(desc(products.featured), desc(products.createdAt))
+        .limit(limit)
+        .offset(offset);
+
+      return c.json({
+        success: true,
+        data: {
+          query: query.q,
+          results,
+          total: results.length,
+        },
+      });
+    } catch (error) {
+      console.error('Error searching products:', error);
+      return c.json(
+        {
+          success: false,
+          error: 'Internal Server Error',
+          message: 'Failed to search products',
+        },
+        500
+      );
+    }
   }
-});
+);
 
 // GET /api/products/:identifier - Get single product by ID or slug
-app.get('/:identifier', async (c) => {
+app.get('/:identifier', async c => {
   try {
     const db = c.get('db');
     const identifier = c.req.param('identifier');
 
     // Try to find by ID first, then by slug
-    let product = await db
-      .select()
-      .from(products)
-      .where(eq(products.id, identifier))
-      .limit(1);
+    let product = await db.select().from(products).where(eq(products.id, identifier)).limit(1);
 
     if (product.length === 0) {
-      product = await db
-        .select()
-        .from(products)
-        .where(eq(products.slug, identifier))
-        .limit(1);
+      product = await db.select().from(products).where(eq(products.slug, identifier)).limit(1);
     }
 
     if (product.length === 0) {
-      return c.json({
-        success: false,
-        error: 'Not Found',
-        message: 'Product not found'
-      }, 404);
+      return c.json(
+        {
+          success: false,
+          error: 'Not Found',
+          message: 'Product not found',
+        },
+        404
+      );
     }
 
     return c.json({
       success: true,
-      data: product[0]
+      data: product[0],
     });
-
   } catch (error) {
     console.error('Error fetching product:', error);
-    return c.json({
-      success: false,
-      error: 'Internal Server Error',
-      message: 'Failed to fetch product'
-    }, 500);
+    return c.json(
+      {
+        success: false,
+        error: 'Internal Server Error',
+        message: 'Failed to fetch product',
+      },
+      500
+    );
   }
 });
 
 // POST /api/products - Create new product (Admin only)
-app.post('/', requireAdmin, zValidator('json', createProductSchema), async (c) => {
+app.post('/', requireAdmin, zValidator('json', createProductSchema), async c => {
   try {
     const db = c.get('db');
     const cache = c.get('cache');
@@ -400,11 +414,14 @@ app.post('/', requireAdmin, zValidator('json', createProductSchema), async (c) =
       .where(eq(products.slug, productData.slug));
 
     if (existingProduct) {
-      return c.json({
-        success: false,
-        error: 'Conflict',
-        message: 'A product with this slug already exists'
-      }, 409);
+      return c.json(
+        {
+          success: false,
+          error: 'Conflict',
+          message: 'A product with this slug already exists',
+        },
+        409
+      );
     }
 
     const productId = createId();
@@ -428,7 +445,7 @@ app.post('/', requireAdmin, zValidator('json', createProductSchema), async (c) =
         seoTitle: productData.seoTitle || null,
         seoDescription: productData.seoDescription || null,
         createdAt: now,
-        updatedAt: now
+        updatedAt: now,
       })
       .returning();
 
@@ -436,24 +453,29 @@ app.post('/', requireAdmin, zValidator('json', createProductSchema), async (c) =
     await cache.delete('products:featured');
     await cache.delete('products:categories');
 
-    return c.json({
-      success: true,
-      data: newProduct,
-      message: 'Product created successfully'
-    }, 201);
-
+    return c.json(
+      {
+        success: true,
+        data: newProduct,
+        message: 'Product created successfully',
+      },
+      201
+    );
   } catch (error) {
     console.error('Error creating product:', error);
-    return c.json({
-      success: false,
-      error: 'Internal Server Error',
-      message: 'Failed to create product'
-    }, 500);
+    return c.json(
+      {
+        success: false,
+        error: 'Internal Server Error',
+        message: 'Failed to create product',
+      },
+      500
+    );
   }
 });
 
 // PUT /api/products/:id - Update product (Admin only)
-app.put('/:id', requireAdmin, zValidator('json', updateProductSchema), async (c) => {
+app.put('/:id', requireAdmin, zValidator('json', updateProductSchema), async c => {
   try {
     const db = c.get('db');
     const cache = c.get('cache');
@@ -467,11 +489,14 @@ app.put('/:id', requireAdmin, zValidator('json', updateProductSchema), async (c)
       .where(eq(products.id, id));
 
     if (!existingProduct) {
-      return c.json({
-        success: false,
-        error: 'Not Found',
-        message: 'Product not found'
-      }, 404);
+      return c.json(
+        {
+          success: false,
+          error: 'Not Found',
+          message: 'Product not found',
+        },
+        404
+      );
     }
 
     // Check if new slug conflicts with existing products (if slug is being updated)
@@ -482,11 +507,14 @@ app.put('/:id', requireAdmin, zValidator('json', updateProductSchema), async (c)
         .where(eq(products.slug, updateData.slug));
 
       if (conflictingProduct) {
-        return c.json({
-          success: false,
-          error: 'Conflict',
-          message: 'A product with this slug already exists'
-        }, 409);
+        return c.json(
+          {
+            success: false,
+            error: 'Conflict',
+            message: 'A product with this slug already exists',
+          },
+          409
+        );
       }
     }
 
@@ -494,7 +522,7 @@ app.put('/:id', requireAdmin, zValidator('json', updateProductSchema), async (c)
       .update(products)
       .set({
         ...updateData,
-        updatedAt: new Date()
+        updatedAt: new Date(),
       })
       .where(eq(products.id, id))
       .returning();
@@ -506,21 +534,23 @@ app.put('/:id', requireAdmin, zValidator('json', updateProductSchema), async (c)
     return c.json({
       success: true,
       data: updatedProduct,
-      message: 'Product updated successfully'
+      message: 'Product updated successfully',
     });
-
   } catch (error) {
     console.error('Error updating product:', error);
-    return c.json({
-      success: false,
-      error: 'Internal Server Error',
-      message: 'Failed to update product'
-    }, 500);
+    return c.json(
+      {
+        success: false,
+        error: 'Internal Server Error',
+        message: 'Failed to update product',
+      },
+      500
+    );
   }
 });
 
 // DELETE /api/products/:id - Delete product (Admin only)
-app.delete('/:id', requireAdmin, async (c) => {
+app.delete('/:id', requireAdmin, async c => {
   try {
     const db = c.get('db');
     const cache = c.get('cache');
@@ -533,16 +563,17 @@ app.delete('/:id', requireAdmin, async (c) => {
       .where(eq(products.id, id));
 
     if (!existingProduct) {
-      return c.json({
-        success: false,
-        error: 'Not Found',
-        message: 'Product not found'
-      }, 404);
+      return c.json(
+        {
+          success: false,
+          error: 'Not Found',
+          message: 'Product not found',
+        },
+        404
+      );
     }
 
-    await db
-      .delete(products)
-      .where(eq(products.id, id));
+    await db.delete(products).where(eq(products.id, id));
 
     // Clear relevant caches
     await cache.delete('products:featured');
@@ -550,16 +581,18 @@ app.delete('/:id', requireAdmin, async (c) => {
 
     return c.json({
       success: true,
-      message: 'Product deleted successfully'
+      message: 'Product deleted successfully',
     });
-
   } catch (error) {
     console.error('Error deleting product:', error);
-    return c.json({
-      success: false,
-      error: 'Internal Server Error',
-      message: 'Failed to delete product'
-    }, 500);
+    return c.json(
+      {
+        success: false,
+        error: 'Internal Server Error',
+        message: 'Failed to delete product',
+      },
+      500
+    );
   }
 });
 

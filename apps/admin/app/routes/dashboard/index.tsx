@@ -14,19 +14,48 @@ const salesData = [
 ];
 
 const recentOrders = [
-  { id: 'ORD-001', customer: '王小明', product: 'Simmons S4 特大雙人床墊', amount: 125000, status: '已付款' },
-  { id: 'ORD-002', customer: '李美麗', product: 'Simmons S3 雙人床墊', amount: 95000, status: '待付款' },
-  { id: 'ORD-003', customer: '張大華', product: 'Simmons L-Class 加大雙人', amount: 168000, status: '配送中' },
-  { id: 'ORD-004', customer: '陳淑芬', product: 'Simmons S2 單人床墊', amount: 68000, status: '已完成' },
+  {
+    id: 'ORD-001',
+    customer: '王小明',
+    product: 'Simmons S4 特大雙人床墊',
+    amount: 125000,
+    status: '已付款',
+  },
+  {
+    id: 'ORD-002',
+    customer: '李美麗',
+    product: 'Simmons S3 雙人床墊',
+    amount: 95000,
+    status: '待付款',
+  },
+  {
+    id: 'ORD-003',
+    customer: '張大華',
+    product: 'Simmons L-Class 加大雙人',
+    amount: 168000,
+    status: '配送中',
+  },
+  {
+    id: 'ORD-004',
+    customer: '陳淑芬',
+    product: 'Simmons S2 單人床墊',
+    amount: 68000,
+    status: '已完成',
+  },
 ];
 
 const getStatusColor = (status: string) => {
   switch (status) {
-    case '已付款': return 'bg-green-100 text-green-800';
-    case '待付款': return 'bg-yellow-100 text-yellow-800';
-    case '配送中': return 'bg-blue-100 text-blue-800';
-    case '已完成': return 'bg-gray-100 text-gray-800';
-    default: return 'bg-gray-100 text-gray-800';
+    case '已付款':
+      return 'bg-green-100 text-green-800';
+    case '待付款':
+      return 'bg-yellow-100 text-yellow-800';
+    case '配送中':
+      return 'bg-blue-100 text-blue-800';
+    case '已完成':
+      return 'bg-gray-100 text-gray-800';
+    default:
+      return 'bg-gray-100 text-gray-800';
   }
 };
 
@@ -110,16 +139,19 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {recentOrders.map((order) => (
-                <div key={order.id} className="flex items-center justify-between p-4 border rounded-lg">
+              {recentOrders.map(order => (
+                <div
+                  key={order.id}
+                  className="flex items-center justify-between p-4 border rounded-lg"
+                >
                   <div className="space-y-1">
-                    <p className="text-sm font-medium">{order.id} - {order.customer}</p>
+                    <p className="text-sm font-medium">
+                      {order.id} - {order.customer}
+                    </p>
                     <p className="text-sm text-muted-foreground">{order.product}</p>
                     <p className="text-sm font-semibold">NT$ {order.amount.toLocaleString()}</p>
                   </div>
-                  <Badge className={getStatusColor(order.status)}>
-                    {order.status}
-                  </Badge>
+                  <Badge className={getStatusColor(order.status)}>{order.status}</Badge>
                 </div>
               ))}
             </div>

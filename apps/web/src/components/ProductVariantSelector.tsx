@@ -5,7 +5,7 @@ import { z } from 'zod';
 const createVariantSchema = (variants: ProductVariant[]) => {
   const availableSizes = [...new Set(variants.map(v => v.size))];
   const availableFirmness = [...new Set(variants.map(v => v.firmness))];
-  
+
   return z.object({
     size: z.enum(availableSizes as [string, ...string[]], { message: '請選擇尺寸' }),
     firmness: z.enum(availableFirmness as [string, ...string[]], { message: '請選擇類型' }),
@@ -40,10 +40,10 @@ export default function ProductVariantSelector({
   variants,
   onVariantChange,
   onAddToCart,
-  className = ''
+  className = '',
 }: ProductVariantSelectorProps) {
   const [selectedVariant, setSelectedVariant] = useState<Partial<VariantData>>({
-    quantity: 1
+    quantity: 1,
   });
   const [errors, setErrors] = useState<Partial<Record<keyof VariantData, string>>>({});
   const [currentPrice, setCurrentPrice] = useState<number | null>(null);
@@ -57,7 +57,7 @@ export default function ProductVariantSelector({
       setSelectedVariant(prev => ({
         ...prev,
         size: singleVariant.size,
-        firmness: singleVariant.firmness
+        firmness: singleVariant.firmness,
       }));
     }
   }, [variants]);
@@ -65,19 +65,19 @@ export default function ProductVariantSelector({
   // Generate dynamic options from variant data
   const availableSizes = [...new Set(variants.map(v => v.size))];
   const availableFirmness = [...new Set(variants.map(v => v.firmness))];
-  
+
   // Size label mapping with fallback to value
   const getSizeLabel = (size: string) => {
     const sizeMap: Record<string, { label: string; width?: string }> = {
-      'single': { label: '單人 (3.5尺)', width: '105cm' },
-      'double': { label: '雙人 (5尺)', width: '152cm' },
-      'queen': { label: '加大雙人 (6尺)', width: '182cm' },
-      'king': { label: '特大雙人 (7尺)', width: '212cm' },
-      'small': { label: '小號' },
-      'medium': { label: '中號' },
-      'large': { label: '大號' },
-      'standard': { label: '標準尺寸' },
-      'compact': { label: '迷你尺寸' },
+      single: { label: '單人 (3.5尺)', width: '105cm' },
+      double: { label: '雙人 (5尺)', width: '152cm' },
+      queen: { label: '加大雙人 (6尺)', width: '182cm' },
+      king: { label: '特大雙人 (7尺)', width: '212cm' },
+      small: { label: '小號' },
+      medium: { label: '中號' },
+      large: { label: '大號' },
+      standard: { label: '標準尺寸' },
+      compact: { label: '迷你尺寸' },
     };
     return sizeMap[size] || { label: size }; // Fallback to raw value
   };
@@ -85,44 +85,44 @@ export default function ProductVariantSelector({
   // Firmness label mapping with fallback to value
   const getFirmnessLabel = (firmness: string) => {
     const firmnessMap: Record<string, { label: string; description?: string }> = {
-      'soft': { label: '偏軟', description: '適合側睡者' },
-      'medium': { label: '適中', description: '適合多數人' },
-      'firm': { label: '偏硬', description: '適合仰睡者' },
-      'standard': { label: '標準' },
-      'premium': { label: '高級' },
-      'basic': { label: '基本款' },
+      soft: { label: '偏軟', description: '適合側睡者' },
+      medium: { label: '適中', description: '適合多數人' },
+      firm: { label: '偏硬', description: '適合仰睡者' },
+      standard: { label: '標準' },
+      premium: { label: '高級' },
+      basic: { label: '基本款' },
     };
     return firmnessMap[firmness] || { label: firmness }; // Fallback to raw value
   };
 
   const sizeOptions = availableSizes.map(size => ({
     value: size,
-    ...getSizeLabel(size)
+    ...getSizeLabel(size),
   }));
 
   const firmnessOptions = availableFirmness.map(firmness => ({
     value: firmness,
-    ...getFirmnessLabel(firmness)
+    ...getFirmnessLabel(firmness),
   }));
 
   // Update price and SKU when variant selection changes
   useEffect(() => {
     if (selectedVariant.size && selectedVariant.firmness) {
-      const variant = variants.find(v => 
-        v.size === selectedVariant.size && v.firmness === selectedVariant.firmness
+      const variant = variants.find(
+        v => v.size === selectedVariant.size && v.firmness === selectedVariant.firmness
       );
-      
+
       if (variant) {
         setCurrentPrice(variant.price);
         setCurrentSku(variant.sku);
-        
+
         try {
           const variantSchema = createVariantSchema(variants);
           const validatedVariant = variantSchema.parse(selectedVariant);
           onVariantChange({
             ...validatedVariant,
             price: variant.price,
-            sku: variant.sku
+            sku: variant.sku,
           });
         } catch (error) {
           // Validation failed, don't call onVariantChange
@@ -133,7 +133,7 @@ export default function ProductVariantSelector({
 
   const handleVariantChange = (field: keyof VariantData, value: string | number) => {
     setSelectedVariant(prev => ({ ...prev, [field]: value }));
-    
+
     // Clear error when user makes a selection
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: undefined }));
@@ -142,15 +142,15 @@ export default function ProductVariantSelector({
 
   const validateAndAddToCart = async () => {
     if (!onAddToCart) return;
-    
+
     setIsLoading(true);
     setErrors({});
 
     try {
       const variantSchema = createVariantSchema(variants);
       const validatedVariant = variantSchema.parse(selectedVariant);
-      const variant = variants.find(v => 
-        v.size === validatedVariant.size && v.firmness === validatedVariant.firmness
+      const variant = variants.find(
+        v => v.size === validatedVariant.size && v.firmness === validatedVariant.firmness
       );
 
       if (!variant) {
@@ -164,9 +164,8 @@ export default function ProductVariantSelector({
       await onAddToCart({
         ...validatedVariant,
         price: variant.price,
-        sku: variant.sku
+        sku: variant.sku,
       });
-
     } catch (error) {
       if (error instanceof z.ZodError) {
         const fieldErrors: Partial<Record<keyof VariantData, string>> = {};
@@ -186,8 +185,8 @@ export default function ProductVariantSelector({
 
   const getCurrentStock = () => {
     if (!selectedVariant.size || !selectedVariant.firmness) return null;
-    const variant = variants.find(v => 
-      v.size === selectedVariant.size && v.firmness === selectedVariant.firmness
+    const variant = variants.find(
+      v => v.size === selectedVariant.size && v.firmness === selectedVariant.firmness
     );
     return variant?.stock || 0;
   };
@@ -199,11 +198,9 @@ export default function ProductVariantSelector({
       {/* Size Selection - only show if multiple options */}
       {sizeOptions.length > 1 ? (
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-3">
-            尺寸選擇 *
-          </label>
+          <label className="block text-sm font-medium text-gray-700 mb-3">尺寸選擇 *</label>
           <div className="grid grid-cols-2 gap-3">
-            {sizeOptions.map((option) => (
+            {sizeOptions.map(option => (
               <button
                 key={option.value}
                 type="button"
@@ -221,21 +218,21 @@ export default function ProductVariantSelector({
           </div>
           {errors.size && <p className="text-red-500 text-sm mt-1">{errors.size}</p>}
         </div>
-      ) : sizeOptions.length === 1 && (
-        <div className="p-3 bg-gray-50 rounded-lg">
-          <span className="text-sm text-gray-600">尺寸: </span>
-          <span className="font-medium">{sizeOptions[0].label}</span>
-        </div>
+      ) : (
+        sizeOptions.length === 1 && (
+          <div className="p-3 bg-gray-50 rounded-lg">
+            <span className="text-sm text-gray-600">尺寸: </span>
+            <span className="font-medium">{sizeOptions[0].label}</span>
+          </div>
+        )
       )}
 
       {/* Firmness Selection - only show if multiple options */}
       {firmnessOptions.length > 1 ? (
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-3">
-            軟硬度選擇 *
-          </label>
+          <label className="block text-sm font-medium text-gray-700 mb-3">軟硬度選擇 *</label>
           <div className="grid grid-cols-3 gap-3">
-            {firmnessOptions.map((option) => (
+            {firmnessOptions.map(option => (
               <button
                 key={option.value}
                 type="button"
@@ -253,12 +250,14 @@ export default function ProductVariantSelector({
           </div>
           {errors.firmness && <p className="text-red-500 text-sm mt-1">{errors.firmness}</p>}
         </div>
-      ) : firmnessOptions.length === 1 && (
-        <div className="p-3 bg-gray-50 rounded-lg">
-          <span className="text-sm text-gray-600">軟硬度: </span>
-          <span className="font-medium">{firmnessOptions[0].label}</span>
-          <span className="text-xs text-gray-500 ml-2">({firmnessOptions[0].description})</span>
-        </div>
+      ) : (
+        firmnessOptions.length === 1 && (
+          <div className="p-3 bg-gray-50 rounded-lg">
+            <span className="text-sm text-gray-600">軟硬度: </span>
+            <span className="font-medium">{firmnessOptions[0].label}</span>
+            <span className="text-xs text-gray-500 ml-2">({firmnessOptions[0].description})</span>
+          </div>
+        )
       )}
 
       {/* Price Display */}
@@ -271,22 +270,20 @@ export default function ProductVariantSelector({
             </span>
           </div>
           {currentStock !== null && (
-            <div className="text-sm text-gray-600 mt-1">
-              庫存: {currentStock} 件
-            </div>
+            <div className="text-sm text-gray-600 mt-1">庫存: {currentStock} 件</div>
           )}
         </div>
       )}
 
       {/* Quantity Selection */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          數量 *
-        </label>
+        <label className="block text-sm font-medium text-gray-700 mb-2">數量 *</label>
         <div className="flex items-center space-x-3">
           <button
             type="button"
-            onClick={() => handleVariantChange('quantity', Math.max(1, (selectedVariant.quantity || 1) - 1))}
+            onClick={() =>
+              handleVariantChange('quantity', Math.max(1, (selectedVariant.quantity || 1) - 1))
+            }
             className="w-10 h-10 border border-gray-300 rounded-lg flex items-center justify-center hover:bg-gray-50"
             disabled={(selectedVariant.quantity || 1) <= 1}
           >
@@ -297,12 +294,17 @@ export default function ProductVariantSelector({
             min="1"
             max={Math.min(10, currentStock || 10)}
             value={selectedVariant.quantity || 1}
-            onChange={(e) => handleVariantChange('quantity', parseInt(e.target.value) || 1)}
+            onChange={e => handleVariantChange('quantity', parseInt(e.target.value) || 1)}
             className="w-20 text-center border border-gray-300 rounded-lg py-2"
           />
           <button
             type="button"
-            onClick={() => handleVariantChange('quantity', Math.min(10, currentStock || 10, (selectedVariant.quantity || 1) + 1))}
+            onClick={() =>
+              handleVariantChange(
+                'quantity',
+                Math.min(10, currentStock || 10, (selectedVariant.quantity || 1) + 1)
+              )
+            }
             className="w-10 h-10 border border-gray-300 rounded-lg flex items-center justify-center hover:bg-gray-50"
             disabled={(selectedVariant.quantity || 1) >= Math.min(10, currentStock || 10)}
           >
@@ -325,11 +327,7 @@ export default function ProductVariantSelector({
       )}
 
       {/* SKU Display */}
-      {currentSku && (
-        <div className="text-xs text-gray-500">
-          商品編號: {currentSku}
-        </div>
-      )}
+      {currentSku && <div className="text-xs text-gray-500">商品編號: {currentSku}</div>}
     </div>
   );
 }

@@ -25,7 +25,7 @@ export default function AuthCallback() {
       try {
         // Check if we have a valid session after OAuth
         const sessionData = await checkSession();
-        
+
         if (sessionData.user && sessionData.user.role === 'admin') {
           // Clean up URL
           window.history.replaceState({}, '', '/auth/callback');
@@ -47,7 +47,6 @@ export default function AuthCallback() {
             }
           }, 1000);
         }
-        
       } catch (err) {
         console.error('OAuth callback error:', err);
         navigate('/login?error=auth_check_failed');
@@ -61,12 +60,8 @@ export default function AuthCallback() {
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
-          <h2 className="mt-6 text-3xl font-extrabold text-gray-900">
-            登入中...
-          </h2>
-          <p className="mt-2 text-sm text-gray-600">
-            正在完成 Google 登入，請稍候...
-          </p>
+          <h2 className="mt-6 text-3xl font-extrabold text-gray-900">登入中...</h2>
+          <p className="mt-2 text-sm text-gray-600">正在完成 Google 登入，請稍候...</p>
           <div className="mt-4">
             <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
           </div>

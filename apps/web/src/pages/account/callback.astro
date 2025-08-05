@@ -3,14 +3,14 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 ---
 
 <BaseLayout>
-  <main class="container mx-auto px-4 py-8">
-    <div class="max-w-md mx-auto text-center">
-      <div class="bg-white p-8 rounded-lg shadow-md">
-        <div class="mb-4">
-          <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-black"></div>
+  <main class='container mx-auto px-4 py-8'>
+    <div class='max-w-md mx-auto text-center'>
+      <div class='bg-white p-8 rounded-lg shadow-md'>
+        <div class='mb-4'>
+          <div class='inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-black'></div>
         </div>
-        <h1 class="text-2xl font-bold text-gray-900 mb-4">登入中...</h1>
-        <p class="text-gray-600">正在完成 Google 登入，請稍候...</p>
+        <h1 class='text-2xl font-bold text-gray-900 mb-4'>登入中...</h1>
+        <p class='text-gray-600'>正在完成 Google 登入，請稍候...</p>
       </div>
     </div>
   </main>
@@ -52,7 +52,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
             const retryResponse = await fetch(`${API_BASE}/api/auth/session`, {
               credentials: 'include',
             });
-            
+
             if (retryResponse.ok) {
               const retryData = await retryResponse.json();
               if (retryData.user && retryData.authenticated) {

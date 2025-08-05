@@ -9,7 +9,7 @@ describe('Orders API Integration Tests', () => {
       name: '測試客戶',
       email: 'test.customer@example.com',
       phone: '0987-123-456',
-      address: '台北市信義區信義路五段7號'
+      address: '台北市信義區信義路五段7號',
     },
     items: [
       {
@@ -17,20 +17,20 @@ describe('Orders API Integration Tests', () => {
         productName: 'Test Simmons Mattress',
         variant: 'Queen - Medium',
         quantity: 1,
-        price: 89900
-      }
+        price: 89900,
+      },
     ],
     totalAmount: 89900,
     paymentMethod: 'bank_transfer' as const,
-    notes: '希望週末配送'
+    notes: '希望週末配送',
   };
 
   const validOrderData2 = {
     customerInfo: {
       name: '另一個客戶',
-      email: 'another.customer@example.com', 
+      email: 'another.customer@example.com',
       phone: '0912-345-678',
-      address: '高雄市前鎮區中山二路123號'
+      address: '高雄市前鎮區中山二路123號',
     },
     items: [
       {
@@ -38,19 +38,19 @@ describe('Orders API Integration Tests', () => {
         productName: 'Premium Mattress',
         variant: 'King - Firm',
         quantity: 1,
-        price: 129900
+        price: 129900,
       },
       {
         productId: 'test-accessory-1',
         productName: 'Pillow Set',
         variant: 'Standard',
         quantity: 2,
-        price: 2500
-      }
+        price: 2500,
+      },
     ],
     totalAmount: 134900,
     paymentMethod: 'bank_transfer' as const,
-    notes: '請勿週日配送'
+    notes: '請勿週日配送',
   };
 
   let createdOrderIds: string[] = [];
@@ -74,7 +74,7 @@ describe('Orders API Integration Tests', () => {
   describe('GET /api/orders - List Orders (Admin)', () => {
     it('should return empty list when no orders exist', async () => {
       const response = await app.request('/api/orders', {}, env);
-      
+
       expect(response.status).toBe(200);
       const body = await response.json();
       expect(body.success).toBe(true);
@@ -85,25 +85,33 @@ describe('Orders API Integration Tests', () => {
 
     it('should return all orders when they exist', async () => {
       // Create test orders first
-      const order1Response = await app.request('/api/orders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(validOrderData)
-      }, env);
+      const order1Response = await app.request(
+        '/api/orders',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(validOrderData),
+        },
+        env
+      );
       const order1Data = await order1Response.json();
       createdOrderIds.push(order1Data.data.id);
 
-      const order2Response = await app.request('/api/orders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(validOrderData2)
-      }, env);
+      const order2Response = await app.request(
+        '/api/orders',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(validOrderData2),
+        },
+        env
+      );
       const order2Data = await order2Response.json();
       createdOrderIds.push(order2Data.data.id);
 
       // Now fetch all orders
       const response = await app.request('/api/orders', {}, env);
-      
+
       expect(response.status).toBe(200);
       const body = await response.json();
       expect(body.success).toBe(true);
@@ -124,32 +132,44 @@ describe('Orders API Integration Tests', () => {
 
     it('should filter orders by status', async () => {
       // Create orders with different statuses
-      const order1Response = await app.request('/api/orders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(validOrderData)
-      }, env);
+      const order1Response = await app.request(
+        '/api/orders',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(validOrderData),
+        },
+        env
+      );
       const order1Data = await order1Response.json();
       createdOrderIds.push(order1Data.data.id);
 
-      const order2Response = await app.request('/api/orders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(validOrderData2)
-      }, env);
+      const order2Response = await app.request(
+        '/api/orders',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(validOrderData2),
+        },
+        env
+      );
       const order2Data = await order2Response.json();
       createdOrderIds.push(order2Data.data.id);
 
       // Update one order status
-      await app.request(`/api/orders/${order1Data.data.id}/status`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'confirmed' })
-      }, env);
+      await app.request(
+        `/api/orders/${order1Data.data.id}/status`,
+        {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: 'confirmed' }),
+        },
+        env
+      );
 
       // Filter by status
       const response = await app.request('/api/orders?status=confirmed', {}, env);
-      
+
       expect(response.status).toBe(200);
       const body = await response.json();
       expect(body.success).toBe(true);
@@ -159,19 +179,25 @@ describe('Orders API Integration Tests', () => {
 
     it('should support pagination', async () => {
       // Create multiple orders
-      const orderPromises = Array(5).fill(0).map((_, i) => 
-        app.request('/api/orders', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            ...validOrderData,
-            customerInfo: {
-              ...validOrderData.customerInfo,
-              email: `test${i}@example.com`
-            }
-          })
-        }, env)
-      );
+      const orderPromises = Array(5)
+        .fill(0)
+        .map((_, i) =>
+          app.request(
+            '/api/orders',
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                ...validOrderData,
+                customerInfo: {
+                  ...validOrderData.customerInfo,
+                  email: `test${i}@example.com`,
+                },
+              }),
+            },
+            env
+          )
+        );
 
       const orderResponses = await Promise.all(orderPromises);
       for (const response of orderResponses) {
@@ -181,7 +207,7 @@ describe('Orders API Integration Tests', () => {
 
       // Test pagination
       const response = await app.request('/api/orders?limit=3&offset=0', {}, env);
-      
+
       expect(response.status).toBe(200);
       const body = await response.json();
       expect(body.success).toBe(true);
@@ -197,30 +223,34 @@ describe('Orders API Integration Tests', () => {
   describe('GET /api/orders/:id - Get Single Order', () => {
     it('should return specific order by ID', async () => {
       // Create a test order first
-      const createResponse = await app.request('/api/orders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(validOrderData)
-      }, env);
-      
+      const createResponse = await app.request(
+        '/api/orders',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(validOrderData),
+        },
+        env
+      );
+
       const createData = await createResponse.json();
       const orderId = createData.data.id;
       createdOrderIds.push(orderId);
 
       // Retrieve the order
       const response = await app.request(`/api/orders/${orderId}`, {}, env);
-      
+
       expect(response.status).toBe(200);
       const body = await response.json();
       expect(body.success).toBe(true);
       expect(body.data.id).toBe(orderId);
       expect(body.data.status).toBe('pending');
-      
+
       // Verify customer info is stored as JSON string
       const customerInfo = JSON.parse(body.data.customer_info);
       expect(customerInfo.name).toBe(validOrderData.customerInfo.name);
       expect(customerInfo.email).toBe(validOrderData.customerInfo.email);
-      
+
       // Verify items are stored as JSON string
       const items = JSON.parse(body.data.items);
       expect(items).toHaveLength(1);
@@ -229,7 +259,7 @@ describe('Orders API Integration Tests', () => {
 
     it('should return 404 for non-existent order', async () => {
       const response = await app.request('/api/orders/non-existent-id', {}, env);
-      
+
       expect(response.status).toBe(404);
       const body = await response.json();
       expect(body.error).toBe('Order not found');
@@ -238,11 +268,15 @@ describe('Orders API Integration Tests', () => {
 
   describe('POST /api/orders - Create New Order', () => {
     it('should create new order with valid data', async () => {
-      const response = await app.request('/api/orders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(validOrderData)
-      }, env);
+      const response = await app.request(
+        '/api/orders',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(validOrderData),
+        },
+        env
+      );
 
       expect(response.status).toBe(201);
       const body = await response.json();
@@ -250,7 +284,7 @@ describe('Orders API Integration Tests', () => {
       expect(body.data.id).toMatch(/^BL\d+[A-Z0-9]{4}$/);
       expect(body.data.status).toBe('pending');
       expect(body.data.message).toBe('訂單已建立成功，我們將盡快與您聯繫確認付款資訊');
-      
+
       createdOrderIds.push(body.data.id);
 
       // Verify order was actually created in database
@@ -259,16 +293,20 @@ describe('Orders API Integration Tests', () => {
     });
 
     it('should create order with multiple items', async () => {
-      const response = await app.request('/api/orders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(validOrderData2)
-      }, env);
+      const response = await app.request(
+        '/api/orders',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(validOrderData2),
+        },
+        env
+      );
 
       expect(response.status).toBe(201);
       const body = await response.json();
       expect(body.success).toBe(true);
-      
+
       createdOrderIds.push(body.data.id);
 
       // Verify items were stored correctly
@@ -282,23 +320,29 @@ describe('Orders API Integration Tests', () => {
     });
 
     it('should generate unique order IDs', async () => {
-      const requests = Array(3).fill(0).map(() => 
-        app.request('/api/orders', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            ...validOrderData,
-            customerInfo: {
-              ...validOrderData.customerInfo,
-              email: `unique${Math.random()}@example.com`
-            }
-          })
-        }, env)
-      );
+      const requests = Array(3)
+        .fill(0)
+        .map(() =>
+          app.request(
+            '/api/orders',
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                ...validOrderData,
+                customerInfo: {
+                  ...validOrderData.customerInfo,
+                  email: `unique${Math.random()}@example.com`,
+                },
+              }),
+            },
+            env
+          )
+        );
 
       const responses = await Promise.all(requests);
       const orderIds: string[] = [];
-      
+
       for (const response of responses) {
         const data = await response.json();
         orderIds.push(data.data.id);
@@ -307,7 +351,7 @@ describe('Orders API Integration Tests', () => {
 
       // All IDs should be unique
       expect(new Set(orderIds).size).toBe(3);
-      
+
       // All IDs should match expected format
       orderIds.forEach(id => {
         expect(id).toMatch(/^BL\d+[A-Z0-9]{4}$/);
@@ -321,15 +365,19 @@ describe('Orders API Integration Tests', () => {
           name: '',
           email: 'invalid-email',
           phone: '',
-          address: ''
-        }
+          address: '',
+        },
       };
 
-      const response = await app.request('/api/orders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(invalidData)
-      }, env);
+      const response = await app.request(
+        '/api/orders',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(invalidData),
+        },
+        env
+      );
 
       expect(response.status).toBe(400);
     });
@@ -339,15 +387,19 @@ describe('Orders API Integration Tests', () => {
         ...validOrderData,
         customerInfo: {
           ...validOrderData.customerInfo,
-          email: 'not-an-email'
-        }
+          email: 'not-an-email',
+        },
       };
 
-      const response = await app.request('/api/orders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(invalidData)
-      }, env);
+      const response = await app.request(
+        '/api/orders',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(invalidData),
+        },
+        env
+      );
 
       expect(response.status).toBe(400);
     });
@@ -355,14 +407,18 @@ describe('Orders API Integration Tests', () => {
     it('should validate items array is not empty', async () => {
       const invalidData = {
         ...validOrderData,
-        items: []
+        items: [],
       };
 
-      const response = await app.request('/api/orders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(invalidData)
-      }, env);
+      const response = await app.request(
+        '/api/orders',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(invalidData),
+        },
+        env
+      );
 
       expect(response.status).toBe(400);
     });
@@ -370,14 +426,18 @@ describe('Orders API Integration Tests', () => {
     it('should validate positive total amount', async () => {
       const invalidData = {
         ...validOrderData,
-        totalAmount: -1000
+        totalAmount: -1000,
       };
 
-      const response = await app.request('/api/orders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(invalidData)
-      }, env);
+      const response = await app.request(
+        '/api/orders',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(invalidData),
+        },
+        env
+      );
 
       expect(response.status).toBe(400);
     });
@@ -385,17 +445,23 @@ describe('Orders API Integration Tests', () => {
     it('should validate positive item quantities', async () => {
       const invalidData = {
         ...validOrderData,
-        items: [{
-          ...validOrderData.items[0],
-          quantity: 0
-        }]
+        items: [
+          {
+            ...validOrderData.items[0],
+            quantity: 0,
+          },
+        ],
       };
 
-      const response = await app.request('/api/orders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(invalidData)
-      }, env);
+      const response = await app.request(
+        '/api/orders',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(invalidData),
+        },
+        env
+      );
 
       expect(response.status).toBe(400);
     });
@@ -403,17 +469,23 @@ describe('Orders API Integration Tests', () => {
     it('should validate positive item prices', async () => {
       const invalidData = {
         ...validOrderData,
-        items: [{
-          ...validOrderData.items[0],
-          price: -100
-        }]
+        items: [
+          {
+            ...validOrderData.items[0],
+            price: -100,
+          },
+        ],
       };
 
-      const response = await app.request('/api/orders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(invalidData)
-      }, env);
+      const response = await app.request(
+        '/api/orders',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(invalidData),
+        },
+        env
+      );
 
       expect(response.status).toBe(400);
     });
@@ -422,11 +494,15 @@ describe('Orders API Integration Tests', () => {
       const dataWithoutPaymentMethod = { ...validOrderData };
       delete (dataWithoutPaymentMethod as any).paymentMethod;
 
-      const response = await app.request('/api/orders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(dataWithoutPaymentMethod)
-      }, env);
+      const response = await app.request(
+        '/api/orders',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(dataWithoutPaymentMethod),
+        },
+        env
+      );
 
       expect(response.status).toBe(201);
       const body = await response.json();
@@ -439,11 +515,15 @@ describe('Orders API Integration Tests', () => {
     });
 
     it('should handle malformed JSON', async () => {
-      const response = await app.request('/api/orders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: 'invalid json{'
-      }, env);
+      const response = await app.request(
+        '/api/orders',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: 'invalid json{',
+        },
+        env
+      );
 
       expect(response.status).toBe(400);
     });
@@ -454,26 +534,34 @@ describe('Orders API Integration Tests', () => {
 
     beforeEach(async () => {
       // Create a test order for status updates
-      const response = await app.request('/api/orders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(validOrderData)
-      }, env);
-      
+      const response = await app.request(
+        '/api/orders',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(validOrderData),
+        },
+        env
+      );
+
       const data = await response.json();
       testOrderId = data.data.id;
       createdOrderIds.push(testOrderId);
     });
 
     it('should update order status successfully', async () => {
-      const response = await app.request(`/api/orders/${testOrderId}/status`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          status: 'confirmed',
-          notes: '已確認付款'
-        })
-      }, env);
+      const response = await app.request(
+        `/api/orders/${testOrderId}/status`,
+        {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            status: 'confirmed',
+            notes: '已確認付款',
+          }),
+        },
+        env
+      );
 
       expect(response.status).toBe(200);
       const body = await response.json();
@@ -488,17 +576,28 @@ describe('Orders API Integration Tests', () => {
     });
 
     it('should accept all valid status values', async () => {
-      const validStatuses = ['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled'];
-      
+      const validStatuses = [
+        'pending',
+        'confirmed',
+        'processing',
+        'shipped',
+        'delivered',
+        'cancelled',
+      ];
+
       for (const status of validStatuses) {
-        const response = await app.request(`/api/orders/${testOrderId}/status`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ status })
-        }, env);
+        const response = await app.request(
+          `/api/orders/${testOrderId}/status`,
+          {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status }),
+          },
+          env
+        );
 
         expect(response.status).toBe(200);
-        
+
         // Verify status was updated
         const checkResponse = await app.request(`/api/orders/${testOrderId}`, {}, env);
         const checkBody = await checkResponse.json();
@@ -507,14 +606,18 @@ describe('Orders API Integration Tests', () => {
     });
 
     it('should update notes when provided', async () => {
-      const response = await app.request(`/api/orders/${testOrderId}/status`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          status: 'processing',
-          notes: '正在準備出貨'
-        })
-      }, env);
+      const response = await app.request(
+        `/api/orders/${testOrderId}/status`,
+        {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            status: 'processing',
+            notes: '正在準備出貨',
+          }),
+        },
+        env
+      );
 
       expect(response.status).toBe(200);
 
@@ -525,11 +628,15 @@ describe('Orders API Integration Tests', () => {
     });
 
     it('should update status without notes', async () => {
-      const response = await app.request(`/api/orders/${testOrderId}/status`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'shipped' })
-      }, env);
+      const response = await app.request(
+        `/api/orders/${testOrderId}/status`,
+        {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: 'shipped' }),
+        },
+        env
+      );
 
       expect(response.status).toBe(200);
 
@@ -541,21 +648,29 @@ describe('Orders API Integration Tests', () => {
     });
 
     it('should validate status enum values', async () => {
-      const response = await app.request(`/api/orders/${testOrderId}/status`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'invalid-status' })
-      }, env);
+      const response = await app.request(
+        `/api/orders/${testOrderId}/status`,
+        {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: 'invalid-status' }),
+        },
+        env
+      );
 
       expect(response.status).toBe(400);
     });
 
     it('should return 404 for non-existent order', async () => {
-      const response = await app.request('/api/orders/non-existent/status', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'confirmed' })
-      }, env);
+      const response = await app.request(
+        '/api/orders/non-existent/status',
+        {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: 'confirmed' }),
+        },
+        env
+      );
 
       expect(response.status).toBe(404);
       const body = await response.json();
@@ -572,11 +687,15 @@ describe('Orders API Integration Tests', () => {
       await new Promise(resolve => setTimeout(resolve, 100));
 
       // Update status
-      await app.request(`/api/orders/${testOrderId}/status`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'confirmed' })
-      }, env);
+      await app.request(
+        `/api/orders/${testOrderId}/status`,
+        {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: 'confirmed' }),
+        },
+        env
+      );
 
       // Check updated timestamp
       const updatedResponse = await app.request(`/api/orders/${testOrderId}`, {}, env);
@@ -590,58 +709,74 @@ describe('Orders API Integration Tests', () => {
   describe('GET /api/orders/customer/:email - Get Customer Orders', () => {
     it('should return orders for specific customer email', async () => {
       const customerEmail = 'customer.test@example.com';
-      
+
       // Create orders for this customer
       const orderData1 = {
         ...validOrderData,
         customerInfo: {
           ...validOrderData.customerInfo,
-          email: customerEmail
-        }
+          email: customerEmail,
+        },
       };
-      
+
       const orderData2 = {
         ...validOrderData2,
         customerInfo: {
           ...validOrderData2.customerInfo,
-          email: customerEmail
-        }
+          email: customerEmail,
+        },
       };
 
-      const response1 = await app.request('/api/orders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(orderData1)
-      }, env);
+      const response1 = await app.request(
+        '/api/orders',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(orderData1),
+        },
+        env
+      );
       const data1 = await response1.json();
       createdOrderIds.push(data1.data.id);
 
-      const response2 = await app.request('/api/orders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(orderData2)
-      }, env);
+      const response2 = await app.request(
+        '/api/orders',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(orderData2),
+        },
+        env
+      );
       const data2 = await response2.json();
       createdOrderIds.push(data2.data.id);
 
       // Create an order for a different customer
-      const otherOrderResponse = await app.request('/api/orders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...validOrderData,
-          customerInfo: {
-            ...validOrderData.customerInfo,
-            email: 'other.customer@example.com'
-          }
-        })
-      }, env);
+      const otherOrderResponse = await app.request(
+        '/api/orders',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            ...validOrderData,
+            customerInfo: {
+              ...validOrderData.customerInfo,
+              email: 'other.customer@example.com',
+            },
+          }),
+        },
+        env
+      );
       const otherOrderData = await otherOrderResponse.json();
       createdOrderIds.push(otherOrderData.data.id);
 
       // Fetch orders for specific customer
-      const response = await app.request(`/api/orders/customer/${encodeURIComponent(customerEmail)}`, {}, env);
-      
+      const response = await app.request(
+        `/api/orders/customer/${encodeURIComponent(customerEmail)}`,
+        {},
+        env
+      );
+
       expect(response.status).toBe(200);
       const body = await response.json();
       expect(body.success).toBe(true);
@@ -657,7 +792,7 @@ describe('Orders API Integration Tests', () => {
 
     it('should return empty array for email with no orders', async () => {
       const response = await app.request('/api/orders/customer/no-orders@example.com', {}, env);
-      
+
       expect(response.status).toBe(200);
       const body = await response.json();
       expect(body.success).toBe(true);
@@ -668,60 +803,72 @@ describe('Orders API Integration Tests', () => {
     it('should handle URL-encoded email addresses', async () => {
       const email = 'test+special@example.com';
       const encodedEmail = encodeURIComponent(email);
-      
+
       // Create order with special characters in email
-      const orderResponse = await app.request('/api/orders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...validOrderData,
-          customerInfo: {
-            ...validOrderData.customerInfo,
-            email: email
-          }
-        })
-      }, env);
-      const orderData = await orderResponse.json();
-      createdOrderIds.push(orderData.data.id);
-
-      // Fetch orders using encoded email
-      const response = await app.request(`/api/orders/customer/${encodedEmail}`, {}, env);
-      
-      expect(response.status).toBe(200);
-      const body = await response.json();
-      expect(body.success).toBe(true);
-      expect(body.data).toHaveLength(1);
-      
-      const customerInfo = JSON.parse(body.data[0].customer_info);
-      expect(customerInfo.email).toBe(email);
-    });
-
-    it('should return orders sorted by creation date (newest first)', async () => {
-      const customerEmail = 'sorted.test@example.com';
-      
-      // Create multiple orders with slight delays
-      for (let i = 0; i < 3; i++) {
-        const response = await app.request('/api/orders', {
+      const orderResponse = await app.request(
+        '/api/orders',
+        {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             ...validOrderData,
             customerInfo: {
               ...validOrderData.customerInfo,
-              email: customerEmail,
-              name: `Customer ${i}`
-            }
-          })
-        }, env);
+              email: email,
+            },
+          }),
+        },
+        env
+      );
+      const orderData = await orderResponse.json();
+      createdOrderIds.push(orderData.data.id);
+
+      // Fetch orders using encoded email
+      const response = await app.request(`/api/orders/customer/${encodedEmail}`, {}, env);
+
+      expect(response.status).toBe(200);
+      const body = await response.json();
+      expect(body.success).toBe(true);
+      expect(body.data).toHaveLength(1);
+
+      const customerInfo = JSON.parse(body.data[0].customer_info);
+      expect(customerInfo.email).toBe(email);
+    });
+
+    it('should return orders sorted by creation date (newest first)', async () => {
+      const customerEmail = 'sorted.test@example.com';
+
+      // Create multiple orders with slight delays
+      for (let i = 0; i < 3; i++) {
+        const response = await app.request(
+          '/api/orders',
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              ...validOrderData,
+              customerInfo: {
+                ...validOrderData.customerInfo,
+                email: customerEmail,
+                name: `Customer ${i}`,
+              },
+            }),
+          },
+          env
+        );
         const data = await response.json();
         createdOrderIds.push(data.data.id);
-        
+
         // Small delay to ensure different timestamps
         await new Promise(resolve => setTimeout(resolve, 10));
       }
 
-      const response = await app.request(`/api/orders/customer/${encodeURIComponent(customerEmail)}`, {}, env);
-      
+      const response = await app.request(
+        `/api/orders/customer/${encodeURIComponent(customerEmail)}`,
+        {},
+        env
+      );
+
       expect(response.status).toBe(200);
       const body = await response.json();
       expect(body.data).toHaveLength(3);
@@ -729,32 +876,40 @@ describe('Orders API Integration Tests', () => {
       // Verify orders are sorted by creation date (newest first)
       const timestamps = body.data.map((order: any) => new Date(order.created_at).getTime());
       for (let i = 1; i < timestamps.length; i++) {
-        expect(timestamps[i-1]).toBeGreaterThanOrEqual(timestamps[i]);
+        expect(timestamps[i - 1]).toBeGreaterThanOrEqual(timestamps[i]);
       }
     });
 
     it('should handle case-sensitive email matching', async () => {
       const lowerEmail = 'case.test@example.com';
       const upperEmail = 'CASE.TEST@EXAMPLE.COM';
-      
+
       // Create order with lowercase email
-      const response1 = await app.request('/api/orders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...validOrderData,
-          customerInfo: {
-            ...validOrderData.customerInfo,
-            email: lowerEmail
-          }
-        })
-      }, env);
+      const response1 = await app.request(
+        '/api/orders',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            ...validOrderData,
+            customerInfo: {
+              ...validOrderData.customerInfo,
+              email: lowerEmail,
+            },
+          }),
+        },
+        env
+      );
       const data1 = await response1.json();
       createdOrderIds.push(data1.data.id);
 
       // Query with uppercase email should not match (case-sensitive)
-      const response = await app.request(`/api/orders/customer/${encodeURIComponent(upperEmail)}`, {}, env);
-      
+      const response = await app.request(
+        `/api/orders/customer/${encodeURIComponent(upperEmail)}`,
+        {},
+        env
+      );
+
       expect(response.status).toBe(200);
       const body = await response.json();
       expect(body.data).toHaveLength(0); // No matches due to case sensitivity
@@ -764,41 +919,49 @@ describe('Orders API Integration Tests', () => {
   describe('Order Business Logic Integration', () => {
     it('should maintain data integrity through order lifecycle', async () => {
       // Create order
-      const createResponse = await app.request('/api/orders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(validOrderData)
-      }, env);
-      
+      const createResponse = await app.request(
+        '/api/orders',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(validOrderData),
+        },
+        env
+      );
+
       const createData = await createResponse.json();
       const orderId = createData.data.id;
       createdOrderIds.push(orderId);
-      
+
       // Update status multiple times
       const statuses = ['confirmed', 'processing', 'shipped', 'delivered'];
       for (const status of statuses) {
-        await app.request(`/api/orders/${orderId}/status`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ 
-            status,
-            notes: `Status updated to ${status}`
-          })
-        }, env);
+        await app.request(
+          `/api/orders/${orderId}/status`,
+          {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              status,
+              notes: `Status updated to ${status}`,
+            }),
+          },
+          env
+        );
       }
-      
+
       // Verify final state
       const finalResponse = await app.request(`/api/orders/${orderId}`, {}, env);
       const finalBody = await finalResponse.json();
-      
+
       expect(finalBody.data.status).toBe('delivered');
       expect(finalBody.data.notes).toBe('Status updated to delivered');
-      
+
       // Verify original data is preserved
       const customerInfo = JSON.parse(finalBody.data.customer_info);
       expect(customerInfo.name).toBe(validOrderData.customerInfo.name);
       expect(customerInfo.email).toBe(validOrderData.customerInfo.email);
-      
+
       const items = JSON.parse(finalBody.data.items);
       expect(items).toHaveLength(1);
       expect(items[0].productName).toBe(validOrderData.items[0].productName);
@@ -806,23 +969,29 @@ describe('Orders API Integration Tests', () => {
 
     it('should handle concurrent order creation without conflicts', async () => {
       // Create multiple orders concurrently
-      const concurrentRequests = Array(5).fill(0).map((_, i) =>
-        app.request('/api/orders', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            ...validOrderData,
-            customerInfo: {
-              ...validOrderData.customerInfo,
-              email: `concurrent${i}@example.com`
-            }
-          })
-        }, env)
-      );
+      const concurrentRequests = Array(5)
+        .fill(0)
+        .map((_, i) =>
+          app.request(
+            '/api/orders',
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                ...validOrderData,
+                customerInfo: {
+                  ...validOrderData.customerInfo,
+                  email: `concurrent${i}@example.com`,
+                },
+              }),
+            },
+            env
+          )
+        );
 
       const responses = await Promise.all(concurrentRequests);
       const orderIds: string[] = [];
-      
+
       // Verify all orders were created successfully
       for (const response of responses) {
         expect(response.status).toBe(201);
@@ -833,7 +1002,7 @@ describe('Orders API Integration Tests', () => {
 
       // Verify all IDs are unique
       expect(new Set(orderIds).size).toBe(5);
-      
+
       // Verify all orders exist in database
       for (const orderId of orderIds) {
         const checkResponse = await app.request(`/api/orders/${orderId}`, {}, env);
@@ -847,7 +1016,7 @@ describe('Orders API Integration Tests', () => {
           name: '測試客戶 with "quotes" & special chars < > & \' "',
           email: 'complex.test@example.com',
           phone: '(02)1234-5678',
-          address: '台北市信義區信義路五段7號 10樓 A室'
+          address: '台北市信義區信義路五段7號 10樓 A室',
         },
         items: [
           {
@@ -855,19 +1024,23 @@ describe('Orders API Integration Tests', () => {
             productName: 'Product with "特殊字符" & symbols < > \' "',
             variant: 'Size: Queen (5尺), Firmness: 中軟式',
             quantity: 1,
-            price: 89900
-          }
+            price: 89900,
+          },
         ],
         totalAmount: 89900,
         paymentMethod: 'bank_transfer' as const,
-        notes: 'Special instructions: 請於 2024/12/31 前配送，聯絡人：王先生 (手機: 0987-654-321)'
+        notes: 'Special instructions: 請於 2024/12/31 前配送，聯絡人：王先生 (手機: 0987-654-321)',
       };
 
-      const response = await app.request('/api/orders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(complexOrderData)
-      }, env);
+      const response = await app.request(
+        '/api/orders',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(complexOrderData),
+        },
+        env
+      );
 
       expect(response.status).toBe(201);
       const createData = await response.json();
@@ -891,31 +1064,43 @@ describe('Orders API Integration Tests', () => {
 
   describe('Error Handling', () => {
     it('should handle missing request body gracefully', async () => {
-      const response = await app.request('/api/orders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
-        // No body
-      }, env);
+      const response = await app.request(
+        '/api/orders',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          // No body
+        },
+        env
+      );
 
       expect(response.status).toBe(400);
     });
 
     it('should handle empty request body', async () => {
-      const response = await app.request('/api/orders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: ''
-      }, env);
+      const response = await app.request(
+        '/api/orders',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: '',
+        },
+        env
+      );
 
       expect(response.status).toBe(400);
     });
 
     it('should handle invalid Content-Type', async () => {
-      const response = await app.request('/api/orders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain' },
-        body: JSON.stringify(validOrderData)
-      }, env);
+      const response = await app.request(
+        '/api/orders',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain' },
+          body: JSON.stringify(validOrderData),
+        },
+        env
+      );
 
       expect(response.status).toBe(400);
     });

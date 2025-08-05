@@ -5,40 +5,47 @@ import AccountNav from '../../components/AccountNav.astro';
 ---
 
 <BaseLayout>
-  <main class="container mx-auto px-4 py-8">
-    <div class="max-w-4xl mx-auto">
-      <div class="mb-8">
-        <h1 class="text-3xl font-bold text-gray-900 mb-2">訂單記錄</h1>
-        <p class="text-gray-600">查看您的購買記錄</p>
+  <main class='container mx-auto px-4 py-8'>
+    <div class='max-w-4xl mx-auto'>
+      <div class='mb-8'>
+        <h1 class='text-3xl font-bold text-gray-900 mb-2'>訂單記錄</h1>
+        <p class='text-gray-600'>查看您的購買記錄</p>
       </div>
-      
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-        <AccountNav currentPage="orders" />
-        
-        <div class="md:col-span-2 min-w-0">
-          <div class="min-w-[600px] min-h-[400px]">
-          <div id="loading" class="text-center py-8">
-            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
-            <p class="mt-2 text-gray-600">載入中...</p>
-          </div>
 
-          <div id="not-authenticated" class="text-center py-8 hidden">
-            <p class="text-gray-600 mb-4">請先登入您的帳號</p>
-            <a href="/login" class="bg-black text-white px-6 py-2 rounded-lg hover:bg-gray-800 inline-block">
-              前往登入
-            </a>
-          </div>
+      <div class='grid grid-cols-1 md:grid-cols-3 gap-8'>
+        <AccountNav currentPage='orders' />
 
-          <div id="no-orders" class="text-center py-8 hidden">
-            <p class="text-gray-600 mb-4">您目前沒有任何訂單</p>
-            <a href="/simmons-black" class="bg-black text-white px-6 py-2 rounded-lg hover:bg-gray-800 inline-block">
-              開始購物
-            </a>
-          </div>
-          
-          <div id="orders-container" class="space-y-6 hidden">
-            <!-- Orders will be dynamically rendered here -->
-          </div>
+        <div class='md:col-span-2 min-w-0'>
+          <div class='min-w-[600px] min-h-[400px]'>
+            <div id='loading' class='text-center py-8'>
+              <div class='animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto'>
+              </div>
+              <p class='mt-2 text-gray-600'>載入中...</p>
+            </div>
+
+            <div id='not-authenticated' class='text-center py-8 hidden'>
+              <p class='text-gray-600 mb-4'>請先登入您的帳號</p>
+              <a
+                href='/login'
+                class='bg-black text-white px-6 py-2 rounded-lg hover:bg-gray-800 inline-block'
+              >
+                前往登入
+              </a>
+            </div>
+
+            <div id='no-orders' class='text-center py-8 hidden'>
+              <p class='text-gray-600 mb-4'>您目前沒有任何訂單</p>
+              <a
+                href='/simmons-black'
+                class='bg-black text-white px-6 py-2 rounded-lg hover:bg-gray-800 inline-block'
+              >
+                開始購物
+              </a>
+            </div>
+
+            <div id='orders-container' class='space-y-6 hidden'>
+              <!-- Orders will be dynamically rendered here -->
+            </div>
           </div>
         </div>
       </div>
@@ -71,7 +78,7 @@ import AccountNav from '../../components/AccountNav.astro';
           return;
         }
       }
-      
+
       showNotAuthenticated();
     } catch (error) {
       console.error('Auth check failed:', error);
@@ -121,13 +128,14 @@ import AccountNav from '../../components/AccountNav.astro';
     noOrders.classList.add('hidden');
     ordersContainer.classList.remove('hidden');
 
-    ordersContainer.innerHTML = orders.map(order => {
-      const customerInfo = JSON.parse(order.customer_info);
-      const items = JSON.parse(order.items);
-      const statusColor = getStatusColor(order.status);
-      const statusText = getStatusText(order.status);
+    ordersContainer.innerHTML = orders
+      .map(order => {
+        const customerInfo = JSON.parse(order.customer_info);
+        const items = JSON.parse(order.items);
+        const statusColor = getStatusColor(order.status);
+        const statusText = getStatusText(order.status);
 
-      return `
+        return `
         <div class="bg-white p-6 rounded-lg shadow-md">
           <div class="flex justify-between items-start mb-4">
             <div>
@@ -139,7 +147,9 @@ import AccountNav from '../../components/AccountNav.astro';
           </div>
           
           <div class="border-t pt-4 space-y-2">
-            ${items.map((item: any) => `
+            ${items
+              .map(
+                (item: any) => `
               <div class="flex justify-between">
                 <div>
                   <p class="text-gray-700">${item.productName} - ${item.variant}</p>
@@ -147,7 +157,9 @@ import AccountNav from '../../components/AccountNav.astro';
                 </div>
                 <p class="text-gray-900 font-medium">NT$ ${item.price.toLocaleString()}</p>
               </div>
-            `).join('')}
+            `
+              )
+              .join('')}
             
             <div class="border-t pt-2 mt-4">
               <div class="flex justify-between font-semibold text-lg">
@@ -160,29 +172,30 @@ import AccountNav from '../../components/AccountNav.astro';
           </div>
         </div>
       `;
-    }).join('');
+      })
+      .join('');
   }
 
   function getStatusColor(status: string) {
     const colors: { [key: string]: string } = {
-      'pending': 'bg-yellow-100 text-yellow-800',
-      'confirmed': 'bg-blue-100 text-blue-800',
-      'processing': 'bg-purple-100 text-purple-800',
-      'shipped': 'bg-indigo-100 text-indigo-800',
-      'delivered': 'bg-green-100 text-green-800',
-      'cancelled': 'bg-red-100 text-red-800'
+      pending: 'bg-yellow-100 text-yellow-800',
+      confirmed: 'bg-blue-100 text-blue-800',
+      processing: 'bg-purple-100 text-purple-800',
+      shipped: 'bg-indigo-100 text-indigo-800',
+      delivered: 'bg-green-100 text-green-800',
+      cancelled: 'bg-red-100 text-red-800',
     };
     return colors[status] || 'bg-gray-100 text-gray-800';
   }
 
   function getStatusText(status: string) {
     const texts: { [key: string]: string } = {
-      'pending': '待確認',
-      'confirmed': '已確認',
-      'processing': '處理中',
-      'shipped': '已出貨',
-      'delivered': '已送達',
-      'cancelled': '已取消'
+      pending: '待確認',
+      confirmed: '已確認',
+      processing: '處理中',
+      shipped: '已出貨',
+      delivered: '已送達',
+      cancelled: '已取消',
     };
     return texts[status] || status;
   }

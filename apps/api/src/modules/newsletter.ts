@@ -44,17 +44,20 @@ const subscriberQuerySchema = z.object({
 const requireAdmin = async (c: any, next: any) => {
   const user = c.get('user');
   if (!user || user.role !== 'admin') {
-    return c.json({ 
-      success: false, 
-      error: 'Unauthorized', 
-      message: 'Admin access required' 
-    }, 403);
+    return c.json(
+      {
+        success: false,
+        error: 'Unauthorized',
+        message: 'Admin access required',
+      },
+      403
+    );
   }
   await next();
 };
 
 // POST /api/newsletter/subscribe - Subscribe to newsletter
-app.post('/subscribe', zValidator('json', subscribeSchema), async (c) => {
+app.post('/subscribe', zValidator('json', subscribeSchema), async c => {
   try {
     const db = c.get('db');
     const cache = c.get('cache');
@@ -71,17 +74,17 @@ app.post('/subscribe', zValidator('json', subscribeSchema), async (c) => {
       if (existingSubscription.status === 'active') {
         return c.json({
           success: true,
-          message: 'You are already subscribed to our newsletter'
+          message: 'You are already subscribed to our newsletter',
         });
       }
-      
+
       // If previously unsubscribed, reactivate
       const [reactivatedSubscription] = await db
         .update(newsletters)
         .set({
           status: 'active',
           source: subscriptionData.source,
-          createdAt: new Date() // Update the subscription date
+          createdAt: new Date(), // Update the subscription date
         })
         .where(eq(newsletters.email, subscriptionData.email))
         .returning();
@@ -92,7 +95,7 @@ app.post('/subscribe', zValidator('json', subscribeSchema), async (c) => {
       return c.json({
         success: true,
         message: 'Successfully resubscribed to newsletter',
-        data: reactivatedSubscription
+        data: reactivatedSubscription,
       });
     }
 
@@ -105,31 +108,36 @@ app.post('/subscribe', zValidator('json', subscribeSchema), async (c) => {
         email: subscriptionData.email,
         status: 'active',
         source: subscriptionData.source,
-        createdAt: new Date()
+        createdAt: new Date(),
       })
       .returning();
 
     // Clear admin cache
     await cache.delete('newsletter:subscribers:stats');
 
-    return c.json({
-      success: true,
-      message: 'Successfully subscribed to newsletter',
-      data: newSubscription
-    }, 201);
-
+    return c.json(
+      {
+        success: true,
+        message: 'Successfully subscribed to newsletter',
+        data: newSubscription,
+      },
+      201
+    );
   } catch (error) {
     console.error('Error subscribing to newsletter:', error);
-    return c.json({
-      success: false,
-      error: 'Internal Server Error',
-      message: 'Failed to subscribe to newsletter'
-    }, 500);
+    return c.json(
+      {
+        success: false,
+        error: 'Internal Server Error',
+        message: 'Failed to subscribe to newsletter',
+      },
+      500
+    );
   }
 });
 
 // DELETE /api/newsletter/unsubscribe/:email - Unsubscribe from newsletter
-app.delete('/unsubscribe/:email', async (c) => {
+app.delete('/unsubscribe/:email', async c => {
   try {
     const db = c.get('db');
     const cache = c.get('cache');
@@ -138,33 +146,36 @@ app.delete('/unsubscribe/:email', async (c) => {
     // Validate email format
     const emailSchema = z.string().email();
     const parseResult = emailSchema.safeParse(email);
-    
+
     if (!parseResult.success) {
-      return c.json({
-        success: false,
-        error: 'Bad Request',
-        message: 'Invalid email format'
-      }, 400);
+      return c.json(
+        {
+          success: false,
+          error: 'Bad Request',
+          message: 'Invalid email format',
+        },
+        400
+      );
     }
 
     // Find the subscription
-    const [subscription] = await db
-      .select()
-      .from(newsletters)
-      .where(eq(newsletters.email, email));
+    const [subscription] = await db.select().from(newsletters).where(eq(newsletters.email, email));
 
     if (!subscription) {
-      return c.json({
-        success: false,
-        error: 'Not Found',
-        message: 'Email not found in our newsletter list'
-      }, 404);
+      return c.json(
+        {
+          success: false,
+          error: 'Not Found',
+          message: 'Email not found in our newsletter list',
+        },
+        404
+      );
     }
 
     if (subscription.status === 'unsubscribed') {
       return c.json({
         success: true,
-        message: 'You are already unsubscribed from our newsletter'
+        message: 'You are already unsubscribed from our newsletter',
       });
     }
 
@@ -181,21 +192,23 @@ app.delete('/unsubscribe/:email', async (c) => {
     return c.json({
       success: true,
       message: 'Successfully unsubscribed from newsletter',
-      data: unsubscribedSubscription
+      data: unsubscribedSubscription,
     });
-
   } catch (error) {
     console.error('Error unsubscribing from newsletter:', error);
-    return c.json({
-      success: false,
-      error: 'Internal Server Error',
-      message: 'Failed to unsubscribe from newsletter'
-    }, 500);  
+    return c.json(
+      {
+        success: false,
+        error: 'Internal Server Error',
+        message: 'Failed to unsubscribe from newsletter',
+      },
+      500
+    );
   }
 });
 
 // GET /api/newsletter/admin/subscribers - List subscribers (admin only)
-app.get('/admin/subscribers', requireAdmin, zValidator('query', subscriberQuerySchema), async (c) => {
+app.get('/admin/subscribers', requireAdmin, zValidator('query', subscriberQuerySchema), async c => {
   try {
     const db = c.get('db');
     const cache = c.get('cache');
@@ -203,24 +216,24 @@ app.get('/admin/subscribers', requireAdmin, zValidator('query', subscriberQueryS
 
     // Build cache key
     const cacheKey = `newsletter:subscribers:${JSON.stringify(query)}`;
-    
+
     // Try cache first
     const cached = await cache.get(cacheKey);
     if (cached) {
       return c.json({
         success: true,
         data: JSON.parse(cached),
-        cached: true
+        cached: true,
       });
     }
 
     // Build query conditions
     const conditions = [];
-    
+
     if (query.status) {
       conditions.push(eq(newsletters.status, query.status));
     }
-    
+
     if (query.source) {
       conditions.push(eq(newsletters.source, query.source));
     }
@@ -249,8 +262,8 @@ app.get('/admin/subscribers', requireAdmin, zValidator('query', subscriberQueryS
         limit,
         offset,
         total: totalResult.count,
-        hasMore: offset + result.length < totalResult.count
-      }
+        hasMore: offset + result.length < totalResult.count,
+      },
     };
 
     // Cache the result for 5 minutes
@@ -258,34 +271,36 @@ app.get('/admin/subscribers', requireAdmin, zValidator('query', subscriberQueryS
 
     return c.json({
       success: true,
-      data: responseData
+      data: responseData,
     });
-
   } catch (error) {
     console.error('Error fetching newsletter subscribers:', error);
-    return c.json({
-      success: false,
-      error: 'Internal Server Error',
-      message: 'Failed to fetch newsletter subscribers'
-    }, 500);
+    return c.json(
+      {
+        success: false,
+        error: 'Internal Server Error',
+        message: 'Failed to fetch newsletter subscribers',
+      },
+      500
+    );
   }
 });
 
 // GET /api/newsletter/admin/stats - Get newsletter statistics (admin only)
-app.get('/admin/stats', requireAdmin, async (c) => {
+app.get('/admin/stats', requireAdmin, async c => {
   try {
     const db = c.get('db');
     const cache = c.get('cache');
 
     const cacheKey = 'newsletter:subscribers:stats';
-    
+
     // Try cache first
     const cached = await cache.get(cacheKey);
     if (cached) {
       return c.json({
         success: true,
         data: JSON.parse(cached),
-        cached: true
+        cached: true,
       });
     }
 
@@ -329,20 +344,25 @@ app.get('/admin/stats', requireAdmin, async (c) => {
         recent: count(),
       })
       .from(newsletters)
-      .where(and(
-        eq(newsletters.status, 'active'),
-        // Note: SQLite timestamp comparison might need adjustment based on your schema
-      ));
+      .where(
+        and(
+          eq(newsletters.status, 'active')
+          // Note: SQLite timestamp comparison might need adjustment based on your schema
+        )
+      );
 
     const stats = {
       total: totalStats.total || 0,
       active: activeStats.active || 0,
       unsubscribed: unsubscribedStats.unsubscribed || 0,
       recentSubscribers: recentStats.recent || 0,
-      sourceBreakdown: sourceStats.reduce((acc, item) => {
-        acc[item.source] = item.count;
-        return acc;
-      }, {} as Record<string, number>)
+      sourceBreakdown: sourceStats.reduce(
+        (acc, item) => {
+          acc[item.source] = item.count;
+          return acc;
+        },
+        {} as Record<string, number>
+      ),
     };
 
     // Cache for 10 minutes
@@ -350,60 +370,62 @@ app.get('/admin/stats', requireAdmin, async (c) => {
 
     return c.json({
       success: true,
-      data: stats
+      data: stats,
     });
-
   } catch (error) {
     console.error('Error fetching newsletter stats:', error);
-    return c.json({
-      success: false,
-      error: 'Internal Server Error',  
-      message: 'Failed to fetch newsletter statistics'
-    }, 500);
+    return c.json(
+      {
+        success: false,
+        error: 'Internal Server Error',
+        message: 'Failed to fetch newsletter statistics',
+      },
+      500
+    );
   }
 });
 
 // DELETE /api/newsletter/admin/subscribers/:id - Remove subscriber (admin only)
-app.delete('/admin/subscribers/:id', requireAdmin, async (c) => {
+app.delete('/admin/subscribers/:id', requireAdmin, async c => {
   try {
     const db = c.get('db');
     const cache = c.get('cache');
     const id = c.req.param('id');
 
     // Check if subscriber exists
-    const [existingSubscriber] = await db
-      .select()
-      .from(newsletters)
-      .where(eq(newsletters.id, id));
+    const [existingSubscriber] = await db.select().from(newsletters).where(eq(newsletters.id, id));
 
     if (!existingSubscriber) {
-      return c.json({
-        success: false,
-        error: 'Not Found',
-        message: 'Subscriber not found'
-      }, 404);
+      return c.json(
+        {
+          success: false,
+          error: 'Not Found',
+          message: 'Subscriber not found',
+        },
+        404
+      );
     }
 
     // Delete the subscriber
-    await db
-      .delete(newsletters)
-      .where(eq(newsletters.id, id));
+    await db.delete(newsletters).where(eq(newsletters.id, id));
 
     // Clear relevant caches
     await cache.delete('newsletter:subscribers:stats');
 
     return c.json({
       success: true,
-      message: 'Subscriber removed successfully'
+      message: 'Subscriber removed successfully',
     });
-
   } catch (error) {
     console.error('Error removing newsletter subscriber:', error);
-    return c.json({
-      success: false,
-      error: 'Internal Server Error',
-      message: 'Failed to remove subscriber'
-    }, 500);
+    return c.json(
+      {
+        success: false,
+        error: 'Internal Server Error',
+        message: 'Failed to remove subscriber',
+      },
+      500
+    );
   }
 });
 

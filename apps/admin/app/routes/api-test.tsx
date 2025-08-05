@@ -1,10 +1,10 @@
-import type { Route } from "./+types/api-test";
-import APITest from "../components/APITest";
+import type { Route } from './+types/api-test';
+import APITest from '../components/APITest';
 
 export function meta({}: Route.MetaArgs) {
   return [
-    { title: "API Test - Black Living Admin" },
-    { name: "description", content: "Test API connection from admin app" },
+    { title: 'API Test - Black Living Admin' },
+    { name: 'description', content: 'Test API connection from admin app' },
   ];
 }
 

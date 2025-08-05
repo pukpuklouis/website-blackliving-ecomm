@@ -9,24 +9,30 @@ const { class: className } = Astro.props;
 
 <header class={`bg-white shadow-lg ${className}`}>
   <!-- Top Row: Logo and User Actions -->
-  <div class="bg-white border-b border-gray-200">
-    <div class="container mx-auto px-6">
-      <div class="flex items-center justify-between py-4">
+  <div class='bg-white border-b border-gray-200'>
+    <div class='container mx-auto px-6'>
+      <div class='flex items-center justify-between py-4'>
         <!-- Logo -->
-        <a href="/" class="flex items-center">
+        <a href='/' class='flex items-center'>
           <img
-            src="https://api.builder.io/api/v1/image/assets/TEMP/e9f01fdc2fb69fc2035c3a2ca9f734fc73cd0a49?width=205"
-            alt="Black Living 黑哥家居"
-            class="h-9 w-auto"
+            src='https://api.builder.io/api/v1/image/assets/TEMP/e9f01fdc2fb69fc2035c3a2ca9f734fc73cd0a49?width=205'
+            alt='Black Living 黑哥家居'
+            class='h-9 w-auto'
           />
         </a>
 
         <!-- User Actions -->
-        <div class="flex items-center gap-4">
-          <a href="/cart" class="text-black text-base font-normal hover:text-gray-600 transition-colors">
+        <div class='flex items-center gap-4'>
+          <a
+            href='/cart'
+            class='text-black text-base font-normal hover:text-gray-600 transition-colors'
+          >
             購物車
           </a>
-          <a href="/account" class="text-black text-base font-normal hover:text-gray-600 transition-colors">
+          <a
+            href='/account'
+            class='text-black text-base font-normal hover:text-gray-600 transition-colors'
+          >
             會員中心
           </a>
         </div>
@@ -35,42 +41,63 @@ const { class: className } = Astro.props;
   </div>
 
   <!-- Bottom Row: Navigation -->
-  <div class="bg-[#C69C6D]">
-    <div class="container mx-auto px-6">
-      <nav class="flex justify-center py-4">
-        <ul class="flex items-center gap-6 flex-wrap justify-center">
+  <div class='bg-[#C69C6D]'>
+    <div class='container mx-auto px-6'>
+      <nav class='flex justify-center py-4'>
+        <ul class='flex items-center gap-6 flex-wrap justify-center'>
           <li>
-            <a href="/about" class="text-white text-base font-normal hover:text-gray-200 transition-colors whitespace-nowrap">
+            <a
+              href='/about'
+              class='text-white text-base font-normal hover:text-gray-200 transition-colors whitespace-nowrap'
+            >
               關於黑哥
             </a>
           </li>
           <li>
-            <a href="/simmons-black" class="text-white text-base font-normal hover:text-gray-200 transition-colors whitespace-nowrap">
+            <a
+              href='/simmons-black'
+              class='text-white text-base font-normal hover:text-gray-200 transition-colors whitespace-nowrap'
+            >
               席夢思黑標床墊
             </a>
           </li>
           <li>
-            <a href="/accessories" class="text-white text-base font-normal hover:text-gray-200 transition-colors whitespace-nowrap">
+            <a
+              href='/accessories'
+              class='text-white text-base font-normal hover:text-gray-200 transition-colors whitespace-nowrap'
+            >
               精選周邊
             </a>
           </li>
           <li>
-            <a href="/us-imports" class="text-white text-base font-normal hover:text-gray-200 transition-colors whitespace-nowrap">
+            <a
+              href='/us-imports'
+              class='text-white text-base font-normal hover:text-gray-200 transition-colors whitespace-nowrap'
+            >
               美國品牌代購專區
             </a>
           </li>
           <li>
-            <a href="/testimonials" class="text-white text-base font-normal hover:text-gray-200 transition-colors whitespace-nowrap">
+            <a
+              href='/testimonials'
+              class='text-white text-base font-normal hover:text-gray-200 transition-colors whitespace-nowrap'
+            >
               顧客好評
             </a>
           </li>
           <li>
-            <a href="/posts" class="text-white text-base font-normal hover:text-gray-200 transition-colors whitespace-nowrap">
+            <a
+              href='/posts'
+              class='text-white text-base font-normal hover:text-gray-200 transition-colors whitespace-nowrap'
+            >
               好文分享
             </a>
           </li>
           <li>
-            <a href="/appointment" class="text-white text-base font-normal hover:text-gray-200 transition-colors whitespace-nowrap">
+            <a
+              href='/appointment'
+              class='text-white text-base font-normal hover:text-gray-200 transition-colors whitespace-nowrap'
+            >
               預約試躺
             </a>
           </li>

@@ -10,7 +10,7 @@ export class CacheManager {
     try {
       const value = await this.kv.get(key);
       if (!value) return null;
-      
+
       return parseJson ? JSON.parse(value) : value;
     } catch (error) {
       console.error('Cache get error:', error);
@@ -59,11 +59,7 @@ export class CacheManager {
   /**
    * Get or set cache data with a fallback function
    */
-  async getOrSet<T = any>(
-    key: string, 
-    fallback: () => Promise<T>, 
-    ttl = 3600
-  ): Promise<T> {
+  async getOrSet<T = any>(key: string, fallback: () => Promise<T>, ttl = 3600): Promise<T> {
     const cached = await this.get<T>(key);
     if (cached !== null) {
       return cached;
@@ -79,7 +75,7 @@ export class CacheManager {
    */
   static keys = {
     products: {
-      list: (category?: string, featured?: boolean) => 
+      list: (category?: string, featured?: boolean) =>
         `products:list:${category || 'all'}:${featured || 'all'}`,
       detail: (id: string) => `products:detail:${id}`,
       search: (query: string) => `products:search:${query}`,
@@ -110,11 +106,11 @@ export class CacheManager {
    */
   async setWithTags(key: string, value: any, tags: string[], ttl = 3600): Promise<void> {
     await this.set(key, value, ttl);
-    
+
     // Store reverse mapping for tag-based invalidation
     for (const tag of tags) {
       const tagKey = `tag:${tag}`;
-      const taggedKeys = await this.get<string[]>(tagKey, true) || [];
+      const taggedKeys = (await this.get<string[]>(tagKey, true)) || [];
       if (!taggedKeys.includes(key)) {
         taggedKeys.push(key);
         await this.set(tagKey, taggedKeys, ttl);
@@ -128,12 +124,12 @@ export class CacheManager {
   async invalidateByTags(tags: string[]): Promise<void> {
     for (const tag of tags) {
       const tagKey = `tag:${tag}`;
-      const taggedKeys = await this.get<string[]>(tagKey, true) || [];
-      
+      const taggedKeys = (await this.get<string[]>(tagKey, true)) || [];
+
       // Delete all keys associated with this tag
       const deletePromises = taggedKeys.map(key => this.delete(key));
       await Promise.all(deletePromises);
-      
+
       // Delete the tag key itself
       await this.delete(tagKey);
     }
@@ -147,8 +143,8 @@ export function createCacheManager(kv: KVNamespace): CacheManager {
 
 // Cache TTL constants (in seconds)
 export const CacheTTL = {
-  SHORT: 300,      // 5 minutes
-  MEDIUM: 1800,    // 30 minutes  
-  LONG: 3600,      // 1 hour
+  SHORT: 300, // 5 minutes
+  MEDIUM: 1800, // 30 minutes
+  LONG: 3600, // 1 hour
   VERY_LONG: 86400, // 24 hours
 } as const;

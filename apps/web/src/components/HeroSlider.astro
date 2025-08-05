@@ -3,10 +3,12 @@
 import { getCollection } from 'astro:content';
 import HeroCarousel from './HeroCarousel.tsx';
 
-const slides = (await getCollection('hero-slider'))[0]?.data.slideset.slides?.map(s => ({ data: s }));
+const slides = (await getCollection('hero-slider'))[0]?.data.slideset.slides?.map(s => ({
+  data: s,
+}));
 ---
 
-<section class="relative h-screen overflow-hidden">
+<section class='relative h-screen overflow-hidden'>
   {slides?.length && <HeroCarousel slides={slides} client:load />}
 </section>
 

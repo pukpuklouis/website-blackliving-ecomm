@@ -1,25 +1,25 @@
-"use client"
+'use client';
 
-import * as React from "react"
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from "recharts"
-import { ChartContainer, ChartConfig } from "./chart"
+import * as React from 'react';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from 'recharts';
+import { ChartContainer, ChartConfig } from './chart';
 
 export interface SimpleChartProps {
   data: Array<{
-    month: string
-    sales: number
-    orders: number
-  }>
+    month: string;
+    sales: number;
+    orders: number;
+  }>;
 }
 
 const chartConfig = {
   sales: {
-    label: "銷售額",
+    label: '銷售額',
   },
   orders: {
-    label: "訂單數",
+    label: '訂單數',
   },
-} satisfies ChartConfig
+} satisfies ChartConfig;
 
 export function SimpleChart({ data }: SimpleChartProps) {
   return (
@@ -44,5 +44,5 @@ export function SimpleChart({ data }: SimpleChartProps) {
         </LineChart>
       </ResponsiveContainer>
     </ChartContainer>
-  )
+  );
 }

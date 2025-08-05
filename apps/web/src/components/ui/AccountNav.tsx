@@ -37,14 +37,14 @@ export default function AccountNav({ currentPage, className }: AccountNavProps) 
   const handleLogout = async () => {
     try {
       const API_BASE = import.meta.env.PUBLIC_API_URL || 'http://localhost:8787';
-      
+
       // Try multiple logout endpoints as Better Auth might use different ones
       const endpoints = [
         `${API_BASE}/api/auth/sign-out`,
         `${API_BASE}/api/auth/logout`,
-        `${API_BASE}/api/auth/session-logout`
+        `${API_BASE}/api/auth/session-logout`,
       ];
-      
+
       for (const endpoint of endpoints) {
         try {
           const response = await fetch(endpoint, {
@@ -58,13 +58,13 @@ export default function AccountNav({ currentPage, className }: AccountNavProps) 
           console.warn(`Logout attempt failed for ${endpoint}:`, err);
         }
       }
-      
+
       // Clear any local storage/session storage
-      if (typeof(Storage) !== "undefined") {
+      if (typeof Storage !== 'undefined') {
         localStorage.clear();
         sessionStorage.clear();
       }
-      
+
       window.location.href = '/login';
     } catch (error) {
       console.error('All logout attempts failed:', error);
@@ -74,21 +74,21 @@ export default function AccountNav({ currentPage, className }: AccountNavProps) 
   };
 
   return (
-    <div className={cn("md:col-span-1", className)}>
+    <div className={cn('md:col-span-1', className)}>
       <nav className="space-y-2">
-        {navItems.map((item) => {
+        {navItems.map(item => {
           const Icon = item.icon;
           const isActive = currentPage === item.page;
-          
+
           return (
             <Button
               key={item.page}
-              variant={isActive ? "default" : "ghost"}
+              variant={isActive ? 'default' : 'ghost'}
               className={cn(
-                "w-full justify-start gap-3 h-auto p-4",
-                isActive 
-                  ? "bg-primary text-primary-foreground hover:bg-primary/90" 
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                'w-full justify-start gap-3 h-auto p-4',
+                isActive
+                  ? 'bg-primary text-primary-foreground hover:bg-primary/90'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-muted'
               )}
               asChild
             >
@@ -99,11 +99,11 @@ export default function AccountNav({ currentPage, className }: AccountNavProps) 
             </Button>
           );
         })}
-        
+
         <div className="my-4">
           <div className="border-t border-border" />
         </div>
-        
+
         <Button
           variant="ghost"
           className="w-full justify-start gap-3 h-auto p-4 text-destructive hover:text-destructive hover:bg-destructive/10"

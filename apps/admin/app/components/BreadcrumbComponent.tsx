@@ -24,7 +24,7 @@ const routeNames: Record<string, string> = {
 export function BreadcrumbComponent() {
   const location = useLocation();
   const pathSegments = location.pathname.split('/').filter(Boolean);
-  
+
   const breadcrumbs = pathSegments.map((segment, index) => {
     const path = '/' + pathSegments.slice(0, index + 1).join('/');
     return {

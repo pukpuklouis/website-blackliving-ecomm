@@ -30,7 +30,7 @@ export default function AppointmentForm({ onSubmit, className = '' }: Appointmen
   ) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
-    
+
     // Clear error when user starts typing
     if (errors[name as keyof AppointmentFormData]) {
       setErrors(prev => ({ ...prev, [name]: undefined }));
@@ -44,7 +44,7 @@ export default function AppointmentForm({ onSubmit, className = '' }: Appointmen
 
     try {
       const validatedData = appointmentSchema.parse(formData);
-      
+
       // Call API or parent handler
       if (onSubmit) {
         await onSubmit(validatedData);
@@ -55,11 +55,11 @@ export default function AppointmentForm({ onSubmit, className = '' }: Appointmen
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(validatedData),
         });
-        
+
         if (!response.ok) {
           throw new Error('預約提交失敗');
         }
-        
+
         alert('預約已成功提交！我們將盡快與您聯繫。');
         setFormData({});
       }
@@ -83,7 +83,7 @@ export default function AppointmentForm({ onSubmit, className = '' }: Appointmen
   return (
     <div className={`bg-white p-6 rounded-lg shadow-lg ${className}`}>
       <h3 className="text-2xl font-bold text-gray-900 mb-6">預約試躺</h3>
-      
+
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Name */}
         <div>
@@ -169,7 +169,9 @@ export default function AppointmentForm({ onSubmit, className = '' }: Appointmen
             min={new Date().toISOString().split('T')[0]}
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black"
           />
-          {errors.preferredDate && <p className="text-red-500 text-sm mt-1">{errors.preferredDate}</p>}
+          {errors.preferredDate && (
+            <p className="text-red-500 text-sm mt-1">{errors.preferredDate}</p>
+          )}
         </div>
 
         {/* Preferred Time */}
@@ -189,7 +191,9 @@ export default function AppointmentForm({ onSubmit, className = '' }: Appointmen
             <option value="afternoon">下午 (13:00-17:00)</option>
             <option value="evening">晚上 (18:00-21:00)</option>
           </select>
-          {errors.preferredTime && <p className="text-red-500 text-sm mt-1">{errors.preferredTime}</p>}
+          {errors.preferredTime && (
+            <p className="text-red-500 text-sm mt-1">{errors.preferredTime}</p>
+          )}
         </div>
 
         {/* Message */}
@@ -217,7 +221,7 @@ export default function AppointmentForm({ onSubmit, className = '' }: Appointmen
           {isSubmitting ? '提交中...' : '預約試躺'}
         </button>
       </form>
-      
+
       <div className="mt-4 text-sm text-gray-600 text-center">
         <p>我們將在收到預約後24小時內與您聯繫確認時間</p>
       </div>

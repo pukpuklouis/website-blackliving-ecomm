@@ -2,35 +2,36 @@ import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
   testDir: './tests',
-  
+
   // Run tests in files in parallel
   fullyParallel: true,
-  
+
   // Fail the build on CI if you accidentally left test.only in the source code
   forbidOnly: !!process.env.CI,
-  
+
   // Retry on CI only
   retries: process.env.CI ? 2 : 0,
-  
+
   // Opt out of parallel tests on CI
   workers: process.env.CI ? 1 : undefined,
-  
+
   // Reporter to use
   reporter: 'html',
-  
+
   use: {
     // Base URL for API tests
     baseURL: 'http://localhost:8787',
-    
+
     // Collect trace when retrying the failed test
     trace: 'on-first-retry',
-    
+
     // Global test timeout
     actionTimeout: 30000,
-    
+
     // Specify Chromium execution path if needed
     launchOptions: {
-      executablePath: '/Users/pukpuk/Library/Caches/ms-playwright/chromium_headless_shell-1182/chrome-mac/headless_shell',
+      executablePath:
+        '/Users/pukpuk/Library/Caches/ms-playwright/chromium_headless_shell-1182/chrome-mac/headless_shell',
     },
   },
 
@@ -45,7 +46,7 @@ export default defineConfig({
         headless: true,
       },
     },
-    
+
     // UI tests with Chromium
     {
       name: 'chromium',
@@ -60,7 +61,7 @@ export default defineConfig({
 
   // Run setup files before other tests
   globalSetup: './tests/setup.ts',
-  
+
   // Web Server for testing (optional - can be started manually)
   webServer: [
     {

@@ -7,7 +7,7 @@ export class StorageManager {
    * Upload a file to R2 storage
    */
   async uploadFile(
-    key: string, 
+    key: string,
     file: File | ArrayBuffer | Uint8Array | string,
     options: {
       contentType?: string;
@@ -42,7 +42,7 @@ export class StorageManager {
       });
 
       const url = `https://images.blackliving.com/${key}`;
-      
+
       return { key, url, size };
     } catch (error) {
       console.error('Storage upload error:', error);
@@ -56,10 +56,10 @@ export class StorageManager {
   async uploadFiles(
     files: Array<{ key: string; file: File | ArrayBuffer | Uint8Array | string; options?: any }>
   ): Promise<Array<{ key: string; url: string; size: number }>> {
-    const uploadPromises = files.map(({ key, file, options = {} }) => 
+    const uploadPromises = files.map(({ key, file, options = {} }) =>
       this.uploadFile(key, file, options)
     );
-    
+
     return Promise.all(uploadPromises);
   }
 
@@ -113,11 +113,16 @@ export class StorageManager {
   /**
    * List files with optional prefix
    */
-  async listFiles(prefix?: string, limit = 100): Promise<Array<{
-    key: string;
-    size: number;
-    lastModified: Date;
-  }>> {
+  async listFiles(
+    prefix?: string,
+    limit = 100
+  ): Promise<
+    Array<{
+      key: string;
+      size: number;
+      lastModified: Date;
+    }>
+  > {
     try {
       const result = await this.r2.list({
         prefix,
@@ -144,7 +149,7 @@ export class StorageManager {
     const extension = originalName.split('.').pop();
     const nameWithoutExt = originalName.replace(/\.[^/.]+$/, '');
     const sanitizedName = nameWithoutExt.replace(/[^a-zA-Z0-9-_]/g, '-');
-    
+
     return `${folder}/${timestamp}-${sanitizedName}-${randomSuffix}.${extension}`;
   }
 
@@ -159,14 +164,14 @@ export class StorageManager {
     if (!allowedTypes.includes(file.type)) {
       return {
         valid: false,
-        error: `File type ${file.type} is not allowed. Allowed types: ${allowedTypes.join(', ')}`
+        error: `File type ${file.type} is not allowed. Allowed types: ${allowedTypes.join(', ')}`,
       };
     }
 
     if (file.size > maxSize) {
       return {
         valid: false,
-        error: `File size ${(file.size / 1024 / 1024).toFixed(2)}MB exceeds maximum size ${(maxSize / 1024 / 1024)}MB`
+        error: `File size ${(file.size / 1024 / 1024).toFixed(2)}MB exceeds maximum size ${maxSize / 1024 / 1024}MB`,
       };
     }
 
@@ -202,8 +207,8 @@ export const FileTypes = {
 
 // File size constants (in bytes)
 export const FileSizes = {
-  SMALL: 1 * 1024 * 1024,    // 1MB
-  MEDIUM: 5 * 1024 * 1024,   // 5MB
-  LARGE: 10 * 1024 * 1024,   // 10MB
-  XLARGE: 50 * 1024 * 1024,  // 50MB
+  SMALL: 1 * 1024 * 1024, // 1MB
+  MEDIUM: 5 * 1024 * 1024, // 5MB
+  LARGE: 10 * 1024 * 1024, // 10MB
+  XLARGE: 50 * 1024 * 1024, // 50MB
 } as const;

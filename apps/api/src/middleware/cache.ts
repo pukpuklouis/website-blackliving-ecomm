@@ -46,11 +46,11 @@ export function cacheMiddleware(options: CacheOptions = {}) {
 
       // Try to get cached response
       const cachedResponse = await getCachedResponse(cache, cacheKey);
-      
+
       if (cachedResponse) {
         const { data, timestamp, etag } = cachedResponse;
         const age = Math.floor((Date.now() - timestamp) / 1000);
-        
+
         // Check if content is fresh
         if (age < ttl) {
           // Fresh content - serve from cache
@@ -60,10 +60,10 @@ export function cacheMiddleware(options: CacheOptions = {}) {
             cacheStatus: 'HIT',
             maxAge: ttl - age,
           });
-          
+
           return c.json(data);
         }
-        
+
         // Check if we can serve stale content while revalidating
         if (age < ttl + staleWhileRevalidate) {
           // Serve stale content immediately
@@ -73,29 +73,32 @@ export function cacheMiddleware(options: CacheOptions = {}) {
             cacheStatus: 'STALE',
             maxAge: 0, // Force revalidation on next request
           });
-          
+
           // Trigger background revalidation (fire and forget)
-          c.executionCtx?.waitUntil(
-            revalidateCache(c, next, cache, cacheKey, ttl)
-          );
-          
+          c.executionCtx?.waitUntil(revalidateCache(c, next, cache, cacheKey, ttl));
+
           return c.json(data);
         }
       }
 
       // No cache or expired - fetch fresh data
       await next();
-      
+
       // Cache the response if it's successful
       if (c.res.status === 200) {
         const responseData = await c.res.clone().json();
-        
-        await setCachedResponse(cache, cacheKey, {
-          data: responseData,
-          timestamp: Date.now(),
-          etag: generateETag(responseData),
-        }, ttl + staleWhileRevalidate);
-        
+
+        await setCachedResponse(
+          cache,
+          cacheKey,
+          {
+            data: responseData,
+            timestamp: Date.now(),
+            etag: generateETag(responseData),
+          },
+          ttl + staleWhileRevalidate
+        );
+
         setResponseHeaders(c, {
           age: 0,
           etag: generateETag(responseData),
@@ -118,20 +121,20 @@ function generateCacheKey(c: Context, prefix: string, varyByUser: boolean): stri
   const url = new URL(c.req.url);
   const pathname = url.pathname;
   const searchParams = url.searchParams.toString();
-  
+
   let keyParts = [prefix, pathname];
-  
+
   if (searchParams) {
     keyParts.push(searchParams);
   }
-  
+
   if (varyByUser) {
     const user = c.get('user');
     if (user?.id) {
       keyParts.push(`user:${user.id}`);
     }
   }
-  
+
   // Create a hash of the key to ensure consistent length and valid characters
   const keyString = keyParts.join(':');
   return createHash('md5').update(keyString).digest('hex');
@@ -154,9 +157,9 @@ async function getCachedResponse(cache: KVNamespace, key: string) {
  * Store response in KV cache
  */
 async function setCachedResponse(
-  cache: KVNamespace, 
-  key: string, 
-  data: CachedResponse, 
+  cache: KVNamespace,
+  key: string,
+  data: CachedResponse,
   ttl: number
 ) {
   try {
@@ -181,17 +184,22 @@ async function revalidateCache(
   try {
     // Create a new context for background execution
     const newContext = c.clone();
-    
+
     await next();
-    
+
     if (newContext.res.status === 200) {
       const responseData = await newContext.res.clone().json();
-      
-      await setCachedResponse(cache, cacheKey, {
-        data: responseData,
-        timestamp: Date.now(),
-        etag: generateETag(responseData),
-      }, ttl);
+
+      await setCachedResponse(
+        cache,
+        cacheKey,
+        {
+          data: responseData,
+          timestamp: Date.now(),
+          etag: generateETag(responseData),
+        },
+        ttl
+      );
     }
   } catch (error) {
     console.error('Background revalidation error:', error);
@@ -209,26 +217,29 @@ function generateETag(data: any): string {
 /**
  * Set cache-related response headers
  */
-function setResponseHeaders(c: Context, options: {
-  age?: number;
-  etag?: string;
-  cacheStatus?: string;
-  maxAge?: number;
-}) {
+function setResponseHeaders(
+  c: Context,
+  options: {
+    age?: number;
+    etag?: string;
+    cacheStatus?: string;
+    maxAge?: number;
+  }
+) {
   const { age, etag, cacheStatus, maxAge } = options;
-  
+
   if (age !== undefined) {
     c.res.headers.set('Age', age.toString());
   }
-  
+
   if (etag) {
     c.res.headers.set('ETag', etag);
   }
-  
+
   if (cacheStatus) {
     c.res.headers.set('X-Cache-Status', cacheStatus);
   }
-  
+
   if (maxAge !== undefined) {
     c.res.headers.set('Cache-Control', `public, max-age=${maxAge}`);
   }
@@ -239,23 +250,23 @@ function setResponseHeaders(c: Context, options: {
  */
 export function setCacheHeaders(c: Context, headers: CacheHeaders) {
   const { maxAge, etag, lastModified, mustRevalidate } = headers;
-  
+
   let cacheControl = 'public';
-  
+
   if (maxAge !== undefined) {
     cacheControl += `, max-age=${maxAge}`;
   }
-  
+
   if (mustRevalidate) {
     cacheControl += ', must-revalidate';
   }
-  
+
   c.res.headers.set('Cache-Control', cacheControl);
-  
+
   if (etag) {
     c.res.headers.set('ETag', etag);
   }
-  
+
   if (lastModified) {
     c.res.headers.set('Last-Modified', lastModified.toUTCString());
   }
@@ -266,27 +277,27 @@ export function setCacheHeaders(c: Context, headers: CacheHeaders) {
  */
 export class CacheInvalidator {
   private cache: KVNamespace;
-  
+
   constructor(cache: KVNamespace) {
     this.cache = cache;
   }
-  
+
   /**
    * Invalidate user-specific cache entries
    */
   async invalidateUserCache(userId: string, patterns: string[] = []) {
     const defaultPatterns = [
       'profile',
-      'full-profile', 
+      'full-profile',
       'analytics',
       'addresses',
       'payment-methods',
       'wishlist',
       'notifications',
     ];
-    
+
     const allPatterns = [...defaultPatterns, ...patterns];
-    
+
     const deletePromises = allPatterns.map(pattern => {
       const key = generateCacheKey(
         { req: { url: `/${pattern}` }, get: () => ({ id: userId }) } as any,
@@ -295,17 +306,17 @@ export class CacheInvalidator {
       );
       return this.cache.delete(key);
     });
-    
+
     await Promise.all(deletePromises);
   }
-  
+
   /**
    * Invalidate specific cache entry
    */
   async invalidateCache(key: string) {
     await this.cache.delete(key);
   }
-  
+
   /**
    * Clear all cache (use with caution)
    */
@@ -321,18 +332,18 @@ export class CacheInvalidator {
  */
 export class CacheWarmer {
   private cache: KVNamespace;
-  
+
   constructor(cache: KVNamespace) {
     this.cache = cache;
   }
-  
+
   /**
    * Warm cache for new user registration
    */
   async warmUserCache(userId: string) {
     // This would be called after user registration to pre-populate cache
     // with empty/default responses to improve first-time user experience
-    
+
     const defaultResponses = [
       {
         key: `profile:${userId}`,
@@ -340,15 +351,19 @@ export class CacheWarmer {
         ttl: 300,
       },
     ];
-    
+
     const promises = defaultResponses.map(({ key, data, ttl }) =>
-      this.cache.put(key, JSON.stringify({
-        data,
-        timestamp: Date.now(),
-        etag: generateETag(data),
-      }), { expirationTtl: ttl })
+      this.cache.put(
+        key,
+        JSON.stringify({
+          data,
+          timestamp: Date.now(),
+          etag: generateETag(data),
+        }),
+        { expirationTtl: ttl }
+      )
     );
-    
+
     await Promise.all(promises);
   }
 }
