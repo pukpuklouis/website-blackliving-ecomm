@@ -129,7 +129,7 @@ const createPostSchema = z.object({
   excerpt: z.string().optional(),
   content: z.string().min(50, '文章內容至少需要50個字元'),
   categoryId: z.string().optional(),
-  category: z.enum(['部落格文章', '客戶評價']).optional(),
+  category: z.string().optional(), // Remove hardcoded enum, validate dynamically
   tags: z.array(z.string()).default([]),
   status: z.enum(['draft', 'published', 'scheduled', 'archived']).default('draft'),
   featured: z.boolean().default(false),
@@ -147,7 +147,7 @@ const createPostSchema = z.object({
   // Publishing
   scheduledAt: z.string().optional(),
   readingTime: z.number().min(1).max(60).default(5),
-});
+});;
 
 const updatePostSchema = createPostSchema.partial();
 
@@ -156,7 +156,7 @@ const querySchema = z.object({
   limit: z.string().optional().default('20'),
   search: z.string().optional(),
   status: z.enum(['draft', 'published', 'scheduled', 'archived', 'all']).optional().default('all'),
-  category: z.enum(['部落格文章', '客戶評價', 'all']).optional().default('all'),
+  category: z.string().optional().default('all'), // Allow any string, validate dynamically
   featured: z.enum(['true', 'false', 'all']).optional().default('all'),
   author: z.string().optional(),
   sortBy: z
@@ -164,7 +164,7 @@ const querySchema = z.object({
     .optional()
     .default('createdAt'),
   sortOrder: z.enum(['asc', 'desc']).optional().default('desc'),
-});
+});;
 
 // Helper functions
 const generateSlug = (title: string): string => {
@@ -410,12 +410,9 @@ postsRouter.get('/', requireAdmin(), zValidator('query', querySchema), async c =
     }
 
     if (category !== 'all') {
-      // Support both legacy category field and new categoryId
+      // Filter by category slug using categoryId relationship
       conditions.push(
-        or(
-          eq(posts.category, category),
-          sql`${posts.categoryId} IN (SELECT id FROM ${postCategories} WHERE name = ${category})`
-        )
+        sql`${posts.categoryId} IN (SELECT id FROM ${postCategories} WHERE slug = ${category} AND is_active = 1)`
       );
     }
 
@@ -503,12 +500,9 @@ postsRouter.get('/public', zValidator('query', querySchema.omit({ status: true }
     }
 
     if (category !== 'all') {
-      // Support both legacy category field and new categoryId
+      // Filter by category slug using categoryId relationship
       conditions.push(
-        or(
-          eq(posts.category, category),
-          sql`${posts.categoryId} IN (SELECT id FROM ${postCategories} WHERE name = ${category})`
-        )
+        sql`${posts.categoryId} IN (SELECT id FROM ${postCategories} WHERE slug = ${category} AND is_active = 1)`
       );
     }
 
