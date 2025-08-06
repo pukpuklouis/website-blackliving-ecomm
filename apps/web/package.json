@@ -7,7 +7,7 @@
     "start": "astro dev --host --port 4321",
     "build": "NODE_OPTIONS='--loader=./loader.mjs' astro build",
     "build:check": "astro check && astro build",
-    "preview": "wrangler pages dev dist --compatibility-date=2024-09-23 --port=4322",
+    "preview": "wrangler pages dev dist --compatibility-date=2024-09-23 --port=4321 --project-name blackliving-web --commit-dirty",
     "preview:astro": "astro preview",
     "astro": "astro",
     "type-check": "astro check",
@@ -15,7 +15,7 @@
     "format:check": "prettier --check \"src/**/*.{ts,tsx,js,jsx}\"",
     "format:astro": "node ../../scripts/fix-astro-classnames.js",
     "lint:astro": "astro check",
-    "deploy": "wrangler pages deploy dist --project-name blackliving-web"
+    "deploy": "wrangler pages deploy dist --project-name blackliving-web --commit-dirty"
   },
   "dependencies": {
     "@astrojs/check": "^0.9.4",

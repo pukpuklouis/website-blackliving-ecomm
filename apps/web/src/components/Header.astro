@@ -20,15 +20,15 @@ const menuItems = navigationData?.data.items.sort((a, b) => a.order - b.order) |
   <!-- Top Row: Logo and User Actions -->
   <div class='bg-white border-b border-gray-200'>
     <div class='container mx-auto px-4 lg:px-6 bg-white w-full'>
-      <div class='flex items-center justify-between py-6 lg:py-14 transition-all duration-700 ease-out' id="header-content">
+      <div class='flex items-center justify-between py-12 lg:py-14 transition-all duration-700 ease-out' id="header-content">
         <!-- placeholder make User action can be rightplace -->
         <div class="flex item-center w-1"></div>
         <!-- Animated Logo -->
         <a id="main-logo" href='/' class='flex items-center absolute left-1/2 transform -translate-x-1/2 transition-transform duration-700 ease-out z-20' aria-label='Black Living 黑哥家居 首頁'>
           <img
-            src='/blackliving-logo.svg'
+            src='/blackliving-logo-zh.svg'
             alt='Black Living 黑哥家居'
-            class='h-12 w-auto lg:h-28 '
+            class='h-16 w-auto lg:h-28 '
             loading='eager'
             decoding='async'
           />
@@ -178,16 +178,39 @@ const menuItems = navigationData?.data.items.sort((a, b) => a.order - b.order) |
     const headerContent = document.getElementById('header-content');
     let isScrolled = false;
 
+    // Function to get responsive translate values
+    const getTranslateValues = () => {
+      const isMobile = window.innerWidth < 768; // md breakpoint
+      return {
+        mobile: {
+          scrolled: 'translateX(-60%) scale(0.6)', // Less translateX, larger scale for mobile
+          reset: 'translateX(0%) scale(1)'
+        },
+        desktop: {
+          scrolled: 'translateX(-150%) scale(0.4)', // More translateX, smaller scale for desktop
+          reset: 'translateX(0%) scale(1)'
+        },
+        current: isMobile ? {
+          scrolled: 'translateX(-60%) scale(0.6)',
+          reset: 'translateX(0%) scale(1)'
+        } : {
+          scrolled: 'translateX(-150%) scale(0.4)',
+          reset: 'translateX(0%) scale(1)'
+        }
+      };
+    };
+
     // Function to handle scroll behavior
     const handleScroll = () => {
       const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
       const shouldShowCompactHeader = scrollTop > 100; // Trigger after 100px scroll
+      const translateValues = getTranslateValues();
       
       if (shouldShowCompactHeader && !isScrolled) {
         
         // Scrolled state: Move logo to left, show nav, reduce padding
         if (mainLogo) {
-          mainLogo.style.transform = 'translateX(-150%) scale(0.4)'; // Move to left and scale down
+          mainLogo.style.transform = translateValues.current.scrolled;
         }
         if (navSection) {
           navSection.style.transform = 'translateY(-100%)'; // Slide nav up from bottom
@@ -202,7 +225,7 @@ const menuItems = navigationData?.data.items.sort((a, b) => a.order - b.order) |
         // Top of page: Center logo, hide nav, increase padding
         
         if (mainLogo) {
-          mainLogo.style.transform = 'translateX(0%) scale(1)'; // Back to center and full size
+          mainLogo.style.transform = translateValues.current.reset;
         }
         if (navSection) {
           navSection.style.transform = 'translateY(0)'; // Hide nav to bottom
@@ -238,8 +261,20 @@ const menuItems = navigationData?.data.items.sort((a, b) => a.order - b.order) |
       }
     };
 
-    // Add scroll event listener
+    // Handle resize events to update transforms based on new screen size
+    const handleResize = () => {
+      // Re-apply current state with new responsive values
+      if (isScrolled) {
+        const translateValues = getTranslateValues();
+        if (mainLogo) {
+          mainLogo.style.transform = translateValues.current.scrolled;
+        }
+      }
+    };
+
+    // Add event listeners
     window.addEventListener('scroll', throttledHandleScroll, { passive: true });
+    window.addEventListener('resize', handleResize, { passive: true });
     
     // Initialize on page load
     handleScroll();
