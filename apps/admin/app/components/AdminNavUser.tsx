@@ -1,4 +1,7 @@
-import { ChevronUp, LogOut, User } from 'lucide-react';
+// Tree-shakable Lucide imports
+import ChevronUp from '@lucide/react/chevron-up';
+import LogOut from '@lucide/react/log-out';
+import User from '@lucide/react/user';
 import {
   DropdownMenu,
   DropdownMenuContent,

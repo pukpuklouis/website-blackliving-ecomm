@@ -36,24 +36,23 @@ import {
   TabsTrigger,
   Switch,
 } from '@blackliving/ui';
-import {
-  Search,
-  Eye,
-  Edit,
-  Plus,
-  Tag,
-  TrendingUp,
-  ShoppingBag,
-  Calendar,
-  Phone,
-  Mail,
-  MapPin,
-  Filter,
-  Star,
-  Users,
-  DollarSign,
-  Package,
-} from 'lucide-react';
+// Tree-shakable Lucide imports
+import Search from '@lucide/react/search';
+import Eye from '@lucide/react/eye';
+import Edit from '@lucide/react/edit';
+import Plus from '@lucide/react/plus';
+import Tag from '@lucide/react/tag';
+import TrendingUp from '@lucide/react/trending-up';
+import ShoppingBag from '@lucide/react/shopping-bag';
+import Calendar from '@lucide/react/calendar';
+import Phone from '@lucide/react/phone';
+import Mail from '@lucide/react/mail';
+import MapPin from '@lucide/react/map-pin';
+import Filter from '@lucide/react/filter';
+import Star from '@lucide/react/star';
+import Users from '@lucide/react/users';
+import DollarSign from '@lucide/react/dollar-sign';
+import Package from '@lucide/react/package';
 import {
   useReactTable,
   createColumnHelper,

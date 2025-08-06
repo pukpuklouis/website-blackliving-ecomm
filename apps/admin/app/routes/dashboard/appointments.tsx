@@ -36,21 +36,20 @@ import {
   TabsTrigger,
   Switch,
 } from '@blackliving/ui';
-import {
-  Search,
-  Eye,
-  Edit,
-  Calendar,
-  Clock,
-  MapPin,
-  User,
-  Phone,
-  CheckCircle,
-  XCircle,
-  AlertCircle,
-  Filter,
-  Users,
-} from 'lucide-react';
+// Tree-shakable Lucide imports
+import Search from '@lucide/react/search';
+import Eye from '@lucide/react/eye';
+import Edit from '@lucide/react/edit';
+import Calendar from '@lucide/react/calendar';
+import Clock from '@lucide/react/clock';
+import MapPin from '@lucide/react/map-pin';
+import User from '@lucide/react/user';
+import Phone from '@lucide/react/phone';
+import CheckCircle from '@lucide/react/check-circle';
+import XCircle from '@lucide/react/x-circle';
+import AlertCircle from '@lucide/react/alert-circle';
+import Filter from '@lucide/react/filter';
+import Users from '@lucide/react/users';
 import {
   useReactTable,
   createColumnHelper,

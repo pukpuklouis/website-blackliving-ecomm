@@ -5,19 +5,18 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { format } from 'date-fns';
 import { zhTW } from 'date-fns/locale';
-import {
-  ArrowLeftIcon,
-  SaveIcon,
-  EyeIcon,
-  CalendarIcon,
-  TagIcon,
-  ImageIcon,
-  SettingsIcon,
-  Globe,
-  Hash,
-  FileText,
-  Clock,
-} from 'lucide-react';
+// Tree-shakable Lucide imports
+import ArrowLeftIcon from '@lucide/react/arrow-left';
+import SaveIcon from '@lucide/react/save';
+import EyeIcon from '@lucide/react/eye';
+import CalendarIcon from '@lucide/react/calendar';
+import TagIcon from '@lucide/react/tag';
+import ImageIcon from '@lucide/react/image';
+import SettingsIcon from '@lucide/react/settings';
+import Globe from '@lucide/react/globe';
+import Hash from '@lucide/react/hash';
+import FileText from '@lucide/react/file-text';
+import Clock from '@lucide/react/clock';
 
 import { Button } from '@blackliving/ui';
 import { Input } from '@blackliving/ui';

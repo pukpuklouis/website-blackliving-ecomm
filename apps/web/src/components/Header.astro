@@ -16,17 +16,19 @@ const navigationData = await getEntry('navigation', 'main-menu');
 const menuItems = navigationData?.data.items.sort((a, b) => a.order - b.order) || [];
 ---
 
-<header class={`bg-white shadow-lg sticky top-0 z-50 ${className}`}>
+<header id="main-header" class={`bg-white shadow-lg sticky top-0 z-50 overflow-hidden transition-all duration-500 ${className}`}>
   <!-- Top Row: Logo and User Actions -->
   <div class='bg-white border-b border-gray-200'>
-    <div class='container mx-auto px-4 lg:px-6'>
-      <div class='flex items-center justify-between py-3 lg:py-4'>
-        <!-- Logo -->
-        <a href='/' class='flex items-center' aria-label='Black Living 黑哥家居 首頁'>
+    <div class='container mx-auto px-4 lg:px-6 bg-white w-full'>
+      <div class='flex items-center justify-between py-6 lg:py-14 transition-all duration-700 ease-out' id="header-content">
+        <!-- placeholder make User action can be rightplace -->
+        <div class="flex item-center w-1"></div>
+        <!-- Animated Logo -->
+        <a id="main-logo" href='/' class='flex items-center absolute left-1/2 transform -translate-x-1/2 transition-transform duration-700 ease-out z-20' aria-label='Black Living 黑哥家居 首頁'>
           <img
             src='/blackliving-logo.svg'
             alt='Black Living 黑哥家居'
-            class='h-8 w-auto lg:h-9'
+            class='h-12 w-auto lg:h-28 '
             loading='eager'
             decoding='async'
           />
@@ -69,7 +71,7 @@ const menuItems = navigationData?.data.items.sort((a, b) => a.order - b.order) |
   </div>
 
   <!-- Desktop Navigation -->
-  <div class='hidden md:block bg-[#C69C6D]'>
+  <div class='hidden md:block bg-primary translate-y-full opacity-0 transform transition-transform duration-700 ease-out' id="nav-section">
     <div class='container mx-auto px-4 lg:px-6'>
       <nav class='flex justify-center py-3 lg:py-4' role='navigation' aria-label='主導航'>
         <ul class='flex items-center gap-4 lg:gap-6 flex-wrap justify-center'>
@@ -169,8 +171,80 @@ const menuItems = navigationData?.data.items.sort((a, b) => a.order - b.order) |
 </header>
 
 <script>
-  // Mobile menu overlay functionality
+  // Scroll-responsive header animation
   document.addEventListener('DOMContentLoaded', () => {
+    const mainLogo = document.getElementById('main-logo');
+    const navSection = document.getElementById('nav-section');
+    const headerContent = document.getElementById('header-content');
+    let isScrolled = false;
+
+    // Function to handle scroll behavior
+    const handleScroll = () => {
+      const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+      const shouldShowCompactHeader = scrollTop > 100; // Trigger after 100px scroll
+      
+      if (shouldShowCompactHeader && !isScrolled) {
+        
+        // Scrolled state: Move logo to left, show nav, reduce padding
+        if (mainLogo) {
+          mainLogo.style.transform = 'translateX(-150%) scale(0.4)'; // Move to left and scale down
+        }
+        if (navSection) {
+          navSection.style.transform = 'translateY(-100%)'; // Slide nav up from bottom
+          navSection.style.opacity = '1'; // Show nav
+        }
+        if (headerContent) {
+          headerContent.style.paddingTop = '1.5rem'; // py-6
+          headerContent.style.paddingBottom = '1.5rem';
+        }
+        isScrolled = true;
+      } else if (!shouldShowCompactHeader && isScrolled) {
+        // Top of page: Center logo, hide nav, increase padding
+        
+        if (mainLogo) {
+          mainLogo.style.transform = 'translateX(0%) scale(1)'; // Back to center and full size
+        }
+        if (navSection) {
+          navSection.style.transform = 'translateY(0)'; // Hide nav to bottom
+          navSection.style.opacity = '0'; // Hide nav
+        }
+        if (headerContent) {
+          headerContent.style.paddingTop = '3.5rem'; // py-14
+          headerContent.style.paddingBottom = '3.5rem';
+        }
+        isScrolled = false;
+      }
+    };
+
+    // Debounce scroll events with threshold to prevent back and forth
+    let ticking = false;
+    let lastScrollTop = 0;
+    const scrollThreshold = 40; // Minimum scroll distance to trigger change
+    
+    const throttledHandleScroll = () => {
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          const currentScrollTop = window.pageYOffset || document.documentElement.scrollTop;
+          
+          // Only trigger if scroll difference is significant enough
+          if (Math.abs(currentScrollTop - lastScrollTop) > scrollThreshold) {
+            handleScroll();
+            lastScrollTop = currentScrollTop;
+          }
+          
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
+
+    // Add scroll event listener
+    window.addEventListener('scroll', throttledHandleScroll, { passive: true });
+    
+    // Initialize on page load
+    handleScroll();
+
+    // Mobile menu overlay functionality
     const mobileMenuButton = document.getElementById('mobile-menu-button');
     const mobileMenuClose = document.getElementById('mobile-menu-close');
     const mobileMenu = document.getElementById('mobile-menu');

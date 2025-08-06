@@ -33,7 +33,14 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@blackliving/ui';
-import { Plus, Search, Edit, Trash2, Upload, Eye, Filter } from 'lucide-react';
+// Tree-shakable Lucide imports
+import Plus from '@lucide/react/plus';
+import Search from '@lucide/react/search';
+import Edit from '@lucide/react/edit';
+import Trash2 from '@lucide/react/trash-2';
+import Upload from '@lucide/react/upload';
+import Eye from '@lucide/react/eye';
+import Filter from '@lucide/react/filter';
 import {
   useReactTable,
   createColumnHelper,

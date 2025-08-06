@@ -4,7 +4,7 @@
       {
         "title": "席夢思黑標床墊",
         "subtitle": "專櫃價2-3折起，全台最低價保證",
-        "image": "https://placehold.co/1920x1080?text=image1",
+        "image": "/images/simmons-beautyrest-black-k-class-mattress.webp",
         "buttonText": "立即選購",
         "buttonLink": "/simmons-black",
         "order": 1
@@ -12,7 +12,7 @@
       {
         "title": "預約試躺體驗",
         "subtitle": "中和、中壢展間歡迎預約",
-        "image": "https://placehold.co/1920x1080?text=image2",
+        "image": "/images/simmons-beautyrest-black-mattress-bedroom-view.webp",
         "buttonText": "預約試躺",
         "buttonLink": "/appointment",
         "order": 2

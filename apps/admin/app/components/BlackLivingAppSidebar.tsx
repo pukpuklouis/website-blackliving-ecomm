@@ -8,17 +8,16 @@ import {
 import { AdminNavMain } from './AdminNavMain';
 import { AdminNavSecondary } from './AdminNavSecondary';
 import { AdminNavUser } from './AdminNavUser';
-import {
-  Home,
-  Package,
-  ShoppingCart,
-  FileText,
-  PenTool,
-  Settings,
-  Calendar,
-  BarChart3,
-  Users,
-} from 'lucide-react';
+// Tree-shakable Lucide imports
+import Home from '@lucide/react/home';
+import Package from '@lucide/react/package';
+import ShoppingCart from '@lucide/react/shopping-cart';
+import FileText from '@lucide/react/file-text';
+import PenTool from '@lucide/react/pen-tool';
+import Settings from '@lucide/react/settings';
+import Calendar from '@lucide/react/calendar';
+import BarChart3 from '@lucide/react/bar-chart-3';
+import Users from '@lucide/react/users';
 
 const data = {
   user: {

@@ -11,18 +11,17 @@ import {
 } from '@tanstack/react-table';
 import { format } from 'date-fns';
 import { zhTW } from 'date-fns/locale';
-import {
-  PlusIcon,
-  PencilIcon,
-  TrashIcon,
-  EyeIcon,
-  TagIcon,
-  Calendar,
-  User,
-  Search,
-  Filter,
-  MoreHorizontal,
-} from 'lucide-react';
+// Tree-shakable Lucide imports
+import PlusIcon from '@lucide/react/plus';
+import PencilIcon from '@lucide/react/pencil';
+import TrashIcon from '@lucide/react/trash';
+import EyeIcon from '@lucide/react/eye';
+import TagIcon from '@lucide/react/tag';
+import Calendar from '@lucide/react/calendar';
+import User from '@lucide/react/user';
+import Search from '@lucide/react/search';
+import Filter from '@lucide/react/filter';
+import MoreHorizontal from '@lucide/react/more-horizontal';
 
 import { Button } from '@blackliving/ui';
 import { Input } from '@blackliving/ui';

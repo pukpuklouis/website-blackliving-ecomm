@@ -5,17 +5,17 @@
   "scripts": {
     "dev": "astro dev",
     "start": "astro dev --host --port 4321",
-    "build": "astro build",
+    "build": "NODE_OPTIONS='--loader=./loader.mjs' astro build",
     "build:check": "astro check && astro build",
-    "preview": "astro preview",
+    "preview": "wrangler pages dev dist --compatibility-date=2024-09-23 --port=4322",
+    "preview:astro": "astro preview",
     "astro": "astro",
     "type-check": "astro check",
     "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx}\"",
     "format:check": "prettier --check \"src/**/*.{ts,tsx,js,jsx}\"",
     "format:astro": "node ../../scripts/fix-astro-classnames.js",
     "lint:astro": "astro check",
-    "deploy": "wrangler pages deploy dist --project-name blackliving-web",
-    "deploy:staging": "wrangler pages deploy dist --project-name blackliving-web-staging"
+    "deploy": "wrangler pages deploy dist --project-name blackliving-web"
   },
   "dependencies": {
     "@astrojs/check": "^0.9.4",

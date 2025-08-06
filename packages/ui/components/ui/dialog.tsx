@@ -1,6 +1,6 @@
 import * as React from 'react';
 import * as DialogPrimitive from '@radix-ui/react-dialog';
-import { X } from 'lucide-react';
+// Tree-shakable Lucide imports
 
 import { cn } from '../../lib/utils';
 
