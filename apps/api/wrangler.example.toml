@@ -1,0 +1,127 @@
+# Example Cloudflare Workers configuration
+# Copy this file to wrangler.toml and update with your actual values
+
+# Single source of truth for database migrations and remote sync
+# Production and staging share remote database, development uses local
+# All migrations controlled from packages/db/
+
+name = "your-api-name"
+main = "src/index.ts"
+compatibility_date = "2024-09-23"
+compatibility_flags = ["nodejs_compat"]
+
+[env.development]
+name = "your-api-name-dev"
+
+[env.staging]
+name = "your-api-name-staging"
+
+[env.production]
+name = "your-api-name"
+
+# Production database (remote) - single source of truth
+[[env.production.d1_databases]]
+binding = "DB"
+database_name = "your-db-name"
+database_id = "your-production-database-id"
+migrations_dir = "../../packages/db/migrations"
+
+# Staging uses same remote database as production
+[[env.staging.d1_databases]]
+binding = "DB"
+database_name = "your-db-name"
+database_id = "your-staging-database-id"
+migrations_dir = "../../packages/db/migrations"
+
+# Development uses local database only
+[[env.development.d1_databases]]
+binding = "DB"
+database_name = "your-db-name"
+database_id = "local-dev-db-id"
+migrations_dir = "../../packages/db/migrations"
+
+# Default configurations (production)
+[[d1_databases]]
+binding = "DB"
+database_name = "your-db-name"
+database_id = "your-production-database-id"
+migrations_dir = "../../packages/db/migrations"
+
+[[env.production.r2_buckets]]
+binding = "R2"
+bucket_name = "your-images-bucket"
+
+# Cloudflare R2 Storage
+[[r2_buckets]]
+binding = "R2"
+bucket_name = "your-images-bucket"
+
+[[env.development.r2_buckets]]
+binding = "R2"
+bucket_name = "your-images-bucket-dev"
+
+[[env.staging.r2_buckets]]
+binding = "R2"
+bucket_name = "your-images-bucket-staging"
+
+# Cloudflare KV Storage
+[[kv_namespaces]]
+binding = "CACHE"
+id = "your-production-kv-id"
+
+[[env.development.kv_namespaces]]
+binding = "CACHE"
+id = "local-dev-kv-id"
+preview_id = "local-dev-preview-kv-id"
+
+[[env.staging.kv_namespaces]]
+binding = "CACHE"
+id = "your-staging-kv-id"
+preview_id = "your-staging-kv-id"
+
+[[env.production.kv_namespaces]]
+binding = "CACHE"
+id = "your-production-kv-id"
+preview_id = "your-production-kv-id"
+
+# Environment Variables (defaults to production)
+[vars]
+NODE_ENV = "production"
+API_BASE_URL = "https://your-api.your-subdomain.workers.dev"
+WEB_BASE_URL = "https://your-web.pages.dev"
+ADMIN_BASE_URL = "https://your-admin.pages.dev"
+# Update with your actual deployment URLs
+ALLOWED_ORIGINS = "https://your-web-deployment.pages.dev,https://your-admin-deployment.pages.dev,https://yourdomain.com,https://admin.yourdomain.com"
+
+[env.development.vars]
+NODE_ENV = "development"
+API_BASE_URL = "http://localhost:8787"
+WEB_BASE_URL = "http://localhost:4321"
+ADMIN_BASE_URL = "http://localhost:5173"
+ALLOWED_ORIGINS = "http://localhost:4321,http://localhost:5173,http://localhost:8787"
+
+[env.staging.vars]
+NODE_ENV = "staging"
+API_BASE_URL = "https://your-api-staging.your-subdomain.workers.dev"
+WEB_BASE_URL = "https://staging.your-web.pages.dev"
+ADMIN_BASE_URL = "https://staging.your-admin.pages.dev"
+ALLOWED_ORIGINS = "https://staging.your-web.pages.dev,https://staging.your-admin.pages.dev,https://your-api-staging.your-subdomain.workers.dev"
+
+
+
+# Secrets (set via wrangler secret put <SECRET_NAME> <VALUE> --env <ENVIRONMENT>)
+# Required secrets for all environments:
+# - BETTER_AUTH_SECRET (generate with: openssl rand -base64 32)
+# - GOOGLE_CLIENT_ID (from Google Cloud Console OAuth 2.0 credentials)
+# - GOOGLE_CLIENT_SECRET (from Google Cloud Console OAuth 2.0 credentials)
+# - JWT_SECRET (optional, for additional JWT operations - generate with: openssl rand -base64 32)
+
+# To set secrets:
+# wrangler secret put BETTER_AUTH_SECRET --env production
+# wrangler secret put GOOGLE_CLIENT_ID --env production  
+# wrangler secret put GOOGLE_CLIENT_SECRET --env production
+
+# For development, you can also use .dev.vars file:
+# BETTER_AUTH_SECRET=your-dev-secret
+# GOOGLE_CLIENT_ID=your-google-client-id
+# GOOGLE_CLIENT_SECRET=your-google-client-secret

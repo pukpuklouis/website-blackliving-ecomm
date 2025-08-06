@@ -14,6 +14,9 @@ export const createAuth = (
     GOOGLE_CLIENT_SECRET?: string;
     NODE_ENV?: string;
     BETTER_AUTH_SECRET?: string;
+    API_BASE_URL?: string;
+    WEB_BASE_URL?: string;
+    ADMIN_BASE_URL?: string;
   }
 ) => {
   return betterAuth({
@@ -31,16 +34,21 @@ export const createAuth = (
     secret: env.BETTER_AUTH_SECRET || 'dev-secret-key-change-in-production',
 
     // API base URL where Better Auth endpoints are mounted
-    baseURL:
-      env.NODE_ENV === 'production' ? 'https://api.blackliving.com' : 'http://localhost:8787',
+    baseURL: env.API_BASE_URL || 
+      (env.NODE_ENV === 'production' ? 'https://blackliving-api.pukpuk-tw.workers.dev' : 'http://localhost:8787'),
 
     trustedOrigins: [
       'http://localhost:4321', // Web app
       'http://localhost:5173', // Admin app
       'http://localhost:8787', // API server
+      // Production domains (future)
       'https://blackliving.com',
       'https://admin.blackliving.com',
       'https://api.blackliving.com',
+      // Current deployment URLs
+      'https://c0e3e7c9.blackliving-web.pages.dev',
+      'https://f407255f.blackliving-admin.pages.dev',
+      'https://blackliving-api.pukpuk-tw.workers.dev',
     ],
 
     // Use Better Auth's built-in Google provider
@@ -102,7 +110,7 @@ export const createAuth = (
     advanced: {
       crossSubDomainCookies: {
         enabled: true,
-        domain: env.NODE_ENV === 'production' ? '.blackliving.com' : 'localhost',
+        domain: env.NODE_ENV === 'production' ? '.pages.dev' : 'localhost',
       },
     },
 

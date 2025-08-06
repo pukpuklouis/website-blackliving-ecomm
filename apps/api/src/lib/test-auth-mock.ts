@@ -44,8 +44,10 @@ export const mockCustomerSession = {
 
 // Create mock auth instance
 export function createMockAuth(userType: 'admin' | 'customer' | 'none' = 'none') {
-  const mockUser = userType === 'admin' ? mockAdminUser : userType === 'customer' ? mockCustomerUser : null;
-  const mockSession = userType === 'admin' ? mockAdminSession : userType === 'customer' ? mockCustomerSession : null;
+  const mockUser =
+    userType === 'admin' ? mockAdminUser : userType === 'customer' ? mockCustomerUser : null;
+  const mockSession =
+    userType === 'admin' ? mockAdminSession : userType === 'customer' ? mockCustomerSession : null;
 
   return {
     api: {
@@ -55,21 +57,26 @@ export function createMockAuth(userType: 'admin' | 'customer' | 'none' = 'none')
       signOut: vi.fn().mockResolvedValue({ success: true }),
     },
     handler: vi.fn().mockImplementation(async () => {
-      return new Response(JSON.stringify({ 
-        user: mockUser,
-        session: mockSession 
-      }), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json' }
-      });
+      return new Response(
+        JSON.stringify({
+          user: mockUser,
+          session: mockSession,
+        }),
+        {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
     }),
   };
 }
 
 // Helper to create auth middleware mock
 export function createMockAuthMiddleware(userType: 'admin' | 'customer' | 'none' = 'none') {
-  const mockUser = userType === 'admin' ? mockAdminUser : userType === 'customer' ? mockCustomerUser : null;
-  const mockSession = userType === 'admin' ? mockAdminSession : userType === 'customer' ? mockCustomerSession : null;
+  const mockUser =
+    userType === 'admin' ? mockAdminUser : userType === 'customer' ? mockCustomerUser : null;
+  const mockSession =
+    userType === 'admin' ? mockAdminSession : userType === 'customer' ? mockCustomerSession : null;
 
   return vi.fn().mockImplementation(async (c: any, next: any) => {
     c.set('user', mockUser);

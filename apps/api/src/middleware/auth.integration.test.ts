@@ -30,7 +30,7 @@ describe('requireAdmin Middleware Integration Test', () => {
     app.use('*', mockAuthMiddleware);
     app.use('/admin/*', requireAdmin());
 
-    app.get('/admin/test', (c) => {
+    app.get('/admin/test', c => {
       return c.json({ success: true, message: 'Welcome, admin!' });
     });
 
