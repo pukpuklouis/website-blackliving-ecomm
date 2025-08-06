@@ -1,12 +1,12 @@
 name = "blackliving-web"
-main = "./dist/_worker.js"
 compatibility_date = "2024-09-23"
 compatibility_flags = ["nodejs_compat"]
 pages_build_output_dir = "./dist"
 
-[assets]
-directory = "./dist"
-binding = "ASSETS"
+# Assets binding not needed for Pages deployment
+# [assets]
+# directory = "./dist"
+# binding = "ASSETS"
 
 # Better Auth Session Storage (temporarily disabled)
 # [[kv_namespaces]]
@@ -14,21 +14,13 @@ binding = "ASSETS"
 # id = "local-session-kv-id"
 # preview_id = "local-session-preview-kv-id"
 
-[env.development]
-name = "blackliving-web-dev"
+[env.preview]
+name = "blackliving-web-preview"
 
-# [[env.development.kv_namespaces]]
+# [[env.preview.kv_namespaces]]
 # binding = "SESSION"
-# id = "dev-session-kv-id"
-# preview_id = "dev-session-preview-kv-id"
-
-[env.staging]
-name = "blackliving-web-staging"
-
-# [[env.staging.kv_namespaces]]
-# binding = "SESSION"
-# id = "staging-session-kv-id"
-# preview_id = "staging-session-preview-kv-id"
+# id = "preview-session-kv-id"
+# preview_id = "preview-session-preview-kv-id"
 
 [env.production]
 name = "blackliving-web"
@@ -44,13 +36,8 @@ NODE_ENV = "development"
 API_BASE_URL = "http://localhost:8787"
 PUBLIC_SITE_URL = "http://localhost:4321"
 
-[env.development.vars]
-NODE_ENV = "development"
-API_BASE_URL = "http://localhost:8787"
-PUBLIC_SITE_URL = "http://localhost:4321"
-
-[env.staging.vars]
-NODE_ENV = "staging"
+[env.preview.vars]
+NODE_ENV = "preview"
 API_BASE_URL = "https://blackliving-api-staging.pukpuk-tw.workers.dev"
 PUBLIC_SITE_URL = "https://staging.blackliving-web.pages.dev"
 
