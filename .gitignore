@@ -42,6 +42,11 @@ Thumbs.db
 .env.local
 .env.*.local
 
+# Cloudflare Workers configuration (contains sensitive IDs and secrets)
+apps/api/wrangler.toml
+**/wrangler.toml
+!**/wrangler.example.toml
+
 # React Router
 .react-router/
 

@@ -31,6 +31,10 @@ export interface Env {
   BETTER_AUTH_SECRET: string;
   GOOGLE_CLIENT_ID: string;
   GOOGLE_CLIENT_SECRET: string;
+  ALLOWED_ORIGINS: string;
+  API_BASE_URL: string;
+  WEB_BASE_URL: string;
+  ADMIN_BASE_URL: string;
 }
 
 const app = new Hono<{
@@ -53,33 +57,27 @@ app.use(
   '*',
   cors({
     origin: (origin, c) => {
-      // Development environment - allow localhost origins only
-      if (c.env.NODE_ENV === 'development') {
-        const devOrigins = [
-          'http://localhost:4321',
-          'http://localhost:5173',
-          'http://localhost:8787',
-        ];
-        if (!origin || devOrigins.includes(origin)) {
-          return origin;
-        }
-        return undefined;
-      }
+      // Get allowed origins from environment variable
+      const allowedOrigins = c.env.ALLOWED_ORIGINS 
+        ? c.env.ALLOWED_ORIGINS.split(',').map(o => o.trim())
+        : [];
 
-      // Production whitelist - strict domain validation
-      const allowedOrigins = [
+      // Add common allowed origins as fallback
+      const fallbackOrigins = [
         'https://blackliving.com',
-        'https://www.blackliving.com',
+        'https://www.blackliving.com', 
         'https://admin.blackliving.com',
         'https://api.blackliving.com',
       ];
 
-      if (!origin || allowedOrigins.includes(origin)) {
+      const allAllowedOrigins = [...allowedOrigins, ...fallbackOrigins];
+
+      if (!origin || allAllowedOrigins.includes(origin)) {
         return origin;
       }
 
       // Log suspicious origin attempts
-      console.warn(`Blocked CORS request from unauthorized origin: ${origin}`);
+      console.warn(`Blocked CORS request from unauthorized origin: ${origin}. Allowed: ${allAllowedOrigins.join(', ')}`);
       return undefined;
     },
     allowHeaders: [
@@ -108,6 +106,9 @@ app.use('*', async (c, next) => {
     GOOGLE_CLIENT_SECRET: c.env.GOOGLE_CLIENT_SECRET,
     NODE_ENV: c.env.NODE_ENV,
     BETTER_AUTH_SECRET: c.env.BETTER_AUTH_SECRET,
+    API_BASE_URL: c.env.API_BASE_URL,
+    WEB_BASE_URL: c.env.WEB_BASE_URL,
+    ADMIN_BASE_URL: c.env.ADMIN_BASE_URL,
   });
 
   c.set('db', db);
