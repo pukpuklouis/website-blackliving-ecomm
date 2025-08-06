@@ -5,19 +5,58 @@ import sitemap from '@astrojs/sitemap';
 import cloudflare from '@astrojs/cloudflare';
 import tailwindcss from '@tailwindcss/vite';
 
+// Environment detection
+const isDev = process.env.NODE_ENV !== 'production';
+
+// Lucide icon import resolver for both dev and production
+function lucideIconResolver() {
+  return {
+    name: 'lucide-icon-resolver',
+    resolveId(id) {
+      // Handle @lucide/react/* imports in both dev and production
+      if (id.startsWith('@lucide/react/')) {
+        const iconName = id.replace('@lucide/react/', '');
+        
+        if (isDev) {
+          // Development: create virtual module ID
+          return `\0lucide-icon:${iconName}`;
+        } else {
+          // Production: resolve to individual icon files for tree-shaking
+          // The iconName is already in kebab-case (e.g., "panel-left")
+          return {
+            id: `lucide-react/dist/esm/icons/${iconName}.js`,
+            external: false
+          };
+        }
+      }
+      return null;
+    },
+    load(id) {
+      // In development, create a virtual module that exports the icon from lucide-react
+      if (isDev && id.startsWith('\0lucide-icon:')) {
+        const iconName = id.replace('\0lucide-icon:', '');
+        // Convert kebab-case to PascalCase for the actual export name
+        const pascalIconName = iconName.split('-').map(word => 
+          word.charAt(0).toUpperCase() + word.slice(1)
+        ).join('');
+        
+        return `export { ${pascalIconName} as default } from 'lucide-react';`;
+      }
+      return null;
+    }
+  };
+}
+
 
 // https://astro.build/config
 // Note: Using Tailwind v4 - no @astrojs/tailwind integration needed
 export default defineConfig({
-  site: process.env.NODE_ENV === 'production' ? "https://blackliving.com" : "http://localhost:4321",
+  site: process.env.PUBLIC_SITE_URL || 
+        (process.env.NODE_ENV === 'production' ? "https://blackliving-web.pages.dev" : "http://localhost:4321"),
   integrations: [react(), sitemap()],
 
   output: 'server',
-  adapter: cloudflare({
-    platformProxy: {
-      enabled: true
-    }
-  }),
+  adapter: cloudflare(),
 
   experimental: {
     fonts: [
@@ -75,14 +114,41 @@ export default defineConfig({
   },
 
   vite: {
-    plugins: [tailwindcss()],
+    plugins: [tailwindcss(), lucideIconResolver()],
     resolve: {
       alias: {
         '~': new URL('./src', import.meta.url).pathname,
         '@': new URL('../../packages/ui', import.meta.url).pathname,
-        ...(import.meta.env.PROD && {
+        // Simple alias approach for Lucide icons
+        ...(isDev ? {} : {
+          '@lucide/react/': 'lucide-react/dist/esm/icons/'
+        }),
+        ...(!isDev && {
           "react-dom/server": "react-dom/server.edge"
         })
+      }
+    },
+    optimizeDeps: {
+      // Development: Include full lucide-react package for better DX
+      include: isDev ? ['lucide-react'] : [],
+      // Development: Don't pre-bundle individual icons  
+      exclude: isDev ? [] : ['lucide-react']
+    },
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks(id) {
+            // Group node_modules into vendor chunk
+            if (id.includes('node_modules')) {
+              // Large packages get their own chunks
+              if (id.includes('@blackliving/ui')) return 'ui';
+              // Icons get separate chunk (will be smaller in prod due to tree-shaking)
+              if (id.includes('lucide-react')) return 'icons';
+              // Other vendor packages
+              return 'vendor';
+            }
+          }
+        }
       }
     },
     server: {

@@ -25,7 +25,8 @@ let products = [];
 let error = null;
 
 try {
-  const apiUrl = `${Astro.url.origin}/api/products?category=${category}&featured=true&limit=${limit}`;
+  const apiBaseUrl = import.meta.env.PUBLIC_API_BASE_URL || 'http://localhost:8787';
+  const apiUrl = `${apiBaseUrl}/api/products?category=${category}&featured=true&limit=${limit}`;
   const response = await fetch(apiUrl);
   
   if (!response.ok) {

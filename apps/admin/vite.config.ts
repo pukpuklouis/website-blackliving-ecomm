@@ -5,41 +5,49 @@ import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig({
   plugins: [tailwindcss(), reactRouter(), tsconfigPaths()],
-  css: {
-    modules: {
-      localsConvention: 'camelCase',
+  resolve: {
+    alias: {
+      // Lucide tree-shaking alias for individual icon imports
+      '@lucide/react': 'lucide-react/dist/esm/icons',
     },
   },
   // 優化依賴處理
   optimizeDeps: {
-    include: ['novel'],
+    include: ['novel', 'lucide-react'],
+    exclude: ['@lucide/react'], // Let Vite handle lucide imports directly
   },
-  // Build optimization for tree-shaking
+  // Build optimization
   build: {
     sourcemap: false, // Disable sourcemaps to avoid UI component errors
+    minify: 'esbuild', // Use esbuild for faster builds
+    target: 'esnext',
     rollupOptions: {
-      external: (id) => {
-        // Don't bundle all lucide-react icons
-        if (id.includes('lucide-react/dist/esm/icons/') && 
-            !id.match(/\/(plus|search|edit|trash-2|upload|eye|filter|chevron-up|log-out|user|arrow-up-right|bar-chart-3|lock|plus-circle|users|calendar|package|more-horizontal|save|bold|italic|list|image|link|code|at-sign|phone|mail|map-pin|clock|file-image)\.js$/)) {
-          return true;
+      onwarn(warning, warn) {
+        // Suppress warnings about circular dependencies and other non-critical issues
+        if (warning.code === 'CIRCULAR_DEPENDENCY') return;
+        if (warning.code === 'THIS_IS_UNDEFINED') return;
+        if (warning.code === 'PLUGIN_WARNING') return;
+        warn(warning);
+      },
+      output: {
+        manualChunks(id) {
+          // Group node_modules into vendor chunk
+          if (id.includes('node_modules')) {
+            // Large packages get their own chunks
+            if (id.includes('novel')) return 'novel';
+            if (id.includes('@blackliving/ui')) return 'ui';
+            if (id.includes('lucide-react')) return 'icons';
+            // Other vendor packages
+            return 'vendor';
+          }
         }
-        return false;
-      },
-    },
+      }
+    }
   },
-  // SSR 配置 - 根據你的建議
-  ssr: {
-    // 將 react-tweet 設為 noExternal，讓 Vite 處理其 CSS 檔案
-    noExternal: ['novel', 'react-tweet'],
-  },
-  // 測試環境配置（如果使用 Vitest）
-  test: {
-    deps: {
-      web: {
-        // 讓 Vitest 處理 CSS 檔案
-        transformCss: true,
-      },
+  // Ensure proper handling of workspace packages
+  server: {
+    fs: {
+      allow: ['..', '../..'], // Allow access to workspace packages
     },
   },
 });

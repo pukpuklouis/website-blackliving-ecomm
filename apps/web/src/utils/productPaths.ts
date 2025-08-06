@@ -1,5 +1,5 @@
 // API configuration
-const API_BASE = import.meta.env.PUBLIC_API_URL || 'http://localhost:8787';
+const API_BASE = import.meta.env.PUBLIC_API_BASE_URL || 'http://localhost:8787';
 
 export async function generateStaticPaths(category: string) {
   try {

@@ -9,7 +9,6 @@
     "dev:remote": "wrangler dev",
     "build": "wrangler deploy --dry-run",
     "deploy": "wrangler deploy",
-    "deploy:staging": "wrangler deploy --env staging",
     "type-check": "tsc --noEmit",
     "lint": "eslint src --ext .ts",
     "test": "vitest run",

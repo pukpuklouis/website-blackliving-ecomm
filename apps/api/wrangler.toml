@@ -1,7 +1,6 @@
-# IMPORTANT: In non-development environments, you must replace the
-# placeholder IDs ("__PROD_DB_ID__", "__PROD_KV_NAMESPACE_ID__") with your actual
-# production/staging/test resource IDs. These are configured in your Cloudflare dashboard.
-# The development environment uses local defaults and does not require these placeholders.
+# Single source of truth for database migrations and remote sync
+# Production and staging share remote database, development uses local
+# All migrations controlled from packages/db/
 
 name = "blackliving-api"
 main = "src/index.ts"
@@ -17,28 +16,37 @@ name = "blackliving-api-staging"
 [env.production]
 name = "blackliving-api"
 
-# Cloudflare D1 Database
-# Cloudflare D1 Database
+# Production database (remote) - single source of truth
+[[env.production.d1_databases]]
+binding = "DB"
+database_name = "blackliving-db"
+database_id = "6e8078ae-a12b-48e2-ab44-f3adf4ba3482"
+migrations_dir = "../../packages/db/migrations"
+
+# Staging uses same remote database as production
+[[env.staging.d1_databases]]
+binding = "DB"
+database_name = "blackliving-db"
+database_id = "6e8078ae-a12b-48e2-ab44-f3adf4ba3482"
+migrations_dir = "../../packages/db/migrations"
+
+# Development uses local database only
+[[env.development.d1_databases]]
+binding = "DB"
+database_name = "blackliving-db"
+database_id = "local-dev-db-id"
+migrations_dir = "../../packages/db/migrations"
+
+# Default configurations (production)
 [[d1_databases]]
 binding = "DB"
 database_name = "blackliving-db"
 database_id = "6e8078ae-a12b-48e2-ab44-f3adf4ba3482"
-
 migrations_dir = "../../packages/db/migrations"
 
-[[env.development.d1_databases]]
-binding = "DB"
-database_name = "blackliving-db-dev"
-database_id = "local-dev-db-id"
-
-migrations_dir = "../../packages/db/migrations"
-
-[[env.staging.d1_databases]]
-binding = "DB"
-database_name = "blackliving-db-staging" 
-database_id = "6ed38bfb-6130-414b-9fcf-f9338a309a90"
-
-migrations_dir = "../../packages/db/migrations"
+[[env.production.r2_buckets]]
+binding = "R2"
+bucket_name = "blackliving-images"
 
 # Cloudflare R2 Storage
 [[r2_buckets]]
@@ -51,7 +59,7 @@ bucket_name = "blackliving-images-dev"
 
 [[env.staging.r2_buckets]]
 binding = "R2"
-bucket_name = "blackliving-images-staging"
+bucket_name = "blackliving-images"
 
 # Cloudflare KV Storage
 [[kv_namespaces]]
@@ -65,20 +73,20 @@ preview_id = "local-dev-preview-kv-id"
 
 [[env.staging.kv_namespaces]]
 binding = "CACHE"
-id = "61e654b7c0e9409ca76191411fc64b8c"
-preview_id = "61e654b7c0e9409ca76191411fc64b8c"
+id = "e978fa20a08b46bea9bcb31400f8e61f"
+preview_id = "e978fa20a08b46bea9bcb31400f8e61f"
 
 [[env.production.kv_namespaces]]
 binding = "CACHE"
 id = "e978fa20a08b46bea9bcb31400f8e61f"
 preview_id = "e978fa20a08b46bea9bcb31400f8e61f"
 
-# Environment Variables
+# Environment Variables (defaults to production)
 [vars]
-NODE_ENV = "development"
-API_BASE_URL = "https://api.blackliving.com"
-WEB_BASE_URL = "https://blackliving.com"
-ADMIN_BASE_URL = "https://admin.blackliving.com"
+NODE_ENV = "production"
+API_BASE_URL = "https://blackliving-api.pukpuk-tw.workers.dev"
+WEB_BASE_URL = "https://blackliving-web.pages.dev"
+ADMIN_BASE_URL = "https://blackliving-admin.pages.dev"
 
 [env.development.vars]
 NODE_ENV = "development"
@@ -88,40 +96,11 @@ ADMIN_BASE_URL = "http://localhost:5173"
 
 [env.staging.vars]
 NODE_ENV = "staging"
-API_BASE_URL = "https://api-staging.blackliving.com"
-WEB_BASE_URL = "https://staging.blackliving.com"
-ADMIN_BASE_URL = "https://admin-staging.blackliving.com"
+API_BASE_URL = "https://blackliving-api-staging.pukpuk-tw.workers.dev"
+WEB_BASE_URL = "https://staging.blackliving-web.pages.dev"
+ADMIN_BASE_URL = "https://staging.blackliving-admin.pages.dev"
 
-[env.production.vars]
-NODE_ENV = "production"
-API_BASE_URL = "https://api.blackliving.com"
-WEB_BASE_URL = "https://blackliving.com"
-ADMIN_BASE_URL = "https://admin.blackliving.com"
 
-[env.test]
-name = "blackliving-api-test"
-
-[[env.test.d1_databases]]
-binding = "DB"
-database_name = "blackliving-db-test"
-database_id = "your-test-database-id-here"
-migrations_dir = "../../packages/db/migrations"
-
-[[env.test.r2_buckets]]
-binding = "R2"
-bucket_name = "blackliving-images-test"
-
-[[env.test.kv_namespaces]]
-binding = "CACHE"
-id = "your-test-kv-id-here"
-preview_id = "your-test-preview-kv-id-here"
-
-[env.test.vars]
-NODE_ENV = "test"
-API_BASE_URL = "http://localhost:8787"
-WEB_BASE_URL = "http://localhost:4321"
-ADMIN_BASE_URL = "http://localhost:5173"
-BETTER_AUTH_URL = "http://localhost:8787"
 
 # Secrets (set via wrangler secret put <SECRET_NAME> <VALUE> --env <ENVIRONMENT>)
 # Required secrets for all environments:

@@ -1,0 +1,62 @@
+name = "blackliving-web"
+main = "./dist/_worker.js"
+compatibility_date = "2024-09-23"
+compatibility_flags = ["nodejs_compat"]
+
+[assets]
+directory = "./dist"
+binding = "ASSETS"
+
+# Better Auth Session Storage (temporarily disabled)
+# [[kv_namespaces]]
+# binding = "SESSION"
+# id = "local-session-kv-id"
+# preview_id = "local-session-preview-kv-id"
+
+[env.development]
+name = "blackliving-web-dev"
+
+# [[env.development.kv_namespaces]]
+# binding = "SESSION"
+# id = "dev-session-kv-id"
+# preview_id = "dev-session-preview-kv-id"
+
+[env.staging]
+name = "blackliving-web-staging"
+
+# [[env.staging.kv_namespaces]]
+# binding = "SESSION"
+# id = "staging-session-kv-id"
+# preview_id = "staging-session-preview-kv-id"
+
+[env.production]
+name = "blackliving-web"
+
+# [[env.production.kv_namespaces]]
+# binding = "SESSION"
+# id = "prod-session-kv-id"
+# preview_id = "prod-session-preview-kv-id"
+
+# Environment Variables
+[vars]
+NODE_ENV = "development"
+API_BASE_URL = "http://localhost:8787"
+PUBLIC_SITE_URL = "http://localhost:4321"
+
+[env.development.vars]
+NODE_ENV = "development"
+API_BASE_URL = "http://localhost:8787"
+PUBLIC_SITE_URL = "http://localhost:4321"
+
+[env.staging.vars]
+NODE_ENV = "staging"
+API_BASE_URL = "https://blackliving-api-staging.pukpuk-tw.workers.dev"
+PUBLIC_SITE_URL = "https://staging.blackliving-web.pages.dev"
+
+[env.production.vars]
+NODE_ENV = "production"
+API_BASE_URL = "https://blackliving-api.pukpuk-tw.workers.dev"
+PUBLIC_SITE_URL = "https://blackliving-web.pages.dev"
+
+[observability]
+enabled = true

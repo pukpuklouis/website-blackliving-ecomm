@@ -35,19 +35,18 @@ import {
   TabsList,
   TabsTrigger,
 } from '@blackliving/ui';
-import {
-  Search,
-  Eye,
-  Edit,
-  Package,
-  Truck,
-  CheckCircle,
-  XCircle,
-  Clock,
-  Filter,
-  DollarSign,
-  FileImage,
-} from 'lucide-react';
+// Tree-shakable Lucide imports
+import Search from '@lucide/react/search';
+import Eye from '@lucide/react/eye';
+import Edit from '@lucide/react/edit';
+import Package from '@lucide/react/package';
+import Truck from '@lucide/react/truck';
+import CheckCircle from '@lucide/react/check-circle';
+import XCircle from '@lucide/react/x-circle';
+import Clock from '@lucide/react/clock';
+import Filter from '@lucide/react/filter';
+import DollarSign from '@lucide/react/dollar-sign';
+import FileImage from '@lucide/react/file-image';
 import {
   useReactTable,
   createColumnHelper,

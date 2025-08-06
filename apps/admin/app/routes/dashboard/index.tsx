@@ -1,7 +1,11 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@blackliving/ui';
 import { Badge } from '@blackliving/ui';
 import { SimpleChart } from '@blackliving/ui';
-import { ArrowUpRight, BarChart3, Lock, PlusCircle } from 'lucide-react';
+// Tree-shakable Lucide imports
+import ArrowUpRight from '@lucide/react/arrow-up-right';
+import BarChart3 from '@lucide/react/bar-chart-3';
+import Lock from '@lucide/react/lock';
+import PlusCircle from '@lucide/react/plus-circle';
 
 // Mock data for dashboard
 const salesData = [

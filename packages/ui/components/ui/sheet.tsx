@@ -2,7 +2,8 @@
 
 import * as React from 'react';
 import * as SheetPrimitive from '@radix-ui/react-dialog';
-import { XIcon } from 'lucide-react';
+// Tree-shakable Lucide imports
+import XIcon from '@lucide/react/x';
 
 import { cn } from '@/lib/utils';
 
