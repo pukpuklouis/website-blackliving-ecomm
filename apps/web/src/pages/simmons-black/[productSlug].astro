@@ -1,6 +1,8 @@
 ---
 import ProductLayout from '../../layouts/ProductLayout.astro';
-import ProductVariantSelector from '../../components/ProductVariantSelector.tsx';
+import ProductTabs from '../../components/ProductTabs.tsx';
+import ProductImageCarousel from '../../components/ProductImageCarousel.tsx';
+import ProductDetail from '../../components/ProductDetail.tsx';
 import { getEntry } from 'astro:content';
 import { generateStaticPaths, fetchProduct } from '../../utils/productPaths.ts';
 
@@ -47,102 +49,44 @@ if (notFound) {
         description={product.description}
         image={product.images?.[0]}
       >
-        <div class='grid grid-cols-1 lg:grid-cols-2 gap-12'>
-          <div>
-            <img
-              src={product.images?.[0] || '/images/placeholder-mattress.jpg'}
-              alt={product.name}
-              class='w-full h-auto rounded-lg shadow-lg'
+        {/* Product Images - Left Column */}
+        <ProductImageCarousel
+          images={product.images || []}
+          productName={product.name}
+          client:load
+          slot="product-images"
+        />
+
+        {/* Product Details & Actions - Right Column */}
+        <div slot="product-details">
+          {/* Product Detail with Cart Functionality */}
+          <ProductDetail
+            product={product}
+            categoryConfig={categoryConfig}
+            client:load
+          />
+
+          {/* Product Description & Specifications Tabs - Mobile below product details */}
+          <div class='mt-8 block md:hidden'>
+            <ProductTabs
+              features={product.features || []}
+              specifications={product.specifications}
+              categoryFeatures={categoryConfig.features}
+              categoryName={categoryConfig.category}
+              client:load
             />
-
-            {/* Additional images carousel - if more than one image */}
-            {product.images && product.images.length > 1 && (
-              <div class='mt-4 grid grid-cols-4 gap-2'>
-                {product.images.slice(1, 5).map((image: any, index: number) => (
-                  <img
-                    src={image}
-                    alt={`${product.name} - 圖片 ${index + 2}`}
-                    class='w-full h-20 object-cover rounded border hover:border-black cursor-pointer'
-                  />
-                ))}
-              </div>
-            )}
           </div>
+        </div>
 
-          <div>
-            <div class='mb-6'>
-              <span class='inline-block bg-black text-white text-sm px-3 py-1 rounded mb-2'>
-                {categoryConfig.series}
-              </span>
-              <h1 class='text-3xl font-bold text-gray-900 mb-4'>{product.name}</h1>
-              <p class='text-lg text-gray-600'>{product.description}</p>
-            </div>
-
-            {/* Product Variant Selector */}
-            {product.variants && product.variants.length > 0 ? (
-              <ProductVariantSelector
-                productId={product.id}
-                variants={product.variants}
-                onVariantChange={variant => {
-                  // Handle variant change in client-side
-                  console.log('Variant changed:', variant);
-                }}
-                client:load
-              />
-            ) : (
-              <div class='p-4 bg-gray-50 rounded-lg mb-6'>
-                <p class='text-gray-600'>請聯繫我們獲取產品價格資訊</p>
-                <a href='tel:+886-2-12345678' class='text-black font-semibold hover:underline'>
-                  電話: 02-1234-5678
-                </a>
-              </div>
-            )}
-
-            {/* Product Features */}
-            <div class='mt-8'>
-              <h3 class='text-xl font-semibold mb-4'>產品特色</h3>
-              <ul class='space-y-2 text-gray-600'>
-                {product.features && product.features.length > 0 ? (
-                  product.features.map((feature: any, index: number) => (
-                    <li class='flex items-start'>
-                      <span class='w-1.5 h-1.5 bg-black rounded-full mt-2 mr-3 flex-shrink-0' />
-                      {feature}
-                    </li>
-                  ))
-                ) : (
-                  <>
-                    {categoryConfig.features.map(feature => (
-                      <li class='flex items-start'>
-                        <span class='w-1.5 h-1.5 bg-black rounded-full mt-2 mr-3 flex-shrink-0' />
-                        {feature}
-                      </li>
-                    ))}
-                    {categoryConfig.category === 'simmons-black' && (
-                      <li class='flex items-start'>
-                        <span class='w-1.5 h-1.5 bg-black rounded-full mt-2 mr-3 flex-shrink-0' />
-                        美國原裝進口
-                      </li>
-                    )}
-                  </>
-                )}
-              </ul>
-            </div>
-
-            {/* Product Specifications */}
-            {product.specifications && Object.keys(product.specifications).length > 0 && (
-              <div class='mt-8'>
-                <h3 class='text-xl font-semibold mb-4'>產品規格</h3>
-                <div class='bg-gray-50 rounded-lg p-4'>
-                  {Object.entries(product.specifications).map(([key, value]: [string, any]) => (
-                    <div class='flex justify-between items-center py-2 border-b border-gray-200 last:border-b-0'>
-                      <span class='text-gray-600'>{key}</span>
-                      <span class='font-semibold'>{value}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
+        {/* Product Features and Specifications Tabs - Desktop full width below */}
+        <div class='hidden lg:block' slot="product-tabs">
+          <ProductTabs
+            features={product.features || []}
+            specifications={product.specifications}
+            categoryFeatures={categoryConfig.features}
+            categoryName={categoryConfig.category}
+            client:load
+          />
         </div>
       </ProductLayout>
     )

@@ -12,6 +12,8 @@
   "scripts": {
     "db:generate": "drizzle-kit generate",
     "db:studio": "drizzle-kit studio",
+    "db:studio:local": "drizzle-kit studio --config=drizzle.config.local.ts",
+    "db:studio:remote": "drizzle-kit studio --config=drizzle.config.ts",
     "db:introspect": "drizzle-kit introspect",
     "db:push": "drizzle-kit push",
     "db:sync": "node db-sync.js",
@@ -26,7 +28,8 @@
     "db:status": "node db-sync.js status",
     "db:migrate:prod": "node db-sync.js migrate-remote",
     "db:seed:prod": "node db-sync.js seed-remote",
-    "db:seed": "node db-sync.js seed-local"
+    "db:seed": "node db-sync.js seed-local",
+    "db:sync-data": "node sync-data.js"
   },
   "dependencies": {
     "@libsql/client": "^0.15.10",

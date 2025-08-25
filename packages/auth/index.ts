@@ -34,21 +34,39 @@ export const createAuth = (
     secret: env.BETTER_AUTH_SECRET || 'dev-secret-key-change-in-production',
 
     // API base URL where Better Auth endpoints are mounted
-    baseURL: env.API_BASE_URL || 
-      (env.NODE_ENV === 'production' ? 'https://blackliving-api.pukpuk-tw.workers.dev' : 'http://localhost:8787'),
+    baseURL: env.API_BASE_URL || (() => {
+      switch (env.NODE_ENV) {
+        case 'development':
+          return 'http://localhost:8787';
+        case 'staging':
+          return 'https://blackliving-api-staging.pukpuk-tw.workers.dev';
+        case 'production':
+        default:
+          return 'https://blackliving-api.pukpuk-tw.workers.dev';
+      }
+    })(),
 
     trustedOrigins: [
+      // Development
       'http://localhost:4321', // Web app
       'http://localhost:5173', // Admin app
       'http://localhost:8787', // API server
-      // Production domains (future)
+      
+      // Staging
+      'https://staging.blackliving-web.pages.dev',
+      'https://staging.blackliving-admin.pages.dev',
+      'https://blackliving-api-staging.pukpuk-tw.workers.dev',
+      
+      // Production (current deployment URLs)
+      'https://blackliving-web.pages.dev',
+      'https://blackliving-admin.pages.dev',
+      'https://blackliving-api.pukpuk-tw.workers.dev',
+      
+      // Future custom domains (forward compatibility)
       'https://blackliving.com',
+      'https://www.blackliving.com',
       'https://admin.blackliving.com',
       'https://api.blackliving.com',
-      // Current deployment URLs
-      'https://c0e3e7c9.blackliving-web.pages.dev',
-      'https://f407255f.blackliving-admin.pages.dev',
-      'https://blackliving-api.pukpuk-tw.workers.dev',
     ],
 
     // Use Better Auth's built-in Google provider
@@ -66,15 +84,20 @@ export const createAuth = (
       updateAge: 60 * 60 * 24, // 1 day
     },
 
+    // FIXED: Proper cross-origin cookie settings for .pages.dev <-> .workers.dev
+    cookieOptions: {
+      httpOnly: true,
+      secure: env.NODE_ENV === 'production', // Must be true for sameSite: 'none'
+      sameSite: env.NODE_ENV === 'development' ? 'lax' : 'none', // 'none' required for cross-origin
+      // No domain specified - let browser handle per-origin cookies
+    },
+
     user: {
       additionalFields: {
         role: {
           type: 'string',
           defaultValue: 'customer',
-          // Use correct 'validator' instead of 'validate'
-          validator: (value: string) => {
-            return ['customer', 'admin'].includes(value);
-          },
+          required: false,
         },
         phone: {
           type: 'string',
@@ -108,9 +131,11 @@ export const createAuth = (
     // Role-based access control handled through user.role field
 
     advanced: {
+      // FIXED: Disable cross-subdomain cookies entirely for production
+      // Web app (.pages.dev) and API (.workers.dev) are incompatible domains
       crossSubDomainCookies: {
-        enabled: true,
-        domain: env.NODE_ENV === 'production' ? '.pages.dev' : 'localhost',
+        enabled: env.NODE_ENV === 'development', // Only enable for localhost development  
+        domain: env.NODE_ENV === 'development' ? 'localhost' : undefined,
       },
     },
 
@@ -118,7 +143,7 @@ export const createAuth = (
       level: env.NODE_ENV === 'development' ? 'debug' : 'error',
     },
   });
-};
+};;
 
 // Export types
 export type AuthInstance = ReturnType<typeof createAuth>;

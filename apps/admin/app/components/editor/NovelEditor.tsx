@@ -21,7 +21,7 @@ export default function NovelEditor({
       <EditorRoot>
         <EditorContent
           initialContent={value ? JSON.parse(value) : undefined}
-          onUpdate={(editor: any) => {
+          onUpdate={({ editor }: any) => {
             const html = editor?.getHTML() || '';
             onChange?.(html);
           }}

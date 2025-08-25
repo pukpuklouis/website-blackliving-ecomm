@@ -1,0 +1,144 @@
+---
+// AnnouncementBar component with date-based visibility control
+import { 
+  currentAnnouncement, 
+  isAnnouncementVisible, 
+  typeClasses,
+  type AnnouncementConfig 
+} from '../config/announcements';
+
+const announcementConfig = currentAnnouncement;
+const isVisible = isAnnouncementVisible(announcementConfig);
+
+// Note: isDismissed check happens on client-side due to localStorage access
+---
+
+{isVisible && (
+  <div
+    id="announcement-bar"
+    class={`relative w-full py-3 px-4 text-center text-sm font-medium ${typeClasses[announcementConfig.type || 'info']} transition-all duration-300 ease-in-out`}
+    data-announcement-id={announcementConfig.id}
+    style="display: none;"
+  >
+    <div class="container mx-auto flex items-center justify-between">
+      <div class="flex-1 text-center">
+        <span class="mr-2">{announcementConfig.message}</span>
+        {announcementConfig.url && announcementConfig.buttonText && (
+          <a
+            href={announcementConfig.url}
+            class="inline-flex items-center px-3 py-1 ml-2 text-xs font-semibold bg-white/20 hover:bg-white/30 rounded-full transition-colors duration-200"
+          >
+            {announcementConfig.buttonText}
+            <svg class="w-3 h-3 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+          </a>
+        )}
+      </div>
+      
+      {announcementConfig.dismissible && (
+        <button
+          id="dismiss-announcement"
+          class="flex-shrink-0 ml-4 p-1 hover:bg-white/20 rounded transition-colors duration-200"
+          aria-label="關閉公告"
+          title="關閉公告"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      )}
+    </div>
+  </div>
+)}
+
+<script>
+  // Client-side script for managing announcement visibility and dismissal
+  function initAnnouncementBar() {
+    const announcementBar = document.getElementById('announcement-bar');
+    if (!announcementBar) return;
+    
+    const announcementId = announcementBar.getAttribute('data-announcement-id');
+    if (!announcementId) return;
+    
+    // Check if user has dismissed this announcement
+    const isDismissed = localStorage.getItem(`announcement-dismissed-${announcementId}`) === 'true';
+    
+    if (!isDismissed) {
+      // Show the announcement bar
+      announcementBar.style.display = 'block';
+      
+      // Set up dismiss button if it exists
+      const dismissButton = document.getElementById('dismiss-announcement');
+      if (dismissButton) {
+        dismissButton.addEventListener('click', () => {
+          // Save dismissal to localStorage
+          localStorage.setItem(`announcement-dismissed-${announcementId}`, 'true');
+          
+          // Hide announcement with animation
+          announcementBar.style.transform = 'translateY(-100%)';
+          announcementBar.style.opacity = '0';
+          
+          setTimeout(() => {
+            announcementBar.style.display = 'none';
+            // Dispatch custom event for other components that might need to adjust layout
+            window.dispatchEvent(new CustomEvent('announcementDismissed'));
+          }, 300);
+        });
+      }
+    }
+  }
+
+  // Initialize when DOM is loaded
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initAnnouncementBar);
+  } else {
+    initAnnouncementBar();
+  }
+
+  // Re-initialize on page navigation (for SPA-like behavior)
+  document.addEventListener('astro:page-load', initAnnouncementBar);
+</script>
+
+<style>
+  #announcement-bar {
+    z-index: 1000;
+  }
+  
+  /* Smooth entrance animation */
+  #announcement-bar {
+    animation: slideDown 0.3s ease-out;
+  }
+  
+  @keyframes slideDown {
+    from {
+      transform: translateY(-100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+
+  /* Mobile responsiveness */
+  @media (max-width: 640px) {
+    #announcement-bar {
+      padding: 0.75rem 1rem;
+      font-size: 0.813rem;
+    }
+    
+    #announcement-bar .container {
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    
+    #announcement-bar button {
+      margin-left: 0;
+      align-self: flex-end;
+      position: absolute;
+      top: 0.5rem;
+      right: 0.5rem;
+    }
+  }
+</style>

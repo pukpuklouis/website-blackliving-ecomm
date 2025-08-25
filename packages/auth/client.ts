@@ -7,7 +7,16 @@ const getBaseURL = () => {
     const hostname = window.location.hostname;
 
     // Validate hostname to prevent subdomain attacks
-    const allowedHosts = ['localhost', 'blackliving.com', 'admin.blackliving.com'];
+    const allowedHosts = [
+      'localhost',
+      'blackliving-web.pages.dev',
+      'blackliving-admin.pages.dev',
+      'staging.blackliving-web.pages.dev',
+      'staging.blackliving-admin.pages.dev',
+      'blackliving.com',
+      'admin.blackliving.com'
+    ];
+    
     const isValidHost = allowedHosts.some(
       allowed => hostname === allowed || hostname.endsWith('.' + allowed)
     );
@@ -17,16 +26,26 @@ const getBaseURL = () => {
       throw new Error('Unauthorized domain access');
     }
 
+    // Environment detection based on hostname
     if (hostname === 'localhost') {
       return 'http://localhost:8787'; // Local API server
     }
+    
+    if (hostname.includes('staging')) {
+      return 'https://blackliving-api-staging.pukpuk-tw.workers.dev'; // Staging API
+    }
+    
+    if (hostname.includes('pages.dev') || hostname.includes('blackliving.com')) {
+      return 'https://blackliving-api.pukpuk-tw.workers.dev'; // Production API
+    }
 
-    return 'https://api.blackliving.com'; // Production API
+    // Fallback to production for custom domains
+    return 'https://blackliving-api.pukpuk-tw.workers.dev';
   }
 
   // Server-side environment
   return process.env.NODE_ENV === 'production'
-    ? 'https://api.blackliving.com'
+    ? 'https://blackliving-api.pukpuk-tw.workers.dev'
     : 'http://localhost:8787';
 };
 
@@ -74,15 +93,35 @@ export const {
  */
 export const signInWithGoogleAdmin = async () => {
   try {
-    const baseURL =
-      typeof window !== 'undefined' && window.location.hostname === 'localhost'
-        ? 'http://localhost:8787'
-        : 'https://api.blackliving.com';
+    const baseURL = getBaseURL();
 
-    const adminCallbackURL =
-      typeof window !== 'undefined' && window.location.hostname === 'localhost'
-        ? 'http://localhost:5173/auth/callback'
-        : 'https://admin.blackliving.com/auth/callback';
+    const getAdminCallbackURL = () => {
+      if (typeof window !== 'undefined') {
+        const hostname = window.location.hostname;
+        
+        if (hostname === 'localhost') {
+          return 'http://localhost:5173/auth/callback';
+        }
+        
+        if (hostname.includes('staging')) {
+          return 'https://staging.blackliving-admin.pages.dev/auth/callback';
+        }
+        
+        if (hostname.includes('blackliving-admin.pages.dev')) {
+          return 'https://blackliving-admin.pages.dev/auth/callback';
+        }
+        
+        // Future custom domain
+        if (hostname.includes('admin.blackliving.com')) {
+          return 'https://admin.blackliving.com/auth/callback';
+        }
+      }
+      
+      // Default fallback
+      return 'https://blackliving-admin.pages.dev/auth/callback';
+    };
+
+    const adminCallbackURL = getAdminCallbackURL();
 
     // Use the same direct API approach that works for customers
     const response = await fetch(`${baseURL}/api/auth/sign-in/social`, {
@@ -121,11 +160,34 @@ export const signInWithGoogleAdmin = async () => {
  */
 export const signInWithGoogleCustomer = async () => {
   try {
+    const getCustomerCallbackURL = () => {
+      if (typeof window !== 'undefined') {
+        const hostname = window.location.hostname;
+        
+        if (hostname === 'localhost') {
+          return 'http://localhost:4321/account/profile';
+        }
+        
+        if (hostname.includes('staging')) {
+          return 'https://staging.blackliving-web.pages.dev/account/profile';
+        }
+        
+        if (hostname.includes('blackliving-web.pages.dev')) {
+          return 'https://blackliving-web.pages.dev/account/profile';
+        }
+        
+        // Future custom domain
+        if (hostname.includes('blackliving.com')) {
+          return 'https://blackliving.com/account/profile';
+        }
+      }
+      
+      // Default fallback
+      return 'https://blackliving-web.pages.dev/account/profile';
+    };
+
     // Use Better Auth's built-in social sign-in with customer callback
-    const customerCallbackURL =
-      typeof window !== 'undefined' && window.location.hostname === 'localhost'
-        ? 'http://localhost:4321/account/profile'
-        : 'https://blackliving.com/account/profile';
+    const customerCallbackURL = getCustomerCallbackURL();
 
     await signIn.social({
       provider: 'google',
@@ -229,7 +291,7 @@ export async function validateSession() {
 }
 
 /**
- * Check current session status (legacy compatibility)
+ * Check current session status (uses Better Auth client)
  */
 export const checkSession = async (): Promise<{
   user: any;
@@ -237,20 +299,11 @@ export const checkSession = async (): Promise<{
   authenticated: boolean;
 }> => {
   try {
-    const baseURL = getBaseURL();
-
-    const response = await fetch(`${baseURL}/api/auth/session`, {
-      credentials: 'include',
-      headers: {
-        'X-Requested-With': 'XMLHttpRequest',
-      },
-    });
-
-    if (response.ok) {
-      const data = await response.json();
-
+    const sessionData = await authClient.getSession();
+    
+    if (sessionData.data) {
       // Initialize session metadata if user is authenticated
-      if (data.authenticated && data.user) {
+      if (sessionData.data.user) {
         updateSessionMetadata({
           fingerprint: generateBrowserFingerprint(),
           lastActivity: Date.now(),
@@ -258,7 +311,11 @@ export const checkSession = async (): Promise<{
         });
       }
 
-      return data;
+      return {
+        user: sessionData.data.user,
+        session: sessionData.data.session,
+        authenticated: !!sessionData.data.user,
+      };
     } else {
       clearSessionMetadata();
       return { user: null, session: null, authenticated: false };

@@ -34,16 +34,22 @@ name = "blackliving-web"
 [vars]
 NODE_ENV = "development"
 API_BASE_URL = "http://localhost:8787"
+PUBLIC_API_BASE_URL = "http://localhost:8787"
+PUBLIC_API_URL = "http://localhost:8787"
 PUBLIC_SITE_URL = "http://localhost:4321"
 
 [env.preview.vars]
 NODE_ENV = "preview"
 API_BASE_URL = "https://blackliving-api-staging.pukpuk-tw.workers.dev"
+PUBLIC_API_BASE_URL = "https://blackliving-api-staging.pukpuk-tw.workers.dev"
+PUBLIC_API_URL = "https://blackliving-api-staging.pukpuk-tw.workers.dev"
 PUBLIC_SITE_URL = "https://staging.blackliving-web.pages.dev"
 
 [env.production.vars]
 NODE_ENV = "production"
 API_BASE_URL = "https://blackliving-api.pukpuk-tw.workers.dev"
+PUBLIC_API_BASE_URL = "https://blackliving-api.pukpuk-tw.workers.dev"
+PUBLIC_API_URL = "https://blackliving-api.pukpuk-tw.workers.dev"
 PUBLIC_SITE_URL = "https://blackliving-web.pages.dev"
 
 [observability]

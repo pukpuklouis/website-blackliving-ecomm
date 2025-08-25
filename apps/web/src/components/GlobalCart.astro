@@ -1,0 +1,52 @@
+---
+// Global Cart Component for site-wide cart functionality
+// This component provides floating cart button and handles navigation to checkout
+---
+
+<script>
+  // Import the FloatingCartButton component dynamically
+  import('./FloatingCartButton.tsx').then(({ default: FloatingCartButton }) => {
+    import('react').then(React => {
+      import('react-dom/client').then(({ createRoot }) => {
+        const targetElement = document.getElementById('global-cart-root');
+        if (targetElement) {
+          const root = createRoot(targetElement);
+          
+          // Handle checkout navigation
+          const handleCheckout = () => {
+            window.location.href = '/checkout';
+          };
+
+          root.render(
+            React.createElement(FloatingCartButton, {
+              onCheckout: handleCheckout,
+              position: 'bottom-right',
+              showOnMobile: true,
+              hideWhenEmpty: false
+            })
+          );
+        }
+      });
+    });
+  });
+</script>
+
+<!-- 
+  React Root for Floating Cart Button
+  This div will be hydrated with the FloatingCartButton component
+-->
+<div id="global-cart-root" class="z-50"></div>
+
+<!-- 
+  Alternative: Server-side rendered component (better for SEO)
+  Uncomment this section if you prefer server-side rendering:
+-->
+<!-- 
+<FloatingCartButton
+  onCheckout={() => window.location.href = '/checkout'}
+  position="bottom-right"
+  showOnMobile={true}
+  hideWhenEmpty={false}
+  client:load
+/>
+-->

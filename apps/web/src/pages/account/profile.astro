@@ -115,31 +115,37 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@blac
 
     async function checkAuth(): Promise<boolean> {
       try {
-        const response = await fetch(`${API_BASE}/api/auth/session`, {
-          credentials: 'include',
-        });
+        console.log('=== DEBUG AUTH CHECK START ===');
+        console.log('API_BASE:', API_BASE);
+        console.log('Current URL:', window.location.href);
+        console.log('Cookies:', document.cookie);
+        
+        // Use Better Auth client for session checking
+        const { checkSession } = await import('@blackliving/auth/client');
+        const sessionData = await checkSession();
+        
+        console.log('Auth check response:', sessionData); // Debug log
 
-        if (response.ok) {
-          const data = await response.json();
-          console.log('Auth check response:', data); // Debug log
+        if (sessionData.authenticated && sessionData.user) {
+          currentUser = sessionData.user;
+          console.log('Authenticated user:', currentUser.role, currentUser.id); // Debug log
 
-          if (data.user) {
-            currentUser = data.user;
-            console.log('Authenticated user:', currentUser.role, currentUser.id); // Debug log
-
-            // Allow both admin and customer users
-            if (data.user.role === 'admin' || data.user.role === 'customer') {
-              return true;
-            } else {
-              console.warn('User has unsupported role:', data.user.role);
-              return false;
-            }
+          // Allow both admin and customer users
+          if (sessionData.user.role === 'admin' || sessionData.user.role === 'customer') {
+            console.log('=== AUTH CHECK SUCCESS ===');
+            return true;
+          } else {
+            console.warn('User has unsupported role:', sessionData.user.role);
+            return false;
           }
+        } else {
+          console.log('No authenticated user found');
         }
-        console.log('No authenticated user found');
+        
+        console.log('=== AUTH CHECK FAILED - NO USER ===');
         return false;
       } catch (error) {
-        console.error('Auth check failed:', error);
+        console.error('=== AUTH CHECK ERROR ===', error);
         return false;
       }
     }
