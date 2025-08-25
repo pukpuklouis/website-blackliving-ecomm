@@ -31,13 +31,13 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 
     try {
       // Check if we have a valid session
-      const response = await fetch(`${API_BASE}/api/auth/session`, {
+      const response = await fetch(`${API_BASE}/api/auth/get-session`, {
         credentials: 'include',
       });
 
       if (response.ok) {
         const data = await response.json();
-        if (data.user && data.authenticated) {
+        if (data.user && data.session) {
           // Clean up URL
           window.history.replaceState({}, '', '/account/callback');
           // Redirect to profile - any authenticated user can access
@@ -49,13 +49,13 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
         // Session not found, try again in a moment
         setTimeout(async () => {
           try {
-            const retryResponse = await fetch(`${API_BASE}/api/auth/session`, {
+            const retryResponse = await fetch(`${API_BASE}/api/auth/get-session`, {
               credentials: 'include',
             });
 
             if (retryResponse.ok) {
               const retryData = await retryResponse.json();
-              if (retryData.user && retryData.authenticated) {
+              if (retryData.user && retryData.session) {
                 window.location.href = '/account/profile';
               } else {
                 window.location.href = '/login?error=session_failed';

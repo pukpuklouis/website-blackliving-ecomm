@@ -1,6 +1,8 @@
 ---
-import CategoryPageLayout from '../../components/CategoryPageLayout.astro';
+import CategoryPageLayout from '../../layouts/CategoryPageLayout.astro';
 import { getCollection, getEntry } from 'astro:content';
+
+export const prerender = true;
 
 export async function getStaticPaths() {
   const categoriesEntries = await getCollection('categories');

@@ -37,7 +37,7 @@
   },
   "devDependencies": {
     "@cloudflare/vitest-pool-workers": "^0.8.58",
-    "@cloudflare/workers-types": "^4.20250726.0",
+    "@cloudflare/workers-types": "^4.20250816.0",
     "@paralleldrive/cuid2": "^2.2.2",
     "@types/node": "^20.19.9",
     "@typescript-eslint/eslint-plugin": "^8.38.0",

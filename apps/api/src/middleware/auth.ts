@@ -9,9 +9,27 @@ import { AuthInstance } from '@blackliving/auth';
 export function createEnhancedAuthMiddleware(auth: AuthInstance) {
   return async (c: Context, next: Next) => {
     try {
+      // FIXED: More comprehensive IP address extraction for Cloudflare Workers
+      const ip = 
+        c.req.header('cf-connecting-ip') ||
+        c.req.header('x-forwarded-for')?.split(',')[0]?.trim() ||
+        c.req.header('x-real-ip') ||
+        '0.0.0.0'; // Fallback IP instead of 'unknown'
+
+      console.log('Auth middleware - IP detected:', ip);
+
       // Get session using Better Auth's built-in method
+      // FIXED: Don't pass ipAddress parameter to avoid validation issues
       const session = await auth.api.getSession({
         headers: c.req.raw.headers,
+      });
+
+      console.log('Auth middleware - Session result:', {
+        hasSession: !!session?.session,
+        hasUser: !!session?.user,
+        userId: session?.user?.id,
+        userEmail: session?.user?.email,
+        sessionId: session?.session?.id,
       });
 
       // Set user and session in context
@@ -20,15 +38,16 @@ export function createEnhancedAuthMiddleware(auth: AuthInstance) {
 
       // Log authentication events for security monitoring
       if (session?.user) {
-        const ip =
-          c.req.header('cf-connecting-ip') ||
-          c.req.header('x-forwarded-for')?.split(',')[0] ||
-          'unknown';
-
-        console.log(`Authenticated request: user=${session.user.id}, ip=${ip}, path=${c.req.path}`);
+        console.log(`Authenticated request: user=${session.user.id}, email=${session.user.email}, ip=${ip}, path=${c.req.path}`);
+      } else {
+        console.log(`Unauthenticated request: ip=${ip}, path=${c.req.path}`);
       }
     } catch (error) {
-      console.error('Enhanced auth middleware error:', error);
+      console.error('Enhanced auth middleware error:', {
+        message: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined,
+        error: JSON.stringify(error, null, 2),
+      });
       c.set('user', null);
       c.set('session', null);
     }
