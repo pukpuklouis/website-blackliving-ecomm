@@ -64,6 +64,11 @@ app.use(
 
       // Add common allowed origins as fallback
       const fallbackOrigins = [
+        // Development origins
+        'http://localhost:4321', // Web app
+        'http://localhost:5173', // Admin app
+        'http://localhost:8787', // API server
+        // Production origins
         'https://blackliving.com',
         'https://www.blackliving.com', 
         'https://admin.blackliving.com',
@@ -176,17 +181,7 @@ app.post('/api/auth/assign-admin-role', async c => {
 
 // Debug and Development Endpoints
 
-// Session check endpoint - uses Better Auth session validation
-app.get('/api/auth/session', async c => {
-  const user = c.get('user');
-  const session = c.get('session');
-
-  return c.json({
-    user,
-    session,
-    authenticated: !!user,
-  });
-});
+// Session endpoint removed - Better Auth handler provides this automatically
 
 // Debug endpoint to check environment variables
 app.get('/api/auth/debug/env', async c => {
@@ -234,6 +229,55 @@ app.get('/api/auth/debug/config', async c => {
     return c.json(
       {
         error: 'Better Auth config check failed',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      },
+      500
+    );
+  }
+});
+
+// Debug endpoint to test database connection
+app.get('/api/auth/debug/db', async c => {
+  if (c.env.NODE_ENV !== 'development') {
+    return c.json({ error: 'Only available in development' }, 403);
+  }
+
+  try {
+    const db = c.get('db');
+    
+    if (!db) {
+      return c.json({ error: 'Database instance not found' }, 500);
+    }
+
+    // Test raw database connection
+    const rawQuery = "SELECT name FROM sqlite_master WHERE type='table' LIMIT 5";
+    const rawResult = await c.env.DB.prepare(rawQuery).all();
+
+    // Test Drizzle ORM query
+    let drizzleResult;
+    try {
+      const { products } = await import('@blackliving/db');
+      drizzleResult = await db.select().from(products).limit(1);
+    } catch (drizzleError) {
+      drizzleResult = { error: drizzleError.message };
+    }
+
+    return c.json({
+      success: true,
+      hasDB: !!c.env.DB,
+      hasDbInstance: !!db,
+      rawQuery: {
+        query: rawQuery,
+        results: rawResult
+      },
+      drizzleQuery: {
+        results: drizzleResult
+      }
+    });
+  } catch (error) {
+    return c.json(
+      {
+        error: 'Database test failed',
         message: error instanceof Error ? error.message : 'Unknown error',
       },
       500

@@ -1,0 +1,29 @@
+---
+import { BlogPostCard } from '@blackliving/ui/components/ui/blog-post-card';
+
+interface Props {
+  post: {
+    slug: string;
+    title: string;
+    excerpt?: string;
+    description?: string;
+    featuredImage?: string;
+    category: string;
+    readingTime: string;
+    authorName: string;
+    publishedAt: string;
+  };
+  variant?: "vertical" | "horizontal";
+  class?: string;
+}
+
+const { post, variant = "vertical", class: className = '' } = Astro.props;
+---
+
+<div class={className}>
+  <BlogPostCard 
+    post={post} 
+    variant={variant} 
+    client:load 
+  />
+</div>

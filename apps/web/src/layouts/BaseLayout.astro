@@ -4,6 +4,7 @@ import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import FloatingButtons from '../components/FloatingButtons.astro';
 import SEO from '../components/SEO.astro';
+import AnnouncementBar from '../components/AnnouncementBar.astro';
 import { Font } from 'astro:assets';
 import '@blackliving/tailwind-config/styles.css';
 
@@ -55,6 +56,8 @@ const {
     <!-- Google Tag Manager (noscript) -->
     <!-- Add GTM noscript here when ready -->
 
+    <AnnouncementBar />
+    
     <Header />
 
     <main>

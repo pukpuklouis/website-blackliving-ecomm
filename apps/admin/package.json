@@ -4,10 +4,12 @@
   "type": "module",
   "scripts": {
     "build": "react-router build",
+    "build:staging": "react-router build --mode staging",
     "dev": "react-router dev --host --port 5173",
     "start": "react-router-serve ./build/server/index.js",
     "typecheck": "react-router typegen && tsc",
-    "deploy": "wrangler pages deploy build/client --project-name blackliving-admin"
+    "deploy": "wrangler pages deploy build/client --project-name blackliving-admin --branch production",
+    "deploy:staging": "wrangler pages deploy build/client --project-name blackliving-admin --branch staging"
   },
   "dependencies": {
     "@blackliving/auth": "workspace:*",
@@ -19,7 +21,7 @@
     "date-fns": "^4.1.0",
     "isbot": "^5.1.29",
     "lucide-react": "^0.528.0",
-    "novel": "^1.0.2",
+    "novel": "0.4.2",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-hook-form": "^7.61.1",

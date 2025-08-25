@@ -14,8 +14,4 @@ export default {
   },
   verbose: true,
   strict: true,
-  // Ensure migrations work with remote database
-  introspect: {
-    casing: 'snake_case',
-  },
 } satisfies Config;

@@ -23,16 +23,32 @@ export const defaultSecurityConfig: SecurityConfig = {
     limit: 100, // requests per window
   },
   requestSizeLimit: 10 * 1024 * 1024, // 10MB
-  allowedOrigins: [
-    'http://localhost:4321',
-    'http://localhost:5173',
-    'http://localhost:8787',
-    'https://blackliving.com',
-    'https://admin.blackliving.com',
-  ],
+  allowedOrigins: [], // Will be populated from environment variables
   csrfProtection: true,
   suspiciousActivityThreshold: 50,
 };
+
+/**
+ * Get allowed origins from environment variables
+ */
+function getAllowedOrigins(c: Context): string[] {
+  const allowedOrigins = c.env.ALLOWED_ORIGINS;
+  
+  if (!allowedOrigins) {
+    // Fallback for development - include all common dev ports
+    console.warn('ALLOWED_ORIGINS not set, using development fallback');
+    return [
+      'http://localhost:4321',  // Astro web app
+      'http://localhost:5173',  // React admin app  
+      'http://localhost:8787',  // API worker
+    ];
+  }
+
+  return allowedOrigins
+    .split(',')
+    .map((origin: string) => origin.trim())
+    .filter((origin: string) => origin.length > 0);
+}
 
 /**
  * Comprehensive security middleware for API routes
@@ -41,6 +57,9 @@ export function createSecurityMiddleware(config: Partial<SecurityConfig> = {}) {
   const securityConfig = { ...defaultSecurityConfig, ...config };
 
   return async (c: Context, next: Next) => {
+    // Get environment-specific allowed origins
+    const allowedOrigins = getAllowedOrigins(c);
+    securityConfig.allowedOrigins = allowedOrigins;
     const isDevelopment = c.env.NODE_ENV === 'development';
 
     // Define CSP based on environment
@@ -85,6 +104,37 @@ export function createSecurityMiddleware(config: Partial<SecurityConfig> = {}) {
       xFrameOptions: 'DENY',
       xPermittedCrossDomainPolicies: 'none',
       xXssProtection: '1; mode=block',
+      // Explicitly configure Permissions-Policy to avoid unsupported features
+      permissionsPolicy: {
+        accelerometer: [],
+        'ambient-light-sensor': [],
+        autoplay: [],
+        battery: [],
+        camera: [],
+        'display-capture': [],
+        'document-domain': [],
+        'encrypted-media': [],
+        'execution-while-not-rendered': [],
+        'execution-while-out-of-viewport': [],
+        fullscreen: ['self'],
+        geolocation: [],
+        gyroscope: [],
+        'layout-animations': [],
+        'legacy-image-formats': [],
+        magnetometer: [],
+        microphone: [],
+        midi: [],
+        'navigation-override': [],
+        'oversized-images': [],
+        payment: [],
+        'picture-in-picture': [],
+        'publickey-credentials-get': [],
+        'sync-xhr': [],
+        usb: [],
+        'wake-lock': [],
+        xr: [],
+        // Explicitly exclude 'browsing-topics' to avoid browser warnings
+      },
     })(c, next);
 
     // Request size validation
@@ -289,7 +339,7 @@ export function createCSRFMiddleware() {
       throw new HTTPException(403, { message: 'Missing origin/referer header' });
     }
 
-    const allowedOrigins = defaultSecurityConfig.allowedOrigins;
+    const allowedOrigins = getAllowedOrigins(c);
     const isValidOrigin =
       origin &&
       allowedOrigins.some(

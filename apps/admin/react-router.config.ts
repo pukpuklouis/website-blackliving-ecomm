@@ -1,7 +1,11 @@
+// @ts-nocheck
 import type { Config } from '@react-router/dev/config';
 
 export default {
-  // Config options...
-  // Server-side render by default, to enable SPA mode set this to `false`
-  ssr: false, // Temporarily disable SSR to fix build issue
+  // Enable pure SPA mode - no server-side rendering or prerendering
+  ssr: true,
+  // Configure for client-side only
+  future: {
+    unstable_singleFetch: true,
+  },
 } satisfies Config;

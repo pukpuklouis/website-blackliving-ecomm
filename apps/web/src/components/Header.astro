@@ -242,7 +242,7 @@ const menuItems = navigationData?.data.items.sort((a, b) => a.order - b.order) |
     // Debounce scroll events with threshold to prevent back and forth
     let ticking = false;
     let lastScrollTop = 0;
-    const scrollThreshold = 40; // Minimum scroll distance to trigger change
+    const scrollThreshold = 80; // Minimum scroll distance to trigger change
     
     const throttledHandleScroll = () => {
       if (!ticking) {

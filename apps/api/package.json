@@ -4,11 +4,14 @@
   "description": "Black Living API - Cloudflare Workers with Hono",
   "main": "src/index.ts",
   "scripts": {
-    "dev": "wrangler dev --local --port 8787",
+    "dev": "wrangler dev --env development --local --port 8787",
     "dev:staging": "wrangler dev --env staging --local",
     "dev:remote": "wrangler dev",
     "build": "wrangler deploy --dry-run",
-    "deploy": "wrangler deploy",
+    "deploy": "wrangler deploy --name blackliving-api --env production",
+    "deploy:staging": "wrangler deploy --name blackliving-api-staging --env staging",
+    "secret:put": "wrangler secret put BETTER_AUTH_SECRET GOOGLE_CLIENT_ID GOOGLE_CLIENT_SECRET JWT_SECRET --name blackliving-api",
+    "secret:put:staging": "wrangler secret put BETTER_AUTH_SECRET --name blackliving-api-staging",
     "type-check": "tsc --noEmit",
     "lint": "eslint src --ext .ts",
     "test": "vitest run",
@@ -45,6 +48,6 @@
     "tsx": "^4.7.0",
     "typescript": "^5.8.3",
     "vitest": "^3.2.4",
-    "wrangler": "4.26.0"
+    "wrangler": "4.32.0"
   }
 }
