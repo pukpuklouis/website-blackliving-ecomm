@@ -21,7 +21,7 @@
     "date-fns": "^4.1.0",
     "isbot": "^5.1.29",
     "lucide-react": "^0.528.0",
-    "novel": "0.4.2",
+    "novel": "0.4.3",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-hook-form": "^7.61.1",
@@ -31,9 +31,9 @@
     "zod": "^4.0.14"
   },
   "devDependencies": {
+    "@blackliving/tailwind-config": "workspace:*",
     "@playwright/test": "^1.54.1",
     "@react-router/dev": "^7.7.1",
-    "@blackliving/tailwind-config": "workspace:*",
     "@tailwindcss/vite": "^4.1.11",
     "@types/node": "^20.19.9",
     "@types/react": "^19.1.9",

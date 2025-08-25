@@ -66,7 +66,7 @@ import AccountNav from '../../components/AccountNav.astro';
 
   async function checkAuth() {
     try {
-      const response = await fetch(`${API_BASE}/api/auth/session`, {
+      const response = await fetch(`${API_BASE}/api/auth/get-session`, {
         credentials: 'include',
       });
 

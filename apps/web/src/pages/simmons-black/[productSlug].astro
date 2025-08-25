@@ -6,6 +6,8 @@ import ProductDetail from '../../components/ProductDetail.tsx';
 import { getEntry } from 'astro:content';
 import { generateStaticPaths, fetchProduct } from '../../utils/productPaths.ts';
 
+export const prerender = true;
+
 export async function getStaticPaths() {
   return await generateStaticPaths('simmons-black');
 }

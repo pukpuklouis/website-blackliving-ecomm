@@ -40,7 +40,7 @@ const postsRouter = new Hono<{
 
 // Apply auth middleware to all posts routes
 postsRouter.use('*', async (c, next) => {
-  // Use the same session logic as the main app's /api/auth/session endpoint
+  // Use the same session logic as Better Auth's built-in session validation
   try {
     const auth = c.get('auth');
     const cookieHeader = c.req.header('Cookie');

@@ -285,6 +285,27 @@ app.get('/api/auth/debug/db', async c => {
   }
 });
 
+app.get('/api/auth/debug/sessions', async c => {
+  if (c.env.NODE_ENV !== 'development') {
+    return c.json({ error: 'Only available in development' }, 403);
+  }
+
+  try {
+    const db = c.get('db');
+    const { sessions } = await import('@blackliving/db/schema');
+    const allSessions = await db.select().from(sessions);
+    return c.json({ success: true, sessions: allSessions });
+  } catch (error) {
+    return c.json(
+      {
+        error: 'Failed to fetch sessions',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      },
+      500
+    );
+  }
+});
+
 // Debug endpoint for development - force admin login
 app.post('/api/auth/debug/force-admin-login', async c => {
   if (c.env.NODE_ENV !== 'development') {
@@ -356,6 +377,80 @@ app.post('/api/auth/debug/force-admin-login', async c => {
   }
 });
 
+// Enhanced OAuth debugging endpoint
+app.get('/api/auth/debug/oauth-flow', async c => {
+  if (c.env.NODE_ENV !== 'development') {
+    return c.json({ error: 'Only available in development' }, 403);
+  }
+
+  try {
+    const auth = c.get('auth');
+    const db = c.get('db');
+    const { sessions, users, accounts } = await import('@blackliving/db/schema');
+    
+    // Get current session info
+    const currentSession = await auth.api.getSession({
+      headers: c.req.raw.headers,
+    });
+
+    // Get recent database entries
+    const recentSessions = await db.select().from(sessions).orderBy(sessions.createdAt).limit(10);
+    const recentUsers = await db.select().from(users).orderBy(users.createdAt).limit(10);
+    const recentAccounts = await db.select().from(accounts).orderBy(accounts.createdAt).limit(10);
+
+    return c.json({
+      success: true,
+      timestamp: new Date().toISOString(),
+      currentSession: {
+        hasSession: !!currentSession?.session,
+        hasUser: !!currentSession?.user,
+        sessionId: currentSession?.session?.id,
+        userId: currentSession?.user?.id,
+        userEmail: currentSession?.user?.email,
+      },
+      authConfig: {
+        baseURL: auth.options?.baseURL,
+        hasGoogleProvider: !!auth.options?.socialProviders?.google,
+        googleClientId: auth.options?.socialProviders?.google?.clientId?.substring(0, 10) + '...',
+        trustedOrigins: auth.options?.trustedOrigins,
+      },
+      database: {
+        sessionsCount: recentSessions.length,
+        usersCount: recentUsers.length,
+        accountsCount: recentAccounts.length,
+        recentSessions: recentSessions.map(s => ({
+          id: s.id,
+          userId: s.userId,
+          ipAddress: s.ipAddress,
+          userAgent: s.userAgent,
+          createdAt: s.createdAt,
+        })),
+        recentUsers: recentUsers.map(u => ({
+          id: u.id,
+          email: u.email,
+          name: u.name,
+          role: u.role,
+          createdAt: u.createdAt,
+        })),
+        recentAccounts: recentAccounts.map(a => ({
+          id: a.id,
+          userId: a.userId,
+          provider: a.provider,
+          providerAccountId: a.providerAccountId,
+          createdAt: a.createdAt,
+        })),
+      }
+    });
+  } catch (error) {
+    console.error('OAuth debug error:', error);
+    return c.json({
+      error: 'OAuth debug failed',
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+    }, 500);
+  }
+});
+
 // Security Layer 6: Disabled temporarily
 
 // Better Auth integration - handles all remaining /api/auth/* routes
@@ -364,8 +459,32 @@ app.all('/api/auth/*', async c => {
   try {
     const auth = c.get('auth');
 
+    console.log('🔄 Better Auth Handler Called:', {
+      method: c.req.method,
+      path: c.req.path,
+      url: c.req.url,
+      headers: {
+        cookie: c.req.header('cookie'),
+        origin: c.req.header('origin'),
+        referer: c.req.header('referer'),
+        userAgent: c.req.header('user-agent')?.substring(0, 50) + '...',
+      },
+      timestamp: new Date().toISOString(),
+    });
+
     // Better Auth expects a standard Request object
-    return auth.handler(c.req.raw);
+    const response = await auth.handler(c.req.raw);
+    
+    // Log response details for debugging
+    console.log('📤 Better Auth Response:', {
+      status: response.status,
+      statusText: response.statusText,
+      headers: Object.fromEntries(response.headers.entries()),
+      hasCookies: response.headers.has('set-cookie'),
+      cookies: response.headers.get('set-cookie'),
+    });
+
+    return response;
   } catch (error) {
     console.error('Better Auth handler error:', error);
     return c.json(
