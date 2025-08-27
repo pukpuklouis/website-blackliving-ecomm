@@ -23,7 +23,8 @@
     "test:runner": "tsx tests/test-runner.ts",
     "test:db": "vitest run tests/db-utils.test.ts",
     "test:seed": "vitest run tests/seed-data.test.ts",
-    "test:verbose": "VERBOSE=true vitest run"
+    "test:verbose": "VERBOSE=true vitest run",
+    "test:profile": "vitest run src/routes/__tests__/customer-profile.test.ts"
   },
   "dependencies": {
     "@blackliving/auth": "workspace:*",

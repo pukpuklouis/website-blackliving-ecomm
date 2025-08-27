@@ -7,6 +7,16 @@ import { requireAuth, requireCustomer, requireRole } from '../middleware/auth';
 import { cacheMiddleware, setCacheHeaders } from '../middleware/cache';
 import { customerAddresses } from '@blackliving/db/schema';
 import { eq, and, desc } from 'drizzle-orm';
+import type {
+  ApiResponse,
+  BasicProfile,
+  ExtendedProfile,
+  ProfileAnalytics,
+  CustomerAddress,
+  ProfileUpdateRequest,
+  AddressCreateRequest
+} from '@blackliving/types/profile';
+import { createId } from '@paralleldrive/cuid2';
 
 // Validation schemas
 const updateProfileSchema = z.object({
@@ -91,6 +101,43 @@ function createProfileService(c: any) {
   return CustomerProfileService.create(c.env.DB);
 }
 
+// Helper function to create consistent ETags based on data hash instead of timestamp
+function generateETag(data: any, userId: string): string {
+  const hash = JSON.stringify(data).split('').reduce((a, b) => {
+    a = (a << 5) - a + b.charCodeAt(0);
+    return a & a;
+  }, 0);
+  return `"${userId}-${Math.abs(hash)}"`;
+}
+
+// Helper function for production logging
+function logRequest(c: any, action: string, details?: any) {
+  const requestId = c.req.header('x-request-id') || createId();
+  const userId = c.get('user')?.id;
+  const timestamp = new Date().toISOString();
+  
+  console.log(JSON.stringify({
+    timestamp,
+    requestId,
+    userId,
+    action,
+    details,
+    userAgent: c.req.header('user-agent'),
+    ip: c.req.header('cf-connecting-ip') || c.req.header('x-forwarded-for')
+  }));
+  
+  return requestId;
+}
+
+// Helper function for error response
+function createErrorResponse(message: string, code = 'INTERNAL_ERROR', status = 500): ApiResponse {
+  return {
+    success: false,
+    error: message,
+    timestamp: new Date().toISOString()
+  };
+}
+
 // Helper function to create database instance
 function createDB(c: any) {
   const { createDB } = require('@blackliving/db');
@@ -110,6 +157,7 @@ app.get(
   requireRole(['customer', 'admin']),
   cacheMiddleware({ ttl: 300 }), // 5 minute cache
   async c => {
+    const requestId = logRequest(c, 'GET_BASIC_PROFILE');
     try {
       const userId = c.get('user').id;
 
@@ -117,19 +165,26 @@ app.get(
       const profile = await service.getBasicProfile(userId);
 
       if (!profile) {
-        return c.json({ error: 'Profile not found' }, 404);
+        logRequest(c, 'PROFILE_NOT_FOUND', { userId, requestId });
+        return c.json(createErrorResponse('Profile not found', 'PROFILE_NOT_FOUND'), 404);
       }
 
-      // Set cache headers for client-side caching
-      setCacheHeaders(c, { maxAge: 300, etag: `profile-${userId}-${Date.now()}` });
+      // Generate consistent ETag based on profile data
+      const etag = generateETag(profile, userId);
+      setCacheHeaders(c, { maxAge: 300, etag });
+
+      logRequest(c, 'PROFILE_FETCHED_SUCCESS', { userId, requestId, cacheHit: false });
 
       return c.json({
         success: true,
         data: profile,
+        timestamp: new Date().toISOString(),
+        requestId
       });
     } catch (error) {
-      console.error('Error fetching profile:', error);
-      return c.json({ error: 'Internal server error' }, 500);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      logRequest(c, 'PROFILE_FETCH_ERROR', { error: errorMessage, requestId });
+      return c.json(createErrorResponse('Failed to fetch profile'), 500);
     }
   }
 );
@@ -252,26 +307,53 @@ app.patch(
   requireRole(['customer', 'admin']),
   zValidator('json', updateProfileSchema),
   async c => {
+    const requestId = logRequest(c, 'UPDATE_PROFILE_START');
     try {
       const userId = c.get('user').id;
       const updateData = c.req.valid('json');
+      
+      logRequest(c, 'UPDATE_PROFILE_DATA', { userId, updateData: Object.keys(updateData), requestId });
 
       const service = createProfileService(c);
+      
+      // Get current profile for comparison
+      const beforeProfile = await service.getBasicProfile(userId);
+      
       const result = await service.updateBasicInfo(userId, updateData);
 
       // Clear user's cache after update
       const cacheKeys = [`profile:${userId}`, `full-profile:${userId}`, `analytics:${userId}`];
-
-      await Promise.all(cacheKeys.map(key => c.env.CACHE.delete(key)));
+      const cacheDelResults = await Promise.allSettled(cacheKeys.map(key => c.env.CACHE.delete(key)));
+      
+      // Log cache deletion results
+      cacheDelResults.forEach((result, index) => {
+        if (result.status === 'rejected') {
+          logRequest(c, 'CACHE_DELETE_ERROR', { key: cacheKeys[index], error: result.reason, requestId });
+        }
+      });
+      
+      // Get updated profile to verify changes
+      const afterProfile = await service.getBasicProfile(userId);
+      
+      logRequest(c, 'UPDATE_PROFILE_SUCCESS', { 
+        userId, 
+        requestId,
+        changedFields: Object.keys(updateData),
+        beforeData: beforeProfile ? { name: beforeProfile.name, phone: beforeProfile.phone } : null,
+        afterData: afterProfile ? { name: afterProfile.name, phone: afterProfile.phone } : null
+      });
 
       return c.json({
         success: true,
         data: result,
         message: 'Profile updated successfully',
+        timestamp: new Date().toISOString(),
+        requestId
       });
     } catch (error) {
-      console.error('Error updating profile:', error);
-      return c.json({ error: 'Internal server error' }, 500);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      logRequest(c, 'UPDATE_PROFILE_ERROR', { error: errorMessage, requestId });
+      return c.json(createErrorResponse('Failed to update profile'), 500);
     }
   }
 );
@@ -607,7 +689,6 @@ app.post(
       const db = createDB(c);
 
       const now = new Date();
-      const addressId = crypto.randomUUID();
 
       // If setting as default, remove default from other addresses
       if (addressData.isDefault) {
@@ -621,7 +702,6 @@ app.post(
       const [newAddress] = await db
         .insert(customerAddresses)
         .values({
-          id: addressId,
           userId,
           type: addressData.type,
           label: addressData.label,
