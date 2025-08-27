@@ -29,6 +29,7 @@ export * from './components/ui/toggle';
 export * from './components/ui/toggle-group';
 export * from './components/ui/drawer';
 export * from './components/ui/dialog';
+export * from './components/ui/alert';
 export * from './components/ui/alert-dialog';
 export * from './components/ui/carousel';
 export * from './components/ui/textarea';
@@ -46,6 +47,5 @@ export * from './components/ui/blog-post-card';
 // Export utilities
 export * from './lib/utils';
 
-// Export hooks
-export * from './hooks/use-toast';
+// Export hooks (only shared ones)
 export * from './hooks/use-mobile';

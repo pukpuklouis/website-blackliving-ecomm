@@ -23,6 +23,9 @@ export interface BasicProfileData {
   image: string | null;
   preferences: any;
   role: string | null;
+  birthday: string | null;
+  gender: string | null;
+  contactPreference: string | null;
 }
 
 export interface FullProfileData extends BasicProfileData {
@@ -91,14 +94,20 @@ export class CustomerProfileService {
       const result = await this.db
         .select({
           id: users.id,
-          name: users.name,
+          // Prioritize customerProfile name, fallback to user name
+          name: sql<string>`COALESCE(${customerProfiles.name}, ${users.name})`,
           email: users.email,
-          phone: users.phone,
+          // Prioritize customerProfile phone, fallback to user phone
+          phone: sql<string>`COALESCE(${customerProfiles.phone}, ${users.phone})`,
           image: users.image,
           preferences: users.preferences,
           role: users.role,
+          birthday: customerProfiles.birthday,
+          gender: customerProfiles.gender,
+          contactPreference: customerProfiles.contactPreference,
         })
         .from(users)
+        .leftJoin(customerProfiles, eq(users.id, customerProfiles.userId))
         .where(eq(users.id, userId))
         .limit(1);
 
@@ -402,48 +411,53 @@ export class CustomerProfileService {
     try {
       const batchOperations = [];
 
-      // Prepare user table update
-      const userUpdate: any = {
-        updatedAt: new Date(),
-      };
-
+      // Prepare user table update (for short-term sync)
+      const userUpdate: any = { updatedAt: new Date() };
       if (data.name !== undefined) userUpdate.name = data.name;
       if (data.phone !== undefined) userUpdate.phone = data.phone;
-      if (data.preferences !== undefined) userUpdate.preferences = data.preferences;
-
       if (Object.keys(userUpdate).length > 1) {
-        // More than just updatedAt
         batchOperations.push(this.db.update(users).set(userUpdate).where(eq(users.id, userId)));
       }
 
-      // Prepare customer profile table update
-      const profileUpdate: any = {
+      // Prepare customer profile upsert
+      const profileExists = await this.hasExtendedProfile(userId);
+      
+      const profileData: any = {
+        ...data,
         updatedAt: new Date(),
       };
 
-      if (data.name !== undefined) profileUpdate.name = data.name;
-      if (data.phone !== undefined) profileUpdate.phone = data.phone;
-      if (data.birthday !== undefined) profileUpdate.birthday = data.birthday;
-      if (data.gender !== undefined) profileUpdate.gender = data.gender;
-      if (data.contactPreference !== undefined)
-        profileUpdate.contactPreference = data.contactPreference;
-      if (data.notes !== undefined) profileUpdate.notes = data.notes;
-
-      // Only update profile if it exists and we have updates
-      if (Object.keys(profileUpdate).length > 1) {
-        // More than just updatedAt
-        const profileExists = await this.hasExtendedProfile(userId);
-        if (profileExists) {
-          batchOperations.push(
-            this.db
-              .update(customerProfiles)
-              .set(profileUpdate)
-              .where(eq(customerProfiles.userId, userId))
-          );
+      if (profileExists) {
+        batchOperations.push(
+          this.db
+            .update(customerProfiles)
+            .set(profileData)
+            .where(eq(customerProfiles.userId, userId))
+        );
+      } else {
+        // Create the profile if it doesn't exist
+        const user = await this.db.select({ email: users.email, name: users.name, phone: users.phone }).from(users).where(eq(users.id, userId)).limit(1);
+        if (user[0]) {
+            const newProfile = {
+                id: createId(),
+                userId: userId,
+                customerNumber: await this.generateCustomerNumber(),
+                email: user[0].email,
+                name: data.name || user[0].name,
+                phone: data.phone || user[0].phone,
+                birthday: data.birthday,
+                gender: data.gender,
+                contactPreference: data.contactPreference,
+                notes: data.notes,
+                source: 'existing_user',
+                segment: 'customer',
+                createdAt: new Date(),
+                updatedAt: new Date(),
+            };
+            batchOperations.push(this.db.insert(customerProfiles).values(newProfile));
         }
       }
 
-      // Execute batch operations atomically
       if (batchOperations.length > 0) {
         await this.db.batch(batchOperations);
       }

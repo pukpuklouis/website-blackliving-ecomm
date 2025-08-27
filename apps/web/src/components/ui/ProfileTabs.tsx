@@ -1,345 +1,85 @@
-import React from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@blackliving/ui';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@blackliving/ui';
-import { Button } from '@blackliving/ui';
-import { Input } from '@blackliving/ui';
-import { Label } from '@blackliving/ui';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@blackliving/ui';
-import { Badge } from '@blackliving/ui';
+import React, { useState, useEffect } from 'react';
+import { 
+  Tabs, 
+  TabsContent, 
+  TabsList, 
+  TabsTrigger,
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  Button,
+  Badge,
+  Alert,
+  AlertDescription
+} from '@blackliving/ui';
+import { ProfileForm } from '../profile/ProfileForm';
+import { AddressManager } from '../profile/AddressManager';
+import { PasswordModal } from '../profile/PasswordModal';
+import { ProfileAnalytics } from '../profile/ProfileAnalytics';
+import { AppointmentsManager } from '../profile/AppointmentsManager';
 
 interface ProfileTabsProps {
   className?: string;
 }
 
-export default function ProfileTabs({ className }: ProfileTabsProps) {
-  return (
-    <Tabs defaultValue="profile" className={`space-y-6 ${className || ''}`}>
-      <TabsList className="grid w-full grid-cols-4">
-        <TabsTrigger value="profile">基本資料</TabsTrigger>
-        <TabsTrigger value="addresses">地址管理</TabsTrigger>
-        <TabsTrigger value="payment">付款方式</TabsTrigger>
-        <TabsTrigger value="security">安全設定</TabsTrigger>
-      </TabsList>
+function ProfileTabs({ className }: ProfileTabsProps) {
+  const [mounted, setMounted] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
-      <TabsContent value="profile" className="space-y-6">
-        <Card>
-          <CardHeader>
-            <div className="flex justify-between items-center">
-              <div>
-                <CardTitle>基本資料</CardTitle>
-                <CardDescription>管理您的個人基本資訊</CardDescription>
-              </div>
-              <Badge
-                id="sync-indicator"
-                variant="secondary"
-                className="text-green-600 bg-green-50 border-green-200 hidden"
-              >
-                <span className="inline-block w-2 h-2 bg-green-500 rounded-full mr-2"></span>
-                已同步
-              </Badge>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div id="loading" className="text-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-              <p className="mt-4 text-muted-foreground">載入中...</p>
-            </div>
+  // Client-side hydration safety
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
-            <div id="not-authenticated" className="text-center py-12 hidden">
-              <p className="text-muted-foreground mb-4">請先登入您的帳號</p>
-              <Button asChild>
-                <a href="/login">前往登入</a>
-              </Button>
-            </div>
+  // Message handlers
+  const handleError = (error: string) => {
+    setErrorMessage(error);
+    setTimeout(() => setErrorMessage(''), 5000);
+  };
 
-            <form id="profile-form" className="space-y-6 hidden">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <Label htmlFor="name">姓名 *</Label>
-                  <Input id="name" name="name" type="text" required placeholder="請輸入您的姓名" />
-                  <div id="name-error" className="text-sm text-destructive hidden"></div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="email">電子郵件</Label>
-                  <Input id="email" name="email" type="email" disabled className="bg-muted" />
-                  <div id="email-error" className="text-sm text-destructive hidden"></div>
-                  <p className="text-xs text-muted-foreground">電子郵件地址無法修改</p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <Label htmlFor="phone">手機號碼</Label>
-                  <Input
-                    id="phone"
-                    name="phone"
-                    type="tel"
-                    placeholder="0912345678"
-                    maxLength={10}
-                  />
-                  <div id="phone-error" className="text-sm text-destructive hidden"></div>
-                  <p className="text-xs text-muted-foreground">台灣手機號碼格式：09xxxxxxxx</p>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="birthday">生日</Label>
-                  <Input id="birthday" name="birthday" type="date" />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <Label htmlFor="gender">性別</Label>
-                  <Select name="gender">
-                    <SelectTrigger id="gender">
-                      <SelectValue placeholder="請選擇性別" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="male">男性</SelectItem>
-                      <SelectItem value="female">女性</SelectItem>
-                      <SelectItem value="other">其他</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="contactPreference">聯絡偏好</Label>
-                  <Select name="contactPreference">
-                    <SelectTrigger id="contactPreference">
-                      <SelectValue placeholder="選擇聯絡方式" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="email">電子郵件</SelectItem>
-                      <SelectItem value="phone">電話</SelectItem>
-                      <SelectItem value="sms">簡訊</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div id="message" className="hidden p-4 rounded-lg border"></div>
-
-              <div className="flex gap-3 pt-4">
-                <Button type="submit" id="update-btn" className="flex items-center gap-2">
-                  <span id="update-text">更新資料</span>
-                  <div
-                    id="update-spinner"
-                    className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin hidden"
-                  ></div>
-                </Button>
-                <Button type="button" id="reset-btn" variant="outline">
-                  重設
-                </Button>
-              </div>
-            </form>
-          </CardContent>
-        </Card>
-      </TabsContent>
-
-      {/* Address Management Tab */}
-      <TabsContent value="addresses" className="space-y-6">
-        <Card>
-          <CardHeader>
-            <div className="flex justify-between items-center">
-              <div>
-                <CardTitle>地址管理</CardTitle>
-                <CardDescription>管理您的收貨地址與帳單地址</CardDescription>
-              </div>
-              <Button id="add-address-btn">
-                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M12 4v16m8-8H4"
-                  ></path>
-                </svg>
-                新增地址
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div id="addresses-loading" className="text-center py-8">
-              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mx-auto"></div>
-              <p className="mt-2 text-sm text-muted-foreground">載入地址中...</p>
-            </div>
-
-            <div id="addresses-empty" className="text-center py-12 text-muted-foreground hidden">
-              <svg
-                className="w-12 h-12 mx-auto mb-4 opacity-50"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                ></path>
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                ></path>
-              </svg>
-              <p>尚未新增任何地址</p>
-              <p className="text-sm">新增地址以便快速結帳</p>
-            </div>
-
-            <div id="addresses-list" className="space-y-4 hidden">
-              {/* Addresses will be populated here */}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Address Form Modal */}
-        <div
-          id="address-modal"
-          className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center hidden"
-        >
-          <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-4">
-              <h3 id="address-modal-title" className="text-lg font-semibold">
-                新增地址
-              </h3>
-              <Button id="close-address-modal" variant="ghost" className="p-2">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M6 18L18 6M6 6l12 12"
-                  ></path>
-                </svg>
-              </Button>
-            </div>
-
-            <form id="address-form" className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="address-name">收件人姓名 *</Label>
-                  <Input
-                    id="address-name"
-                    name="name"
-                    type="text"
-                    required
-                    placeholder="請輸入收件人姓名"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="address-phone">聯絡電話 *</Label>
-                  <Input
-                    id="address-phone"
-                    name="phone"
-                    type="tel"
-                    required
-                    placeholder="0912345678"
-                    maxLength={10}
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="address-city">縣市 *</Label>
-                  <Select name="city">
-                    <SelectTrigger id="address-city">
-                      <SelectValue placeholder="選擇縣市" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="台北市">台北市</SelectItem>
-                      <SelectItem value="新北市">新北市</SelectItem>
-                      <SelectItem value="桃園市">桃園市</SelectItem>
-                      <SelectItem value="台中市">台中市</SelectItem>
-                      <SelectItem value="台南市">台南市</SelectItem>
-                      <SelectItem value="高雄市">高雄市</SelectItem>
-                      <SelectItem value="基隆市">基隆市</SelectItem>
-                      <SelectItem value="新竹市">新竹市</SelectItem>
-                      <SelectItem value="嘉義市">嘉義市</SelectItem>
-                      <SelectItem value="新竹縣">新竹縣</SelectItem>
-                      <SelectItem value="苗栗縣">苗栗縣</SelectItem>
-                      <SelectItem value="彰化縣">彰化縣</SelectItem>
-                      <SelectItem value="南投縣">南投縣</SelectItem>
-                      <SelectItem value="雲林縣">雲林縣</SelectItem>
-                      <SelectItem value="嘉義縣">嘉義縣</SelectItem>
-                      <SelectItem value="屏東縣">屏東縣</SelectItem>
-                      <SelectItem value="宜蘭縣">宜蘭縣</SelectItem>
-                      <SelectItem value="花蓮縣">花蓮縣</SelectItem>
-                      <SelectItem value="台東縣">台東縣</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="address-district">區域 *</Label>
-                  <Input
-                    id="address-district"
-                    name="district"
-                    type="text"
-                    required
-                    placeholder="例：中正區"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="address-postal">郵遞區號</Label>
-                  <Input
-                    id="address-postal"
-                    name="postalCode"
-                    type="text"
-                    placeholder="例：100"
-                    maxLength={5}
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="address-street">詳細地址 *</Label>
-                <Input
-                  id="address-street"
-                  name="street"
-                  type="text"
-                  required
-                  placeholder="請輸入詳細地址（路段、巷弄、號碼）"
-                />
-              </div>
-
-              <div className="flex items-center space-x-2">
-                <input type="checkbox" id="address-default" name="isDefault" className="w-4 h-4" />
-                <Label htmlFor="address-default" className="text-sm">
-                  設為預設地址
-                </Label>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="address-notes">備註</Label>
-                <Input
-                  id="address-notes"
-                  name="notes"
-                  type="text"
-                  placeholder="例：公司地址、住家門口有管理員"
-                />
-              </div>
-
-              <div id="address-form-message" className="hidden p-3 rounded border text-sm"></div>
-
-              <div className="flex gap-3 pt-4">
-                <Button type="submit" id="save-address-btn" className="flex-1">
-                  <span id="save-address-text">儲存地址</span>
-                  <div
-                    id="save-address-spinner"
-                    className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin ml-2 hidden"
-                  ></div>
-                </Button>
-                <Button type="button" id="cancel-address-btn" variant="outline">
-                  取消
-                </Button>
-              </div>
-            </form>
-          </div>
+  // Show loading state during hydration
+  if (!mounted) {
+    return (
+      <div className={`space-y-6 ${className || ''}`}>
+        <div className="flex items-center justify-center py-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+          <span className="ml-3">載入中...</span>
         </div>
-      </TabsContent>
+      </div>
+    );
+  }
+
+  return (
+    <div className={`space-y-6 ${className || ''}`}>
+      {/* Global Messages */}
+      {errorMessage && (
+        <Alert variant="destructive">
+          <AlertDescription>{errorMessage}</AlertDescription>
+        </Alert>
+      )}
+
+      <Tabs defaultValue="profile" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-5">
+          <TabsTrigger value="profile">基本資料</TabsTrigger>
+          <TabsTrigger value="addresses">地址管理</TabsTrigger>
+          <TabsTrigger value="analytics">購買分析</TabsTrigger>
+          <TabsTrigger value="payment">付款方式</TabsTrigger>
+          <TabsTrigger value="security">安全設定</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="profile">
+          <ProfileForm onError={handleError} />
+        </TabsContent>
+
+        <TabsContent value="addresses">
+          <AddressManager onError={handleError} />
+        </TabsContent>
+
+        <TabsContent value="analytics">
+          <ProfileAnalytics />
+        </TabsContent>
 
       {/* Payment Methods Tab */}
       <TabsContent value="payment" className="space-y-6">
@@ -558,24 +298,21 @@ export default function ProfileTabs({ className }: ProfileTabsProps) {
         </Card>
       </TabsContent>
 
-      {/* Security Settings Tab */}
-      <TabsContent value="security" className="space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>安全設定</CardTitle>
-            <CardDescription>管理您的帳號安全與登入設定</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="space-y-4">
-              <div className="flex items-center justify-between p-4 border rounded-lg">
-                <div>
-                  <h4 className="font-medium">變更密碼</h4>
-                  <p className="text-sm text-muted-foreground">更新您的帳號密碼</p>
+        <TabsContent value="security" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>安全設定</CardTitle>
+              <CardDescription>管理您的帳號安全與登入設定</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between p-4 border rounded-lg">
+                  <div>
+                    <h4 className="font-medium">變更密碼</h4>
+                    <p className="text-sm text-muted-foreground">更新您的帳號密碼</p>
+                  </div>
+                  <PasswordModal onError={handleError} />
                 </div>
-                <Button variant="outline" id="change-password-btn">
-                  變更密碼
-                </Button>
-              </div>
 
               <div className="flex items-center justify-between p-4 border rounded-lg">
                 <div className="flex items-center space-x-3">
@@ -634,85 +371,10 @@ export default function ProfileTabs({ className }: ProfileTabsProps) {
             </div>
           </CardContent>
         </Card>
-
-        {/* Change Password Modal */}
-        <div
-          id="password-modal"
-          className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center hidden"
-        >
-          <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold">變更密碼</h3>
-              <Button id="close-password-modal" variant="ghost" className="p-2">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M6 18L18 6M6 6l12 12"
-                  ></path>
-                </svg>
-              </Button>
-            </div>
-
-            <form id="password-form" className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="current-password">目前密碼 *</Label>
-                <Input
-                  id="current-password"
-                  name="currentPassword"
-                  type="password"
-                  required
-                  placeholder="請輸入目前密碼"
-                />
-                <div id="current-password-error" className="text-sm text-destructive hidden"></div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="new-password">新密碼 *</Label>
-                <Input
-                  id="new-password"
-                  name="newPassword"
-                  type="password"
-                  required
-                  placeholder="請輸入新密碼"
-                />
-                <div id="new-password-error" className="text-sm text-destructive hidden"></div>
-                <p className="text-xs text-muted-foreground">
-                  密碼須包含至少 8 個字符，包括大小寫字母和數字
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="confirm-password">確認新密碼 *</Label>
-                <Input
-                  id="confirm-password"
-                  name="confirmPassword"
-                  type="password"
-                  required
-                  placeholder="請再次輸入新密碼"
-                />
-                <div id="confirm-password-error" className="text-sm text-destructive hidden"></div>
-              </div>
-
-              <div id="password-form-message" className="hidden p-3 rounded border text-sm"></div>
-
-              <div className="flex gap-3 pt-4">
-                <Button type="submit" id="save-password-btn" className="flex-1">
-                  <span id="save-password-text">更新密碼</span>
-                  <div
-                    id="save-password-spinner"
-                    className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin ml-2 hidden"
-                  ></div>
-                </Button>
-                <Button type="button" id="cancel-password-btn" variant="outline">
-                  取消
-                </Button>
-              </div>
-            </form>
-          </div>
-        </div>
-      </TabsContent>
-    </Tabs>
+        </TabsContent>
+      </Tabs>
+    </div>
   );
 }
+
+export default ProfileTabs;
