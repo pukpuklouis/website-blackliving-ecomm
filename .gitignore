@@ -92,3 +92,6 @@ research/*/*
 
 # claude  command
 .claude/*/*    
+
+# gemini
+.gemini/*/*
