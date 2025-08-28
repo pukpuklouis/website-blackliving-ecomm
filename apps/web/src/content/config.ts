@@ -80,10 +80,22 @@ const categories = defineCollection({
   }),
 });
 
+const pages = defineCollection({
+  type: 'content',
+  schema: z.object({
+    title: z.string(),
+    description: z.string(),
+    seoTitle: z.string().optional(),
+    seoDescription: z.string().optional(),
+    lastUpdated: z.date().optional(),
+  }),
+});
+
 export const collections = {
   posts,
   products,
   'hero-slider': heroSlider,
   navigation,
   categories,
+  pages,
 };
