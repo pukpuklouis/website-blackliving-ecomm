@@ -14,7 +14,7 @@ const { Content } = await aboutPage.render();
   type='website'
 >
   <!-- Hero Section -->
-  <section class='py-16 bg-gradient-to-r from-gray-900 to-black text-white'>
+  <section class='theme-web-blackliving py-16 bg-gradient-to-r from-gray-900 to-black text-white'>
     <div class='container mx-auto px-4 text-center'>
       <h1 class='text-5xl font-bold mb-6'>關於 Black Living 黑哥家居</h1>
       <p class='text-xl opacity-90 max-w-3xl mx-auto'>
@@ -24,9 +24,9 @@ const { Content } = await aboutPage.render();
   </section>
 
   <!-- Content from Markdown -->
-  <section class='py-16 bg-white'>
+  <section class='theme-web-blackliving py-16 bg-white'>
     <div class='container mx-auto px-4'>
-      <div class='max-w-4xl mx-auto prose prose-lg prose-gray max-w-none'>
+      <div class='mx-auto prose prose-base lg:prose-lg prose-h1:text-gray-700 prose-h2:text-gray-700 prose-h3:text-gray-700 prose-h4:text-gray-700 prose-h5:text-gray-700 prose-h6:text-gray-700 prose-li:text-lg prose-li:text-gray-700  prose-a:text-sky-700 prose-a:no-underline prose-a:hover:text-brand-dark prose-a:hover:no-underline prose-a:hover:opacity-80 prose-strong:text-gray-700  prose-p:text-lg prose-p:text-gray-700 prose-p:leading-relaxed prose-th:bg-[var(--primary)] prose-th:text-white prose-th:text-lg prose-th:font-semibold prose-th:text-center prose-th:p-4 prose-th:border-b prose-th:border-gray-200 prose-td:text-gray-700 prose-td:text-lg prose-td:p-4 prose-td:border-b prose-td:border-gray-200 prose-td:text-center'>
         <Content />
       </div>
     </div>

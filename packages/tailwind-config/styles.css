@@ -2,6 +2,8 @@
 @import 'tailwindcss';
 @import './theme.css';
 @import "tw-animate-css";
+@plugin "@tailwindcss/typography";
+/* @config "./tailwind.config.js"; */
 
 @custom-variant dark (&:is(.dark *));
 
@@ -41,6 +43,26 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+
+  /* Typography plugin CSS variables for better dark mode integration */
+  --color-prose-body: var(--color-foreground);
+  --color-prose-headings: var(--color-foreground);
+  --color-prose-lead: var(--color-muted-foreground);
+  --color-prose-links: var(--color-primary);
+  --color-prose-bold: var(--color-foreground);
+  --color-prose-counters: var(--color-muted-foreground);
+  --color-prose-bullets: var(--color-muted-foreground);
+  --color-prose-hr: var(--color-border);
+  --color-prose-quotes: var(--color-muted-foreground);
+  --color-prose-quote-borders: var(--color-border);
+  --color-prose-captions: var(--color-muted-foreground);
+  --color-prose-kbd: var(--color-muted-foreground);
+  --color-prose-kbd-shadows: var(--color-primary);
+  --color-prose-code: var(--color-accent-foreground);
+  --color-prose-pre-code: var(--color-muted);
+  --color-prose-pre-bg: var(--color-muted);
+  --color-prose-th-borders: var(--color-border);
+  --color-prose-td-borders: var(--color-border);
 }
 
 @layer base {
@@ -52,94 +74,28 @@
   }
 }
 
-/* Blog-specific styles */
+/* Blog-specific styles - Enhanced with Typography Plugin */
 .blog {
-  /* Enhanced blog content styling */
+  /* Use prose classes for better typography */
   .blog-content {
-    /* Typography improvements */
-    & h1, & h2, & h3, & h4, & h5, & h6 {
-      @apply scroll-mt-20 font-bold leading-tight;
-      margin-top: theme('spacing.8');
-      margin-bottom: theme('spacing.4');
+    /* Add scroll margin for headings - this enhances the prose plugin */
+    & :is(h1, h2, h3, h4, h5, h6) {
+      @apply scroll-mt-20;
     }
 
-    & h1 { @apply text-4xl; }
-    & h2 { @apply text-3xl; }
-    & h3 { @apply text-2xl; }
-    & h4 { @apply text-xl; }
-    & h5 { @apply text-lg; }
-    & h6 { @apply text-base; }
-
-    & p {
-      @apply mb-6 leading-relaxed text-gray-700;
+    /* Enhanced selection styling */
+    & ::selection {
+      @apply bg-primary/20 text-primary-foreground;
     }
 
-    /* Enhanced links */
-    & a {
-      @apply text-blue-600 hover:text-blue-800 underline decoration-blue-200 hover:decoration-blue-400 decoration-2 underline-offset-2 transition-colors;
+    /* Better focus styles for accessibility */
+    & a:focus {
+      @apply outline-2 outline-primary outline-offset-2;
     }
 
-    /* Lists styling */
-    & ul, & ol {
-      @apply mb-6 pl-6;
-    }
-
-    & ul {
-      @apply list-disc;
-    }
-
-    & ol {
-      @apply list-decimal;
-    }
-
-    & li {
-      @apply mb-2;
-    }
-
-    /* Blockquotes */
-    & blockquote {
-      @apply border-l-4 border-blue-200 bg-blue-50 pl-6 py-4 mb-6 italic text-gray-800;
-    }
-
-    /* Code blocks */
-    & pre {
-      @apply bg-gray-900 text-gray-100 rounded-lg p-4 mb-6 overflow-x-auto;
-    }
-
-    & code {
-      @apply bg-gray-100 text-gray-800 px-2 py-1 text-sm rounded;
-    }
-
-    & pre code {
-      @apply bg-transparent text-gray-100 px-0 py-0;
-    }
-
-    /* Tables */
-    & table {
-      @apply w-full mb-6 border-collapse;
-    }
-
-    & th, & td {
-      @apply border border-gray-300 px-4 py-2 text-left;
-    }
-
-    & th {
-      @apply bg-gray-100 font-semibold;
-    }
-
-    /* Images */
-    & img {
-      @apply rounded-lg shadow-md mb-6 max-w-full h-auto;
-    }
-
-    /* Horizontal rules */
-    & hr {
-      @apply border-t border-gray-300 my-8;
-    }
-
-    /* Enhanced first paragraph */
-    & > p:first-of-type {
-      @apply text-lg font-medium text-gray-800 leading-relaxed;
+    /* Better spacing for nested lists */
+    & :is(ul, ol) :is(ul, ol) {
+      @apply mt-2 mb-2;
     }
   }
 
@@ -164,30 +120,4 @@
     @apply transition-all duration-300 hover:transform hover:scale-105;
   }
 
-  /* Reading experience enhancements */
-  .blog-content {
-    /* Better text selection */
-    & ::selection {
-      @apply bg-blue-200 text-blue-900;
-    }
-
-    /* Improved focus styles for accessibility */
-    & a:focus {
-      @apply outline-2 outline-blue-500 outline-offset-2;
-    }
-
-    /* Better spacing for nested lists */
-    & ul ul, & ul ol, & ol ul, & ol ol {
-      @apply mt-2 mb-2;
-    }
-  }
-}
-
-@layer base {
-  * {
-    @apply border-border outline-ring/50;
-  }
-  body {
-    @apply bg-background text-foreground;
-  }
 }
