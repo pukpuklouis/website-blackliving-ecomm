@@ -5,6 +5,9 @@ import ProcurementComparisonTable from '../components/ProcurementComparisonTable
 
 // Get the about page content from the pages collection
 const aboutPage = await getEntry('pages', 'about');
+if (!aboutPage) {
+  throw new Error('About page content not found');
+}
 const { Content } = await aboutPage.render();
 ---
 

@@ -8,4 +8,4 @@ export interface Props {
 const { currentPage } = Astro.props;
 ---
 
-<AccountNavComponent {currentPage} client:load />
+<AccountNavComponent {currentPage} client:only="react" />
