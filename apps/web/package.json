@@ -16,8 +16,8 @@
     "format:check": "prettier --check \"src/**/*.{ts,tsx,js,jsx}\"",
     "format:astro": "node ../../scripts/fix-astro-classnames.js",
     "lint:astro": "astro check",
-    "deploy": "wrangler pages deploy dist --project-name blackliving-web --commit-dirty --branch production",
-    "deploy:staging": "wrangler pages deploy dist --project-name blackliving-web --commit-dirty --branch staging"
+    "deploy": "wrangler pages deploy dist --project-name blackliving-web --commit-dirty=true --branch production",
+    "deploy:staging": "wrangler pages deploy dist --project-name blackliving-web --commit-dirty=true --branch staging"
   },
   "dependencies": {
     "@astrojs/check": "^0.9.4",
