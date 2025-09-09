@@ -1,33 +1,6 @@
 ---
 import PostLayout from '../../layouts/PostLayout.astro';
-
-interface BlogPost {
-  id: string;
-  title: string;
-  slug: string;
-  description: string;
-  excerpt: string;
-  content: string;
-  authorName: string;
-  category: string;
-  categoryId: string;
-  tags: string[];
-  featuredImage: string;
-  publishedAt: string;
-  viewCount: number;
-  readingTime: number;
-  seoTitle?: string;
-  seoDescription?: string;
-}
-
-interface PostCategory {
-  id: string;
-  name: string;
-  slug: string;
-  description: string;
-  color: string;
-  icon: string;
-}
+import type { BlogPost, PostCategory } from '@blackliving/types';
 
 export async function getStaticPaths() {
   try {
@@ -52,49 +25,32 @@ export async function getStaticPaths() {
 }
 
 const { postSlug } = Astro.params;
-
-// Fetch post data
-let post: BlogPost | null = null;
-let category: PostCategory | null = null;
-let relatedPosts: BlogPost[] = [];
-
-// Use appropriate API URL for both build-time and runtime
 const apiUrl = import.meta.env.PUBLIC_API_BASE_URL || 'http://localhost:8787';
 
-try {
-  // Fetch the post
-  const postResponse = await fetch(`${apiUrl}/api/posts/${postSlug}`);
-  if (postResponse.ok) {
-    const postData = await postResponse.json();
-    post = postData.data;
-
-    // Fetch category information if categoryId exists
-    if (post?.categoryId) {
-      const categoryResponse = await fetch(`${apiUrl}/api/posts/categories`);
-      if (categoryResponse.ok) {
-        const categoriesData = await categoryResponse.json();
-        const categories = categoriesData.data || [];
-        category = categories.find((cat: PostCategory) => cat.id === post?.categoryId);
-      }
-    }
-
-    // Fetch related posts from the same category
-    if (post?.categoryId) {
-      const relatedResponse = await fetch(
-        `${apiUrl}/api/posts/public?category=${encodeURIComponent(post.category)}&limit=3`
-      );
-      if (relatedResponse.ok) {
-        const relatedData = await relatedResponse.json();
-        relatedPosts = (relatedData.data || []).filter((p: BlogPost) => p.slug !== postSlug);
-      }
-    }
-  }
-} catch (error) {
-  console.error('Error fetching post data:', error);
+// Fetch post data using enhanced API endpoint with embedded category
+const postResponse = await fetch(`${apiUrl}/api/posts/${postSlug}?include=category`);
+if (!postResponse.ok) {
+  return Astro.redirect('/404');
 }
 
-if (!post) {
-  return Astro.redirect('/404');
+const postData = await postResponse.json();
+const post: BlogPost & { category?: PostCategory } = postData.data;
+const category = post.category || null;
+
+// Fetch related posts from same category (simplified)
+let relatedPosts: BlogPost[] = [];
+if (post.categoryId) {
+  try {
+    const relatedResponse = await fetch(
+      `${apiUrl}/api/posts/public?category=${encodeURIComponent(post.category)}&limit=3`
+    );
+    if (relatedResponse.ok) {
+      const relatedData = await relatedResponse.json();
+      relatedPosts = (relatedData.data || []).filter((p: BlogPost) => p.slug !== postSlug);
+    }
+  } catch (error) {
+    console.warn('Failed to fetch related posts:', error);
+  }
 }
 
 // SEO data
