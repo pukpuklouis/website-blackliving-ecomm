@@ -1,5 +1,7 @@
 ---
 import BaseLayout from './BaseLayout.astro';
+import Breadcrumbs from '../components/blog/Breadcrumbs.astro';
+import PostHeader from '../components/blog/PostHeader.astro';
 import { unified } from 'unified';
 import remarkParse from 'remark-parse';
 import remarkGfm from 'remark-gfm';
@@ -61,84 +63,11 @@ const htmlContent = processedContent.toString();
 <BaseLayout title={seoTitle} description={seoDescription} image={ogImage} type="article" publishedTime={post.publishedAt} class="blog">
   <main class='container mx-auto px-4 py-8'>
     <!-- Breadcrumb -->
-    <nav class='blog-breadcrumb mb-8' aria-label='麵包屑'>
-      <ol class='flex items-center space-x-2 text-sm text-gray-500'>
-        <li><a href='/' class='hover:text-gray-700'>首頁</a></li>
-        <li>/</li>
-        <li><a href='/posts' class='hover:text-gray-700'>好文分享</a></li>
-        {
-          category && (
-            <>
-              <li>/</li>
-              <li>
-                <a href={`/posts?category=${category.slug}`} class='hover:text-gray-700'>
-                  {category.name}
-                </a>
-              </li>
-            </>
-          )
-        }
-        <li>/</li>
-        <li class='text-gray-900'>{post.title}</li>
-      </ol>
-    </nav>
+    <Breadcrumbs post={post} category={category} />
 
     <article class='max-w-4xl mx-auto'>
       <!-- Article Header -->
-      <header class='mb-8'>
-        {
-          category && (
-            <div class='mb-4'>
-              <span
-                class='blog-category-tag inline-flex items-center px-3 py-1 rounded-full text-sm font-medium'
-                style={`background-color: ${category.color}20; color: ${category.color}`}
-              >
-                <span class='mr-1'>{category.icon}</span>
-                {category.name}
-              </span>
-            </div>
-          )
-        }
-
-        <h1 class='text-4xl font-bold text-gray-900 mb-6'>{post.title}</h1>
-
-        <div class='flex items-center justify-between text-sm text-gray-500 mb-6'>
-          <div class='flex items-center space-x-4'>
-            <span>作者：{post.authorName}</span>
-            <span>發布日期：{new Date(post.publishedAt).toLocaleDateString('zh-TW')}</span>
-            <span>閱讀時間：{post.readingTime} 分鐘</span>
-          </div>
-          <div class='flex items-center space-x-2'>
-            <svg class='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-              <path
-                stroke-linecap='round'
-                stroke-linejoin='round'
-                stroke-width='2'
-                d='M15 12a3 3 0 11-6 0 3 3 0 016 0z'
-              >
-              </path>
-              <path
-                stroke-linecap='round'
-                stroke-linejoin='round'
-                stroke-width='2'
-                d='M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z'
-              >
-              </path>
-            </svg>
-            <span>{post.viewCount} 次瀏覽</span>
-          </div>
-        </div>
-
-        {
-          post.featuredImage && (
-            <img
-              src={post.featuredImage}
-              alt={post.title}
-              class='w-full h-64 md:h-96 object-cover rounded-lg mb-8'
-            />
-          )
-        }
-      </header>
+      <PostHeader post={post} category={category} />
 
       <!-- Article Content -->
       <div class='blog-content prose prose-lg max-w-none mb-12'>
