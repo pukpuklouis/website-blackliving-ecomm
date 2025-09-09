@@ -2,71 +2,25 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import CTA from '../../components/CTA.astro';
 import BlogPostCard from '../../components/BlogPostCard.astro';
-import type { BlogPost } from '@blackliving/ui';
-interface PostCategory {
-  id: string;
-  name: string;
-  slug: string;
-  description: string;
-  color: string;
-  icon: string;
-}
+import type { BlogPostSummary, BlogPost, PostCategory } from '@blackliving/types';
 
-interface CustomerReview {
-  id: string;
-  title: string;
-  slug: string;
-  description: string;
-  excerpt: string;
-  authorName: string;
-  category: string;
-  categoryId: string;
-  tags: string[];
-  featuredImage: string;
-  publishedAt: string;
-  viewCount: number;
-  readingTime: number;
-  rating?: number;
-  product?: string;
-  verified?: boolean;
-}
-
-// Get categories and customer reviews
-let categories: PostCategory[] = [];
-let reviews: CustomerReview[] = [];
-
-// Use appropriate API URL for both build-time and runtime
 const apiUrl = import.meta.env.PUBLIC_API_BASE_URL || 'http://localhost:8787';
 
-try {
-  // Fetch categories
-  const categoriesResponse = await fetch(`${apiUrl}/api/posts/categories`);
-  if (categoriesResponse.ok) {
-    const categoriesData = await categoriesResponse.json();
-    categories = categoriesData.data || [];
-  }
+// Single API call with enhanced endpoint - get customer reviews with embedded category data
+const response = await fetch(`${apiUrl}/api/posts/public?category=customer-review&include=category`);
+const data = await response.json();
 
-  // Fetch customer reviews (filter by category)
-  const reviewsResponse = await fetch(`${apiUrl}/api/posts/public?category=client-review`);
-  if (reviewsResponse.ok) {
-    const reviewsData = await reviewsResponse.json();
-    reviews = reviewsData.data || [];
-  }
-} catch (error) {
-  console.error('Error fetching customer reviews data:', error);
-}
-
-// Transform customer reviews to BlogPost format
-const posts: BlogPost[] = reviews.map(review => ({
-  slug: review.slug,
-  title: review.title,
-  excerpt: review.excerpt,
-  description: review.description,
-  featuredImage: review.featuredImage,
-  category: review.category,
-  readingTime: `${review.readingTime}`,
-  authorName: review.authorName,
-  publishedAt: review.publishedAt,
+// Transform to BlogPostSummary format for BlogPostCard compatibility
+const posts: BlogPostSummary[] = (data.data || []).map((post: BlogPost & { category?: PostCategory }) => ({
+  slug: post.slug,
+  title: post.title,
+  excerpt: post.excerpt,
+  description: post.description,
+  featuredImage: post.featuredImage,
+  category: post.category?.name || post.category, // Use embedded category name or fallback
+  readingTime: `${post.readingTime}`,
+  authorName: post.authorName,
+  publishedAt: post.publishedAt,
 }));
 
 ---
