@@ -2,66 +2,22 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import CTA from '../../components/CTA.astro';
 import BlogPostCard from '../../components/BlogPostCard.astro';
-import type { BlogPost } from '@blackliving/ui';
+import type { BlogPostSummary } from '@blackliving/types';
 
-interface PostCategory {
-  id: string;
-  name: string;
-  slug: string;
-  description: string;
-  color: string;
-  icon: string;
-}
-
-interface ApiBlogPost {
-  id: string;
-  title: string;
-  slug: string;
-  description: string;
-  excerpt: string;
-  authorName: string;
-  category: string;
-  categoryId: string;
-  tags: string[];
-  featuredImage: string;
-  publishedAt: string;
-  viewCount: number;
-  readingTime: number;
-}
-
-// Get categories and posts
-let categories: PostCategory[] = [];
-let apiPosts: ApiBlogPost[] = [];
-
-// Use appropriate API URL for both build-time and runtime
 const apiUrl = import.meta.env.PUBLIC_API_BASE_URL || 'http://localhost:8787';
 
-try {
-  // Fetch categories
-  const categoriesResponse = await fetch(`${apiUrl}/api/posts/categories`);
-  if (categoriesResponse.ok) {
-    const categoriesData = await categoriesResponse.json();
-    categories = categoriesData.data || [];
-  }
+// Single API call with enhanced endpoint - get blog posts with embedded category data
+const response = await fetch(`${apiUrl}/api/posts/public?category=blog-post&include=category`);
+const data = await response.json();
 
-  // Fetch only blog posts
-  const postsResponse = await fetch(`${apiUrl}/api/posts/public?category=blog-post`);
-  if (postsResponse.ok) {
-    const postsData = await postsResponse.json();
-    apiPosts = postsData.data || [];
-  }
-} catch (error) {
-  console.error('Error fetching posts data:', error);
-}
-
-// Transform API posts to BlogPost format
-const posts: BlogPost[] = apiPosts.map(post => ({
+// Transform to BlogPostSummary format for BlogPostCard compatibility
+const posts: BlogPostSummary[] = (data.data || []).map(post => ({
   slug: post.slug,
   title: post.title,
   excerpt: post.excerpt,
   description: post.description,
   featuredImage: post.featuredImage,
-  category: post.category,
+  category: post.category?.name || post.category, // Use embedded category name or fallback
   readingTime: `${post.readingTime}`,
   authorName: post.authorName,
   publishedAt: post.publishedAt,
