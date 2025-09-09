@@ -1,0 +1,32 @@
+---
+import type { BlogBreadcrumbProps } from '@blackliving/types/blog';
+
+export interface Props extends BlogBreadcrumbProps {}
+
+const { post, category } = Astro.props;
+---
+
+<nav class="blog-breadcrumb mb-8" aria-label="麵包屑">
+  <ol class="flex items-center space-x-2 text-sm text-gray-500">
+    <li>
+      <a href="/" class="hover:text-gray-700">首頁</a>
+    </li>
+    {category && (
+      <>
+        <li>/</li>
+        <li>
+          <a 
+            href={`/posts?category=${category.slug}`} 
+            class="hover:text-gray-700"
+          >
+            {category.name}
+          </a>
+        </li>
+      </>
+    )}
+    <li>/</li>
+    <li class="text-gray-900" aria-current="page">
+      {post.title}
+    </li>
+  </ol>
+</nav>
