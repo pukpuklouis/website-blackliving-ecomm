@@ -1,5 +1,5 @@
 ---
-import type { BlogHeaderProps } from '@blackliving/types/blog';
+import type { BlogHeaderProps } from '@blackliving/types';
 
 export interface Props extends BlogHeaderProps {}
 
@@ -49,4 +49,14 @@ const { post, category } = Astro.props;
       <span>{post.viewCount} 次瀏覽</span>
     </div>
   </div>
+
+  {
+    post.featuredImage && (
+      <img
+        src={post.featuredImage}
+        alt={post.title}
+        class="w-full h-64 md:h-96 object-cover rounded-lg mb-8"
+      />
+    )
+  }
 </header>
