@@ -6,7 +6,7 @@ export async function getStaticPaths() {
   try {
     // Fetch all published customer reviews to generate static paths
     const apiUrl = import.meta.env.PUBLIC_API_BASE_URL || 'http://localhost:8787';
-    const response = await fetch(`${apiUrl}/api/posts/public?category=customer-review&limit=100`);
+    const response = await fetch(`${apiUrl}/api/posts/public?category=client-review&limit=100`);
     if (!response.ok) {
       console.error('Failed to fetch customer reviews for static generation');
       return [];
@@ -36,10 +36,10 @@ if (!postResponse.ok) {
 const postData = await postResponse.json();
 const post: BlogPost & { category?: PostCategory } = postData.data;
 
-// Only show if it's actually a customer review
-const isCustomerReview = post.category?.slug === 'customer-review' || 
-  post.category?.includes('customer') || post.category?.includes('review') ||
-  post.category?.includes('顧客') || post.category?.includes('評價');
+// Only show if it's actually a customer review  
+const isCustomerReview = post.category?.slug === 'client-review' || 
+  post.category?.includes('client') || post.category?.includes('review') ||
+  post.category?.includes('客戶') || post.category?.includes('評價');
 
 if (!isCustomerReview) {
   return Astro.redirect('/404');
@@ -51,7 +51,7 @@ const category = post.category || null;
 let relatedPosts: BlogPost[] = [];
 try {
   const relatedResponse = await fetch(
-    `${apiUrl}/api/posts/public?category=customer-review&limit=3`
+    `${apiUrl}/api/posts/public?category=client-review&limit=3`
   );
   if (relatedResponse.ok) {
     const relatedData = await relatedResponse.json();
