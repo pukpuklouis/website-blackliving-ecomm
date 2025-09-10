@@ -7,7 +7,7 @@ import type { BlogPostSummary, BlogPost, PostCategory } from '@blackliving/types
 const apiUrl = import.meta.env.PUBLIC_API_BASE_URL || 'http://localhost:8787';
 
 // Single API call with enhanced endpoint - get customer reviews with embedded category data
-const response = await fetch(`${apiUrl}/api/posts/public?category=client-review&include=category`);
+const response = await fetch(`${apiUrl}/api/posts/public?category=customer-reviews&include=category`);
 const data = await response.json();
 
 // Transform to BlogPostSummary format for BlogPostCard compatibility

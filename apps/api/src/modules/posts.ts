@@ -584,11 +584,13 @@ postsRouter.get('/public', zValidator('query', querySchema.omit({ status: true }
   }
 });
 
-// GET /api/posts/:id - Get single post
+// GET /api/posts/:id - Get single post with optional includes
 postsRouter.get('/:id', async c => {
   try {
     const db = c.get('db');
     const postId = c.req.param('id');
+    const includeParam = c.req.query('include'); // e.g., "category" or "category,other"
+    const includes = includeParam ? includeParam.split(',').map(s => s.trim()) : [];
 
     // Check if this is a slug or ID
     let whereCondition;
@@ -627,9 +629,31 @@ postsRouter.get('/:id', async c => {
       post[0].viewCount += 1;
     }
 
+    // Prepare response data
+    const postData = post[0];
+    const responseData: any = { ...postData };
+
+    // Include category data if requested
+    if (includes.includes('category') && postData.categoryId) {
+      try {
+        const category = await db
+          .select()
+          .from(postCategories)
+          .where(eq(postCategories.id, postData.categoryId))
+          .limit(1);
+
+        if (category.length > 0) {
+          responseData.category = category[0];
+        }
+      } catch (categoryError) {
+        console.warn('Error fetching category for post:', categoryError);
+        // Continue without category data rather than failing the entire request
+      }
+    }
+
     return c.json({
       success: true,
-      data: post[0],
+      data: responseData,
     });
   } catch (error) {
     console.error('Error fetching post:', error);

@@ -1,4 +1,4 @@
-import { cn } from "@/lib/utils"
+import { cn } from "@blackliving/ui"
 
 export interface BlogPost {
   slug: string
@@ -40,7 +40,7 @@ export function BlogPostCard({
         )}
         <div className="p-6 flex-1">
           <div className="flex items-center mb-3">
-            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary text-forwardground">
               {post.category}
             </span>
             <span className="ml-2 text-sm text-gray-500">{post.readingTime} 分鐘閱讀</span>
