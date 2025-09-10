@@ -12,7 +12,8 @@ export const birthdayRegex = /^\d{4}-\d{2}-\d{2}$/;
 
 // Profile validation schemas
 export const profileValidationSchema = {
-  name: z.string().min(1, '姓名不能為空').max(100, '姓名不能超過100個字符'),
+  firstName: z.string().min(1, '姓氏不能為空').max(50, '姓氏不能超過50個字符'),
+  lastName: z.string().min(1, '名字不能為空').max(50, '名字不能超過50個字符'),
   phone: z.string()
     .regex(taiwanPhoneRegex, '請輸入有效的台灣手機號碼 (09xxxxxxxx)')
     .optional()
@@ -53,15 +54,27 @@ export const passwordValidationSchema = {
 };
 
 // Validation functions
-export function validateName(name: string): string | null {
+export function validateFirstName(name: string): string | null {
   try {
-    profileValidationSchema.name.parse(name);
+    profileValidationSchema.firstName.parse(name);
     return null;
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return error.errors[0]?.message || '姓名格式錯誤';
+      return error.errors[0]?.message || '姓氏格式錯誤';
     }
-    return '姓名格式錯誤';
+    return '姓氏格式錯誤';
+  }
+}
+
+export function validateLastName(name: string): string | null {
+  try {
+    profileValidationSchema.lastName.parse(name);
+    return null;
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return error.errors[0]?.message || '名字格式錯誤';
+    }
+    return '名字格式錯誤';
   }
 }
 
@@ -70,19 +83,19 @@ export function validatePhone(phone: string): string | null {
   if (!phone || phone.trim() === '') {
     return null;
   }
-  
+
   // Use the regex to test the format if the string is not empty.
   if (taiwanPhoneRegex.test(phone)) {
     return null; // The format is correct.
   }
-  
+
   // If the format is incorrect, return the error message.
   return '請輸入有效的台灣手機號碼 (09xxxxxxxx)';
 }
 
 export function validateAddress(address: Record<string, any>): Record<string, string> | null {
   const errors: Record<string, string> = {};
-  
+
   Object.entries(addressValidationSchema).forEach(([field, schema]) => {
     try {
       schema.parse(address[field]);
@@ -92,7 +105,7 @@ export function validateAddress(address: Record<string, any>): Record<string, st
       }
     }
   });
-  
+
   return Object.keys(errors).length > 0 ? errors : null;
 }
 
@@ -102,7 +115,7 @@ export function validatePasswordForm(data: {
   confirmPassword: string;
 }): Record<string, string> | null {
   const errors: Record<string, string> = {};
-  
+
   try {
     passwordValidationSchema.currentPassword.parse(data.currentPassword);
   } catch (error) {
@@ -110,7 +123,7 @@ export function validatePasswordForm(data: {
       errors.currentPassword = error.errors[0]?.message || '請輸入目前密碼';
     }
   }
-  
+
   try {
     passwordValidationSchema.newPassword.parse(data.newPassword);
   } catch (error) {
@@ -118,18 +131,18 @@ export function validatePasswordForm(data: {
       errors.newPassword = error.errors[0]?.message || '新密碼格式錯誤';
     }
   }
-  
+
   if (data.newPassword !== data.confirmPassword) {
     errors.confirmPassword = '確認密碼與新密碼不符';
   }
-  
+
   return Object.keys(errors).length > 0 ? errors : null;
 }
 
 // Form state validation
 export function isFormDirty(current: Record<string, any>, original: Record<string, any>): boolean {
-  return Object.keys(current).some(key => 
-    current[key] !== original[key] && 
+  return Object.keys(current).some(key =>
+    current[key] !== original[key] &&
     !(current[key] === '' && original[key] === null)
   );
 }
