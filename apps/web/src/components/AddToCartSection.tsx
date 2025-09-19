@@ -1,23 +1,23 @@
 import { useState, useEffect } from 'react';
 import type { FC } from 'react';
 import { useCartStore, type CartItem } from '../stores/cartStore';
-import { Button } from '@blackliving/ui/components/ui/button';
-import { Badge } from '@blackliving/ui/components/ui/badge';
-import { Separator } from '@blackliving/ui/components/ui/separator';
-import { 
-  Minus, 
-  Plus, 
-  ShoppingCart, 
-  Check, 
-  Heart, 
-  Share2, 
-  Truck, 
-  Shield, 
+import { Button } from '@blackliving/ui';
+import { Badge } from '@blackliving/ui';
+import { Separator } from '@blackliving/ui';
+import {
+  Minus,
+  Plus,
+  ShoppingCart,
+  Check,
+  Heart,
+  Share2,
+  Truck,
+  Shield,
   CreditCard,
   Phone,
-  AlertCircle
+  AlertCircle,
 } from 'lucide-react';
-import { cn } from '@blackliving/ui/lib/utils';
+import { cn } from '@blackliving/ui';
 
 interface Product {
   id: string;
@@ -84,15 +84,15 @@ const AddToCartSection: FC<AddToCartSectionProps> = ({
   const maxQuantity = variant.stock ? Math.min(10, variant.stock) : 10;
 
   // Check if item is already in cart
-  const cartItem = items.find(item => 
-    item.productId === product.id && item.variantId === selectedVariantId
+  const cartItem = items.find(
+    item => item.productId === product.id && item.variantId === selectedVariantId
   );
   const currentQuantityInCart = cartItem?.quantity || 0;
 
   // Calculate savings if there's an original price
   const savings = variant.originalPrice ? variant.originalPrice - variant.price : 0;
-  const savingsPercentage = variant.originalPrice 
-    ? Math.round((savings / variant.originalPrice) * 100) 
+  const savingsPercentage = variant.originalPrice
+    ? Math.round((savings / variant.originalPrice) * 100)
     : 0;
 
   // Handle add to cart
@@ -139,10 +139,9 @@ const AddToCartSection: FC<AddToCartSectionProps> = ({
         ...cartItemData,
         quantity: quantity,
       });
-      
+
       setTimeout(() => setShowSuccess(false), 3000);
       setQuantity(1); // Reset quantity
-      
     } catch (err) {
       console.error('Error adding to cart:', err);
       const errorMsg = '加入購物車失敗，請稍後再試';
@@ -183,7 +182,7 @@ const AddToCartSection: FC<AddToCartSectionProps> = ({
   };
 
   return (
-    <div className={cn("bg-white border rounded-xl shadow-sm", className)}>
+    <div className={cn('bg-white border rounded-xl shadow-sm', className)}>
       {/* Sticky Header on Mobile */}
       <div className="sticky top-0 bg-white border-b rounded-t-xl z-10 p-4 md:p-6">
         {/* Product Title & Category */}
@@ -220,7 +219,7 @@ const AddToCartSection: FC<AddToCartSectionProps> = ({
                 className="p-2 h-auto"
                 aria-label="加入心願清單"
               >
-                <Heart className={cn("h-5 w-5", isWishlisted && "fill-red-500 text-red-500")} />
+                <Heart className={cn('h-5 w-5', isWishlisted && 'fill-red-500 text-red-500')} />
               </Button>
               <Button
                 variant="ghost"
@@ -233,7 +232,7 @@ const AddToCartSection: FC<AddToCartSectionProps> = ({
               </Button>
             </div>
           </div>
-          
+
           {/* Savings Badge */}
           {savings > 0 && (
             <div className="inline-flex items-center space-x-2">
@@ -250,7 +249,11 @@ const AddToCartSection: FC<AddToCartSectionProps> = ({
           {variant.size && (
             <div className="text-sm text-gray-600">
               規格: <span className="font-medium">{variant.size}</span>
-              {variant.firmness && <span className="ml-2">硬度: <span className="font-medium">{variant.firmness}</span></span>}
+              {variant.firmness && (
+                <span className="ml-2">
+                  硬度: <span className="font-medium">{variant.firmness}</span>
+                </span>
+              )}
             </div>
           )}
         </div>
@@ -270,21 +273,20 @@ const AddToCartSection: FC<AddToCartSectionProps> = ({
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <span className="text-sm font-medium">庫存狀態:</span>
-            <div className={cn(
-              "flex items-center space-x-1 text-sm",
-              isAvailable ? "text-green-600" : "text-red-600"
-            )}>
-              <div className={cn(
-                "w-2 h-2 rounded-full",
-                isAvailable ? "bg-green-500" : "bg-red-500"
-              )} />
+            <div
+              className={cn(
+                'flex items-center space-x-1 text-sm',
+                isAvailable ? 'text-green-600' : 'text-red-600'
+              )}
+            >
+              <div
+                className={cn('w-2 h-2 rounded-full', isAvailable ? 'bg-green-500' : 'bg-red-500')}
+              />
               <span>{isAvailable ? '現貨供應' : '暫時缺貨'}</span>
             </div>
           </div>
           {variant.stock && variant.stock <= 5 && variant.stock > 0 && (
-            <span className="text-xs text-orange-600 font-medium">
-              僅剩 {variant.stock} 件
-            </span>
+            <span className="text-xs text-orange-600 font-medium">僅剩 {variant.stock} 件</span>
           )}
         </div>
 
@@ -333,7 +335,10 @@ const AddToCartSection: FC<AddToCartSectionProps> = ({
                 </Button>
               </div>
               <div className="text-sm text-gray-600">
-                小計: <span className="font-semibold">NT$ {(displayPrice * quantity).toLocaleString()}</span>
+                小計:{' '}
+                <span className="font-semibold">
+                  NT$ {(displayPrice * quantity).toLocaleString()}
+                </span>
               </div>
             </div>
           </div>
@@ -349,19 +354,17 @@ const AddToCartSection: FC<AddToCartSectionProps> = ({
           >
             <Check className="mr-3 h-5 w-5" />
             已成功加入購物車！
-            <span className="ml-2 px-2 py-1 bg-green-700 rounded-full text-sm">
-              {itemCount}
-            </span>
+            <span className="ml-2 px-2 py-1 bg-green-700 rounded-full text-sm">{itemCount}</span>
           </Button>
         ) : (
           <Button
             onClick={handleAddToCart}
             disabled={!isAvailable || isAdding}
             className={cn(
-              "w-full h-14 text-lg font-semibold transition-all duration-200",
-              isAvailable 
-                ? "bg-black hover:bg-gray-800 text-white shadow-lg hover:shadow-xl transform hover:-translate-y-0.5" 
-                : "bg-gray-200 text-gray-500 cursor-not-allowed"
+              'w-full h-14 text-lg font-semibold transition-all duration-200',
+              isAvailable
+                ? 'bg-black hover:bg-gray-800 text-white shadow-lg hover:shadow-xl transform hover:-translate-y-0.5'
+                : 'bg-gray-200 text-gray-500 cursor-not-allowed'
             )}
           >
             {isAdding ? (
@@ -415,14 +418,10 @@ const AddToCartSection: FC<AddToCartSectionProps> = ({
               </div>
               <div className="flex flex-col sm:flex-row gap-2">
                 <Button variant="outline" size="sm" className="flex-1" asChild>
-                  <a href="tel:+886-2-12345678">
-                    📞 02-1234-5678
-                  </a>
+                  <a href="tel:+886-2-12345678">📞 02-1234-5678</a>
                 </Button>
                 <Button variant="outline" size="sm" className="flex-1" asChild>
-                  <a href="mailto:info@blackliving.com">
-                    ✉️ 聯繫我們
-                  </a>
+                  <a href="mailto:info@blackliving.com">✉️ 聯繫我們</a>
                 </Button>
               </div>
             </div>

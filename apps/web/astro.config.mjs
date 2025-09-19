@@ -57,7 +57,9 @@ export default defineConfig({
 
   output: 'server',
   adapter: cloudflare(),
-
+  markdown: {
+    gfm: true,
+  },
   experimental: {
     fonts: [
       {
@@ -129,10 +131,11 @@ export default defineConfig({
       }
     },
     optimizeDeps: {
-      // Development: Include full lucide-react package for better DX
-      include: isDev ? ['lucide-react'] : [],
-      // Development: Don't pre-bundle individual icons  
+      include: ['marked', ...(isDev ? ['lucide-react'] : [])],
       exclude: isDev ? [] : ['lucide-react']
+    },
+    ssr: {
+      noExternal: ['marked']
     },
     build: {
       rollupOptions: {
@@ -144,6 +147,8 @@ export default defineConfig({
               if (id.includes('@blackliving/ui')) return 'ui';
               // Icons get separate chunk (will be smaller in prod due to tree-shaking)
               if (id.includes('lucide-react')) return 'icons';
+              // Markdown parser gets its own chunk
+              if (id.includes('marked')) return 'markdown';
               // Other vendor packages
               return 'vendor';
             }

@@ -34,34 +34,36 @@ export const createAuth = (
     secret: env.BETTER_AUTH_SECRET || 'dev-secret-key-change-in-production',
 
     // API base URL where Better Auth endpoints are mounted
-    baseURL: env.API_BASE_URL || (() => {
-      switch (env.NODE_ENV) {
-        case 'development':
-          return 'http://localhost:8787';
-        case 'staging':
-          return 'https://blackliving-api-staging.pukpuk-tw.workers.dev';
-        case 'production':
-        default:
-          return 'https://blackliving-api.pukpuk-tw.workers.dev';
-      }
-    })(),
+    baseURL:
+      env.API_BASE_URL ||
+      (() => {
+        switch (env.NODE_ENV) {
+          case 'development':
+            return 'http://localhost:8787';
+          case 'staging':
+            return 'https://blackliving-api-staging.pukpuk-tw.workers.dev';
+          case 'production':
+          default:
+            return 'https://blackliving-api.pukpuk-tw.workers.dev';
+        }
+      })(),
 
     trustedOrigins: [
       // Development
       'http://localhost:4321', // Web app
       'http://localhost:5173', // Admin app
       'http://localhost:8787', // API server
-      
+
       // Staging
       'https://staging.blackliving-web.pages.dev',
       'https://staging.blackliving-admin.pages.dev',
       'https://blackliving-api-staging.pukpuk-tw.workers.dev',
-      
+
       // Production (current deployment URLs)
       'https://blackliving-web.pages.dev',
       'https://blackliving-admin.pages.dev',
       'https://blackliving-api.pukpuk-tw.workers.dev',
-      
+
       // Future custom domains (forward compatibility)
       'https://blackliving.com',
       'https://www.blackliving.com',
@@ -134,7 +136,7 @@ export const createAuth = (
       // FIXED: Disable cross-subdomain cookies entirely for production
       // Web app (.pages.dev) and API (.workers.dev) are incompatible domains
       crossSubDomainCookies: {
-        enabled: env.NODE_ENV === 'development', // Only enable for localhost development  
+        enabled: env.NODE_ENV === 'development', // Only enable for localhost development
         domain: env.NODE_ENV === 'development' ? 'localhost' : undefined,
       },
     },
@@ -143,7 +145,7 @@ export const createAuth = (
       level: env.NODE_ENV === 'development' ? 'debug' : 'error',
     },
   });
-};;
+};
 
 // Export types
 export type AuthInstance = ReturnType<typeof createAuth>;

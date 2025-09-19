@@ -49,7 +49,7 @@ const AddToCartButton: FC<AddToCartButtonProps> = ({
   const [isAdding, setIsAdding] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
-  
+
   // Maximum quantity allowed
   const maxQuantity = variant?.inStock ? Math.min(10, variant.stock || 10) : 10;
 
@@ -145,11 +145,7 @@ const AddToCartButton: FC<AddToCartButtonProps> = ({
   if (showSuccess) {
     return (
       <Button
-        className={cn(
-          sizeClasses[size],
-          'bg-green-600 hover:bg-green-700 text-white',
-          className
-        )}
+        className={cn(sizeClasses[size], 'bg-green-600 hover:bg-green-700 text-white', className)}
         disabled
       >
         <Check className="mr-2 h-4 w-4" />
@@ -203,9 +199,7 @@ const AddToCartButton: FC<AddToCartButtonProps> = ({
             >
               <Minus className="h-4 w-4" />
             </Button>
-            <div className="px-4 py-2 text-center font-medium min-w-[50px]">
-              {quantity}
-            </div>
+            <div className="px-4 py-2 text-center font-medium min-w-[50px]">{quantity}</div>
             <Button
               type="button"
               variant="ghost"
@@ -228,8 +222,8 @@ const AddToCartButton: FC<AddToCartButtonProps> = ({
         className={cn(
           sizeClasses[size],
           'w-full font-semibold transition-all duration-200',
-          isAvailable 
-            ? 'bg-black hover:bg-gray-800 text-white shadow-lg hover:shadow-xl' 
+          isAvailable
+            ? 'bg-black hover:bg-gray-800 text-white shadow-lg hover:shadow-xl'
             : 'bg-gray-300 text-gray-500 cursor-not-allowed',
           className
         )}
@@ -261,9 +255,7 @@ const AddToCartButton: FC<AddToCartButtonProps> = ({
 
       {/* Stock Information */}
       {variant.stock !== undefined && variant.stock > 0 && variant.stock <= 5 && (
-        <div className="text-xs text-orange-600">
-          ⚠️ 僅剩 {variant.stock} 件庫存
-        </div>
+        <div className="text-xs text-orange-600">⚠️ 僅剩 {variant.stock} 件庫存</div>
       )}
     </div>
   );

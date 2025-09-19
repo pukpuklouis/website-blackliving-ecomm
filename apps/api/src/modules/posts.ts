@@ -147,7 +147,7 @@ const createPostSchema = z.object({
   // Publishing
   scheduledAt: z.string().optional(),
   readingTime: z.number().min(1).max(60).default(5),
-});;
+});
 
 const updatePostSchema = createPostSchema.partial();
 
@@ -164,7 +164,7 @@ const querySchema = z.object({
     .optional()
     .default('createdAt'),
   sortOrder: z.enum(['asc', 'desc']).optional().default('desc'),
-});;
+});
 
 // Helper functions
 const generateSlug = (title: string): string => {
@@ -476,6 +476,57 @@ postsRouter.get('/', requireAdmin(), zValidator('query', querySchema), async c =
       {
         success: false,
         error: 'Failed to fetch posts',
+      },
+      500
+    );
+  }
+});
+
+// GET /api/posts/static-paths - Generate static paths for build time (public, published only)
+postsRouter.get('/static-paths', async c => {
+  try {
+    const db = c.get('db');
+    const cache = c.get('cache');
+    const cacheKey = 'blog:static-paths';
+
+    // Try to get from cache first
+    const cachedPaths = await cache.get(cacheKey);
+    if (cachedPaths) {
+      return c.json({
+        success: true,
+        data: JSON.parse(cachedPaths),
+        cached: true,
+      });
+    }
+
+    // Get all published posts for static path generation
+    const publishedPosts = await db
+      .select({
+        id: posts.id,
+        slug: posts.slug,
+        title: posts.title,
+        category: posts.category,
+        categoryId: posts.categoryId,
+        publishedAt: posts.publishedAt,
+      })
+      .from(posts)
+      .where(eq(posts.status, 'published'))
+      .orderBy(desc(posts.publishedAt));
+
+    // Cache for 30 minutes
+    await cache.set(cacheKey, JSON.stringify(publishedPosts), { ttl: 1800 });
+
+    return c.json({
+      success: true,
+      data: publishedPosts,
+      cached: false,
+    });
+  } catch (error) {
+    console.error('Error fetching static paths:', error);
+    return c.json(
+      {
+        success: false,
+        error: 'Failed to fetch static paths',
       },
       500
     );
@@ -925,6 +976,150 @@ postsRouter.get('/analytics/stats', requireAdmin(), async c => {
       {
         success: false,
         error: 'Failed to fetch blog analytics',
+      },
+      500
+    );
+  }
+});
+
+// GET /api/posts/:id/related - Get related posts based on category and tags
+postsRouter.get('/:id/related', async c => {
+  try {
+    const db = c.get('db');
+    const cache = c.get('cache');
+    const postId = c.req.param('id');
+    const limit = parseInt(c.req.query('limit') || '3');
+
+    const cacheKey = `blog:related:${postId}:${limit}`;
+
+    // Try to get from cache first
+    const cachedRelated = await cache.get(cacheKey);
+    if (cachedRelated) {
+      return c.json({
+        success: true,
+        data: JSON.parse(cachedRelated),
+        cached: true,
+      });
+    }
+
+    // Check if this is a slug or ID
+    let whereCondition;
+    if (postId.startsWith('post_') || postId.length === 25) {
+      whereCondition = eq(posts.id, postId);
+    } else {
+      whereCondition = eq(posts.slug, postId);
+    }
+
+    // Get the current post to find related posts
+    const currentPost = await db
+      .select({
+        id: posts.id,
+        category: posts.category,
+        categoryId: posts.categoryId,
+        tags: posts.tags,
+      })
+      .from(posts)
+      .where(whereCondition)
+      .limit(1);
+
+    if (currentPost.length === 0) {
+      return c.json(
+        {
+          success: false,
+          error: 'Post not found',
+        },
+        404
+      );
+    }
+
+    const current = currentPost[0];
+
+    // Build conditions for related posts
+    const conditions = [
+      eq(posts.status, 'published'), // Only published posts
+      sql`${posts.id} != ${current.id}`, // Exclude current post
+    ];
+
+    // Prefer posts from same category
+    if (current.categoryId) {
+      conditions.push(eq(posts.categoryId, current.categoryId));
+    } else if (current.category) {
+      conditions.push(eq(posts.category, current.category));
+    }
+
+    const whereClause = and(...conditions);
+
+    // Get related posts (exclude content for performance)
+    const relatedPosts = await db
+      .select({
+        id: posts.id,
+        title: posts.title,
+        slug: posts.slug,
+        description: posts.description,
+        excerpt: posts.excerpt,
+        category: posts.category,
+        tags: posts.tags,
+        featuredImage: posts.featuredImage,
+        publishedAt: posts.publishedAt,
+        readingTime: posts.readingTime,
+        viewCount: posts.viewCount,
+      })
+      .from(posts)
+      .where(whereClause)
+      .orderBy(desc(posts.publishedAt))
+      .limit(limit);
+
+    // If we don't have enough related posts from same category, get from all categories
+    if (relatedPosts.length < limit) {
+      const additionalConditions = [
+        eq(posts.status, 'published'),
+        sql`${posts.id} != ${current.id}`,
+      ];
+
+      // Exclude already selected posts
+      if (relatedPosts.length > 0) {
+        const excludeIds = relatedPosts.map(p => p.id);
+        additionalConditions.push(
+          sql`${posts.id} NOT IN (${excludeIds.map(id => `'${id}'`).join(', ')})`
+        );
+      }
+
+      const additionalPosts = await db
+        .select({
+          id: posts.id,
+          title: posts.title,
+          slug: posts.slug,
+          description: posts.description,
+          excerpt: posts.excerpt,
+          category: posts.category,
+          tags: posts.tags,
+          featuredImage: posts.featuredImage,
+          publishedAt: posts.publishedAt,
+          readingTime: posts.readingTime,
+          viewCount: posts.viewCount,
+        })
+        .from(posts)
+        .where(and(...additionalConditions))
+        .orderBy(desc(posts.publishedAt))
+        .limit(limit - relatedPosts.length);
+
+      relatedPosts.push(...additionalPosts);
+    }
+
+    // Cache for 1 hour
+    await cache.set(cacheKey, JSON.stringify(relatedPosts), { ttl: 3600 });
+
+    return c.json({
+      success: true,
+      data: relatedPosts,
+      cached: false,
+    });
+  } catch (error) {
+    console.error('Error fetching related posts:', error);
+    return c.json(
+      {
+        success: false,
+        error: 'Failed to fetch related posts',
       },
       500
     );

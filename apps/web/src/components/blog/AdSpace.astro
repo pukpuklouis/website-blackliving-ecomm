@@ -1,0 +1,160 @@
+---
+export interface Props {
+  adId?: string;
+  adType?: 'banner' | 'square' | 'vertical';
+  adNetwork?: 'google' | 'custom';
+  fallbackText?: string;
+  class?: string;
+  width?: number;
+  height?: number;
+}
+
+const { 
+  adId,
+  adType = 'banner',
+  adNetwork = 'custom',
+  fallbackText = '廣告',
+  class: className = '',
+  width = 300,
+  height = 250
+} = Astro.props;
+
+// Ad dimensions based on type
+const adDimensions = {
+  banner: { width: 320, height: 100 },
+  square: { width: 300, height: 250 },
+  vertical: { width: 160, height: 600 }
+};
+
+const dimensions = adDimensions[adType] || { width, height };
+---
+
+<div class={`ad-space ad-space--${adType} ${className} bg-white rounded-lg border border-gray-200 overflow-hidden relative ${adType === 'banner' ? 'mb-4' : ''} ${adType === 'square' ? 'mb-6' : ''} ${adType === 'vertical' ? 'sticky top-4' : ''}`}>
+  {adId ? (
+    <div class='ad-space__container flex items-center justify-center' data-ad-id={adId} data-ad-network={adNetwork}>
+      {adNetwork === 'google' ? (
+        <!-- Google AdSense -->
+        <ins 
+          class='adsbygoogle ad-space__ad bg-gray-50 border border-gray-100'
+          style={`display:block;width:${dimensions.width}px;height:${dimensions.height}px`}
+          data-ad-client={adId}
+          data-ad-slot={adId}
+          data-ad-format='auto'
+          data-full-width-responsive='true'
+        ></ins>
+      ) : (
+        <!-- Custom ad space -->
+        <div 
+          class='ad-space__custom bg-gray-50 border border-gray-100'
+          style={`width:${dimensions.width}px;height:${dimensions.height}px`}
+          data-ad-id={adId}
+        >
+          <slot>
+            <!-- Custom ad content goes here -->
+          </slot>
+        </div>
+      )}
+    </div>
+  ) : (
+    <!-- Fallback: Empty ad space -->
+    <div class='ad-space__placeholder bg-gray-50 border-2 border-dashed border-gray-200 mx-auto' style={`width:${dimensions.width}px;height:${dimensions.height}px`}>
+      <div class='ad-space__fallback flex flex-col items-center justify-center h-full text-center p-4'>
+        <svg class='w-6 h-6 text-gray-400' fill='currentColor' viewBox='0 0 20 20'>
+          <path d='M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z'></path>
+        </svg>
+        <span class='text-xs text-gray-500'>{fallbackText}</span>
+      </div>
+    </div>
+  )}
+
+  <!-- Ad label for transparency -->
+  <div class='ad-space__label absolute top-2 right-2 bg-white bg-opacity-80 px-2 py-1 rounded text-xs'>
+    <span class='text-xs text-gray-400'>廣告</span>
+  </div>
+</div>
+
+<style>
+  /* Responsive adjustments that can't be handled with utility classes */
+  @media (max-width: 1024px) {
+    .ad-space--vertical {
+      position: static !important;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .ad-space {
+      margin-left: 1rem;
+      margin-right: 1rem;
+    }
+    
+    .ad-space--banner .ad-space__container,
+    .ad-space--banner .ad-space__placeholder {
+      width: 100% !important;
+      max-width: 320px;
+      margin: 0 auto;
+    }
+  }
+
+  /* Hide ad blocker detection */
+  .ad-space[style*="display: none"],
+  .ad-space[style*="visibility: hidden"] {
+    display: none;
+  }
+</style>
+
+<script>
+  // Google AdSense initialization
+  if (typeof window !== 'undefined') {
+    document.addEventListener('DOMContentLoaded', function() {
+      const googleAds = document.querySelectorAll('.adsbygoogle');
+      
+      if (googleAds.length > 0) {
+        // Load Google AdSense script if not already loaded
+        if (!window.adsbygoogle) {
+          const script = document.createElement('script');
+          script.async = true;
+          script.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js';
+          document.head.appendChild(script);
+          
+          script.onload = function() {
+            googleAds.forEach(ad => {
+              try {
+                (adsbygoogle = window.adsbygoogle || []).push({});
+              } catch (e) {
+                console.warn('AdSense error:', e);
+              }
+            });
+          };
+        } else {
+          googleAds.forEach(ad => {
+            try {
+              (adsbygoogle = window.adsbygoogle || []).push({});
+            } catch (e) {
+              console.warn('AdSense error:', e);
+            }
+          });
+        }
+      }
+
+      // Track ad visibility for analytics
+      const adSpaces = document.querySelectorAll('.ad-space__container');
+      if ('IntersectionObserver' in window) {
+        const observer = new IntersectionObserver((entries) => {
+          entries.forEach(entry => {
+            if (entry.isIntersecting) {
+              const adId = entry.target.getAttribute('data-ad-id');
+              if (adId && typeof gtag !== 'undefined') {
+                gtag('event', 'ad_impression', {
+                  event_category: 'ads',
+                  event_label: adId
+                });
+              }
+            }
+          });
+        }, { threshold: 0.5 });
+
+        adSpaces.forEach(ad => observer.observe(ad));
+      }
+    });
+  }
+</script>

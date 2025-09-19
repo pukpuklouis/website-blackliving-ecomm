@@ -6,10 +6,10 @@ interface ProductImageCarouselProps {
   className?: string;
 }
 
-export default function ProductImageCarousel({ 
-  images, 
-  productName, 
-  className = '' 
+export default function ProductImageCarousel({
+  images,
+  productName,
+  className = '',
 }: ProductImageCarouselProps) {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [isZoomed, setIsZoomed] = useState(false);
@@ -30,15 +30,11 @@ export default function ProductImageCarousel({
   };
 
   const handlePrevious = () => {
-    setSelectedImageIndex((prev) => 
-      prev === 0 ? displayImages.length - 1 : prev - 1
-    );
+    setSelectedImageIndex(prev => (prev === 0 ? displayImages.length - 1 : prev - 1));
   };
 
   const handleNext = () => {
-    setSelectedImageIndex((prev) => 
-      prev === displayImages.length - 1 ? 0 : prev + 1
-    );
+    setSelectedImageIndex(prev => (prev === displayImages.length - 1 ? 0 : prev + 1));
   };
 
   return (
@@ -51,7 +47,7 @@ export default function ProductImageCarousel({
           className="w-full h-auto rounded-lg shadow-lg cursor-zoom-in transition-transform hover:scale-[1.02]"
           onClick={handleImageClick}
         />
-        
+
         {/* Navigation arrows for main image (only show if multiple images) */}
         {displayImages.length > 1 && (
           <>
@@ -61,7 +57,12 @@ export default function ProductImageCarousel({
               aria-label="上一張圖片"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 19l-7-7 7-7"
+                />
               </svg>
             </button>
             <button
@@ -70,7 +71,12 @@ export default function ProductImageCarousel({
               aria-label="下一張圖片"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 5l7 7-7 7"
+                />
               </svg>
             </button>
           </>
@@ -92,8 +98,8 @@ export default function ProductImageCarousel({
               key={index}
               onClick={() => handleThumbnailClick(index)}
               className={`relative overflow-hidden rounded border-2 transition-all hover:border-gray-400 ${
-                index === selectedImageIndex 
-                  ? 'border-black ring-2 ring-black/20' 
+                index === selectedImageIndex
+                  ? 'border-black ring-2 ring-black/20'
                   : 'border-gray-200'
               }`}
             >
@@ -117,7 +123,12 @@ export default function ProductImageCarousel({
               aria-label="關閉放大檢視"
             >
               <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
               </svg>
             </button>
             <img
@@ -125,7 +136,7 @@ export default function ProductImageCarousel({
               alt={`${productName} - 放大檢視`}
               className="max-w-full max-h-full object-contain"
             />
-            
+
             {/* Navigation in lightbox */}
             {displayImages.length > 1 && (
               <>
@@ -135,7 +146,12 @@ export default function ProductImageCarousel({
                   aria-label="上一張圖片"
                 >
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M15 19l-7-7 7-7"
+                    />
                   </svg>
                 </button>
                 <button
@@ -144,7 +160,12 @@ export default function ProductImageCarousel({
                   aria-label="下一張圖片"
                 >
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 5l7 7-7 7"
+                    />
                   </svg>
                 </button>
               </>

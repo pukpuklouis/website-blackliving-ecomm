@@ -1,20 +1,11 @@
 import { useState, useEffect } from 'react';
 import type { FC } from 'react';
 import { useCartStore } from '../stores/cartStore';
-import { Button } from '@blackliving/ui/components/ui/button';
-import { Badge } from '@blackliving/ui/components/ui/badge';
-import { Separator } from '@blackliving/ui/components/ui/separator';
-import { 
-  ShoppingCart, 
-  X, 
-  Plus, 
-  Minus, 
-  Trash2, 
-  ArrowRight,
-  Package,
-  Truck
-} from 'lucide-react';
-import { cn } from '@blackliving/ui/lib/utils';
+import { Button } from '@blackliving/ui';
+import { Badge } from '@blackliving/ui';
+import { Separator } from '@blackliving/ui';
+import { ShoppingCart, X, Plus, Minus, Trash2, ArrowRight, Package, Truck } from 'lucide-react';
+import { cn } from '@blackliving/ui';
 
 interface MiniCartProps {
   isOpen: boolean;
@@ -23,21 +14,9 @@ interface MiniCartProps {
   className?: string;
 }
 
-const MiniCart: FC<MiniCartProps> = ({
-  isOpen,
-  onClose,
-  onCheckout,
-  className = '',
-}) => {
-  const { 
-    items, 
-    itemCount, 
-    subtotal, 
-    shippingFee, 
-    total, 
-    updateQuantity, 
-    removeItem 
-  } = useCartStore();
+const MiniCart: FC<MiniCartProps> = ({ isOpen, onClose, onCheckout, className = '' }) => {
+  const { items, itemCount, subtotal, shippingFee, total, updateQuantity, removeItem } =
+    useCartStore();
 
   const [isAnimating, setIsAnimating] = useState(false);
 
@@ -72,7 +51,11 @@ const MiniCart: FC<MiniCartProps> = ({
     };
   }, [isOpen, onClose]);
 
-  const handleQuantityChange = (productId: string, variantId: string | undefined, newQuantity: number) => {
+  const handleQuantityChange = (
+    productId: string,
+    variantId: string | undefined,
+    newQuantity: number
+  ) => {
     if (newQuantity <= 0) {
       removeItem(productId, variantId);
     } else {
@@ -94,8 +77,8 @@ const MiniCart: FC<MiniCartProps> = ({
       {/* Backdrop */}
       <div
         className={cn(
-          "fixed inset-0 bg-black/60 backdrop-blur-sm z-50 transition-opacity duration-300",
-          isOpen ? "opacity-100" : "opacity-0"
+          'fixed inset-0 bg-black/60 backdrop-blur-sm z-50 transition-opacity duration-300',
+          isOpen ? 'opacity-100' : 'opacity-0'
         )}
         onClick={onClose}
       />
@@ -103,10 +86,10 @@ const MiniCart: FC<MiniCartProps> = ({
       {/* Mini Cart Drawer */}
       <div
         className={cn(
-          "fixed right-0 top-0 h-full w-full max-w-md bg-white shadow-2xl z-50",
-          "transform transition-transform duration-300 ease-out",
-          "flex flex-col",
-          isOpen ? "translate-x-0" : "translate-x-full",
+          'fixed right-0 top-0 h-full w-full max-w-md bg-white shadow-2xl z-50',
+          'transform transition-transform duration-300 ease-out',
+          'flex flex-col',
+          isOpen ? 'translate-x-0' : 'translate-x-full',
           className
         )}
       >
@@ -141,13 +124,8 @@ const MiniCart: FC<MiniCartProps> = ({
                 <ShoppingCart className="h-8 w-8 text-gray-400" />
               </div>
               <h3 className="text-lg font-medium mb-2">購物車是空的</h3>
-              <p className="text-sm text-center mb-6">
-                瀏覽我們的商品，將喜歡的床墊加入購物車吧！
-              </p>
-              <Button 
-                onClick={onClose}
-                className="bg-black hover:bg-gray-800 text-white"
-              >
+              <p className="text-sm text-center mb-6">瀏覽我們的商品，將喜歡的床墊加入購物車吧！</p>
+              <Button onClick={onClose} className="bg-black hover:bg-gray-800 text-white">
                 繼續購物
               </Button>
             </div>
@@ -155,7 +133,7 @@ const MiniCart: FC<MiniCartProps> = ({
             <>
               {/* Cart Items */}
               <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                {items.map((item) => (
+                {items.map(item => (
                   <div
                     key={`${item.productId}-${item.variantId || 'default'}`}
                     className="flex space-x-3 p-3 border rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors"
@@ -166,7 +144,7 @@ const MiniCart: FC<MiniCartProps> = ({
                         src={item.image}
                         alt={item.name}
                         className="w-16 h-16 object-cover rounded-lg bg-white border"
-                        onError={(e) => {
+                        onError={e => {
                           const target = e.target as HTMLImageElement;
                           target.src = '/images/placeholder-mattress.jpg';
                         }}
@@ -175,20 +153,10 @@ const MiniCart: FC<MiniCartProps> = ({
 
                     {/* Product Info */}
                     <div className="flex-1 min-w-0">
-                      <h4 className="font-medium text-sm text-gray-900 truncate">
-                        {item.name}
-                      </h4>
-                      {item.variant && (
-                        <p className="text-xs text-gray-600 mt-1">
-                          {item.variant}
-                        </p>
-                      )}
-                      {item.size && (
-                        <p className="text-xs text-gray-500">
-                          尺寸: {item.size}
-                        </p>
-                      )}
-                      
+                      <h4 className="font-medium text-sm text-gray-900 truncate">{item.name}</h4>
+                      {item.variant && <p className="text-xs text-gray-600 mt-1">{item.variant}</p>}
+                      {item.size && <p className="text-xs text-gray-500">尺寸: {item.size}</p>}
+
                       {/* Price */}
                       <div className="flex items-center justify-between mt-2">
                         <div className="flex items-center space-x-2">
@@ -218,8 +186,12 @@ const MiniCart: FC<MiniCartProps> = ({
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => 
-                              handleQuantityChange(item.productId, item.variantId, item.quantity - 1)
+                            onClick={() =>
+                              handleQuantityChange(
+                                item.productId,
+                                item.variantId,
+                                item.quantity - 1
+                              )
                             }
                             disabled={item.quantity <= 1}
                             className="p-1 h-7 w-7"
@@ -233,8 +205,12 @@ const MiniCart: FC<MiniCartProps> = ({
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => 
-                              handleQuantityChange(item.productId, item.variantId, item.quantity + 1)
+                            onClick={() =>
+                              handleQuantityChange(
+                                item.productId,
+                                item.variantId,
+                                item.quantity + 1
+                              )
                             }
                             disabled={item.quantity >= 10}
                             className="p-1 h-7 w-7"
@@ -300,11 +276,7 @@ const MiniCart: FC<MiniCartProps> = ({
                       <ArrowRight className="h-4 w-4" />
                     </span>
                   </Button>
-                  <Button
-                    onClick={onClose}
-                    variant="outline"
-                    className="w-full"
-                  >
+                  <Button onClick={onClose} variant="outline" className="w-full">
                     繼續購物
                   </Button>
                 </div>

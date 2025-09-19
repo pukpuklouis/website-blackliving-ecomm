@@ -14,9 +14,9 @@ const getBaseURL = () => {
       'staging.blackliving-web.pages.dev',
       'staging.blackliving-admin.pages.dev',
       'blackliving.com',
-      'admin.blackliving.com'
+      'admin.blackliving.com',
     ];
-    
+
     const isValidHost = allowedHosts.some(
       allowed => hostname === allowed || hostname.endsWith('.' + allowed)
     );
@@ -30,11 +30,11 @@ const getBaseURL = () => {
     if (hostname === 'localhost') {
       return 'http://localhost:8787'; // Local API server
     }
-    
+
     if (hostname.includes('staging')) {
       return 'https://blackliving-api-staging.pukpuk-tw.workers.dev'; // Staging API
     }
-    
+
     if (hostname.includes('pages.dev') || hostname.includes('blackliving.com')) {
       return 'https://blackliving-api.pukpuk-tw.workers.dev'; // Production API
     }
@@ -98,25 +98,25 @@ export const signInWithGoogleAdmin = async () => {
     const getAdminCallbackURL = () => {
       if (typeof window !== 'undefined') {
         const hostname = window.location.hostname;
-        
+
         if (hostname === 'localhost') {
           return 'http://localhost:5173/auth/callback';
         }
-        
+
         if (hostname.includes('staging')) {
           return 'https://staging.blackliving-admin.pages.dev/auth/callback';
         }
-        
+
         if (hostname.includes('blackliving-admin.pages.dev')) {
           return 'https://blackliving-admin.pages.dev/auth/callback';
         }
-        
+
         // Future custom domain
         if (hostname.includes('admin.blackliving.com')) {
           return 'https://admin.blackliving.com/auth/callback';
         }
       }
-      
+
       // Default fallback
       return 'https://blackliving-admin.pages.dev/auth/callback';
     };
@@ -163,25 +163,25 @@ export const signInWithGoogleCustomer = async () => {
     const getCustomerCallbackURL = () => {
       if (typeof window !== 'undefined') {
         const hostname = window.location.hostname;
-        
+
         if (hostname === 'localhost') {
           return 'http://localhost:4321/account/profile';
         }
-        
+
         if (hostname.includes('staging')) {
           return 'https://staging.blackliving-web.pages.dev/account/profile';
         }
-        
+
         if (hostname.includes('blackliving-web.pages.dev')) {
           return 'https://blackliving-web.pages.dev/account/profile';
         }
-        
+
         // Future custom domain
         if (hostname.includes('blackliving.com')) {
           return 'https://blackliving.com/account/profile';
         }
       }
-      
+
       // Default fallback
       return 'https://blackliving-web.pages.dev/account/profile';
     };
@@ -300,7 +300,7 @@ export const checkSession = async (): Promise<{
 }> => {
   try {
     const sessionData = await authClient.getSession();
-    
+
     if (sessionData.data) {
       // Initialize session metadata if user is authenticated
       if (sessionData.data.user) {

@@ -29,11 +29,11 @@ export const currentAnnouncement: AnnouncementConfig = {
 // Utility functions for announcement visibility
 export function isAnnouncementVisible(config: AnnouncementConfig): boolean {
   if (!config.enabled) return false;
-  
+
   const now = new Date();
   const publishDate = new Date(config.publishDate);
   const endDate = new Date(config.endDate);
-  
+
   return now >= publishDate && now <= endDate;
 }
 
@@ -86,7 +86,7 @@ export const exampleAnnouncements = {
     type: 'promotion' as const,
     buttonText: '立即搶購',
   },
-  
+
   // New Product Launch
   newProduct: {
     id: 'new-product-launch',
@@ -94,7 +94,7 @@ export const exampleAnnouncements = {
     type: 'success' as const,
     buttonText: '搶先體驗',
   },
-  
+
   // Store Information
   storeUpdate: {
     id: 'store-update',
@@ -102,7 +102,7 @@ export const exampleAnnouncements = {
     type: 'info' as const,
     buttonText: '查看門市',
   },
-  
+
   // System Maintenance
   maintenance: {
     id: 'maintenance-notice',

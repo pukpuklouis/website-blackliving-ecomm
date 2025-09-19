@@ -10,7 +10,7 @@ export function createEnhancedAuthMiddleware(auth: AuthInstance) {
   return async (c: Context, next: Next) => {
     try {
       // FIXED: More comprehensive IP address extraction for Cloudflare Workers
-      const ip = 
+      const ip =
         c.req.header('cf-connecting-ip') ||
         c.req.header('x-forwarded-for')?.split(',')[0]?.trim() ||
         c.req.header('x-real-ip') ||
@@ -38,7 +38,9 @@ export function createEnhancedAuthMiddleware(auth: AuthInstance) {
 
       // Log authentication events for security monitoring
       if (session?.user) {
-        console.log(`Authenticated request: user=${session.user.id}, email=${session.user.email}, ip=${ip}, path=${c.req.path}`);
+        console.log(
+          `Authenticated request: user=${session.user.id}, email=${session.user.email}, ip=${ip}, path=${c.req.path}`
+        );
       } else {
         console.log(`Unauthenticated request: ip=${ip}, path=${c.req.path}`);
       }

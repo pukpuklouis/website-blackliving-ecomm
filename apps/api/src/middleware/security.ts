@@ -33,14 +33,14 @@ export const defaultSecurityConfig: SecurityConfig = {
  */
 function getAllowedOrigins(c: Context): string[] {
   const allowedOrigins = c.env.ALLOWED_ORIGINS;
-  
+
   if (!allowedOrigins) {
     // Fallback for development - include all common dev ports
     console.warn('ALLOWED_ORIGINS not set, using development fallback');
     return [
-      'http://localhost:4321',  // Astro web app
-      'http://localhost:5173',  // React admin app  
-      'http://localhost:8787',  // API worker
+      'http://localhost:4321', // Astro web app
+      'http://localhost:5173', // React admin app
+      'http://localhost:8787', // API worker
     ];
   }
 

@@ -14,20 +14,22 @@ export const birthdayRegex = /^\d{4}-\d{2}-\d{2}$/;
 export const profileValidationSchema = {
   firstName: z.string().min(1, '姓氏不能為空').max(50, '姓氏不能超過50個字符'),
   lastName: z.string().min(1, '名字不能為空').max(50, '名字不能超過50個字符'),
-  phone: z.string()
+  phone: z
+    .string()
     .regex(taiwanPhoneRegex, '請輸入有效的台灣手機號碼 (09xxxxxxxx)')
     .optional()
     .or(z.literal('')),
-  birthday: z.string()
-    .regex(birthdayRegex, '生日格式應為 YYYY-MM-DD')
-    .optional()
-    .or(z.literal('')),
-  gender: z.enum(['male', 'female', 'other'], {
-    errorMap: () => ({ message: '請選擇有效的性別' })
-  }).optional(),
-  contactPreference: z.enum(['email', 'phone', 'sms'], {
-    errorMap: () => ({ message: '請選擇有效的聯絡方式' })
-  }).optional()
+  birthday: z.string().regex(birthdayRegex, '生日格式應為 YYYY-MM-DD').optional().or(z.literal('')),
+  gender: z
+    .enum(['male', 'female', 'other'], {
+      errorMap: () => ({ message: '請選擇有效的性別' }),
+    })
+    .optional(),
+  contactPreference: z
+    .enum(['email', 'phone', 'sms'], {
+      errorMap: () => ({ message: '請選擇有效的聯絡方式' }),
+    })
+    .optional(),
 };
 
 export const addressValidationSchema = {
@@ -42,15 +44,16 @@ export const addressValidationSchema = {
   room: z.string().optional(),
   deliveryInstructions: z.string().max(500, '配送說明不能超過500字符').optional(),
   accessCode: z.string().optional(),
-  label: z.string().optional()
+  label: z.string().optional(),
 };
 
 export const passwordValidationSchema = {
   currentPassword: z.string().min(1, '請輸入目前密碼'),
-  newPassword: z.string()
+  newPassword: z
+    .string()
     .min(8, '新密碼至少需要8個字符')
     .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, '密碼需包含大小寫字母和數字'),
-  confirmPassword: z.string()
+  confirmPassword: z.string(),
 };
 
 // Validation functions
@@ -141,9 +144,8 @@ export function validatePasswordForm(data: {
 
 // Form state validation
 export function isFormDirty(current: Record<string, any>, original: Record<string, any>): boolean {
-  return Object.keys(current).some(key =>
-    current[key] !== original[key] &&
-    !(current[key] === '' && original[key] === null)
+  return Object.keys(current).some(
+    key => current[key] !== original[key] && !(current[key] === '' && original[key] === null)
   );
 }
 

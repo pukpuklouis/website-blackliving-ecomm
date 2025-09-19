@@ -40,9 +40,9 @@ export default defineConfig({
             // Other vendor packages
             return 'vendor';
           }
-        }
-      }
-    }
+        },
+      },
+    },
   },
   // Ensure proper handling of workspace packages
   server: {

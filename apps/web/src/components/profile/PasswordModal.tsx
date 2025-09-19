@@ -26,7 +26,7 @@ interface PasswordFormData {
 const initialFormData: PasswordFormData = {
   currentPassword: '',
   newPassword: '',
-  confirmPassword: ''
+  confirmPassword: '',
 };
 
 export function PasswordModal({ onSuccess, onError }: PasswordModalProps) {
@@ -37,13 +37,13 @@ export function PasswordModal({ onSuccess, onError }: PasswordModalProps) {
   const [showPasswords, setShowPasswords] = useState({
     current: false,
     new: false,
-    confirm: false
+    confirm: false,
   });
 
   // Handle input changes
   const handleInputChange = (field: keyof PasswordFormData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
-    
+
     // Clear field error when user types
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: '' }));
@@ -69,24 +69,24 @@ export function PasswordModal({ onSuccess, onError }: PasswordModalProps) {
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
-    
+
     setIsSubmitting(true);
-    
+
     try {
       const response = await fetch('/api/auth/change-password', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           currentPassword: formData.currentPassword,
-          newPassword: formData.newPassword
+          newPassword: formData.newPassword,
         }),
-        credentials: 'include'
+        credentials: 'include',
       });
 
       if (!response.ok) {
@@ -94,7 +94,7 @@ export function PasswordModal({ onSuccess, onError }: PasswordModalProps) {
       }
 
       const result = await response.json();
-      
+
       if (result.success) {
         setShowModal(false);
         setFormData(initialFormData);
@@ -125,10 +125,12 @@ export function PasswordModal({ onSuccess, onError }: PasswordModalProps) {
 
   // Check if form is valid
   const isFormValid = () => {
-    return formData.currentPassword && 
-           formData.newPassword && 
-           formData.confirmPassword && 
-           Object.keys(errors).length === 0;
+    return (
+      formData.currentPassword &&
+      formData.newPassword &&
+      formData.confirmPassword &&
+      Object.keys(errors).length === 0
+    );
   };
 
   return (
@@ -139,12 +141,12 @@ export function PasswordModal({ onSuccess, onError }: PasswordModalProps) {
           更改密碼
         </Button>
       </DialogTrigger>
-      
+
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>更改密碼</DialogTitle>
         </DialogHeader>
-        
+
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Current Password */}
           <div className="space-y-2">
@@ -154,7 +156,7 @@ export function PasswordModal({ onSuccess, onError }: PasswordModalProps) {
                 id="currentPassword"
                 type={showPasswords.current ? 'text' : 'password'}
                 value={formData.currentPassword}
-                onChange={(e) => handleInputChange('currentPassword', e.target.value)}
+                onChange={e => handleInputChange('currentPassword', e.target.value)}
                 className={errors.currentPassword ? 'border-red-500 pr-10' : 'pr-10'}
                 placeholder="請輸入目前密碼"
                 required
@@ -186,7 +188,7 @@ export function PasswordModal({ onSuccess, onError }: PasswordModalProps) {
                 id="newPassword"
                 type={showPasswords.new ? 'text' : 'password'}
                 value={formData.newPassword}
-                onChange={(e) => handleInputChange('newPassword', e.target.value)}
+                onChange={e => handleInputChange('newPassword', e.target.value)}
                 className={errors.newPassword ? 'border-red-500 pr-10' : 'pr-10'}
                 placeholder="請輸入新密碼"
                 required
@@ -198,19 +200,11 @@ export function PasswordModal({ onSuccess, onError }: PasswordModalProps) {
                 className="absolute right-2 top-1/2 -translate-y-1/2 h-auto p-1"
                 onClick={() => togglePasswordVisibility('new')}
               >
-                {showPasswords.new ? (
-                  <EyeOff className="h-4 w-4" />
-                ) : (
-                  <Eye className="h-4 w-4" />
-                )}
+                {showPasswords.new ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </Button>
             </div>
-            {errors.newPassword && (
-              <p className="text-sm text-red-500">{errors.newPassword}</p>
-            )}
-            <p className="text-xs text-gray-600">
-              密碼至少需要8個字符，包含大小寫字母和數字
-            </p>
+            {errors.newPassword && <p className="text-sm text-red-500">{errors.newPassword}</p>}
+            <p className="text-xs text-gray-600">密碼至少需要8個字符，包含大小寫字母和數字</p>
           </div>
 
           {/* Confirm Password */}
@@ -221,7 +215,7 @@ export function PasswordModal({ onSuccess, onError }: PasswordModalProps) {
                 id="confirmPassword"
                 type={showPasswords.confirm ? 'text' : 'password'}
                 value={formData.confirmPassword}
-                onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
+                onChange={e => handleInputChange('confirmPassword', e.target.value)}
                 className={errors.confirmPassword ? 'border-red-500 pr-10' : 'pr-10'}
                 placeholder="請再次輸入新密碼"
                 required
@@ -260,18 +254,10 @@ export function PasswordModal({ onSuccess, onError }: PasswordModalProps) {
 
           {/* Action Buttons */}
           <div className="flex justify-end space-x-2 pt-4">
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={handleClose}
-              disabled={isSubmitting}
-            >
+            <Button type="button" variant="outline" onClick={handleClose} disabled={isSubmitting}>
               取消
             </Button>
-            <Button 
-              type="submit" 
-              disabled={!isFormValid() || isSubmitting}
-            >
+            <Button type="submit" disabled={!isFormValid() || isSubmitting}>
               {isSubmitting ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin mr-2" />

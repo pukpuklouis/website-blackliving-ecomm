@@ -4,12 +4,12 @@
  */
 
 import { useState, useCallback, useEffect } from 'react';
-import type { 
-  CustomerAddress, 
-  AddressCreateRequest, 
+import type {
+  CustomerAddress,
+  AddressCreateRequest,
   AddressUpdateRequest,
   AddressesApiResponse,
-  AddressApiResponse
+  AddressApiResponse,
 } from '@blackliving/types/profile';
 
 interface UseAddressesOptions {
@@ -29,26 +29,26 @@ const API_BASE = '/api/customers/profile/addresses';
 export function useAddresses(options: UseAddressesOptions = {}) {
   const {
     autoLoad = true,
-    cacheTimeout = 180000 // 3 minutes
+    cacheTimeout = 180000, // 3 minutes
   } = options;
 
   const [state, setState] = useState<AddressesState>({
     addresses: [],
     loading: false,
     error: null,
-    lastUpdated: null
+    lastUpdated: null,
   });
 
   // Load all addresses
   const loadAddresses = useCallback(async () => {
     setState(prev => ({ ...prev, loading: true, error: null }));
-    
+
     try {
       console.log('[useAddresses] Fetching addresses from:', API_BASE);
       const response = await fetch(API_BASE, {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'include'
+        credentials: 'include',
       });
 
       console.log('[useAddresses] Response status:', response.status);
@@ -60,11 +60,11 @@ export function useAddresses(options: UseAddressesOptions = {}) {
       }
 
       if (result.success && result.data) {
-        setState(prev => ({ 
-          ...prev, 
-          addresses: result.data!, 
+        setState(prev => ({
+          ...prev,
+          addresses: result.data!,
           loading: false,
-          lastUpdated: new Date()
+          lastUpdated: new Date(),
         }));
         return result.data;
       } else {
@@ -81,13 +81,13 @@ export function useAddresses(options: UseAddressesOptions = {}) {
   // Create new address
   const createAddress = useCallback(async (addressData: AddressCreateRequest) => {
     setState(prev => ({ ...prev, loading: true, error: null }));
-    
+
     try {
       const response = await fetch(API_BASE, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(addressData),
-        credentials: 'include'
+        credentials: 'include',
       });
 
       if (!response.ok) {
@@ -95,16 +95,16 @@ export function useAddresses(options: UseAddressesOptions = {}) {
       }
 
       const result: AddressApiResponse = await response.json();
-      
+
       if (result.success && result.data) {
         // Add new address to state
-        setState(prev => ({ 
-          ...prev, 
-          addresses: [...prev.addresses, result.data!], 
+        setState(prev => ({
+          ...prev,
+          addresses: [...prev.addresses, result.data!],
           loading: false,
-          lastUpdated: new Date()
+          lastUpdated: new Date(),
         }));
-        
+
         return { success: true, data: result.data, message: result.message };
       } else {
         throw new Error(result.error || 'Failed to create address');
@@ -119,13 +119,13 @@ export function useAddresses(options: UseAddressesOptions = {}) {
   // Update existing address
   const updateAddress = useCallback(async (addressId: string, updateData: AddressUpdateRequest) => {
     setState(prev => ({ ...prev, loading: true, error: null }));
-    
+
     try {
       const response = await fetch(`${API_BASE}/${addressId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updateData),
-        credentials: 'include'
+        credentials: 'include',
       });
 
       if (!response.ok) {
@@ -133,18 +133,16 @@ export function useAddresses(options: UseAddressesOptions = {}) {
       }
 
       const result: AddressApiResponse = await response.json();
-      
+
       if (result.success && result.data) {
         // Update address in state
-        setState(prev => ({ 
-          ...prev, 
-          addresses: prev.addresses.map(addr => 
-            addr.id === addressId ? result.data! : addr
-          ), 
+        setState(prev => ({
+          ...prev,
+          addresses: prev.addresses.map(addr => (addr.id === addressId ? result.data! : addr)),
           loading: false,
-          lastUpdated: new Date()
+          lastUpdated: new Date(),
         }));
-        
+
         return { success: true, data: result.data, message: result.message };
       } else {
         throw new Error(result.error || 'Failed to update address');
@@ -159,12 +157,12 @@ export function useAddresses(options: UseAddressesOptions = {}) {
   // Delete address
   const deleteAddress = useCallback(async (addressId: string) => {
     setState(prev => ({ ...prev, loading: true, error: null }));
-    
+
     try {
       const response = await fetch(`${API_BASE}/${addressId}`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'include'
+        credentials: 'include',
       });
 
       if (!response.ok) {
@@ -172,16 +170,16 @@ export function useAddresses(options: UseAddressesOptions = {}) {
       }
 
       const result = await response.json();
-      
+
       if (result.success) {
         // Remove address from state
-        setState(prev => ({ 
-          ...prev, 
-          addresses: prev.addresses.filter(addr => addr.id !== addressId), 
+        setState(prev => ({
+          ...prev,
+          addresses: prev.addresses.filter(addr => addr.id !== addressId),
           loading: false,
-          lastUpdated: new Date()
+          lastUpdated: new Date(),
         }));
-        
+
         return { success: true, message: result.message };
       } else {
         throw new Error(result.error || 'Failed to delete address');
@@ -196,12 +194,12 @@ export function useAddresses(options: UseAddressesOptions = {}) {
   // Set address as default
   const setDefaultAddress = useCallback(async (addressId: string) => {
     setState(prev => ({ ...prev, loading: true, error: null }));
-    
+
     try {
       const response = await fetch(`${API_BASE}/${addressId}/default`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'include'
+        credentials: 'include',
       });
 
       if (!response.ok) {
@@ -209,19 +207,19 @@ export function useAddresses(options: UseAddressesOptions = {}) {
       }
 
       const result: AddressApiResponse = await response.json();
-      
+
       if (result.success && result.data) {
         // Update addresses: set the selected as default, others as not default
-        setState(prev => ({ 
-          ...prev, 
+        setState(prev => ({
+          ...prev,
           addresses: prev.addresses.map(addr => ({
             ...addr,
-            isDefault: addr.id === addressId
-          })), 
+            isDefault: addr.id === addressId,
+          })),
           loading: false,
-          lastUpdated: new Date()
+          lastUpdated: new Date(),
         }));
-        
+
         return { success: true, data: result.data, message: result.message };
       } else {
         throw new Error(result.error || 'Failed to set default address');
@@ -239,9 +237,12 @@ export function useAddresses(options: UseAddressesOptions = {}) {
   }, [state.addresses]);
 
   // Get addresses by type
-  const getAddressesByType = useCallback((type: 'shipping' | 'billing' | 'both') => {
-    return state.addresses.filter(addr => addr.type === type || addr.type === 'both');
-  }, [state.addresses]);
+  const getAddressesByType = useCallback(
+    (type: 'shipping' | 'billing' | 'both') => {
+      return state.addresses.filter(addr => addr.type === type || addr.type === 'both');
+    },
+    [state.addresses]
+  );
 
   // Auto-load addresses
   useEffect(() => {
@@ -253,13 +254,13 @@ export function useAddresses(options: UseAddressesOptions = {}) {
   return {
     // State
     ...state,
-    
+
     // Computed values
     defaultAddress: getDefaultAddress(),
     shippingAddresses: getAddressesByType('shipping'),
     billingAddresses: getAddressesByType('billing'),
     isEmpty: state.addresses.length === 0,
-    
+
     // Actions
     loadAddresses,
     createAddress,
@@ -267,9 +268,9 @@ export function useAddresses(options: UseAddressesOptions = {}) {
     deleteAddress,
     setDefaultAddress,
     getAddressesByType,
-    
+
     // Utilities
     refresh: loadAddresses,
-    findById: (id: string) => state.addresses.find(addr => addr.id === id) || null
+    findById: (id: string) => state.addresses.find(addr => addr.id === id) || null,
   };
 }

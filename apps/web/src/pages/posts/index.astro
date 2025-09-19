@@ -39,7 +39,7 @@ const posts: BlogPostSummary[] = (data.data || []).map((post: BlogPost & { categ
     <div class='max-w-4xl mx-auto'>
       <div class='grid grid-cols-1 md:flex flex-col gap-8'>
         {posts.map(post => (
-          <BlogPostCard post={post} variant="horizontal" />
+          <BlogPostCard post={post} variant="horizontal" href={`/posts/${post.slug}`} />
         ))}
       </div>
       {

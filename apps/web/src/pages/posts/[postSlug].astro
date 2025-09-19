@@ -1,59 +1,79 @@
 ---
 import PostLayout from '../../layouts/PostLayout.astro';
-import type { BlogPost, PostCategory } from '@blackliving/types';
+import type { BlogPost } from '@blackliving/types';
+import { getCollection, getEntry } from 'astro:content';
 
 export async function getStaticPaths() {
+  const apiUrl = process.env.PUBLIC_API_BASE_URL || 'http://localhost:8787';
+  
   try {
-    // Fetch all published posts to generate static paths
-    const apiUrl = import.meta.env.PUBLIC_API_BASE_URL || 'http://localhost:8787';
-    const response = await fetch(`${apiUrl}/api/posts/public?limit=100`);
-    if (!response.ok) {
-      console.error('Failed to fetch posts for static generation');
-      return [];
-    }
-
-    const data = await response.json();
-    const posts = data.data || [];
-
-    return posts.map((post: BlogPost) => ({
+    const response = await fetch(`${apiUrl}/api/posts/public?category=blog-post&include=category`);
+    const { data: posts } = await response.json();
+    
+    return posts.map((post: any) => ({
       params: { postSlug: post.slug },
+      props: { post },
     }));
   } catch (error) {
-    console.error('Error generating static paths:', error);
+    console.error('Error fetching static paths:', error);
     return [];
   }
 }
 
-const { postSlug } = Astro.params;
-const apiUrl = import.meta.env.PUBLIC_API_BASE_URL || 'http://localhost:8787';
+export const prerender = true;
 
-// Fetch post data using enhanced API endpoint with embedded category
-const postResponse = await fetch(`${apiUrl}/api/posts/${postSlug}?include=category`);
-if (!postResponse.ok) {
-  return Astro.redirect('/404');
-}
+const { post: basicPost } = Astro.props;
+const apiUrl = process.env.PUBLIC_API_BASE_URL || 'http://localhost:8787';
 
-const postData = await postResponse.json();
-const post: BlogPost & { category?: PostCategory } = postData.data;
-const category = post.category || null;
+// Fetch full post data with content using the slug
+const fullPostResponse = await fetch(`${apiUrl}/api/posts/${basicPost.slug}`);
+const { data: apiPost } = await fullPostResponse.json();
 
-// Fetch related posts from same category (simplified)
-let relatedPosts: BlogPost[] = [];
-if (post.categoryId) {
-  try {
-    const relatedResponse = await fetch(
-      `${apiUrl}/api/posts/public?category=${encodeURIComponent(post.category)}&limit=3`
-    );
-    if (relatedResponse.ok) {
-      const relatedData = await relatedResponse.json();
-      relatedPosts = (relatedData.data || []).filter((p: BlogPost) => p.slug !== postSlug);
-    }
-  } catch (error) {
-    console.warn('Failed to fetch related posts:', error);
-  }
-}
+// Get related posts from API
+const relatedResponse = await fetch(`${apiUrl}/api/posts/public?category=blog-post&include=category`);
+const { data: allPosts } = await relatedResponse.json();
+const relatedPosts = allPosts.filter((p: any) => p.id !== apiPost.id).slice(0, 3);
 
-// SEO data
+const post: BlogPost = {
+  id: apiPost.id,
+  title: apiPost.title,
+  slug: apiPost.slug,
+  description: apiPost.description || apiPost.excerpt,
+  excerpt: apiPost.excerpt || apiPost.description,
+  content: apiPost.content || apiPost.excerpt || apiPost.description || '',
+  authorName: apiPost.authorName || 'Black Living 專業團隊',
+  category: apiPost.category || 'Blog',
+  categoryId: 'blog',
+  tags: apiPost.tags || [],
+  featuredImage: apiPost.featuredImage || '',
+  publishedAt: apiPost.publishedAt,
+  viewCount: apiPost.viewCount || 0,
+  readingTime: apiPost.readingTime || 5,
+  seoTitle: apiPost.seoTitle,
+  seoDescription: apiPost.seoDescription,
+};
+
+
+const relatedBlogPosts: BlogPost[] = relatedPosts.map((p: any) => ({
+  id: p.id,
+  title: p.title,
+  slug: p.slug,
+  description: p.description || p.excerpt,
+  excerpt: p.excerpt || p.description,
+  content: p.content || p.excerpt || '',
+  authorName: p.authorName || 'Black Living 專業團隊',
+  category: p.category || 'Blog',
+  categoryId: 'blog',
+  tags: p.tags || [],
+  featuredImage: p.featuredImage || '',
+  publishedAt: p.publishedAt,
+  viewCount: p.viewCount || 0,
+  readingTime: p.readingTime || 5,
+}));
+
+const category = (apiPost && typeof apiPost.category === 'object')
+  ? { slug: apiPost.category.slug || 'blog-post', name: apiPost.category.name || '好文分享', color: apiPost.category.color, icon: apiPost.category.icon }
+  : { slug: 'blog-post', name: (typeof apiPost?.category === 'string' ? apiPost.category : '好文分享') };
 const seoTitle = post.seoTitle || `${post.title} | 黑哥家居`;
 const seoDescription = post.seoDescription || post.excerpt || post.description;
 const ogImage = post.featuredImage || '/images/default-og.jpg';
@@ -62,8 +82,10 @@ const ogImage = post.featuredImage || '/images/default-og.jpg';
 <PostLayout 
   {post}
   {category}
-  {relatedPosts}
+  relatedPosts={relatedBlogPosts}
   {seoTitle}
   {seoDescription}
   {ogImage}
-/>
+>
+  <!-- Content rendered by BlogContent component in PostLayout -->
+</PostLayout>
