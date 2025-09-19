@@ -3,7 +3,32 @@ import type { BlogBreadcrumbProps } from '@blackliving/types';
 
 export interface Props extends BlogBreadcrumbProps {}
 
-const { post, category } = Astro.props;
+const { post, category } = Astro.props as any;
+
+type NormalizedCategory = { slug: string; name: string; color?: string; icon?: string } | null;
+
+function normalizeCategory(input: any): NormalizedCategory {
+  if (!input) return null;
+  if (typeof input === 'object') {
+    const slug = input.slug || (typeof input.name === 'string' ? input.name.toLowerCase().replace(/\s+/g, '-') : undefined);
+    const name = input.name || input.slug || '';
+    if (!slug || !name) return null;
+    return { slug, name, color: input.color, icon: input.icon };
+  }
+  if (typeof input === 'string') {
+    const raw = input.trim();
+    // Map common labels to slugs
+    if (['客戶評價', 'customer-reviews', 'Customer Reviews'].includes(raw)) {
+      return { slug: 'customer-reviews', name: '顧客好評' };
+    }
+    // Default to blog posts
+    return { slug: 'blog-post', name: raw || '好文分享' };
+  }
+  return null;
+}
+
+const normalized = normalizeCategory(category);
+const basePath = normalized?.slug === 'customer-reviews' ? '/customer-reviews' : '/posts';
 ---
 
 <nav class="blog-breadcrumb mb-8" aria-label="麵包屑">
@@ -11,15 +36,15 @@ const { post, category } = Astro.props;
     <li>
       <a href="/" class="hover:text-gray-700">首頁</a>
     </li>
-    {category && (
+    {normalized && (
       <>
         <li>/</li>
         <li>
           <a 
-            href={`/posts?category=${category.slug}`} 
+            href={`${basePath}`} 
             class="hover:text-gray-700"
           >
-            {category.name}
+            {normalized.name}
           </a>
         </li>
       </>

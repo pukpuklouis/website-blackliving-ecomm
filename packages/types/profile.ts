@@ -2,10 +2,10 @@ import type { User, UserProfile, CustomerProfile } from './user';
 import type { Address } from './address';
 
 export interface FullUserProfile {
-    user: User;
-    userProfile: UserProfile;
-    customerProfile: CustomerProfile;
-    addresses: Address[];
+  user: User;
+  userProfile: UserProfile;
+  customerProfile: CustomerProfile;
+  addresses: Address[];
 }
 
 export interface ProfileAnalytics {

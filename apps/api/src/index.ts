@@ -58,7 +58,7 @@ app.use(
   cors({
     origin: (origin, c) => {
       // Get allowed origins from environment variable
-      const allowedOrigins = c.env.ALLOWED_ORIGINS 
+      const allowedOrigins = c.env.ALLOWED_ORIGINS
         ? c.env.ALLOWED_ORIGINS.split(',').map(o => o.trim())
         : [];
 
@@ -70,7 +70,7 @@ app.use(
         'http://localhost:8787', // API server
         // Production origins
         'https://blackliving.com',
-        'https://www.blackliving.com', 
+        'https://www.blackliving.com',
         'https://admin.blackliving.com',
         'https://api.blackliving.com',
       ];
@@ -82,7 +82,9 @@ app.use(
       }
 
       // Log suspicious origin attempts
-      console.warn(`Blocked CORS request from unauthorized origin: ${origin}. Allowed: ${allAllowedOrigins.join(', ')}`);
+      console.warn(
+        `Blocked CORS request from unauthorized origin: ${origin}. Allowed: ${allAllowedOrigins.join(', ')}`
+      );
       return undefined;
     },
     allowHeaders: [
@@ -244,7 +246,7 @@ app.get('/api/auth/debug/db', async c => {
 
   try {
     const db = c.get('db');
-    
+
     if (!db) {
       return c.json({ error: 'Database instance not found' }, 500);
     }
@@ -268,11 +270,11 @@ app.get('/api/auth/debug/db', async c => {
       hasDbInstance: !!db,
       rawQuery: {
         query: rawQuery,
-        results: rawResult
+        results: rawResult,
       },
       drizzleQuery: {
-        results: drizzleResult
-      }
+        results: drizzleResult,
+      },
     });
   } catch (error) {
     return c.json(
@@ -387,7 +389,7 @@ app.get('/api/auth/debug/oauth-flow', async c => {
     const auth = c.get('auth');
     const db = c.get('db');
     const { sessions, users, accounts } = await import('@blackliving/db/schema');
-    
+
     // Get current session info
     const currentSession = await auth.api.getSession({
       headers: c.req.raw.headers,
@@ -439,15 +441,18 @@ app.get('/api/auth/debug/oauth-flow', async c => {
           providerAccountId: a.providerAccountId,
           createdAt: a.createdAt,
         })),
-      }
+      },
     });
   } catch (error) {
     console.error('OAuth debug error:', error);
-    return c.json({
-      error: 'OAuth debug failed',
-      message: error instanceof Error ? error.message : 'Unknown error',
-      stack: error instanceof Error ? error.stack : undefined,
-    }, 500);
+    return c.json(
+      {
+        error: 'OAuth debug failed',
+        message: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined,
+      },
+      500
+    );
   }
 });
 
@@ -474,7 +479,7 @@ app.all('/api/auth/*', async c => {
 
     // Better Auth expects a standard Request object
     const response = await auth.handler(c.req.raw);
-    
+
     // Log response details for debugging
     console.log('📤 Better Auth Response:', {
       status: response.status,

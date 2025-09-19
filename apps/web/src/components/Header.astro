@@ -57,7 +57,7 @@ const menuItems = navigationData?.data.items.sort((a, b) => a.order - b.order) |
         <!-- Mobile Menu Button -->
         <button
           id='mobile-menu-button'
-          class='md:hidden p-2 text-gray-600 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[#C69C6D]'
+          class='md:hidden p-2 text-gray-600 hover:text-gray-900'
           aria-expanded='false'
           aria-controls='mobile-menu'
           aria-label='開啟選單'
@@ -79,7 +79,7 @@ const menuItems = navigationData?.data.items.sort((a, b) => a.order - b.order) |
             <li>
               <a
                 href={item.href}
-                class='text-white text-sm lg:text-base font-normal hover:text-gray-200 transition-colors whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-[#C69C6D] rounded px-2 py-1'
+                class='text-white text-sm lg:text-base font-normal hover:text-gray-200 transition-colors whitespace-nowrap rounded px-2 py-1'
               >
                 {item.label}
               </a>
@@ -124,7 +124,7 @@ const menuItems = navigationData?.data.items.sort((a, b) => a.order - b.order) |
           <!-- Close Button -->
           <button
             id='mobile-menu-close'
-            class='p-2 text-muted-foreground hover:text-muted-foreground/80 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-muted-foreground/50'
+            class='p-2 text-muted-foreground hover:text-muted-foreground/80'
             aria-label='關閉選單'
           >
             <svg class='w-6 h-6' fill='none' stroke='currentColor' viewBox='0 0 24 24' aria-hidden='true'>
@@ -160,7 +160,7 @@ const menuItems = navigationData?.data.items.sort((a, b) => a.order - b.order) |
         {menuItems.map((item, index) => (
           <a
             href={item.href}
-            class={`block px-6 py-3 text-primary-foreground text-base font-normal hover:bg-primary-foreground/10 hover:text-primary-foreground transition-colors rounded-md focus:outline-none focus:ring-2 focus:ring-primary-foreground/50${index === menuItems.length - 1 ? ' mb-3' : ''}`}
+            class={`block px-6 py-3 text-primary-foreground text-base font-normal hover:bg-primary-foreground/10 hover:text-primary-foreground transition-colors rounded-md ${index === menuItems.length - 1 ? ' mb-3' : ''}`}
           >
             {item.label}
           </a>

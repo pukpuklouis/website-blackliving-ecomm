@@ -1,0 +1,15 @@
+---
+import { marked } from 'marked';
+
+export interface Props {
+  content: string;
+  className?: string;
+}
+
+const { content, className = '' } = Astro.props as Props;
+
+marked.use({ gfm: true, breaks: true, async: true });
+const html = await marked.parse(content ?? '');
+---
+
+<article class={`prose prose-base prose-slate max-w-none prose-h1:text-gray-700 prose-h2:text-gray-700 prose-h3:text-gray-700 prose-h4:text-gray-700 prose-h5:text-gray-700 prose-h6:text-gray-700 prose-li:text-lg prose-li:text-gray-700 prose-a:text-sky-700 prose-a:no-underline prose-a:hover:text-brand-dark prose-a:hover:no-underline prose-a:hover:opacity-80 prose-strong:text-gray-700 prose-p:text-lg prose-p:text-gray-700 prose-p:leading-relaxed ${className}`} set:html={html} />

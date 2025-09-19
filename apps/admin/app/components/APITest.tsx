@@ -76,9 +76,7 @@ export default function APITest() {
           <div className="bg-gray-100 p-4 rounded-lg">
             <div className="mb-2">
               <span className="font-medium">Status: </span>
-              <span className={`${
-                response.status === 200 ? 'text-green-600' : 'text-red-600'
-              }`}>
+              <span className={`${response.status === 200 ? 'text-green-600' : 'text-red-600'}`}>
                 {response.status}
               </span>
             </div>

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import type { FC } from 'react';
 import { X, CheckCircle, AlertCircle, Info, AlertTriangle } from 'lucide-react';
-import { cn } from '@blackliving/ui/lib/utils';
+import { cn } from '@blackliving/ui';
 
 interface ToastProps {
   id: string;
@@ -13,14 +13,7 @@ interface ToastProps {
   onClose: (id: string) => void;
 }
 
-const Toast: FC<ToastProps> = ({
-  id,
-  type,
-  title,
-  message,
-  duration = 5000,
-  onClose,
-}) => {
+const Toast: FC<ToastProps> = ({ id, type, title, message, duration = 5000, onClose }) => {
   const [isVisible, setIsVisible] = useState(false);
   const [isLeaving, setIsLeaving] = useState(false);
 
@@ -85,9 +78,7 @@ const Toast: FC<ToastProps> = ({
           </div>
           <div className="ml-3 w-0 flex-1">
             <div className="text-sm font-medium">{title}</div>
-            {message && (
-              <div className="mt-1 text-sm opacity-90">{message}</div>
-            )}
+            {message && <div className="mt-1 text-sm opacity-90">{message}</div>}
           </div>
           <div className="ml-4 flex-shrink-0 flex">
             <button
@@ -154,7 +145,7 @@ export const ToastContainer: FC<ToastContainerProps> = ({ toasts, onRemoveToast 
   return createPortal(
     <div className="fixed top-0 right-0 p-4 z-50 pointer-events-none">
       <div className="space-y-2 pointer-events-auto">
-        {toasts.map((toast) => (
+        {toasts.map(toast => (
           <Toast
             key={toast.id}
             id={toast.id}

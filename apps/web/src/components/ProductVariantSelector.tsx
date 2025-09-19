@@ -1,12 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { z } from 'zod';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@blackliving/ui';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@blackliving/ui';
 
 // Dynamic validation schema that adapts to available variants
 const createVariantSchema = (variants: ProductVariant[]) => {

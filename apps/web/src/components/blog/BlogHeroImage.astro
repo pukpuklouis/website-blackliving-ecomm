@@ -1,0 +1,45 @@
+---
+export interface Props {
+  image?: string;
+  alt: string;
+  class?: string;
+}
+
+const { image, alt, class: className = '' } = Astro.props;
+---
+
+{image ? (
+  <section class={`blog-hero-image w-full ${className}`}>
+    <div class='relative w-full h-64 md:h-96 lg:h-[500px] overflow-hidden'>
+      <img
+        src={image}
+        alt={alt}
+        class='w-full h-full object-cover'
+        loading='eager'
+      />
+      <div class='absolute inset-0 bg-gradient-to-t from-black/20 to-transparent'></div>
+    </div>
+  </section>
+) : (
+  <!-- Fallback: Empty hero space with gradient background -->
+  <section class={`blog-hero-image w-full ${className}`}>
+    <div class='relative w-full h-32 md:h-48 bg-gradient-to-r from-blue-50 to-indigo-50'>
+      <div class='absolute inset-0 bg-gradient-to-t from-white/10 to-transparent'></div>
+    </div>
+  </section>
+)}
+
+<style>
+  .blog-hero-image {
+    /* Ensure hero image is full-width */
+    margin-left: calc(-50vw + 50%);
+    margin-right: calc(-50vw + 50%);
+  }
+
+  @media (max-width: 768px) {
+    .blog-hero-image {
+      margin-left: -1rem;
+      margin-right: -1rem;
+    }
+  }
+</style>

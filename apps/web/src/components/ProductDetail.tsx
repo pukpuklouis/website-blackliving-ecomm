@@ -38,18 +38,14 @@ interface ProductDetailProps {
   className?: string;
 }
 
-const ProductDetail: FC<ProductDetailProps> = ({
-  product,
-  categoryConfig,
-  className = '',
-}) => {
+const ProductDetail: FC<ProductDetailProps> = ({ product, categoryConfig, className = '' }) => {
   const { addItem } = useCartStore();
   const { addToast } = useToast();
 
   // Get reviews data from product - default to 0 if not available
   const reviewsData = {
     rating: product.averageRating || 0,
-    count: product.reviewCount || 0
+    count: product.reviewCount || 0,
   };
 
   // Convert product variants to ProductVariantSelector format
@@ -79,7 +75,7 @@ const ProductDetail: FC<ProductDetailProps> = ({
     for (let i = 0; i < variantData.quantity; i++) {
       addItem(cartItem);
     }
-    
+
     addToast({
       type: 'success',
       title: '已成功加入購物車！',
@@ -99,10 +95,8 @@ const ProductDetail: FC<ProductDetailProps> = ({
 
       {/* Product Name */}
       <div className="mb-6">
-        <h1 className="text-2xl lg:text-4xl font-bold text-gray-900 mb-2">
-          {product.name}
-        </h1>
-        
+        <h1 className="text-2xl lg:text-4xl font-bold text-gray-900 mb-2">{product.name}</h1>
+
         {/* Star Rating */}
         <StarRating
           rating={reviewsData.rating}
@@ -110,11 +104,9 @@ const ProductDetail: FC<ProductDetailProps> = ({
           size="md"
           className="mb-3"
         />
-        
+
         {/* Product Description */}
-        <p className="text-gray-600 text-sm">
-          {product.description}
-        </p>
+        <p className="text-gray-600 text-sm">{product.description}</p>
       </div>
 
       {/* Variant Selector with integrated quantity and add to cart */}

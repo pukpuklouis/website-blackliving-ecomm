@@ -12,8 +12,8 @@
   "scripts": {
     "db:generate": "drizzle-kit generate",
     "db:studio": "drizzle-kit studio",
-    "db:studio:local": "drizzle-kit studio --config=drizzle.config.local.ts",
-    "db:studio:remote": "drizzle-kit studio --config=drizzle.config.ts",
+    "db:studio:local": "drizzle-kit studio --config=drizzle.config.local.ts --port=4984",
+    "db:studio:remote": "drizzle-kit studio --config=drizzle.config.ts --port=4983",
     "db:introspect": "drizzle-kit introspect",
     "db:push": "drizzle-kit push",
     "db:sync": "node db-sync.js",

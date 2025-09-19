@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import type { FC } from 'react';
 import { useCartStore } from '../stores/cartStore';
-import { Button } from '@blackliving/ui/components/ui/button';
-import { Badge } from '@blackliving/ui/components/ui/badge';
+import { Button } from '@blackliving/ui';
+import { Badge } from '@blackliving/ui';
 import MiniCart from './MiniCart';
 import { ShoppingCart } from 'lucide-react';
-import { cn } from '@blackliving/ui/lib/utils';
+import { cn } from '@blackliving/ui';
 
 interface FloatingCartButtonProps {
   onCheckout?: () => void;
@@ -32,7 +32,7 @@ const FloatingCartButton: FC<FloatingCartButtonProps> = ({
   useEffect(() => {
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
-      
+
       // Show/hide based on scroll direction
       if (currentScrollY < 100) {
         setIsVisible(true);
@@ -43,7 +43,7 @@ const FloatingCartButton: FC<FloatingCartButtonProps> = ({
         // Scrolling up - show
         setIsVisible(true);
       }
-      
+
       setLastScrollY(currentScrollY);
     };
 
@@ -147,18 +147,15 @@ const FloatingCartButton: FC<FloatingCartButtonProps> = ({
               <ShoppingCart className="h-3 w-3" />
               <span>{itemCount} 件商品</span>
             </div>
-            
+
             {/* Tooltip Arrow */}
             <div
-              className={cn(
-                'absolute w-2 h-2 bg-black rotate-45',
-                {
-                  'top-full left-1/2 -translate-x-1/2 -mt-1': position.includes('bottom'),
-                  'bottom-full left-1/2 -translate-x-1/2 -mb-1': position.includes('top'),
-                  'left-full top-1/2 -translate-y-1/2 -ml-1': position.includes('right'),
-                  'right-full top-1/2 -translate-y-1/2 -mr-1': position.includes('left'),
-                }
-              )}
+              className={cn('absolute w-2 h-2 bg-black rotate-45', {
+                'top-full left-1/2 -translate-x-1/2 -mt-1': position.includes('bottom'),
+                'bottom-full left-1/2 -translate-x-1/2 -mb-1': position.includes('top'),
+                'left-full top-1/2 -translate-y-1/2 -ml-1': position.includes('right'),
+                'right-full top-1/2 -translate-y-1/2 -mr-1': position.includes('left'),
+              })}
             />
           </div>
         )}

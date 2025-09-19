@@ -1,5 +1,9 @@
 ---
-// Footer component for Black Living website
+import { getCollection } from 'astro:content';
+import type { StoreInfoData } from '@blackliving/types';
+
+const storeinfoEntries = await getCollection('storeinfo');
+const storeinfo = storeinfoEntries[0].data;
 ---
 
 <footer class='bg-gray-900 text-white'>
@@ -7,12 +11,11 @@
     <div class='grid grid-cols-1 md:grid-cols-4 gap-8'>
       <!-- Company Info -->
       <div>
-        <h3 class='text-lg font-semibold mb-4'>Black Living 黑哥家居</h3>
+        <h3 class='text-lg font-semibold mb-4'>{storeinfo.name}</h3>
         <p class='text-gray-300 mb-4'>專營席夢思黑標床墊，提供全台最低價與專業服務。</p>
         <div class='space-y-2 text-sm text-gray-300'>
-          <p>📍 中和展間：新北市中和區</p>
-          <p>📍 中壢展間：桃園市中壢區</p>
-          <p>📞 Line: @blackking</p>
+          <p>📍 {storeinfo.address}</p>
+          <p>📞 {storeinfo.phone}</p>
         </div>
       </div>
 

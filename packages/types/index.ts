@@ -5,3 +5,4 @@ export * from './address';
 export * from './api';
 export * from './profile';
 export * from './blog';
+export * from './storeinfo';

@@ -421,7 +421,7 @@ export class CustomerProfileService {
 
       // Prepare customer profile upsert
       const profileExists = await this.hasExtendedProfile(userId);
-      
+
       const profileData: any = {
         ...data,
         updatedAt: new Date(),
@@ -436,25 +436,29 @@ export class CustomerProfileService {
         );
       } else {
         // Create the profile if it doesn't exist
-        const user = await this.db.select({ email: users.email, name: users.name, phone: users.phone }).from(users).where(eq(users.id, userId)).limit(1);
+        const user = await this.db
+          .select({ email: users.email, name: users.name, phone: users.phone })
+          .from(users)
+          .where(eq(users.id, userId))
+          .limit(1);
         if (user[0]) {
-            const newProfile = {
-                id: createId(),
-                userId: userId,
-                customerNumber: await this.generateCustomerNumber(),
-                email: user[0].email,
-                name: data.name || user[0].name,
-                phone: data.phone || user[0].phone,
-                birthday: data.birthday,
-                gender: data.gender,
-                contactPreference: data.contactPreference,
-                notes: data.notes,
-                source: 'existing_user',
-                segment: 'customer',
-                createdAt: new Date(),
-                updatedAt: new Date(),
-            };
-            batchOperations.push(this.db.insert(customerProfiles).values(newProfile));
+          const newProfile = {
+            id: createId(),
+            userId: userId,
+            customerNumber: await this.generateCustomerNumber(),
+            email: user[0].email,
+            name: data.name || user[0].name,
+            phone: data.phone || user[0].phone,
+            birthday: data.birthday,
+            gender: data.gender,
+            contactPreference: data.contactPreference,
+            notes: data.notes,
+            source: 'existing_user',
+            segment: 'customer',
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          };
+          batchOperations.push(this.db.insert(customerProfiles).values(newProfile));
         }
       }
 

@@ -49,17 +49,17 @@ export const auth = betterAuth({
     'http://localhost:4321', // Web app
     'http://localhost:5173', // Admin app
     'http://localhost:8787', // API server
-    
+
     // Staging
     'https://staging.blackliving-web.pages.dev',
     'https://staging.blackliving-admin.pages.dev',
     'https://blackliving-api-staging.pukpuk-tw.workers.dev',
-    
+
     // Production (current .pages.dev URLs)
     'https://blackliving-web.pages.dev',
     'https://blackliving-admin.pages.dev',
     'https://blackliving-api.pukpuk-tw.workers.dev',
-    
+
     // Future custom domains (forward compatibility)
     'https://blackliving.com',
     'https://admin.blackliving.com',

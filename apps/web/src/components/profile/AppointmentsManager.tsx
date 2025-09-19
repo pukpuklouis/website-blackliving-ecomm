@@ -8,17 +8,7 @@ import { Button } from '@blackliving/ui';
 import { Card, CardContent, CardHeader, CardTitle } from '@blackliving/ui';
 import { Badge } from '@blackliving/ui';
 import { Alert, AlertDescription } from '@blackliving/ui';
-import { 
-  Calendar,
-  Clock,
-  MapPin,
-  Phone,
-  User,
-  RefreshCcw,
-  X,
-  Plus,
-  Loader2
-} from 'lucide-react';
+import { Calendar, Clock, MapPin, Phone, User, RefreshCcw, X, Plus, Loader2 } from 'lucide-react';
 
 interface Appointment {
   id: string;
@@ -48,13 +38,13 @@ const statusConfig = {
   pending: { label: '待確認', color: 'bg-yellow-100 text-yellow-800 border-yellow-200' },
   confirmed: { label: '已確認', color: 'bg-blue-100 text-blue-800 border-blue-200' },
   completed: { label: '已完成', color: 'bg-green-100 text-green-800 border-green-200' },
-  cancelled: { label: '已取消', color: 'bg-red-100 text-red-800 border-red-200' }
+  cancelled: { label: '已取消', color: 'bg-red-100 text-red-800 border-red-200' },
 };
 
 const timeSlots = {
-  '上午': '09:00 - 12:00',
-  '下午': '14:00 - 17:00', 
-  '晚上': '19:00 - 21:00'
+  上午: '09:00 - 12:00',
+  下午: '14:00 - 17:00',
+  晚上: '19:00 - 21:00',
 };
 
 function formatDate(dateString: string): string {
@@ -62,7 +52,7 @@ function formatDate(dateString: string): string {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
-    weekday: 'long'
+    weekday: 'long',
   });
 }
 
@@ -76,12 +66,12 @@ export function AppointmentsManager({ className, onSuccess, onError }: Appointme
   const loadAppointments = async () => {
     setLoading(true);
     setError(null);
-    
+
     try {
       const response = await fetch('/api/appointments/my', {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'include'
+        credentials: 'include',
       });
 
       if (!response.ok) {
@@ -89,7 +79,7 @@ export function AppointmentsManager({ className, onSuccess, onError }: Appointme
       }
 
       const result = await response.json();
-      
+
       if (result.success && result.data) {
         setAppointments(result.data);
       } else {
@@ -111,12 +101,12 @@ export function AppointmentsManager({ className, onSuccess, onError }: Appointme
     }
 
     setActionLoading(appointmentId);
-    
+
     try {
       const response = await fetch(`/api/appointments/${appointmentId}/cancel`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'include'
+        credentials: 'include',
       });
 
       if (!response.ok) {
@@ -124,14 +114,12 @@ export function AppointmentsManager({ className, onSuccess, onError }: Appointme
       }
 
       const result = await response.json();
-      
+
       if (result.success) {
         // Update local state
-        setAppointments(prev => 
-          prev.map(apt => 
-            apt.id === appointmentId 
-              ? { ...apt, status: 'cancelled' as const }
-              : apt
+        setAppointments(prev =>
+          prev.map(apt =>
+            apt.id === appointmentId ? { ...apt, status: 'cancelled' as const } : apt
           )
         );
         onSuccess?.(result.message || '預約已取消');
@@ -146,7 +134,7 @@ export function AppointmentsManager({ className, onSuccess, onError }: Appointme
     }
   };
 
-  // Reschedule appointment  
+  // Reschedule appointment
   const rescheduleAppointment = async (appointmentId: string) => {
     // For now, redirect to booking page with appointment ID
     window.location.href = `/appointment?reschedule=${appointmentId}`;
@@ -210,7 +198,7 @@ export function AppointmentsManager({ className, onSuccess, onError }: Appointme
           </Button>
         </div>
       </CardHeader>
-      
+
       <CardContent>
         {isEmpty ? (
           <div className="text-center py-8">
@@ -218,14 +206,12 @@ export function AppointmentsManager({ className, onSuccess, onError }: Appointme
             <p className="text-gray-600 mb-2">尚無預約記錄</p>
             <p className="text-sm text-gray-500 mb-4">立即預約免費到府試躺服務</p>
             <Button asChild>
-              <a href="/appointment">
-                立即預約
-              </a>
+              <a href="/appointment">立即預約</a>
             </Button>
           </div>
         ) : (
           <div className="space-y-4">
-            {appointments.map((appointment) => (
+            {appointments.map(appointment => (
               <Card key={appointment.id} className="relative">
                 <CardContent className="pt-4">
                   <div className="flex justify-between items-start">
@@ -238,7 +224,7 @@ export function AppointmentsManager({ className, onSuccess, onError }: Appointme
                           預約編號: {appointment.id.slice(-8)}
                         </span>
                       </div>
-                      
+
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
                         <div className="space-y-2">
                           <div className="flex items-center text-sm">
@@ -254,7 +240,7 @@ export function AppointmentsManager({ className, onSuccess, onError }: Appointme
                             <span>{appointment.storeLocation}門市</span>
                           </div>
                         </div>
-                        
+
                         <div className="space-y-2">
                           <div className="flex items-center text-sm">
                             <Calendar className="h-4 w-4 mr-2 text-gray-500" />
@@ -262,16 +248,19 @@ export function AppointmentsManager({ className, onSuccess, onError }: Appointme
                           </div>
                           <div className="flex items-center text-sm">
                             <Clock className="h-4 w-4 mr-2 text-gray-500" />
-                            <span>{appointment.preferredTime} ({timeSlots[appointment.preferredTime]})</span>
+                            <span>
+                              {appointment.preferredTime} ({timeSlots[appointment.preferredTime]})
+                            </span>
                           </div>
                           {appointment.confirmedDateTime && (
                             <div className="text-sm font-medium text-blue-600">
-                              ✓ 已確認時間: {new Date(appointment.confirmedDateTime).toLocaleString('zh-TW')}
+                              ✓ 已確認時間:{' '}
+                              {new Date(appointment.confirmedDateTime).toLocaleString('zh-TW')}
                             </div>
                           )}
                         </div>
                       </div>
-                      
+
                       {appointment.productInterest && appointment.productInterest.length > 0 && (
                         <div className="mb-3">
                           <p className="text-sm text-gray-600 mb-1">興趣產品:</p>
@@ -284,7 +273,7 @@ export function AppointmentsManager({ className, onSuccess, onError }: Appointme
                           </div>
                         </div>
                       )}
-                      
+
                       {appointment.notes && (
                         <div className="mb-3">
                           <p className="text-sm text-gray-600 mb-1">備註:</p>
@@ -293,12 +282,12 @@ export function AppointmentsManager({ className, onSuccess, onError }: Appointme
                           </p>
                         </div>
                       )}
-                      
+
                       <p className="text-xs text-gray-500">
                         建立時間: {new Date(appointment.createdAt).toLocaleString('zh-TW')}
                       </p>
                     </div>
-                    
+
                     <div className="flex flex-col space-y-2 ml-4">
                       {appointment.status === 'pending' && (
                         <>
@@ -327,7 +316,7 @@ export function AppointmentsManager({ className, onSuccess, onError }: Appointme
                           </Button>
                         </>
                       )}
-                      
+
                       {appointment.status === 'confirmed' && (
                         <Button
                           variant="outline"
@@ -339,14 +328,9 @@ export function AppointmentsManager({ className, onSuccess, onError }: Appointme
                           改期
                         </Button>
                       )}
-                      
+
                       {appointment.status === 'completed' && (
-                        <Button
-                          asChild
-                          variant="outline"
-                          size="sm"
-                          className="text-green-600"
-                        >
+                        <Button asChild variant="outline" size="sm" className="text-green-600">
                           <a href="/appointment">
                             <Plus className="h-3 w-3 mr-1" />
                             再預約
@@ -360,7 +344,7 @@ export function AppointmentsManager({ className, onSuccess, onError }: Appointme
             ))}
           </div>
         )}
-        
+
         {/* Contact Info */}
         <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
           <div className="flex items-start space-x-3">

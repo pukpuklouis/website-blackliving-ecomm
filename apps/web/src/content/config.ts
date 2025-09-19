@@ -10,6 +10,8 @@ const posts = defineCollection({
     image: z.string().optional(),
     tags: z.array(z.string()).default([]),
     featured: z.boolean().default(false),
+    seoTitle: z.string().optional(),
+    seoDescription: z.string().optional(),
   }),
 });
 
@@ -91,6 +93,15 @@ const pages = defineCollection({
   }),
 });
 
+const storeinfo = defineCollection({
+  type: 'data',
+  schema: z.object({
+    name: z.string(),
+    address: z.string(),
+    phone: z.string(),
+  }),
+});
+
 export const collections = {
   posts,
   products,
@@ -98,4 +109,5 @@ export const collections = {
   navigation,
   categories,
   pages,
+  storeinfo,
 };

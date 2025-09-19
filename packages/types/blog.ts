@@ -72,7 +72,10 @@ export interface BlogBreadcrumbProps {
  * Props for BlogHeader component
  */
 export interface BlogHeaderProps {
-  post: Pick<BlogPost, 'title' | 'authorName' | 'publishedAt' | 'readingTime' | 'viewCount' | 'featuredImage'>;
+  post: Pick<
+    BlogPost,
+    'title' | 'authorName' | 'publishedAt' | 'readingTime' | 'viewCount' | 'featuredImage'
+  >;
   category?: PostCategory | null;
 }
 
@@ -126,7 +129,7 @@ export interface PostLayoutProps {
  */
 export interface BlogPostCardProps {
   post: BlogPostSummary;
-  variant?: "vertical" | "horizontal";
+  variant?: 'vertical' | 'horizontal';
   className?: string;
 }
 
