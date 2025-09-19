@@ -67,7 +67,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       if (response.ok) {
         await checkAuth();
-        return user?.role === 'admin';
+        // After checkAuth updates state, route protection will gate access.
+        // Return success here to avoid a race on stale `user` state.
+        return true;
       }
       return false;
     } catch (error) {
