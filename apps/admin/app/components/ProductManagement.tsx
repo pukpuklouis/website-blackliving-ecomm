@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import {
   Card,
   CardContent,
@@ -23,6 +23,7 @@ import {
   Separator,
   Textarea,
   Switch,
+  Skeleton,
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -38,9 +39,9 @@ import Plus from '@lucide/react/plus';
 import Search from '@lucide/react/search';
 import Edit from '@lucide/react/edit';
 import Trash2 from '@lucide/react/trash-2';
-import Upload from '@lucide/react/upload';
 import Eye from '@lucide/react/eye';
 import Filter from '@lucide/react/filter';
+import GripVertical from '@lucide/react/grip-vertical';
 import {
   useReactTable,
   createColumnHelper,
@@ -52,11 +53,15 @@ import {
   type SortingState,
   type ColumnFiltersState,
 } from '@tanstack/react-table';
-import { z } from 'zod';
+import { z, type ZodIssue } from 'zod';
 import { toast } from 'sonner';
+import { resolveAssetUrl, extractAssetKey } from '../lib/assets';
+import { reorderList } from '../lib/array';
+import { safeParseJSON } from '../lib/http';
+import { ImageUpload } from './ImageUpload';
 
 // Product types based on database schema
-interface Product {
+export interface Product {
   id: string;
   name: string;
   slug: string;
@@ -82,12 +87,11 @@ interface Product {
 }
 
 // Validation schema
-const productSchema = z.object({
+export const slugRegex = /^[a-z0-9-]+$/;
+
+export const productSchema = z.object({
   name: z.string().min(1, '產品名稱為必填'),
-  slug: z
-    .string()
-    .min(1, 'URL slug 為必填')
-    .regex(/^[a-z0-9-]+$/, '只能包含小寫字母、數字和連字符'),
+  slug: z.string().min(1, 'URL slug 為必填').regex(slugRegex, '只能包含小寫字母、數字和連字符'),
   description: z.string().min(10, '產品描述至少需要 10 個字元'),
   category: z.enum(['simmons-black', 'accessories', 'us-imports'], {
     errorMap: () => ({ message: '請選擇產品分類' }),
@@ -120,7 +124,9 @@ const categoryLabels = {
   'us-imports': '美國進口',
 };
 
-export default function ProductManagement() {
+export default function ProductManagement({ initialProducts }: { initialProducts?: Product[] }) {
+  const API_BASE = import.meta.env.PUBLIC_API_URL as string;
+  const cdnBase = (import.meta.env.PUBLIC_IMAGE_CDN_URL as string | undefined)?.trim();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [sorting, setSorting] = useState<SortingState>([]);
@@ -131,6 +137,31 @@ export default function ProductManagement() {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [formData, setFormData] = useState<Partial<ProductFormData>>({});
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [specOrder, setSpecOrder] = useState<string[]>([]);
+
+  const fallbackAssetBase = useMemo(
+    () => (typeof window !== 'undefined' ? window.location.origin : undefined),
+    []
+  );
+  const featureDragIndexRef = useRef<number | null>(null);
+  const specDragIndexRef = useRef<number | null>(null);
+
+  const hasAtLeastOneImage = useMemo(() => (formData.images?.length ?? 0) > 0, [formData.images]);
+  const hasAtLeastOneVariant = useMemo(
+    () => (formData.variants?.length ?? 0) > 0,
+    [formData.variants]
+  );
+  const isSubmitDisabled = isSubmitting || !hasAtLeastOneImage || !hasAtLeastOneVariant;
+  const specificationEntries = useMemo(() => {
+    const specs = formData.specifications || {};
+    if (specOrder.length > 0) {
+      return specOrder
+        .filter(key => key in specs)
+        .map(key => [key, specs[key] as string] as [string, string]);
+    }
+    return Object.entries(specs) as Array<[string, string]>;
+  }, [formData.specifications, specOrder]);
 
   const columnHelper = createColumnHelper<Product>();
 
@@ -232,18 +263,37 @@ export default function ProductManagement() {
     getSortedRowModel: getSortedRowModel(),
   });
 
-  // Load products on component mount
+  // Initialize with server data if provided; otherwise fetch
   useEffect(() => {
-    loadProducts();
+    if (initialProducts && initialProducts.length >= 0) {
+      const sanitized = initialProducts.map(product =>
+        sanitizeProduct(product, cdnBase, fallbackAssetBase)
+      );
+      setProducts(sanitized);
+      setLoading(false);
+    } else {
+      loadProducts();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadProducts = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:8787/api/products');
+      const response = await fetch(`${API_BASE}/api/products`, { credentials: 'include' });
       if (response.ok) {
         const result = await response.json();
-        setProducts(result.success ? result.data.products : []);
+        // /api/products returns { success, data: { products, pagination } }
+        if (result.success) {
+          const fetchedProducts = Array.isArray(result.data?.products) ? result.data.products : [];
+          setProducts(
+            fetchedProducts.map((product: Product) =>
+              sanitizeProduct(product, cdnBase, fallbackAssetBase)
+            )
+          );
+        } else {
+          setProducts([]);
+        }
       }
     } catch (error) {
       console.error('Failed to load products:', error);
@@ -254,6 +304,7 @@ export default function ProductManagement() {
   };
 
   const handleCreate = () => {
+    setSelectedProduct(null);
     setFormData({
       category: 'simmons-black',
       images: [],
@@ -265,19 +316,28 @@ export default function ProductManagement() {
       sortOrder: 0,
     });
     setFormErrors({});
+    setSpecOrder([]);
+    setFeatureInput('');
+    setSpecKey('');
+    setSpecVal('');
     setIsCreateDialogOpen(true);
   };
 
   const handleEdit = (product: Product) => {
-    setSelectedProduct(product);
-    setFormData(product);
+    const sanitized = sanitizeProduct(product, cdnBase, fallbackAssetBase);
+    setSelectedProduct(sanitized);
+    setFormData(sanitized);
+    setSpecOrder(Object.keys(sanitized.specifications || {}));
     setFormErrors({});
+    setFeatureInput('');
+    setSpecKey('');
+    setSpecVal('');
     setIsEditDialogOpen(true);
   };
 
   const handleDelete = async (id: string) => {
     try {
-      const response = await fetch(`http://localhost:8787/api/products/${id}`, {
+      const response = await fetch(`${API_BASE}/api/admin/products/${id}`, {
         method: 'DELETE',
         credentials: 'include',
       });
@@ -285,21 +345,51 @@ export default function ProductManagement() {
         setProducts(prev => prev.filter(p => p.id !== id));
         toast.success('產品刪除成功');
       } else {
-        throw new Error('Failed to delete product');
+        const err = await safeParseJSON(response);
+        throw new Error(err?.error || err?.message || 'Failed to delete product');
       }
     } catch (error) {
       console.error('Delete failed:', error);
-      toast.error('刪除產品失敗');
+      toast.error(error instanceof Error ? error.message : '刪除產品失敗');
     }
   };
 
   const handleSubmit = async (isEdit: boolean) => {
     try {
-      const validatedData = productSchema.parse(formData);
+      setIsSubmitting(true);
+      setFormErrors({});
+
+      // Normalize types (price fields to number) and respect spec ordering
+      const normalized = normalizeFormData(formData, specOrder);
+
+      const requiredErrors: Record<string, string> = {};
+      if (normalized.images.length === 0) {
+        requiredErrors.images = '至少需要一張產品圖片';
+      }
+      if (normalized.variants.length === 0) {
+        requiredErrors['variants'] = '至少需要一個產品變體';
+      }
+
+      if (Object.keys(requiredErrors).length > 0) {
+        setFormErrors(requiredErrors);
+        toast.error('請先新增至少一張圖片與一個產品變體');
+        return;
+      }
+
+      const validationResult = validateProductWithFallback(normalized);
+      if (!validationResult.success) {
+        if (validationResult.errors) {
+          setFormErrors(prev => ({ ...prev, ...validationResult.errors }));
+        }
+        toast.error('請確認表單欄位填寫正確');
+        return;
+      }
+
+      const validatedData = validationResult.data;
 
       const url = isEdit
-        ? `http://localhost:8787/api/products/${selectedProduct?.id}`
-        : 'http://localhost:8787/api/products';
+        ? `${API_BASE}/api/admin/products/${selectedProduct?.id}`
+        : `${API_BASE}/api/admin/products`;
       const method = isEdit ? 'PUT' : 'POST';
 
       const response = await fetch(url, {
@@ -311,7 +401,7 @@ export default function ProductManagement() {
 
       if (response.ok) {
         const result = await response.json();
-        const savedProduct = result.data;
+        const savedProduct = sanitizeProduct(result.data, cdnBase, fallbackAssetBase);
 
         if (isEdit) {
           setProducts(prev => prev.map(p => (p.id === selectedProduct?.id ? savedProduct : p)));
@@ -324,30 +414,181 @@ export default function ProductManagement() {
         toast.success(isEdit ? '產品更新成功' : '產品建立成功');
         setFormData({});
         setFormErrors({});
+        setSpecOrder([]);
       } else {
-        throw new Error('Failed to save product');
+        const err = await safeParseJSON(response);
+        throw new Error(err?.error || err?.message || 'Failed to save product');
       }
     } catch (error) {
-      if (error instanceof z.ZodError) {
-        const errors: Record<string, string> = {};
-        error.errors.forEach(err => {
-          const path = err.path.join('.');
-          errors[path] = err.message;
-        });
-        setFormErrors(errors);
-      } else {
-        console.error('Save failed:', error);
-        toast.error('儲存產品失敗');
-      }
+      console.error('Save failed:', error);
+      toast.error(error instanceof Error ? error.message : '儲存產品失敗');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
+  const handleAddVariant = () => {
+    setFormData(prev => ({
+      ...prev,
+      variants: [...(prev.variants || []), { name: '', price: 0, sku: '', size: '' }],
+    }));
+    setFormErrors(prev => {
+      if (!prev.variants) return prev;
+      const { variants, ...rest } = prev;
+      return rest;
+    });
+  };
+
+  const handleUpdateVariant = (
+    index: number,
+    field: keyof ProductFormData['variants'][number],
+    value: string
+  ) => {
+    setFormData(prev => {
+      const variants = [...(prev.variants || [])];
+      const current = { ...(variants[index] || { name: '', price: 0 }) } as any;
+      if (field === 'price') {
+        current.price = Number(value) || 0;
+      } else {
+        current[field] = value;
+      }
+      variants[index] = current;
+      return { ...prev, variants };
+    });
+  };
+
+  const handleRemoveVariant = (index: number) => {
+    const nextVariants = (formData.variants || []).filter((_, i) => i !== index);
+    setFormData(prev => ({
+      ...prev,
+      variants: nextVariants,
+    }));
+    setFormErrors(prev => {
+      if (nextVariants.length === 0) {
+        return { ...prev, variants: '至少需要一個產品變體' };
+      }
+      if (!prev.variants) return prev;
+      const { variants, ...rest } = prev;
+      return rest;
+    });
+  };
+
+  const [featureInput, setFeatureInput] = useState('');
+  const handleAddFeature = () => {
+    const val = featureInput.trim();
+    if (!val) return;
+    setFormData(prev => ({ ...prev, features: [...(prev.features || []), val] }));
+    setFeatureInput('');
+  };
+  const handleRemoveFeature = (i: number) => {
+    setFormData(prev => ({
+      ...prev,
+      features: (prev.features || []).filter((_, idx) => idx !== i),
+    }));
+  };
+
+  const [specKey, setSpecKey] = useState('');
+  const [specVal, setSpecVal] = useState('');
+  const handleAddSpec = () => {
+    const k = specKey.trim();
+    const v = specVal.trim();
+    if (!k || !v) return;
+    setFormData(prev => ({
+      ...prev,
+      specifications: { ...(prev.specifications || {}), [k]: v },
+    }));
+    setSpecOrder(prev => (prev.includes(k) ? prev : [...prev, k]));
+    setSpecKey('');
+    setSpecVal('');
+  };
+  const handleRemoveSpec = (k: string) => {
+    setFormData(prev => {
+      const next = { ...(prev.specifications || {}) } as Record<string, string>;
+      delete next[k];
+      return { ...prev, specifications: next };
+    });
+    setSpecOrder(prev => prev.filter(key => key !== k));
+  };
+
+  const handleProductImagesChange = (images: string[]) => {
+    setFormData(prev => ({ ...prev, images }));
+    setFormErrors(prev => {
+      if (images.length === 0) {
+        return { ...prev, images: '至少需要一張產品圖片' };
+      }
+      if (!prev.images) return prev;
+      const { images: _removed, ...rest } = prev;
+      return rest;
+    });
+  };
+
+
+
+
+
+  const handleFeatureDragStart = (index: number) => {
+    featureDragIndexRef.current = index;
+  };
+
+  const handleFeatureDragEnter = (index: number) => {
+    if (featureDragIndexRef.current === null || featureDragIndexRef.current === index) return;
+    setFormData(prev => {
+      const features = prev.features || [];
+      const from = featureDragIndexRef.current;
+      if (
+        from === null ||
+        from < 0 ||
+        from >= features.length ||
+        index < 0 ||
+        index >= features.length
+      ) {
+        return prev;
+      }
+      const reordered = reorderList(features, from, index);
+      featureDragIndexRef.current = index;
+      return { ...prev, features: reordered };
+    });
+  };
+
+  const handleFeatureDragEnd = () => {
+    featureDragIndexRef.current = null;
+  };
+
+  const handleSpecDragStart = (index: number) => {
+    specDragIndexRef.current = index;
+  };
+
+  const handleSpecDragEnter = (index: number) => {
+    if (specDragIndexRef.current === null || specDragIndexRef.current === index) return;
+    setSpecOrder(prev => {
+      const from = specDragIndexRef.current;
+      if (from === null || from < 0 || from >= prev.length || index < 0 || index >= prev.length) {
+        return prev;
+      }
+      const reordered = reorderList(prev, from, index);
+      specDragIndexRef.current = index;
+      return reordered;
+    });
+  };
+
+  const handleSpecDragEnd = () => {
+    specDragIndexRef.current = null;
+  };
+
+
+
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
-          <p className="mt-2 text-gray-600">載入中...</p>
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <div>
+            <div className="h-7 w-40 bg-transparent" />
+          </div>
+          <Skeleton className="h-9 w-28" />
+        </div>
+        <div className="space-y-3">
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-72 w-full" />
         </div>
       </div>
     );
@@ -358,8 +599,8 @@ export default function ProductManagement() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">產品管理</h1>
-          <p className="text-gray-600 mt-2">管理席夢思床墊與相關產品</p>
+          <h1 className="text-3xl font-bold text-foreground">產品管理</h1>
+          <p className="text-foreground/60 mt-2">管理席夢思床墊與相關產品</p>
         </div>
         <Button onClick={handleCreate}>
           <Plus className="h-4 w-4 mr-2" />
@@ -489,7 +730,7 @@ export default function ProductManagement() {
           }
         }}
       >
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="lg:min-w-4xl w-full max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{isEditDialogOpen ? '編輯產品' : '新增產品'}</DialogTitle>
             <DialogDescription>
@@ -502,7 +743,7 @@ export default function ProductManagement() {
             <div className="space-y-4">
               <h4 className="font-medium">基本資訊</h4>
               <div className="grid grid-cols-2 gap-4">
-                <div>
+                <div className="flex flex-col gap-2">
                   <Label htmlFor="name">產品名稱 *</Label>
                   <Input
                     id="name"
@@ -514,7 +755,7 @@ export default function ProductManagement() {
                     <p className="text-sm text-red-500 mt-1">{formErrors.name}</p>
                   )}
                 </div>
-                <div>
+                <div className="flex flex-col gap-2">
                   <Label htmlFor="slug">URL Slug *</Label>
                   <Input
                     id="slug"
@@ -528,7 +769,7 @@ export default function ProductManagement() {
                 </div>
               </div>
 
-              <div>
+              <div className="flex flex-col gap-2">
                 <Label htmlFor="description">產品描述 *</Label>
                 <Textarea
                   id="description"
@@ -542,7 +783,7 @@ export default function ProductManagement() {
                 )}
               </div>
 
-              <div>
+              <div className="flex flex-col gap-2">
                 <Label htmlFor="category">產品分類 *</Label>
                 <Select
                   value={formData.category || ''}
@@ -594,13 +835,212 @@ export default function ProductManagement() {
 
             <Separator />
 
-            {/* Image Upload Placeholder */}
+            {/* Image Upload */}
+            <ImageUpload
+              title="產品圖片"
+              value={formData.images || []}
+              onChange={handleProductImagesChange}
+              folder="products"
+              emptyHint={!hasAtLeastOneImage ? '儲存前請至少上傳一張產品圖片。' : undefined}
+              error={formErrors.images}
+            />
+
+            <Separator />
+
+            {/* Variants */}
             <div className="space-y-4">
-              <h4 className="font-medium">產品圖片</h4>
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
-                <Upload className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-600 mb-2">圖片上傳功能開發中</p>
-                <p className="text-sm text-gray-500">將整合 Cloudflare R2 儲存</p>
+              <h4 className="font-medium">產品選項</h4>
+              <div className="space-y-6">
+                {(formData.variants || []).map((v, i) => (
+                  <div key={i} className="grid grid-cols-12 gap-2 items-end">
+                    <div className="col-span-3 flex flex-col gap-2">
+                      <Label>名稱</Label>
+                      <Input
+                        value={v?.name || ''}
+                        onChange={e => handleUpdateVariant(i, 'name', e.target.value)}
+                      />
+                    </div>
+                    <div className="col-span-3 flex flex-col gap-2">
+                      <Label>價格</Label>
+                      <Input
+                        type="number"
+                        inputMode="decimal"
+                        value={v?.price?.toString() ?? '0'}
+                        onChange={e => handleUpdateVariant(i, 'price', e.target.value)}
+                      />
+                    </div>
+                    <div className="col-span-3 flex flex-col gap-2">
+                      <Label>SKU</Label>
+                      <Input
+                        value={v?.sku || ''}
+                        onChange={e => handleUpdateVariant(i, 'sku', e.target.value)}
+                      />
+                    </div>
+                    <div className="col-span-2 flex flex-col gap-2">
+                      <Label>尺寸</Label>
+                      <Input
+                        value={v?.size || ''}
+                        onChange={e => handleUpdateVariant(i, 'size', e.target.value)}
+                      />
+                    </div>
+                    <div className="col-span-1">
+                      <Button variant="outline" onClick={() => handleRemoveVariant(i)}>
+                        移除
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <Button variant="secondary" onClick={handleAddVariant}>
+                新增選項
+              </Button>
+              {!hasAtLeastOneVariant && (
+                <p className="text-sm text-amber-600">儲存前請至少新增一個產品選項。</p>
+              )}
+              {formErrors['variants'] && (
+                <p className="text-sm text-red-500">{formErrors['variants']}</p>
+              )}
+            </div>
+
+            <Separator />
+
+            {/* Features */}
+            <div className="space-y-3">
+              <h4 className="font-medium">產品特色</h4>
+              <div className="flex gap-2">
+                <Input
+                  placeholder="新增特色..."
+                  value={featureInput}
+                  onChange={e => setFeatureInput(e.target.value)}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleAddFeature();
+                    }
+                  }}
+                />
+                <Button type="button" onClick={handleAddFeature}>
+                  新增
+                </Button>
+              </div>
+              {(formData.features || []).length > 0 && (
+                <ul className="space-y-2">
+                  {(formData.features || []).map((feature, i) => (
+                    <li
+                      key={`${feature}-${i}`}
+                      className="flex items-center justify-between gap-2 rounded border bg-muted/20 p-2 cursor-move"
+                      draggable
+                      onDragStart={() => handleFeatureDragStart(i)}
+                      onDragEnter={() => handleFeatureDragEnter(i)}
+                      onDragOver={e => e.preventDefault()}
+                      onDragEnd={handleFeatureDragEnd}
+                      onDrop={handleFeatureDragEnd}
+                      aria-label={`重新排序特色 ${i + 1}`}
+                    >
+                      <span className="flex items-center gap-2 text-sm">
+                        <GripVertical className="h-4 w-4 text-muted-foreground" aria-hidden />
+                        {feature}
+                      </span>
+                      <Button variant="outline" size="sm" onClick={() => handleRemoveFeature(i)}>
+                        移除
+                      </Button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+
+            <Separator />
+
+            {/* Specifications */}
+            <div className="space-y-3">
+              <h4 className="font-medium">產品規格</h4>
+              <div className="grid grid-cols-12 gap-2 items-end">
+                <div className="col-span-3 flex flex-col gap-2">
+                  <Label>規格名稱</Label>
+                  <Input value={specKey} onChange={e => setSpecKey(e.target.value)} />
+                </div>
+                <div className="col-span-6 flex flex-col gap-2">
+                  <Label>規格數據</Label>
+                  <Input value={specVal} onChange={e => setSpecVal(e.target.value)} />
+                </div>
+                <div className="col-span-2">
+                  <Button type="button" onClick={handleAddSpec}>
+                    新增
+                  </Button>
+                </div>
+              </div>
+              <div className="space-y-2">
+                {specificationEntries.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">尚未新增規格。</p>
+                ) : (
+                  <ul className="space-y-2">
+                    {specificationEntries.map(([k, v], i) => (
+                      <li
+                        key={k}
+                        className="flex items-start justify-between gap-2 rounded border bg-muted/20 p-3 cursor-move"
+                        draggable
+                        onDragStart={() => handleSpecDragStart(i)}
+                        onDragEnter={() => handleSpecDragEnter(i)}
+                        onDragOver={e => e.preventDefault()}
+                        onDragEnd={handleSpecDragEnd}
+                        onDrop={handleSpecDragEnd}
+                        aria-label={`重新排序規格 ${k}`}
+                      >
+                        <div className="flex flex-1 items-start gap-2">
+                          <GripVertical
+                            className="mt-1 h-4 w-4 text-muted-foreground"
+                            aria-hidden
+                          />
+                          <div>
+                            <div className="text-sm font-medium">{k}</div>
+                            <div className="text-sm text-muted-foreground">{v}</div>
+                          </div>
+                        </div>
+                        <Button variant="ghost" size="sm" onClick={() => handleRemoveSpec(k)}>
+                          移除
+                        </Button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* SEO & Sorting */}
+            <div className="space-y-4">
+              <h4 className="font-medium">SEO 與排序</h4>
+              <div className="grid grid-cols-3 gap-4 items-start">
+                <div className="flex flex-col gap-2">
+                  <Label>排序順序</Label>
+                  <Input
+                    type="number"
+                    inputMode="numeric"
+                    value={(formData.sortOrder ?? 0).toString()}
+                    onChange={e =>
+                      setFormData(prev => ({ ...prev, sortOrder: Number(e.target.value) || 0 }))
+                    }
+                  />
+                </div>
+                <div className="col-span-3 flex flex-col gap-2">
+                  <Label>SEO 標題</Label>
+                  <Input
+                    value={formData.seoTitle || ''}
+                    onChange={e => setFormData(prev => ({ ...prev, seoTitle: e.target.value }))}
+                  />
+                </div>
+                <div className="col-span-3 flex flex-col gap-2">
+                  <Label>SEO 描述</Label>
+                  <Textarea
+                    rows={3}
+                    value={formData.seoDescription || ''}
+                    onChange={e =>
+                      setFormData(prev => ({ ...prev, seoDescription: e.target.value }))
+                    }
+                  />
+                </div>
               </div>
             </div>
           </div>
@@ -615,12 +1055,216 @@ export default function ProductManagement() {
             >
               取消
             </Button>
-            <Button onClick={() => handleSubmit(isEditDialogOpen)}>
-              {isEditDialogOpen ? '更新' : '建立'}
+            <Button disabled={isSubmitDisabled} onClick={() => handleSubmit(isEditDialogOpen)}>
+              {isSubmitting ? (
+                <span className="inline-flex items-center gap-2">
+                  <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
+                  處理中...
+                </span>
+              ) : isEditDialogOpen ? (
+                '更新'
+              ) : (
+                '建立'
+              )}
             </Button>
           </div>
         </DialogContent>
       </Dialog>
     </div>
   );
+}
+
+export function normalizeFormData(
+  fd: Partial<ProductFormData>,
+  specOrder: string[] = []
+): ProductFormData {
+  const variants = Array.isArray(fd.variants)
+    ? fd.variants.map(variant => ({
+        name: (variant?.name ?? '').toString().trim(),
+        price:
+          typeof variant?.price === 'number'
+            ? variant.price
+            : Number((variant?.price as unknown as string) ?? 0) || 0,
+        sku: variant?.sku ? variant.sku.toString().trim() : undefined,
+        size: variant?.size ? variant.size.toString().trim() : undefined,
+      }))
+    : [];
+
+  const images = Array.isArray(fd.images)
+    ? fd.images.map(img => (typeof img === 'string' ? img.trim() : '')).filter(Boolean)
+    : [];
+
+  const features = Array.isArray(fd.features)
+    ? fd.features
+        .map(feature => (typeof feature === 'string' ? feature.trim() : ''))
+        .filter(Boolean)
+    : [];
+
+  const rawSpecifications =
+    fd.specifications && typeof fd.specifications === 'object'
+      ? (fd.specifications as Record<string, unknown>)
+      : {};
+
+  const specificationEntries = Object.entries(rawSpecifications)
+    .map(([key, value]) => {
+      const trimmedKey = key.trim();
+      const strValue =
+        typeof value === 'string'
+          ? value.trim()
+          : value !== undefined && value !== null
+            ? String(value).trim()
+            : '';
+      return [trimmedKey, strValue] as [string, string];
+    })
+    .filter(([key, value]) => key.length > 0 && value.length > 0);
+
+  const orderedKeys = specOrder.length
+    ? specOrder.filter(orderKey => specificationEntries.some(([key]) => key === orderKey))
+    : specificationEntries.map(([key]) => key);
+
+  const specifications: Record<string, string> = {};
+  orderedKeys.forEach(key => {
+    const entry = specificationEntries.find(([specKey]) => specKey === key);
+    if (entry) {
+      specifications[entry[0]] = entry[1];
+    }
+  });
+
+  specificationEntries.forEach(([key, value]) => {
+    if (!(key in specifications)) {
+      specifications[key] = value;
+    }
+  });
+
+  return {
+    name: fd.name?.trim() ?? '',
+    slug: fd.slug?.trim() ?? '',
+    description: fd.description?.trim() ?? '',
+    category: (fd.category as ProductFormData['category']) ?? 'simmons-black',
+    images,
+    variants,
+    features,
+    specifications,
+    inStock: fd.inStock ?? true,
+    featured: fd.featured ?? false,
+    sortOrder:
+      typeof fd.sortOrder === 'number'
+        ? fd.sortOrder
+        : Number((fd.sortOrder as unknown as string) ?? 0) || 0,
+    seoTitle: fd.seoTitle?.trim() || undefined,
+    seoDescription: fd.seoDescription?.trim() || undefined,
+  };
+}
+
+
+interface ValidationResult {
+  success: boolean;
+  data?: ProductFormData;
+  errors?: Record<string, string>;
+}
+
+export function validateProductWithFallback(data: ProductFormData): ValidationResult {
+  try {
+    const result = productSchema.safeParse(data);
+    if (result.success) {
+      return { success: true, data: result.data };
+    }
+    return {
+      success: false,
+      errors: mapZodIssues(result.error.issues),
+    };
+  } catch (error) {
+    if (isZodInternalError(error)) {
+      console.warn('Zod validation failed internally, using manual validation fallback.', error);
+      return manualValidateProduct(data);
+    }
+    throw error;
+  }
+}
+
+function mapZodIssues(issues: ZodIssue[]): Record<string, string> {
+  const mapped: Record<string, string> = {};
+  issues.forEach(issue => {
+    const key = issue.path.length > 0 ? issue.path.join('.') : 'form';
+    mapped[key] = issue.message;
+  });
+  return mapped;
+}
+
+function manualValidateProduct(data: ProductFormData): ValidationResult {
+  const errors: Record<string, string> = {};
+
+  if (!data.name || data.name.trim().length === 0) {
+    errors.name = '產品名稱為必填';
+  }
+
+  const slug = data.slug?.trim() ?? '';
+  if (!slug) {
+    errors.slug = 'URL slug 為必填';
+  } else if (!slugRegex.test(slug)) {
+    errors.slug = '只能包含小寫字母、數字和連字符';
+  }
+
+  if (!data.description || data.description.trim().length < 10) {
+    errors.description = '產品描述至少需要 10 個字元';
+  }
+
+  if (!['simmons-black', 'accessories', 'us-imports'].includes(data.category)) {
+    errors.category = '請選擇產品分類';
+  }
+
+  if (!Array.isArray(data.images) || data.images.length === 0) {
+    errors.images = '至少需要一張產品圖片';
+  }
+
+  if (!Array.isArray(data.variants) || data.variants.length === 0) {
+    errors['variants'] = '至少需要一個產品變體';
+  } else {
+    data.variants.forEach((variant, index) => {
+      if (!variant.name || variant.name.trim().length === 0) {
+        errors[`variants.${index}.name`] = '變體名稱為必填';
+      }
+      if (typeof variant.price !== 'number' || Number.isNaN(variant.price) || variant.price < 0) {
+        errors[`variants.${index}.price`] = '價格需為不小於 0 的數字';
+      }
+    });
+  }
+
+  if (Object.keys(errors).length > 0) {
+    return { success: false, errors };
+  }
+
+  return { success: true, data };
+}
+
+function isZodInternalError(error: unknown): boolean {
+  return (
+    error instanceof TypeError &&
+    typeof error.message === 'string' &&
+    error.message.includes('_zod')
+  );
+}
+
+export function sanitizeProduct(
+  product: Product | null | undefined,
+  cdnUrl?: string,
+  fallbackBase?: string
+): Product {
+  const safeProduct = (product ?? {}) as Product;
+
+  const images = Array.isArray(safeProduct.images)
+    ? safeProduct.images.filter(Boolean).map(image => {
+        const imgString = String(image);
+        const key = extractAssetKey(imgString);
+        return resolveAssetUrl({ key, url: imgString }, cdnUrl, fallbackBase);
+      })
+    : [];
+
+  return {
+    ...safeProduct,
+    images,
+    variants: Array.isArray(safeProduct.variants) ? safeProduct.variants : [],
+    features: Array.isArray(safeProduct.features) ? safeProduct.features : [],
+    specifications: safeProduct.specifications || {},
+  };
 }

@@ -11,6 +11,7 @@ export default [
     route('orders', 'routes/dashboard/orders.tsx'),
     route('posts', 'routes/dashboard/posts.tsx'),
     route('blog-composer', 'routes/dashboard/blog-composer.tsx'),
+    route('editor-playground', 'routes/dashboard/editor-playground.tsx'),
     route('appointments', 'routes/dashboard/appointments.tsx'),
     route('customers', 'routes/dashboard/customers.tsx'),
     route('analytics', 'routes/dashboard/analytics.tsx'),
