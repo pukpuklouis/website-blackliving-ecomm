@@ -1,0 +1,11 @@
+{
+  "name": "@tailwindcss/typography",
+  "version": "0.5.16",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "default": "./index.js"
+    }
+  }
+}
