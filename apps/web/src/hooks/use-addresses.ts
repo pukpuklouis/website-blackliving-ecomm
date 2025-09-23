@@ -44,16 +44,13 @@ export function useAddresses(options: UseAddressesOptions = {}) {
     setState(prev => ({ ...prev, loading: true, error: null }));
 
     try {
-      console.log('[useAddresses] Fetching addresses from:', API_BASE);
       const response = await fetch(API_BASE, {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
       });
 
-      console.log('[useAddresses] Response status:', response.status);
       const result: AddressesApiResponse = await response.json();
-      console.log('[useAddresses] API Result:', result);
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);

@@ -172,7 +172,7 @@ const AddToCartSection: FC<AddToCartSectionProps> = ({
           url: window.location.href,
         });
       } catch (err) {
-        console.log('Error sharing:', err);
+        // Sharing failed - fall through to clipboard fallback
       }
     } else {
       // Fallback: copy to clipboard
