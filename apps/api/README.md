@@ -137,6 +137,15 @@ The database uses **Drizzle ORM** with the following main tables:
 - **Blog Posts**: 30 minutes TTL
 - **Tag-based Invalidation**: Automatic cache clearing on updates
 
+### Blog Categories — Dynamic + Cached
+
+- Endpoints:
+  - `GET /api/posts/categories` — returns active categories; KV cached (24h), tag: `post-categories`.
+  - `GET /api/posts/categories/:slug` — returns a single category plus `postsCount`; KV cached (24h), tag: `post-categories`.
+  - `POST /api/posts/categories/cache/invalidate` — admin only; clears all caches tagged `post-categories` (call after add/edit/delete category).
+- Cache keys: `blog:categories:active`, `blog:category:{slug}`.
+- Implementation: see `apps/api/src/modules/posts.ts` and `apps/api/src/lib/cache.ts` (`setWithTags`, `invalidateByTags`).
+
 ## 📁 File Storage
 
 **Cloudflare R2** handles all file operations:
@@ -145,6 +154,15 @@ The database uses **Drizzle ORM** with the following main tables:
 - **Blog Media**: Rich content assets
 - **User Uploads**: Profile pictures, documents
 - **Automatic Validation**: File type and size limits
+
+### Production media delivery
+
+- **Indirect access only**: Production buckets remain private; the Worker streams files via `/media/:key` (see `apps/api/src/routes/media.ts`). Map a subdomain such as `images.blackliving.com` to this Worker route.
+- **Environment-specific buckets**: `wrangler.toml` binds `blackliving-images-dev`, `blackliving-images-staging`, and `blackliving-images-prod`, ensuring uploads stay isolated per environment. Staging currently exposes assets via Cloudflare’s generated R2 domain (`https://pub-bdf23ffacc974ac28ddec02806cf30cb.r2.dev`) until its worker hostname is provisioned.
+- **Immutable caching**: Successful `GET` responses set `Cache-Control: public, max-age=31536000, immutable` and populate Cloudflare cache (`caches.default`). Range requests are served without being cached.
+- **URL contract**: `R2_PUBLIC_URL` (and the admin app's `PUBLIC_IMAGE_CDN_URL`) include the `/media` prefix so all generated URLs already target the Worker.
+- **Protected namespaces**: Requests for keys beginning with `private/` receive `403` until a signed delivery path is implemented.
+- **Operational visibility**: Upload/delete failures are logged, cache hits/misses are reported by the Worker, and Wrangler metrics should be watched for anomalies. Schedule periodic clean-up jobs for orphaned assets.
 
 ## 🚀 Deployment
 
@@ -177,8 +195,10 @@ wrangler deploy --env production
    # Create D1 database
    wrangler d1 create blackliving-db
 
-   # Create R2 bucket
-   wrangler r2 bucket create blackliving-images
+   # Create R2 buckets
+   wrangler r2 bucket create blackliving-images-dev
+   wrangler r2 bucket create blackliving-images-staging
+   wrangler r2 bucket create blackliving-images-prod
 
    # Create KV namespace
    wrangler kv:namespace create "CACHE"

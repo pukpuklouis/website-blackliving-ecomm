@@ -1,7 +1,7 @@
 /* packages/tailwind-config/styles.css */
 @import 'tailwindcss';
 @import './theme.css';
-@import "tw-animate-css";
+@import 'tw-animate-css';
 @plugin "@tailwindcss/typography";
 /* @config "./tailwind.config.js"; */
 
@@ -74,6 +74,51 @@
   }
 }
 
+.bn-editor-style {
+  /*container without focus ring*/
+  .bn-container {
+    --bn-colors-editor-text: var(--color-foreground);
+    --bn-colors-editor-background: var(--color-background);
+  }
+  /* Drag handle / side menu tightening */
+  /* Button sizing */
+  .bn-side-menu .bn-button {
+    margin: 2px;
+    align-self: flex-start;
+    width: 22px;
+    height: 22px;
+    padding: 0;
+    border-radius: 6px;
+  }
+
+  /* Icon size inside buttons */
+  .bn-side-menu .bn-button svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  /* Add block (+) button alignment */
+  .bn-toggle-add-block-button {
+    margin: 1px 0;
+    text-align: left;
+  }
+
+  /* Side menu container alignment */
+  .bn-side-menu {
+    align-items: center;
+    gap: 1px;
+    margin-left: -6px;
+  }
+}
+
+/* BlockNote placeholder behavior and tone */
+/* Only keep document-level placeholder (handled in editor dictionary).
+   If any per-block placeholders slip through, keep them subtle. */
+.bn-editor-style [data-placeholder],
+.bn-editor-style .bn-placeholder {
+  color: color-mix(in oklab, var(--color-muted-foreground) 80%, transparent);
+}
+
 /* Blog-specific styles - Enhanced with Typography Plugin */
 .blog {
   /* Use prose classes for better typography */
@@ -119,5 +164,4 @@
   .blog-related-post {
     @apply transition-all duration-300 hover:transform hover:scale-105;
   }
-
 }

@@ -49,16 +49,17 @@ migrations_dir = "../../packages/db/migrations"
 
 [[env.production.r2_buckets]]
 binding = "R2"
-bucket_name = "your-images-bucket"
+bucket_name = "your-images-bucket-prod"
 
 # Cloudflare R2 Storage
 [[r2_buckets]]
 binding = "R2"
-bucket_name = "your-images-bucket"
+bucket_name = "your-images-bucket-prod"
 
 [[env.development.r2_buckets]]
 binding = "R2"
 bucket_name = "your-images-bucket-dev"
+preview_bucket_name = "your-images-bucket-dev"
 
 [[env.staging.r2_buckets]]
 binding = "R2"
@@ -90,6 +91,7 @@ NODE_ENV = "production"
 API_BASE_URL = "https://your-api.your-subdomain.workers.dev"
 WEB_BASE_URL = "https://your-web.pages.dev"
 ADMIN_BASE_URL = "https://your-admin.pages.dev"
+R2_PUBLIC_URL = "https://images.blackliving.com/media"
 # Update with your actual deployment URLs
 ALLOWED_ORIGINS = "https://your-web-deployment.pages.dev,https://your-admin-deployment.pages.dev,https://yourdomain.com,https://admin.yourdomain.com"
 
@@ -98,6 +100,7 @@ NODE_ENV = "development"
 API_BASE_URL = "http://localhost:8787"
 WEB_BASE_URL = "http://localhost:4321"
 ADMIN_BASE_URL = "http://localhost:5173"
+R2_PUBLIC_URL = "http://localhost:8787/media"
 ALLOWED_ORIGINS = "http://localhost:4321,http://localhost:5173,http://localhost:8787"
 
 [env.staging.vars]
@@ -105,6 +108,7 @@ NODE_ENV = "staging"
 API_BASE_URL = "https://your-api-staging.your-subdomain.workers.dev"
 WEB_BASE_URL = "https://staging.your-web.pages.dev"
 ADMIN_BASE_URL = "https://staging.your-admin.pages.dev"
+R2_PUBLIC_URL = "https://pub-bdf23ffacc974ac28ddec02806cf30cb.r2.dev"
 ALLOWED_ORIGINS = "https://staging.your-web.pages.dev,https://staging.your-admin.pages.dev,https://your-api-staging.your-subdomain.workers.dev"
 
 

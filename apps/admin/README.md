@@ -85,3 +85,21 @@ This template comes with [Tailwind CSS](https://tailwindcss.com/) already config
 ---
 
 Built with ❤️ using React Router.
+
+## Blog Composer — Dynamic Categories (Admin)
+
+- The Blog Composer no longer hardcodes categories or uses a z.enum.
+- It loads categories from the API (`GET ${PUBLIC_API_URL}/api/posts/categories`) and stores `categoryId` in the form.
+- On submit, it also sends the `category` name to keep backward compatibility with the posts schema.
+- If creating a new post, the first active category is selected by default after categories load.
+- A small refresh icon button in the category section clears server cache and reloads categories.
+- After adding or editing blog categories (via future category CRUD), call the API to invalidate cache:
+
+```bash
+curl -X POST -H "Authorization: Bearer <admin-token>" \
+  "${PUBLIC_API_URL}/api/posts/categories/cache/invalidate"
+```
+
+Files involved:
+- Admin UI: `apps/admin/app/components/BlogComposer.tsx`
+- API + cache: `apps/api/src/modules/posts.ts`, `apps/api/src/lib/cache.ts`

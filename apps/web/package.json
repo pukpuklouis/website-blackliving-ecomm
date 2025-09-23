@@ -16,6 +16,8 @@
     "format:check": "prettier --check \"src/**/*.{ts,tsx,js,jsx}\"",
     "format:astro": "node ../../scripts/fix-astro-classnames.js",
     "lint:astro": "astro check",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "deploy": "wrangler pages deploy dist --project-name blackliving-web --commit-dirty=true --branch production",
     "deploy:staging": "wrangler pages deploy dist --project-name blackliving-web --commit-dirty=true --branch staging"
   },
@@ -56,6 +58,7 @@
     "@blackliving/tailwind-config": "workspace:*",
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19.1.6",
-    "wrangler": "^4.26.0"
+    "wrangler": "^4.26.0",
+    "vitest": "^3.2.4"
   }
 }

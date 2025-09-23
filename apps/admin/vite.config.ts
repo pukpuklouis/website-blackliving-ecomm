@@ -5,16 +5,21 @@ import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig({
   plugins: [tailwindcss(), reactRouter(), tsconfigPaths()],
+  // Expose both VITE_* (default) and PUBLIC_* to import.meta.env
+  envPrefix: ['VITE_', 'PUBLIC_'],
   resolve: {
     alias: {
       // Lucide tree-shaking alias for individual icon imports
       '@lucide/react': 'lucide-react/dist/esm/icons',
     },
+    // Prevent multiple React copies across workspace
+    dedupe: ['react', 'react-dom'],
   },
   // 優化依賴處理
   optimizeDeps: {
-    include: ['novel', 'lucide-react'],
-    exclude: ['@lucide/react'], // Let Vite handle lucide imports directly
+    // Rely on Vite defaults; prebundling certain libs can pull duplicate React
+    include: ['lucide-react'],
+    exclude: ['@lucide/react'],
   },
   // Build optimization
   build: {
@@ -34,7 +39,7 @@ export default defineConfig({
           // Group node_modules into vendor chunk
           if (id.includes('node_modules')) {
             // Large packages get their own chunks
-            if (id.includes('novel')) return 'novel';
+            if (id.includes('@blocknote')) return 'blocknote';
             if (id.includes('@blackliving/ui')) return 'ui';
             if (id.includes('lucide-react')) return 'icons';
             // Other vendor packages
@@ -49,5 +54,10 @@ export default defineConfig({
     fs: {
       allow: ['..', '../..'], // Allow access to workspace packages
     },
+  },
+  test: {
+    environment: 'node',
+    include: ['app/components/__tests__/**/*.test.ts'],
+    exclude: ['tests/**'],
   },
 });
