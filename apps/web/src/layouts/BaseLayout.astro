@@ -3,6 +3,7 @@
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import FloatingButtons from '../components/FloatingButtons.astro';
+import SearchModal from '../components/SearchModal.tsx';
 import SEO from '../components/SEO.astro';
 import AnnouncementBar from '../components/AnnouncementBar.astro';
 import { Font } from 'astro:assets';
@@ -67,6 +68,8 @@ const {
     <Footer />
 
     <FloatingButtons />
+
+    <SearchModal client:load />
   </body>
 </html>
 

@@ -3,8 +3,6 @@ const API_BASE = import.meta.env.PUBLIC_API_BASE_URL || 'http://localhost:8787';
 
 export async function generateStaticPaths(category: string) {
   try {
-    console.log('Fetching static paths from:', `${API_BASE}/api/products?category=${category}`);
-
     // Fetch all products for the category for static generation
     const response = await fetch(`${API_BASE}/api/products?category=${category}`);
 
@@ -38,7 +36,6 @@ export async function generateStaticPaths(category: string) {
       params: { productSlug: product.slug },
     }));
 
-    console.log('Generated static paths:', paths);
     return paths;
   } catch (error) {
     console.error('Error fetching static paths:', error);

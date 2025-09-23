@@ -76,16 +76,8 @@ const initialVariantId = selectedVariantId || processedProduct.variants[0]?.id;
 // Check if product has valid pricing
 const hasValidPricing = processedProduct.variants.some(variant => variant.price > 0);
 
-// Server-side logging for debugging (only in development)
-if (import.meta.env.MODE === 'development') {
-  console.log('AddToCartWrapper - Product processed:', {
-    productId: processedProduct.id,
-    productName: processedProduct.name,
-    variantsCount: processedProduct.variants.length,
-    hasValidPricing,
-    initialVariantId,
-  });
-}
+// Validate product data processing
+// All product data should be properly processed at this point
 ---
 
 <!-- 

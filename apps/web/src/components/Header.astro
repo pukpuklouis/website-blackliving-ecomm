@@ -36,6 +36,21 @@ const menuItems = navigationData?.data.items.sort((a, b) => a.order - b.order) |
 
         <!-- Desktop User Actions -->
         <div class='hidden md:flex items-center gap-4 lg:gap-6'>
+          <button
+            type='button'
+            id='search-trigger'
+            data-testid='search-trigger-desktop'
+            class='flex items-center gap-2 rounded-full border border-gray-200 px-4 py-2 text-sm text-black transition-colors hover:bg-gray-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-400'
+            aria-label='搜尋 Black Living 內容'
+          >
+            <svg class='h-4 w-4 text-gray-600' fill='none' stroke='currentColor' viewBox='0 0 24 24' aria-hidden='true'>
+              <path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m21 21-4.35-4.35M10 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16z'></path>
+            </svg>
+            <span class='hidden lg:inline text-sm text-gray-600'>搜尋</span>
+            <kbd class='pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-gray-100 px-1.5 font-mono text-[10px] font-medium text-gray-500'>
+              <span class='text-xs'>⌘</span>K
+            </kbd>
+          </button>
           <a
             href='/cart'
             class='text-black text-sm lg:text-base font-normal hover:text-gray-600 transition-colors flex items-center gap-1'
@@ -53,6 +68,19 @@ const menuItems = navigationData?.data.items.sort((a, b) => a.order - b.order) |
             會員中心
           </a>
         </div>
+
+        <!-- Mobile Search Button -->
+        <button
+          type='button'
+          id='search-trigger-mobile'
+          data-testid='search-trigger-mobile'
+          class='md:hidden p-2 text-gray-600 hover:text-gray-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-400'
+          aria-label='搜尋'
+        >
+          <svg class='h-5 w-5' fill='none' stroke='currentColor' viewBox='0 0 24 24' aria-hidden='true'>
+            <path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m21 21-4.35-4.35M10 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16z'></path>
+          </svg>
+        </button>
 
         <!-- Mobile Menu Button -->
         <button
@@ -176,7 +204,17 @@ const menuItems = navigationData?.data.items.sort((a, b) => a.order - b.order) |
     const mainLogo = document.getElementById('main-logo');
     const navSection = document.getElementById('nav-section');
     const headerContent = document.getElementById('header-content');
+    const searchTriggerDesktop = document.getElementById('search-trigger');
+    const searchTriggerMobile = document.getElementById('search-trigger-mobile');
     let isScrolled = false;
+
+    const openSearchModal = (event?: Event) => {
+      event?.preventDefault?.();
+      window.dispatchEvent(new CustomEvent('cmdk:open'));
+    };
+
+    searchTriggerDesktop?.addEventListener('click', openSearchModal);
+    searchTriggerMobile?.addEventListener('click', openSearchModal);
 
     // Function to get responsive translate values
     const getTranslateValues = () => {
