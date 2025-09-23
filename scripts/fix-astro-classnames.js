@@ -12,14 +12,14 @@ const glob = require('glob');
 function fixClassNames(filePath) {
   let content = fs.readFileSync(filePath, 'utf8');
   let changed = false;
-  
+
   // Replace className with class in HTML/Astro templates
   const classNameRegex = /\bclassName=/g;
   if (classNameRegex.test(content)) {
     content = content.replace(classNameRegex, 'class=');
     changed = true;
   }
-  
+
   // Convert HTML comments to JSX comments inside JSX expressions
   // This regex looks for <!-- comment --> inside JSX expressions
   const htmlCommentInJSX = /(\{[^}]*?)<!--\s*(.*?)\s*-->([^}]*?\})/g;
@@ -27,7 +27,7 @@ function fixClassNames(filePath) {
     content = content.replace(htmlCommentInJSX, '$1{/* $2 */}$3');
     changed = true;
   }
-  
+
   if (changed) {
     fs.writeFileSync(filePath, content);
     console.log(`✅ Fixed: ${filePath}`);
