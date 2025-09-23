@@ -22,6 +22,8 @@ import newsletter from './modules/newsletter';
 import contact from './modules/contact';
 import user from './modules/user';
 import { postsRouter } from './modules/posts';
+import media from './routes/media';
+import searchRouter from './routes/search';
 
 export interface Env {
   DB: D1Database;
@@ -35,6 +37,7 @@ export interface Env {
   API_BASE_URL: string;
   WEB_BASE_URL: string;
   ADMIN_BASE_URL: string;
+  R2_PUBLIC_URL: string;
 }
 
 const app = new Hono<{
@@ -107,7 +110,7 @@ app.use(
 app.use('*', async (c, next) => {
   const db = createDB(c.env.DB);
   const cache = createCacheManager(c.env.CACHE);
-  const storage = createStorageManager(c.env.R2);
+  const storage = createStorageManager(c.env.R2, c.env.R2_PUBLIC_URL);
   const auth = createAuth(db, {
     GOOGLE_CLIENT_ID: c.env.GOOGLE_CLIENT_ID,
     GOOGLE_CLIENT_SECRET: c.env.GOOGLE_CLIENT_SECRET,
@@ -141,6 +144,8 @@ app.get('/', c => {
     version: '1.0.0',
   });
 });
+
+app.route('/media', media);
 
 app.get('/api/auth/test', c => c.json({ message: 'Test route works' }));
 
@@ -514,6 +519,7 @@ app.route('/api/newsletter', newsletter);
 app.route('/api/contact', contact);
 app.route('/api/user', user);
 app.route('/api/posts', postsRouter);
+app.route('/api/search', searchRouter);
 
 // 404 handler
 app.notFound(c => {
