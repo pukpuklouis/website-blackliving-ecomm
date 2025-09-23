@@ -282,7 +282,7 @@ export default function OrdersPage() {
   const loadOrders = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:8787/api/orders');
+      const response = await fetch(`${import.meta.env.PUBLIC_API_URL}/api/orders`);
       if (response.ok) {
         const result = await response.json();
         setOrders(result.success ? result.data.orders : []);
@@ -308,7 +308,7 @@ export default function OrdersPage() {
 
   const handleUpdateStatus = async (orderId: string, newStatus: Order['status']) => {
     try {
-      const response = await fetch(`http://localhost:8787/api/orders/${orderId}/status`, {
+      const response = await fetch(`${import.meta.env.PUBLIC_API_URL}/api/orders/${orderId}/status`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -333,7 +333,7 @@ export default function OrdersPage() {
 
   const handleConfirmPayment = async (orderId: string) => {
     try {
-      const response = await fetch(`http://localhost:8787/api/orders/${orderId}/confirm-payment`, {
+      const response = await fetch(`${import.meta.env.PUBLIC_API_URL}/api/orders/${orderId}/confirm-payment`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',

@@ -9,6 +9,7 @@ import {
 
 import type { Route } from './+types/root';
 import { AuthProvider } from './contexts/AuthContext';
+import { ImageUploadProvider } from './contexts/ImageUploadContext';
 import './app.css';
 
 export const links: Route.LinksFunction = () => [
@@ -45,7 +46,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
 export default function App() {
   return (
     <AuthProvider>
-      <Outlet />
+      <ImageUploadProvider>
+        <Outlet />
+      </ImageUploadProvider>
     </AuthProvider>
   );
 }

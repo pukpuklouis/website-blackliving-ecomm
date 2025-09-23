@@ -288,7 +288,7 @@ export default function AppointmentsPage() {
   const loadAppointments = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:8787/api/appointments');
+      const response = await fetch(`${import.meta.env.PUBLIC_API_URL}/api/appointments`);
       if (response.ok) {
         const result = await response.json();
         setAppointments(result.success ? result.data.appointments : []);
@@ -315,7 +315,7 @@ export default function AppointmentsPage() {
   const handleUpdateStatus = async (appointmentId: string, newStatus: Appointment['status']) => {
     try {
       const response = await fetch(
-        `http://localhost:8787/api/appointments/${appointmentId}/status`,
+        `${import.meta.env.PUBLIC_API_URL}/api/appointments/${appointmentId}/status`,
         {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
@@ -345,7 +345,7 @@ export default function AppointmentsPage() {
   const handleConfirmAppointment = async (appointmentId: string, confirmedDateTime: string) => {
     try {
       const response = await fetch(
-        `http://localhost:8787/api/appointments/${appointmentId}/confirm`,
+        `${import.meta.env.PUBLIC_API_URL}/api/appointments/${appointmentId}/confirm`,
         {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
