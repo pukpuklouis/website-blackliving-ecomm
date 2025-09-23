@@ -38,85 +38,7 @@ const postsRouter = new Hono<{
   };
 }>();
 
-// Apply auth middleware to all posts routes
-postsRouter.use('*', async (c, next) => {
-  // Use the same session logic as Better Auth's built-in session validation
-  try {
-    const auth = c.get('auth');
-    const cookieHeader = c.req.header('Cookie');
-
-    if (!cookieHeader) {
-      c.set('user', null);
-      c.set('session', null);
-      await next();
-      return;
-    }
-
-    // Extract session token from cookie (same logic as main app)
-    const sessionTokenMatch = cookieHeader.match(/better-auth\.session_token=([^;]+)/);
-    if (!sessionTokenMatch) {
-      c.set('user', null);
-      c.set('session', null);
-      await next();
-      return;
-    }
-
-    const sessionToken = sessionTokenMatch[1];
-
-    const db = c.get('db');
-    const { users, sessions } = await import('@blackliving/db/schema');
-    const { eq } = await import('drizzle-orm');
-
-    // Query session directly (same as main app)
-    const sessionResult = await db
-      .select({
-        id: sessions.id,
-        token: sessions.token,
-        userId: sessions.userId,
-        expiresAt: sessions.expiresAt,
-        user: {
-          id: users.id,
-          email: users.email,
-          name: users.name,
-          role: users.role,
-          image: users.image,
-        },
-      })
-      .from(sessions)
-      .innerJoin(users, eq(sessions.userId, users.id))
-      .where(eq(sessions.token, sessionToken))
-      .limit(1);
-
-    if (sessionResult.length === 0) {
-      c.set('user', null);
-      c.set('session', null);
-      await next();
-      return;
-    }
-
-    const session = sessionResult[0];
-
-    // Check if session is expired
-    if (session.expiresAt < new Date()) {
-      c.set('user', null);
-      c.set('session', null);
-      await next();
-      return;
-    }
-
-    c.set('user', session.user);
-    c.set('session', {
-      id: session.id,
-      expiresAt: session.expiresAt,
-    });
-  } catch (error) {
-    console.error('Posts router session check error:', error);
-    c.set('user', null);
-    c.set('session', null);
-  }
-
-  await next();
-});
+// Duplicate auth middleware removed - relying on global Enhanced Auth middleware
 
 // Validation schemas
 const createPostSchema = z.object({
@@ -183,10 +105,18 @@ const calculateReadingTime = (content: string): number => {
 
 // POST CATEGORIES ENDPOINTS
 
-// GET /api/posts/categories - List all post categories
+// GET /api/posts/categories - List all post categories (cached)
 postsRouter.get('/categories', async c => {
   try {
     const db = c.get('db');
+    const cache = c.get('cache');
+
+    const cacheKey = 'blog:categories:active';
+
+    const cached = await cache.get(cacheKey);
+    if (cached) {
+      return c.json({ success: true, data: cached, cached: true });
+    }
 
     const categories = await db
       .select()
@@ -194,10 +124,10 @@ postsRouter.get('/categories', async c => {
       .where(eq(postCategories.isActive, true))
       .orderBy(postCategories.sortOrder, postCategories.name);
 
-    return c.json({
-      success: true,
-      data: categories,
-    });
+    // Cache for 24 hours and tag for invalidation
+    await cache.setWithTags(cacheKey, categories, ['post-categories'], 86400);
+
+    return c.json({ success: true, data: categories, cached: false });
   } catch (error) {
     console.error('Error fetching post categories:', error);
     return c.json(
@@ -214,7 +144,14 @@ postsRouter.get('/categories', async c => {
 postsRouter.get('/categories/:slug', async c => {
   try {
     const db = c.get('db');
+    const cache = c.get('cache');
     const slug = c.req.param('slug');
+
+    const cacheKey = `blog:category:${slug}`;
+    const cached = await cache.get(cacheKey);
+    if (cached) {
+      return c.json({ success: true, data: cached, cached: true });
+    }
 
     // Get category
     const category = await db
@@ -239,19 +176,38 @@ postsRouter.get('/categories/:slug', async c => {
       .from(posts)
       .where(and(eq(posts.categoryId, category[0].id), eq(posts.status, 'published')));
 
-    return c.json({
-      success: true,
-      data: {
-        ...category[0],
-        postsCount: postsCount[0]?.count || 0,
-      },
-    });
+    const payload = {
+      ...category[0],
+      postsCount: postsCount[0]?.count || 0,
+    } as const;
+
+    await cache.setWithTags(cacheKey, payload, ['post-categories'], 86400);
+
+    return c.json({ success: true, data: payload, cached: false });
   } catch (error) {
     console.error('Error fetching post category:', error);
     return c.json(
       {
         success: false,
         error: 'Failed to fetch post category',
+      },
+      500
+    );
+  }
+});
+
+// POST /api/posts/categories/cache/invalidate - Invalidate categories cache (admin only)
+postsRouter.post('/categories/cache/invalidate', requireAdmin(), async c => {
+  try {
+    const cache = c.get('cache');
+    await cache.invalidateByTags(['post-categories']);
+    return c.json({ success: true, message: 'Categories cache invalidated' });
+  } catch (error) {
+    console.error('Error invalidating categories cache:', error);
+    return c.json(
+      {
+        success: false,
+        error: 'Failed to invalidate categories cache',
       },
       500
     );
@@ -639,21 +595,17 @@ postsRouter.get('/public', zValidator('query', querySchema.omit({ status: true }
 postsRouter.get('/:id', async c => {
   try {
     const db = c.get('db');
-    const postId = c.req.param('id');
+    const postIdOrSlug = c.req.param('id');
     const includeParam = c.req.query('include'); // e.g., "category" or "category,other"
     const includes = includeParam ? includeParam.split(',').map(s => s.trim()) : [];
 
-    // Check if this is a slug or ID
-    let whereCondition;
-    if (postId.startsWith('post_') || postId.length === 25) {
-      // It's an ID
-      whereCondition = eq(posts.id, postId);
-    } else {
-      // It's a slug
-      whereCondition = eq(posts.slug, postId);
+    // Try by ID first (robust to non-standard IDs like 'post-01'), then fallback to slug
+    let whereCondition = eq(posts.id, postIdOrSlug);
+    let post = await db.select().from(posts).where(whereCondition).limit(1);
+    if (post.length === 0) {
+      whereCondition = eq(posts.slug, postIdOrSlug);
+      post = await db.select().from(posts).where(whereCondition).limit(1);
     }
-
-    const post = await db.select().from(posts).where(whereCondition).limit(1);
 
     if (post.length === 0) {
       return c.json(
@@ -782,11 +734,14 @@ postsRouter.post('/', requireAdmin(), zValidator('json', createPostSchema), asyn
 postsRouter.put('/:id', requireAdmin(), zValidator('json', updatePostSchema), async c => {
   try {
     const db = c.get('db');
-    const postId = c.req.param('id');
+    const param = c.req.param('id');
     const updates = c.req.valid('json');
 
-    // Check if post exists
-    const existingPost = await db.select().from(posts).where(eq(posts.id, postId)).limit(1);
+    // Resolve by ID first, then by slug
+    let existingPost = await db.select().from(posts).where(eq(posts.id, param)).limit(1);
+    if (existingPost.length === 0) {
+      existingPost = await db.select().from(posts).where(eq(posts.slug, param)).limit(1);
+    }
 
     if (existingPost.length === 0) {
       return c.json(
@@ -797,6 +752,8 @@ postsRouter.put('/:id', requireAdmin(), zValidator('json', updatePostSchema), as
         404
       );
     }
+
+    const postId = existingPost[0].id;
 
     // Check if slug is being updated and doesn't conflict
     if (updates.slug && updates.slug !== existingPost[0].slug) {
@@ -857,14 +814,13 @@ postsRouter.put('/:id', requireAdmin(), zValidator('json', updatePostSchema), as
 postsRouter.delete('/:id', requireAdmin(), async c => {
   try {
     const db = c.get('db');
-    const postId = c.req.param('id');
+    const param = c.req.param('id');
 
-    // Check if post exists
-    const existingPost = await db
-      .select({ id: posts.id })
-      .from(posts)
-      .where(eq(posts.id, postId))
-      .limit(1);
+    // Check if post exists by ID or slug
+    let existingPost = await db.select({ id: posts.id }).from(posts).where(eq(posts.id, param)).limit(1);
+    if (existingPost.length === 0) {
+      existingPost = await db.select({ id: posts.id }).from(posts).where(eq(posts.slug, param)).limit(1);
+    }
 
     if (existingPost.length === 0) {
       return c.json(
@@ -876,7 +832,7 @@ postsRouter.delete('/:id', requireAdmin(), async c => {
       );
     }
 
-    await db.delete(posts).where(eq(posts.id, postId));
+    await db.delete(posts).where(eq(posts.id, existingPost[0].id));
 
     return c.json({
       success: true,
@@ -987,10 +943,10 @@ postsRouter.get('/:id/related', async c => {
   try {
     const db = c.get('db');
     const cache = c.get('cache');
-    const postId = c.req.param('id');
+    const postIdOrSlug = c.req.param('id');
     const limit = parseInt(c.req.query('limit') || '3');
 
-    const cacheKey = `blog:related:${postId}:${limit}`;
+    const cacheKey = `blog:related:${postIdOrSlug}:${limit}`;
 
     // Try to get from cache first
     const cachedRelated = await cache.get(cacheKey);
@@ -1002,16 +958,9 @@ postsRouter.get('/:id/related', async c => {
       });
     }
 
-    // Check if this is a slug or ID
-    let whereCondition;
-    if (postId.startsWith('post_') || postId.length === 25) {
-      whereCondition = eq(posts.id, postId);
-    } else {
-      whereCondition = eq(posts.slug, postId);
-    }
-
-    // Get the current post to find related posts
-    const currentPost = await db
+    // Try ID first, then slug
+    let whereCondition = eq(posts.id, postIdOrSlug);
+    let currentPost = await db
       .select({
         id: posts.id,
         category: posts.category,
@@ -1021,6 +970,20 @@ postsRouter.get('/:id/related', async c => {
       .from(posts)
       .where(whereCondition)
       .limit(1);
+
+    if (currentPost.length === 0) {
+      whereCondition = eq(posts.slug, postIdOrSlug);
+      currentPost = await db
+        .select({
+          id: posts.id,
+          category: posts.category,
+          categoryId: posts.categoryId,
+          tags: posts.tags,
+        })
+        .from(posts)
+        .where(whereCondition)
+        .limit(1);
+    }
 
     if (currentPost.length === 0) {
       return c.json(

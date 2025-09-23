@@ -1,7 +1,29 @@
 import type { R2Bucket } from '@cloudflare/workers-types';
 
+type UploadOptions = {
+  contentType?: string;
+  metadata?: Record<string, string>;
+  cacheControl?: string;
+};
+
 export class StorageManager {
-  constructor(private r2: R2Bucket) {}
+  private publicUrl: string;
+  private static readonly DEFAULT_CACHE_CONTROL = 'public, max-age=31536000, immutable';
+
+  constructor(private r2: R2Bucket, publicUrl: string) {
+    if (!publicUrl) {
+      throw new Error('R2 public URL is not configured. Set R2_PUBLIC_URL in your environment.');
+    }
+    this.publicUrl = StorageManager.normalizeBase(publicUrl);
+  }
+
+  private static normalizeBase(url: string): string {
+    return url.replace(/\/+$/, '');
+  }
+
+  getPublicUrl(): string {
+    return this.publicUrl;
+  }
 
   /**
    * Upload a file to R2 storage
@@ -9,10 +31,7 @@ export class StorageManager {
   async uploadFile(
     key: string,
     file: File | ArrayBuffer | Uint8Array | string,
-    options: {
-      contentType?: string;
-      metadata?: Record<string, string>;
-    } = {}
+    options: UploadOptions = {}
   ): Promise<{ key: string; url: string; size: number }> {
     try {
       let body: ArrayBuffer | Uint8Array | string;
@@ -37,11 +56,12 @@ export class StorageManager {
       await this.r2.put(key, body, {
         httpMetadata: {
           contentType: contentType || 'application/octet-stream',
+          cacheControl: options.cacheControl || StorageManager.DEFAULT_CACHE_CONTROL,
         },
         customMetadata: options.metadata,
       });
 
-      const url = `https://images.blackliving.com/${key}`;
+      const url = this.getFileUrl(key);
 
       return { key, url, size };
     } catch (error) {
@@ -54,7 +74,7 @@ export class StorageManager {
    * Upload multiple files
    */
   async uploadFiles(
-    files: Array<{ key: string; file: File | ArrayBuffer | Uint8Array | string; options?: any }>
+    files: Array<{ key: string; file: File | ArrayBuffer | Uint8Array | string; options?: UploadOptions }>
   ): Promise<Array<{ key: string; url: string; size: number }>> {
     const uploadPromises = files.map(({ key, file, options = {} }) =>
       this.uploadFile(key, file, options)
@@ -113,30 +133,48 @@ export class StorageManager {
   /**
    * List files with optional prefix
    */
-  async listFiles(
-    prefix?: string,
-    limit = 100
-  ): Promise<
-    Array<{
+  async listFiles(options: {
+    prefix?: string;
+    limit?: number;
+    cursor?: string;
+    startAfter?: string;
+  } = {}): Promise<{
+    items: Array<{
       key: string;
       size: number;
       lastModified: Date;
-    }>
-  > {
+      contentType?: string;
+      metadata?: Record<string, string>;
+    }>;
+    truncated: boolean;
+    cursor?: string;
+  }> {
     try {
+      const { prefix, limit = 100, cursor, startAfter } = options;
       const result = await this.r2.list({
         prefix,
         limit,
+        cursor,
+        startAfter,
       });
 
-      return result.objects.map(obj => ({
-        key: obj.key,
-        size: obj.size,
-        lastModified: obj.uploaded,
-      }));
+      return {
+        items: result.objects.map(obj => ({
+          key: obj.key,
+          size: obj.size,
+          lastModified: obj.uploaded,
+          contentType: obj.httpMetadata?.contentType,
+          metadata: obj.customMetadata,
+        })),
+        truncated: result.truncated,
+        cursor: result.cursor,
+      };
     } catch (error) {
       console.error('Storage list files error:', error);
-      return [];
+      return {
+        items: [],
+        truncated: false,
+      };
     }
   }
 
@@ -181,21 +219,34 @@ export class StorageManager {
   /**
    * Get file URL for a given key
    */
-  static getFileUrl(key: string): string {
-    return `https://images.blackliving.com/${key}`;
+  getFileUrl(key: string): string {
+    return `${this.publicUrl}/${key}`;
   }
 
   /**
    * Extract key from URL
    */
-  static getKeyFromUrl(url: string): string {
-    return url.replace('https://images.blackliving.com/', '');
+  getKeyFromUrl(url: string): string {
+    const base = `${this.publicUrl}/`;
+    if (url.startsWith(base)) {
+      return StorageManager.stripDeliveryPrefix(url.slice(base.length));
+    }
+    try {
+      const parsed = new URL(url);
+      return StorageManager.stripDeliveryPrefix(parsed.pathname.replace(/^\/+/, ''));
+    } catch {
+      return StorageManager.stripDeliveryPrefix(url.replace(/^\/+/, ''));
+    }
+  }
+
+  private static stripDeliveryPrefix(key: string): string {
+    return key.startsWith('media/') ? key.slice('media/'.length) : key;
   }
 }
 
 // Helper function to create storage manager instance
-export function createStorageManager(r2: R2Bucket): StorageManager {
-  return new StorageManager(r2);
+export function createStorageManager(r2: R2Bucket, publicUrl: string): StorageManager {
+  return new StorageManager(r2, publicUrl);
 }
 
 // File type constants

@@ -76,8 +76,8 @@ const assignTagSchema = z.object({
   customerTagId: z.string(),
 });
 
-// Debug endpoint to test authentication and database
-customers.get('/debug', async c => {
+// Debug endpoint to test authentication and database (Admin only)
+customers.get('/debug', requireAdmin(), async c => {
   const user = c.get('user');
   // Database from c.env.DB
 

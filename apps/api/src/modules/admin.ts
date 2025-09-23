@@ -296,7 +296,7 @@ admin.delete('/products/:id', requireFreshSession(15), auditLog('product-delete'
 
     // Delete product images from R2
     if (product.images && Array.isArray(product.images)) {
-      const imageKeys = product.images.map((url: string) => StorageManager.getKeyFromUrl(url));
+      const imageKeys = product.images.map((url: string) => storage.getKeyFromUrl(url));
       await storage.deleteFiles(imageKeys);
     }
 
@@ -367,6 +367,144 @@ admin.post('/upload', async c => {
     );
   }
 });
+
+const mediaLibraryQuerySchema = z.object({
+  prefix: z.string().optional(),
+  cursor: z.string().optional(),
+  limit: z.string().optional(),
+  search: z.string().optional(),
+  type: z.enum(['all', 'images', 'files']).optional().default('all'),
+  sort: z.enum(['recent', 'name']).optional().default('recent'),
+});
+
+admin.get('/media/library', zValidator('query', mediaLibraryQuerySchema), async c => {
+  try {
+    const storage = c.get('storage');
+    const { prefix, cursor, limit, search, type, sort } = c.req.valid('query');
+
+    const parsedLimit = clampLimit(limit);
+    const searchTerm = search?.trim().toLowerCase() ?? '';
+
+    const listResult = await storage.listFiles({
+      prefix,
+      cursor: cursor || undefined,
+      limit: parsedLimit,
+    });
+
+    const items = listResult.items
+      .map(item => {
+        const normalizedKey = stripDeliveryPrefix(item.key);
+        const name = normalizedKey.split('/').pop() ?? normalizedKey;
+        const contentType = item.contentType ?? inferMimeFromKey(name);
+        const isImage = determineIsImage(contentType, normalizedKey);
+
+        return {
+          key: normalizedKey,
+          name,
+          url: storage.getFileUrl(normalizedKey),
+          size: item.size,
+          contentType,
+          lastModified: item.lastModified.toISOString(),
+          metadata: item.metadata ?? undefined,
+          isImage,
+        };
+      })
+      .filter(asset => {
+        if (!searchTerm) return true;
+        return asset.name.toLowerCase().includes(searchTerm) || asset.key.toLowerCase().includes(searchTerm);
+      })
+      .filter(asset => {
+        if (type === 'images') return asset.isImage;
+        if (type === 'files') return !asset.isImage;
+        return true;
+      });
+
+    const sorted = items.sort((a, b) => {
+      if (sort === 'name') {
+        return a.name.localeCompare(b.name, 'zh-Hant');
+      }
+      return new Date(b.lastModified).getTime() - new Date(a.lastModified).getTime();
+    });
+
+    const nextCursor = listResult.truncated ? listResult.cursor ?? null : null;
+
+    return c.json({
+      success: true,
+      data: {
+        items: sorted,
+        pageInfo: {
+          nextCursor,
+          hasMore: listResult.truncated,
+        },
+      },
+    });
+  } catch (error) {
+    console.error('Media library fetch error:', error);
+    return c.json(
+      {
+        success: false,
+        error: 'Failed to load media library',
+      },
+      500
+    );
+  }
+});
+
+function clampLimit(value?: string): number {
+  const parsed = Number.parseInt(value ?? '30', 10);
+  if (Number.isNaN(parsed)) return 30;
+  return Math.max(1, Math.min(parsed, 100));
+}
+
+function stripDeliveryPrefix(key: string): string {
+  return key.startsWith('media/') ? key.slice('media/'.length) : key;
+}
+
+function determineIsImage(contentType?: string, key?: string): boolean {
+  if (contentType && contentType.startsWith('image/')) {
+    return true;
+  }
+
+  const extension = key?.split('.').pop()?.toLowerCase();
+  if (!extension) return false;
+
+  return ['jpg', 'jpeg', 'png', 'webp', 'gif', 'bmp', 'svg', 'avif', 'heic', 'heif'].includes(extension);
+}
+
+function inferMimeFromKey(key: string): string | undefined {
+  const extension = key.split('.').pop()?.toLowerCase();
+  if (!extension) return undefined;
+
+  const imageMap: Record<string, string> = {
+    jpg: 'image/jpeg',
+    jpeg: 'image/jpeg',
+    png: 'image/png',
+    webp: 'image/webp',
+    gif: 'image/gif',
+    bmp: 'image/bmp',
+    svg: 'image/svg+xml',
+    avif: 'image/avif',
+    heic: 'image/heic',
+    heif: 'image/heif',
+  };
+
+  if (imageMap[extension]) {
+    return imageMap[extension];
+  }
+
+  const documentMap: Record<string, string> = {
+    pdf: 'application/pdf',
+    txt: 'text/plain',
+    doc: 'application/msword',
+    docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    xls: 'application/vnd.ms-excel',
+    xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    csv: 'text/csv',
+    zip: 'application/zip',
+  };
+
+  return documentMap[extension];
+}
 
 // Blog Post Management
 admin.get(

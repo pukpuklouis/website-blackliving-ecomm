@@ -70,13 +70,8 @@ const confirmPaymentSchema = z.object({
 });
 
 // GET /api/orders - List orders (Admin only)
-orders.get('/', async c => {
+orders.get('/', requireAdmin(), async c => {
   try {
-    const user = c.get('user');
-
-    if (!user || user.role !== 'admin') {
-      return c.json({ error: 'Forbidden' }, 403);
-    }
 
     const { status, limit = '50', offset = '0' } = c.req.query();
     const db = c.get('db');
@@ -105,13 +100,8 @@ orders.get('/', async c => {
 });
 
 // GET /api/orders/:id - Get single order
-orders.get('/:id', async c => {
+orders.get('/:id', requireAdmin(), async c => {
   try {
-    const user = c.get('user');
-
-    if (!user || user.role !== 'admin') {
-      return c.json({ error: 'Forbidden' }, 403);
-    }
 
     const id = c.req.param('id');
     const db = c.get('db');
@@ -181,13 +171,8 @@ orders.post('/', zValidator('json', createOrderSchema), async c => {
 });
 
 // PATCH /api/orders/:id/status - Update order status (Admin only)
-orders.patch('/:id/status', zValidator('json', updateOrderStatusSchema), async c => {
+orders.patch('/:id/status', requireAdmin(), zValidator('json', updateOrderStatusSchema), async c => {
   try {
-    const user = c.get('user');
-
-    if (!user || user.role !== 'admin') {
-      return c.json({ error: 'Forbidden' }, 403);
-    }
 
     const id = c.req.param('id');
     const { status, adminNotes, trackingNumber, shippingCompany } = c.req.valid('json');
@@ -240,13 +225,8 @@ orders.patch('/:id/status', zValidator('json', updateOrderStatusSchema), async c
 });
 
 // PATCH /api/orders/:id/confirm-payment - Confirm payment (Admin only)
-orders.patch('/:id/confirm-payment', zValidator('json', confirmPaymentSchema), async c => {
+orders.patch('/:id/confirm-payment', requireAdmin(), zValidator('json', confirmPaymentSchema), async c => {
   try {
-    const user = c.get('user');
-
-    if (!user || user.role !== 'admin') {
-      return c.json({ error: 'Forbidden' }, 403);
-    }
 
     const id = c.req.param('id');
     const { paymentStatus, status, paymentVerifiedAt, paymentVerifiedBy, adminNotes } =
