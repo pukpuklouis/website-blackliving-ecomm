@@ -16,7 +16,8 @@
       "@/components/*": ["../../packages/ui/components/*"],
       "@/lib/*": ["../../packages/ui/lib/*"],
       "@/hooks/*": ["../../packages/ui/hooks/*"],
-      "@/*": ["../../packages/ui/*"]
+      "@/*": ["../../packages/ui/*"],
+      "@tailwindcss/typography": ["../../packages/tailwindcss-typography/index.js"]
     },
     "esModuleInterop": true,
     "verbatimModuleSyntax": true,
