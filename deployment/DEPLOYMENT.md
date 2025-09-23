@@ -8,10 +8,11 @@ This guide covers the deployment process for the Black Living e-commerce platfor
    - Workers subscription
    - Pages subscription
    - D1 database (`blackliving-db`)
-   - R2 bucket (`blackliving-images`)
+   - R2 buckets (`blackliving-images-dev`, `blackliving-images-staging`, `blackliving-images-prod`)
    - KV namespace (`CACHE`)
 
 2. **Wrangler CLI** installed and authenticated:
+
    ```bash
    pnpm install -g wrangler
    wrangler login
@@ -146,11 +147,13 @@ cd ../..
 After deployment, your applications will be available at:
 
 ### Production
+
 - **Web**: https://blackliving.com
 - **Admin**: https://admin.blackliving.com
 - **API**: https://api.blackliving.com
 
 ### Staging
+
 - **Web**: https://staging.blackliving.com
 - **Admin**: https://admin-staging.blackliving.com
 - **API**: https://api-staging.blackliving.com
