@@ -1,7 +1,7 @@
 {
   "items": [
     {
-      "label": "關於黑哥",
+      "label": "關於Black Living黑哥",
       "href": "/about",
       "order": 1
     },
@@ -11,29 +11,24 @@
       "order": 2
     },
     {
-      "label": "精選周邊",
-      "href": "/accessories",
+      "label": "HEY BRO智能床墊",
+      "href": "/us-imports",
       "order": 3
     },
     {
-      "label": "美國品牌代購專區",
-      "href": "/us-imports",
+      "label": "精選周邊",
+      "href": "/accessories",
       "order": 4
     },
     {
-      "label": "顧客好評",
-      "href": "/customer-reviews",
-      "order": 5
-    },
-    {
-      "label": "好文分享",
+      "label": "好好生活誌",
       "href": "/posts",
-      "order": 6
+      "order": 5
     },
     {
       "label": "預約試躺",
       "href": "/appointment",
-      "order": 7
+      "order": 6
     }
   ]
 }

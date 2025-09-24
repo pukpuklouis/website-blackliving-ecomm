@@ -3,12 +3,13 @@
 import { getCollection } from 'astro:content';
 import HeroCarousel from './HeroCarousel.tsx';
 
-const slides = (await getCollection('hero-slider'))[0]?.data.slideset.slides?.map(s => ({
+const heroSliderCollection = await getCollection('hero-slider');
+const slides = heroSliderCollection[0]?.data.slideset.slides?.map(s => ({
   data: s,
-}));
+})) || [];
 ---
 
-<section class='relative h-screen overflow-hidden'>
+<section class='relative h-[calc(100dvh-8rem)] overflow-hidden'>
   {slides?.length && <HeroCarousel slides={slides} client:load />}
 </section>
 

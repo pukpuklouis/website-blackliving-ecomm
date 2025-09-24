@@ -46,6 +46,7 @@ const heroSlider = defineCollection({
           title: z.string(),
           subtitle: z.string(),
           image: z.string(),
+          logo: z.string().optional(),
           buttonText: z.string(),
           buttonLink: z.string(),
           order: z.number(),
