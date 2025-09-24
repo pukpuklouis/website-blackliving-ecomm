@@ -2,9 +2,8 @@
 import type { Config } from '@react-router/dev/config';
 
 export default {
-  // Enable pure SPA mode - no server-side rendering or prerendering
   ssr: true,
-  // Configure for client-side only
+  serverModuleFormat: 'esm',
   future: {
     unstable_singleFetch: true,
   },

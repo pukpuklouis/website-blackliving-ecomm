@@ -1,0 +1,13 @@
+name = "blackliving-admin"
+main = "./functions/[[path]].ts"
+compatibility_date = "2025-01-15"
+
+[build]
+command = "node ./node_modules/@react-router/dev/bin.js build"
+
+[assets]
+directory = "./build/client"
+binding = "ASSETS"
+
+[env.staging]
+name = "blackliving-admin-staging"
