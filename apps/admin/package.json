@@ -6,7 +6,7 @@
     "build": "react-router build",
     "build:staging": "react-router build --mode staging",
     "dev": "PUBLIC_API_URL=http://localhost:8787 PUBLIC_IMAGE_CDN_URL=http://localhost:8787/media react-router dev --host --port 5173",
-    "start": "react-router-serve ./build/server/index.js",
+    "start": "PORT=5173 react-router-serve ./build/server/index.js",
     "typecheck": "react-router typegen && tsc",
     "test": "playwright test",
     "test:unit": "vitest run",
