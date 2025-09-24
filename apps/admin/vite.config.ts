@@ -2,6 +2,10 @@ import { reactRouter } from '@react-router/dev/vite';
 import { defineConfig } from 'vite';
 import tsconfigPaths from 'vite-tsconfig-paths';
 import tailwindcss from '@tailwindcss/vite';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const projectDir = dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
   plugins: [tailwindcss(), reactRouter(), tsconfigPaths()],
@@ -11,6 +15,7 @@ export default defineConfig({
     alias: {
       // Lucide tree-shaking alias for individual icon imports
       '@lucide/react': 'lucide-react/dist/esm/icons',
+      '@tailwindcss/typography': resolve(projectDir, '../../packages/tailwindcss-typography/index.js'),
     },
     // Prevent multiple React copies across workspace
     dedupe: ['react', 'react-dom'],
