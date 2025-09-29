@@ -37,7 +37,43 @@ export async function fetchUnifiedSearch(
     params.set('includeContent', 'true');
   }
 
-  const response = await fetch(`/api/search?${params.toString()}`, {
+  const candidates: unknown[] = [
+    import.meta.env.PUBLIC_API_BASE_URL,
+    import.meta.env.PUBLIC_API_URL,
+  ];
+
+  if (typeof process !== 'undefined') {
+    candidates.push(process.env?.PUBLIC_API_BASE_URL);
+    candidates.push(process.env?.PUBLIC_API_URL);
+  }
+
+  if (typeof globalThis !== 'undefined') {
+    const runtimeEnv =
+      (globalThis as Record<string, unknown>).ENV ??
+      (globalThis as Record<string, unknown>).__ENV__ ??
+      (globalThis as Record<string, unknown>).__ENV;
+
+    if (runtimeEnv && typeof runtimeEnv === 'object') {
+      const envRecord = runtimeEnv as Record<string, unknown>;
+      candidates.push(envRecord.PUBLIC_API_BASE_URL);
+      candidates.push(envRecord.PUBLIC_API_URL);
+    }
+  }
+
+  const apiBaseFromEnv = candidates.reduce<string>((acc, candidate) => {
+    if (acc) return acc;
+    if (typeof candidate === 'string') {
+      const trimmed = candidate.trim();
+      if (trimmed) {
+        return trimmed.endsWith('/') ? trimmed.slice(0, -1) : trimmed;
+      }
+    }
+    return acc;
+  }, '');
+
+  const searchEndpoint = apiBaseFromEnv ? `${apiBaseFromEnv}/api/search` : '/api/search';
+
+  const response = await fetch(`${searchEndpoint}?${params.toString()}`, {
     method: 'GET',
     signal: options.signal,
     headers: {
