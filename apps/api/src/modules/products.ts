@@ -449,9 +449,11 @@ app.post('/', requireAdmin, zValidator('json', createProductSchema), async c => 
       })
       .returning();
 
-    // Clear relevant caches
+    // Clear relevant caches so new product appears immediately everywhere
     await cache.delete('products:featured');
     await cache.delete('products:categories');
+    await cache.deleteByPrefix('products:list:');
+    await cache.deleteByPrefix('products:detail:');
 
     return c.json(
       {
@@ -527,9 +529,11 @@ app.put('/:id', requireAdmin, zValidator('json', updateProductSchema), async c =
       .where(eq(products.id, id))
       .returning();
 
-    // Clear relevant caches
+    // Clear relevant caches so updated data is reflected immediately
     await cache.delete('products:featured');
     await cache.delete('products:categories');
+    await cache.deleteByPrefix('products:list:');
+    await cache.deleteByPrefix('products:detail:');
 
     return c.json({
       success: true,
@@ -575,9 +579,11 @@ app.delete('/:id', requireAdmin, async c => {
 
     await db.delete(products).where(eq(products.id, id));
 
-    // Clear relevant caches
+    // Clear relevant caches so removed product disappears everywhere
     await cache.delete('products:featured');
     await cache.delete('products:categories');
+    await cache.deleteByPrefix('products:list:');
+    await cache.deleteByPrefix('products:detail:');
 
     return c.json({
       success: true,
