@@ -22,6 +22,8 @@ import newsletter from './modules/newsletter';
 import contact from './modules/contact';
 import user from './modules/user';
 import { postsRouter } from './modules/posts';
+import authRouter from './modules/auth';
+import reservationsRouter from './modules/reservations';
 import media from './routes/media';
 import searchRouter from './routes/search';
 
@@ -38,6 +40,10 @@ export interface Env {
   WEB_BASE_URL: string;
   ADMIN_BASE_URL: string;
   R2_PUBLIC_URL: string;
+  TURNSTILE_SECRET_KEY: string;
+  RESEND_API_KEY: string;
+  RESEND_FROM_EMAIL: string;
+  JWT_SECRET: string;
 }
 
 const app = new Hono<{
@@ -146,6 +152,9 @@ app.get('/', c => {
 });
 
 app.route('/media', media);
+
+app.route('/api/auth', authRouter);
+app.route('/api/reservations', reservationsRouter);
 
 app.get('/api/auth/test', c => c.json({ message: 'Test route works' }));
 

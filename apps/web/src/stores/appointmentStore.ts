@@ -35,10 +35,6 @@ export interface AppointmentData {
 
   // Step 5: Additional info
   message: string;
-
-  // Account creation
-  hasAccount: boolean;
-  createAccount: boolean;
 }
 
 export interface AppointmentStore {
@@ -63,6 +59,8 @@ export interface AppointmentStore {
   setProducts: (products: Product[]) => void;
 }
 
+const MAX_STEP_INDEX = 4;
+
 const initialAppointmentData: AppointmentData = {
   selectedStore: null,
   selectedProduct: null,
@@ -72,8 +70,6 @@ const initialAppointmentData: AppointmentData = {
   preferredDate: '',
   preferredTime: '',
   message: '',
-  hasAccount: false,
-  createAccount: false,
 };
 
 export const useAppointmentStore = create<AppointmentStore>()(
@@ -140,7 +136,7 @@ export const useAppointmentStore = create<AppointmentStore>()(
           appointmentData: { ...state.appointmentData, ...data },
         })),
 
-      nextStep: () => set(state => ({ currentStep: Math.min(state.currentStep + 1, 5) })),
+      nextStep: () => set(state => ({ currentStep: Math.min(state.currentStep + 1, MAX_STEP_INDEX) })),
 
       prevStep: () => set(state => ({ currentStep: Math.max(state.currentStep - 1, 0) })),
 
