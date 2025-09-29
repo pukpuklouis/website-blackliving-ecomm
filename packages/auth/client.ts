@@ -13,6 +13,7 @@ const getBaseURL = () => {
       'blackliving-admin.pages.dev',
       'staging.blackliving-web.pages.dev',
       'staging.blackliving-admin.pages.dev',
+      'blackliving-admin-staging.pukpuk-tw.workers.dev',
       'blackliving.com',
       'admin.blackliving.com',
     ];
@@ -97,28 +98,14 @@ export const signInWithGoogleAdmin = async () => {
 
     const getAdminCallbackURL = () => {
       if (typeof window !== 'undefined') {
-        const hostname = window.location.hostname;
-
-        if (hostname === 'localhost') {
-          return 'http://localhost:5173/auth/callback';
-        }
-
-        if (hostname.includes('staging')) {
-          return 'https://staging.blackliving-admin.pages.dev/auth/callback';
-        }
-
-        if (hostname.includes('blackliving-admin.pages.dev')) {
-          return 'https://blackliving-admin.pages.dev/auth/callback';
-        }
-
-        // Future custom domain
-        if (hostname.includes('admin.blackliving.com')) {
-          return 'https://admin.blackliving.com/auth/callback';
-        }
+        return new URL('/auth/callback', window.location.origin).toString();
       }
 
-      // Default fallback
-      return 'https://blackliving-admin.pages.dev/auth/callback';
+      if (typeof process !== 'undefined' && process.env.PUBLIC_SITE_URL) {
+        return `${process.env.PUBLIC_SITE_URL.replace(/\/$/, '')}/auth/callback`;
+      }
+
+      return 'https://blackliving-admin-staging.pukpuk-tw.workers.dev/auth/callback';
     };
 
     const adminCallbackURL = getAdminCallbackURL();

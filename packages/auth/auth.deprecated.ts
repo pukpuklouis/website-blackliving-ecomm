@@ -52,7 +52,7 @@ export const auth = betterAuth({
 
     // Staging
     'https://staging.blackliving-web.pages.dev',
-    'https://staging.blackliving-admin.pages.dev',
+    'https://blackliving-admin-staging.pukpuk-tw.workers.dev',
     'https://blackliving-api-staging.pukpuk-tw.workers.dev',
 
     // Production (current .pages.dev URLs)
