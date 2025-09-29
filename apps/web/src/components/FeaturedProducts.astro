@@ -7,17 +7,19 @@ export interface Props {
   category: 'simmons-black' | 'accessories' | 'us-imports';
   ctaText?: string;
   ctaHref?: string;
+  image?: string;
   limit?: number;
   class?: string;
 }
 
-const { 
-  title, 
-  category, 
-  ctaText, 
-  ctaHref, 
+const {
+  title,
+  category,
+  ctaText,
+  ctaHref,
+  image,
   limit = 6,
-  class: className = '' 
+  class: className = ''
 } = Astro.props;
 
 // Fetch featured products from API
@@ -28,20 +30,20 @@ try {
   const apiBaseUrl = import.meta.env.PUBLIC_API_BASE_URL || 'http://localhost:8787';
   const apiUrl = `${apiBaseUrl}/api/products?category=${category}&featured=true&limit=${limit}`;
   const response = await fetch(apiUrl);
-  
+
   if (!response.ok) {
     throw new Error(`Failed to fetch products: ${response.status}`);
   }
-  
+
   const result = await response.json();
-  
+
   if (result.success && result.data?.products) {
     // Map API data to ProductCard format
     products = result.data.products.map((product: any) => ({
       id: product.id,
       name: product.name,
-      series: product.category === 'simmons-black' ? '席夢思黑標' : 
-             product.category === 'accessories' ? '周邊配件' : 
+      series: product.category === 'simmons-black' ? '席夢思黑標' :
+             product.category === 'accessories' ? '周邊配件' :
              '美國進口',
       image: product.images?.[0] || '/products/placeholder.jpg',
       features: product.features || [],
@@ -55,9 +57,9 @@ try {
 }
 ---
 
-<section class={`py-16 bg-white ${className}`}>
-  <div class='container mx-auto px-4'>
-    <h2 class='text-3xl font-bold text-center mb-12'>{title}</h2>
+<section class={`py-16 flex flex-col items-center mx-auto bg-white ${className}`}>
+  <div class='container px-4'>
+    <h3 class='text-3xl font-bold text-center mb-12'>{title}</h3>
 
     {error ? (
       <div class='text-center text-red-600 bg-red-50 p-4 rounded-lg'>
@@ -69,11 +71,11 @@ try {
       </div>
     ) : (
       <>
-        <div class='grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8'>
+        <div class='grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-8 mx-auto'>
           {products.map((product: any) => <ProductCard product={product} />)}
         </div>
 
-        {ctaText && ctaHref && (
+        <!-- {ctaText && ctaHref && (
           <div class='text-center mt-12'>
             <a
               href={ctaHref}
@@ -82,7 +84,7 @@ try {
               {ctaText}
             </a>
           </div>
-        )}
+        )} -->
       </>
     )}
   </div>

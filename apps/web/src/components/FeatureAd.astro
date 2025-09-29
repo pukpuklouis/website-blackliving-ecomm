@@ -10,21 +10,21 @@ export interface Props {
   description?: string;
 }
 
-const { 
+const {
   imageUrl = '/feature-ad/simmons-beautyrest-black-c-class-mattress-bedroom-setting.webp',
   alt = 'Black Living 特別優惠',
-  href = '/special-offers',
+  href = '/',
   title = '限時特惠',
   description = '頂級席夢思床墊限時優惠，立即搶購'
 } = Astro.props;
 ---
 
-<section class="py-12 bg-white">
-  <div class="container mx-auto px-4">
-    <div class="max-w-6xl mx-auto">
-      <a 
+<section class="bg-white">
+  <div class="container">
+    <div class="w-screen h-fit">
+      <a
         href={href}
-        class="block rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 group"
+        class="block overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 group"
       >
         <div class="relative">
           <Image
@@ -35,7 +35,7 @@ const {
             loading="lazy"
             class="w-full h-64 sm:h-80 lg:h-96 object-cover group-hover:scale-105 transition-transform duration-300"
           />
-          
+
           <!-- Optional overlay content -->
           {title && description && (
             <div class="absolute inset-0 bg-black bg-opacity-20 flex items-center justify-center opacity-0 group-hover:opacity-50 transition-opacity duration-300">

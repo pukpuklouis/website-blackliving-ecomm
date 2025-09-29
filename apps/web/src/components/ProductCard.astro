@@ -1,4 +1,6 @@
 ---
+import { Image } from 'astro:assets';
+
 // Product card component for displaying mattresses
 export interface Props {
   product: {
@@ -16,63 +18,60 @@ export interface Props {
 const { product, class: className = '' } = Astro.props;
 ---
 
-<div
-  class={`bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow ${className}`}
+<a
+  href={product.href}
+  class={`block rounded-lg overflow-hidden hover:shadow-lg transition-shadow ${className}`}
 >
   <!-- Product Image -->
   <div class='relative aspect-[4/3] overflow-hidden'>
-    <img
+    <Image
       src={product.image}
       alt={product.name}
+      width={400}
+      height={300}
       class='w-full h-full object-cover hover:scale-105 transition-transform duration-300'
       loading='lazy'
     />
 
     <!-- Series Badge -->
-    <div class='absolute top-3 left-3 bg-black text-white px-3 py-1 text-sm font-semibold rounded'>
-      {product.series}
-    </div>
+    {product.series && (
+      <div class='absolute top-3 left-3 bg-primary text-white px-3 py-1 text-sm font-semibold rounded'>
+        {product.series}
+      </div>
+    )}
   </div>
-
-  <!-- Product Info -->
-  <div class='p-6'>
-    <h3 class='text-xl font-semibold mb-3'>
-      <a href={product.href} class='hover:text-gray-600 transition-colors'>
+  <div class='flex flex-col justify-between items-center p-6 gap-3'>
+    <!-- Product Name -->
+    <p class='text-xl font-semibold text-center hover:text-gray-600 transition-colors'>
         {product.name}
-      </a>
-    </h3>
-
-    <!-- Features -->
-    <ul class='space-y-1 mb-4 text-sm text-gray-600'>
-      {
-        product.features.slice(0, 3).map(feature => (
-          <li class='flex items-center'>
-            <span class='w-1.5 h-1.5 bg-black rounded-full mr-2' />
-            {feature}
-          </li>
-        ))
-      }
-    </ul>
+    </p>
 
     <!-- Price -->
-    <div class='flex items-center justify-between'>
-      {
-        product.priceFrom ? (
-          <div class='text-lg font-bold'>
-            <span class='text-sm font-normal text-gray-500'>起</span>
-            <span class='text-red-600'>NT$ {product.priceFrom.toLocaleString()}</span>
-          </div>
+    <div class='flex items-center'>
+        {product.priceFrom ? (
+            <div class='text-lg font-bold'>
+            <span class='text-gray-600'>NT$ {product.priceFrom.toLocaleString()}</span>
+            <span class='text-sm font-base text-gray-600'>起</span>
+            </div>
         ) : (
-          <div class='text-gray-500'>請聯繫報價</div>
-        )
-      }
-
-      <a
-        href={product.href}
-        class='bg-black text-white px-4 py-2 text-sm font-semibold rounded hover:bg-gray-800 transition-colors'
-      >
-        查看詳情
-      </a>
+            <div class='border border-gray-800  text-gray-800 px-4 py-1 text-md font-semibold rounded hover:bg-gray-50 transition-colors'>
+            聯絡我們
+            </div>
+        )}
     </div>
   </div>
-</div>
+</a>
+
+<script>
+  // Handle card clicks
+  document.addEventListener('DOMContentLoaded', () => {
+    const productCards = document.querySelectorAll('a[href*="/"]');
+
+    productCards.forEach(card => {
+      card.addEventListener('click', (e) => {
+        // Allow normal link behavior - no additional handling needed
+        // The entire card is already wrapped in an anchor tag
+      });
+    });
+  });
+</script>
