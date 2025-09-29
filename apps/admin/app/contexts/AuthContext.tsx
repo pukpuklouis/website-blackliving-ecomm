@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { signOut, signInWithGoogleAdmin, checkSession } from '@blackliving/auth/client';
+import { useApiUrl } from './EnvironmentContext';
 
 interface User {
   id: string;
@@ -34,6 +35,7 @@ interface AuthProviderProps {
 export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const apiUrl = useApiUrl();
 
 
   const checkAuth = useCallback(async () => {
@@ -55,7 +57,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
-      const response = await fetch(`${import.meta.env.PUBLIC_API_URL}/api/auth/sign-in/email`, {
+      const response = await fetch(`${apiUrl}/api/auth/sign-in/email`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

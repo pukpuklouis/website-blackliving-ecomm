@@ -59,6 +59,7 @@ import { resolveAssetUrl, extractAssetKey } from '../lib/assets';
 import { reorderList } from '../lib/array';
 import { safeParseJSON } from '../lib/http';
 import { ImageUpload } from './ImageUpload';
+import { useEnvironment } from '../contexts/EnvironmentContext';
 
 // Product types based on database schema
 export interface Product {
@@ -125,8 +126,9 @@ const categoryLabels = {
 };
 
 export default function ProductManagement({ initialProducts }: { initialProducts?: Product[] }) {
-  const API_BASE = import.meta.env.PUBLIC_API_URL as string;
-  const cdnBase = (import.meta.env.PUBLIC_IMAGE_CDN_URL as string | undefined)?.trim();
+  const { PUBLIC_API_URL, PUBLIC_IMAGE_CDN_URL } = useEnvironment();
+  const API_BASE = PUBLIC_API_URL;
+  const cdnBase = PUBLIC_IMAGE_CDN_URL?.trim();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [sorting, setSorting] = useState<SortingState>([]);
@@ -138,6 +140,7 @@ export default function ProductManagement({ initialProducts }: { initialProducts
   const [formData, setFormData] = useState<Partial<ProductFormData>>({});
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [deletingProductIds, setDeletingProductIds] = useState<Record<string, boolean>>({});
   const [specOrder, setSpecOrder] = useState<string[]>([]);
 
   const fallbackAssetBase = useMemo(
@@ -222,7 +225,11 @@ export default function ProductManagement({ initialProducts }: { initialProducts
           </Button>
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button variant="ghost" size="sm">
+              <Button
+                variant="ghost"
+                size="sm"
+                disabled={!!deletingProductIds[row.original.id]}
+              >
                 <Trash2 className="h-4 w-4" />
               </Button>
             </AlertDialogTrigger>
@@ -235,7 +242,10 @@ export default function ProductManagement({ initialProducts }: { initialProducts
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel>取消</AlertDialogCancel>
-                <AlertDialogAction onClick={() => handleDelete(row.original.id)}>
+                <AlertDialogAction
+                  onClick={() => handleDelete(row.original.id)}
+                  disabled={!!deletingProductIds[row.original.id]}
+                >
                   刪除
                 </AlertDialogAction>
               </AlertDialogFooter>
@@ -265,15 +275,17 @@ export default function ProductManagement({ initialProducts }: { initialProducts
 
   // Initialize with server data if provided; otherwise fetch
   useEffect(() => {
-    if (initialProducts && initialProducts.length >= 0) {
+    if (Array.isArray(initialProducts) && initialProducts.length > 0) {
       const sanitized = initialProducts.map(product =>
         sanitizeProduct(product, cdnBase, fallbackAssetBase)
       );
       setProducts(sanitized);
       setLoading(false);
-    } else {
-      loadProducts();
+      return;
     }
+
+    // No initial data or server-side fetch failed; hydrate from API instead
+    loadProducts();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -337,12 +349,15 @@ export default function ProductManagement({ initialProducts }: { initialProducts
 
   const handleDelete = async (id: string) => {
     try {
+      setDeletingProductIds(prev => ({ ...prev, [id]: true }));
       const response = await fetch(`${API_BASE}/api/admin/products/${id}`, {
         method: 'DELETE',
         credentials: 'include',
       });
       if (response.ok) {
         setProducts(prev => prev.filter(p => p.id !== id));
+        // Ensure local state matches server truth when caches were stale
+        await loadProducts();
         toast.success('產品刪除成功');
       } else {
         const err = await safeParseJSON(response);
@@ -351,6 +366,13 @@ export default function ProductManagement({ initialProducts }: { initialProducts
     } catch (error) {
       console.error('Delete failed:', error);
       toast.error(error instanceof Error ? error.message : '刪除產品失敗');
+    }
+    finally {
+      setDeletingProductIds(prev => {
+        const next = { ...prev };
+        delete next[id];
+        return next;
+      });
     }
   };
 

@@ -62,6 +62,7 @@ import {
   type ColumnFiltersState,
 } from '@tanstack/react-table';
 import { toast } from 'sonner';
+import { useApiUrl } from '../../contexts/EnvironmentContext';
 
 interface CustomerInfo {
   name: string;
@@ -126,6 +127,7 @@ const purposeLabels = {
 };
 
 export default function AppointmentsPage() {
+  const apiUrl = useApiUrl();
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
   const [sorting, setSorting] = useState<SortingState>([]);
@@ -288,7 +290,7 @@ export default function AppointmentsPage() {
   const loadAppointments = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${import.meta.env.PUBLIC_API_URL}/api/appointments`);
+      const response = await fetch(`${apiUrl}/api/appointments`);
       if (response.ok) {
         const result = await response.json();
         setAppointments(result.success ? result.data.appointments : []);
@@ -315,7 +317,7 @@ export default function AppointmentsPage() {
   const handleUpdateStatus = async (appointmentId: string, newStatus: Appointment['status']) => {
     try {
       const response = await fetch(
-        `${import.meta.env.PUBLIC_API_URL}/api/appointments/${appointmentId}/status`,
+        `${apiUrl}/api/appointments/${appointmentId}/status`,
         {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
@@ -345,7 +347,7 @@ export default function AppointmentsPage() {
   const handleConfirmAppointment = async (appointmentId: string, confirmedDateTime: string) => {
     try {
       const response = await fetch(
-        `${import.meta.env.PUBLIC_API_URL}/api/appointments/${appointmentId}/confirm`,
+        `${apiUrl}/api/appointments/${appointmentId}/confirm`,
         {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },

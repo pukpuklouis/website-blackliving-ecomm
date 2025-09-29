@@ -35,6 +35,7 @@ import { toast } from 'sonner';
 import { BlockNoteEditor } from './editor';
 import { estimateReadingTimeMinutes } from './blogComposerUtils';
 import { ImageUpload } from './ImageUpload';
+import { useApiUrl, useEnvironment } from '../contexts/EnvironmentContext';
 
 // Blog post validation schema
 const blogPostSchema = z.object({
@@ -114,6 +115,7 @@ export default function BlogComposer() {
   const navigate = useNavigate();
   const postId = searchParams.get('id');
   const isEditing = !!postId;
+  const apiUrl = useApiUrl();
 
   const [loading, setLoading] = useState(isEditing);
   const [saving, setSaving] = useState(false);
@@ -154,6 +156,25 @@ export default function BlogComposer() {
   const watchedCategoryId = watch('categoryId');
   const watchedSlug = watch('slug');
   const primaryActionDisabled = saving || loadingCategories;
+  const { PUBLIC_WEB_URL } = useEnvironment();
+
+  const canonicalBase = React.useMemo(() => {
+    const envCandidate = [
+      PUBLIC_WEB_URL,
+      (import.meta as any)?.env?.PUBLIC_WEB_URL,
+      (import.meta as any)?.env?.PUBLIC_SITE_URL,
+    ].find(value => typeof value === 'string' && value.trim().length > 0);
+
+    if (envCandidate) {
+      return String(envCandidate).replace(/\/$/, '');
+    }
+
+    if (typeof window !== 'undefined' && window.location.origin) {
+      return window.location.origin.replace(/\/$/, '');
+    }
+
+    return 'https://blackliving.com';
+  }, [PUBLIC_WEB_URL]);
 
   // Auto-generate slug from title
   useEffect(() => {
@@ -173,26 +194,14 @@ export default function BlogComposer() {
 
   // Compute canonical URL from slug and keep it in sync
   useEffect(() => {
-    const buildCanonical = (slug?: string) => {
-      if (!slug) return '';
-      const base =
-        (import.meta as any).env.PUBLIC_WEB_URL ||
-        (import.meta as any).env.PUBLIC_SITE_URL ||
-        (typeof window !== 'undefined' && window.location.hostname === 'localhost'
-          ? 'http://localhost:4321'
-          : 'https://blackliving.com');
-      const origin = String(base).replace(/\/$/, '');
-      return `${origin}/posts/${slug}`;
-    };
-
-    const canonical = buildCanonical(watchedSlug);
+    const canonical = watchedSlug ? `${canonicalBase}/posts/${watchedSlug}` : '';
     setCanonicalPreview(prev => (prev === canonical ? prev : canonical));
 
     const currentCanonical = getValues('canonicalUrl');
     if (currentCanonical !== canonical) {
       setValue('canonicalUrl', canonical, { shouldDirty: false, shouldTouch: false });
     }
-  }, [watchedSlug, setValue, getValues]);
+  }, [watchedSlug, canonicalBase, setValue, getValues]);
 
   // Auto-calculate reading time
   useEffect(() => {
@@ -210,7 +219,7 @@ export default function BlogComposer() {
   const fetchCategories = async (): Promise<Category[]> => {
     try {
       setLoadingCategories(true);
-      const res = await fetch(`${import.meta.env.PUBLIC_API_URL}/api/posts/categories`, {
+      const res = await fetch(`${apiUrl}/api/posts/categories`, {
         credentials: 'include',
       });
       if (!res.ok) throw new Error('Failed to fetch categories');
@@ -237,7 +246,7 @@ export default function BlogComposer() {
     try {
       setRefreshingCategories(true);
       const res = await fetch(
-        `${import.meta.env.PUBLIC_API_URL}/api/posts/categories/cache/invalidate`,
+        `${apiUrl}/api/posts/categories/cache/invalidate`,
         {
           method: 'POST',
           credentials: 'include',
@@ -293,7 +302,7 @@ export default function BlogComposer() {
   const fetchPost = async (id: string, availableCategories?: Category[]) => {
     try {
       setLoading(true);
-      const response = await fetch(`${import.meta.env.PUBLIC_API_URL}/api/posts/${id}`, {
+      const response = await fetch(`${apiUrl}/api/posts/${id}`, {
         credentials: 'include',
       });
 
@@ -411,8 +420,7 @@ export default function BlogComposer() {
     try {
       setSaving(true);
 
-      const base = import.meta.env.PUBLIC_API_URL as string;
-      const url = isEditing ? `${base}/api/posts/${postId}` : `${base}/api/posts`;
+      const url = isEditing ? `${apiUrl}/api/posts/${postId}` : `${apiUrl}/api/posts`;
 
       const method = isEditing ? 'PUT' : 'POST';
 

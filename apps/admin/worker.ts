@@ -12,6 +12,7 @@ const handleRequest = createPagesFunctionHandler<Env>({
   getLoadContext({ env, context, params }) {
     return {
       env,
+      cloudflare: { env },
       params,
       waitUntil: context.waitUntil.bind(context),
     };

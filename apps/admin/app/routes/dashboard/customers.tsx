@@ -65,6 +65,7 @@ import {
   type ColumnFiltersState,
 } from '@tanstack/react-table';
 import { toast } from 'sonner';
+import { useApiUrl } from '../../contexts/EnvironmentContext';
 
 interface CustomerAddress {
   city: string;
@@ -149,6 +150,7 @@ const churnRiskColors = {
 };
 
 export default function CustomersPage() {
+  const apiUrl = useApiUrl();
   const [customers, setCustomers] = useState<CustomerProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [sorting, setSorting] = useState<SortingState>([]);
@@ -310,7 +312,7 @@ export default function CustomersPage() {
   const loadCustomers = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${import.meta.env.PUBLIC_API_URL}/api/customers`, {
+      const response = await fetch(`${apiUrl}/api/customers`, {
         credentials: 'include',
       });
       if (response.ok) {
@@ -328,7 +330,7 @@ export default function CustomersPage() {
   const loadCustomerInteractions = async (customerId: string) => {
     try {
       const response = await fetch(
-        `${import.meta.env.PUBLIC_API_URL}/api/customers/${customerId}/interactions`,
+        `${apiUrl}/api/customers/${customerId}/interactions`,
         {
           credentials: 'include',
         }

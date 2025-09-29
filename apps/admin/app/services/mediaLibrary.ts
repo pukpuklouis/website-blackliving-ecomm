@@ -43,11 +43,12 @@ export type FetchMediaLibraryParams = {
 };
 
 export async function fetchMediaLibrary(
-  params: FetchMediaLibraryParams = {}
+  params: FetchMediaLibraryParams = {},
+  apiBase?: string
 ): Promise<MediaLibraryResponse> {
-  const apiBase = (import.meta.env.PUBLIC_API_URL as string | undefined)?.trim();
+  const apiUrl = apiBase || (import.meta.env.PUBLIC_API_URL as string | undefined)?.trim();
 
-  if (!apiBase) {
+  if (!apiUrl) {
     throw new Error('PUBLIC_API_URL is not configured.');
   }
 
@@ -74,7 +75,7 @@ export async function fetchMediaLibrary(
     query.set('sort', sort);
   }
 
-  const url = `${apiBase.replace(/\/$/, '')}/api/admin/media/library${
+  const url = `${apiUrl.replace(/\/$/, '')}/api/admin/media/library${
     query.size ? `?${query.toString()}` : ''
   }`;
 

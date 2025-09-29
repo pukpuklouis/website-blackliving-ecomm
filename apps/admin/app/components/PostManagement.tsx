@@ -55,6 +55,8 @@ import {
 } from '@blackliving/ui';
 import { toast } from 'sonner';
 
+import { useApiUrl } from '../contexts/EnvironmentContext';
+
 interface Post {
   id: string;
   title: string;
@@ -108,6 +110,7 @@ const columnHelper = createColumnHelper<Post>();
 export default function PostManagement() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
+  const apiUrl = useApiUrl();
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [globalFilter, setGlobalFilter] = useState('');
@@ -122,7 +125,7 @@ export default function PostManagement() {
   const fetchPosts = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${import.meta.env.PUBLIC_API_URL}/api/posts`, {
+      const response = await fetch(`${apiUrl}/api/posts`, {
         credentials: 'include',
       });
 
@@ -132,7 +135,7 @@ export default function PostManagement() {
           try {
             // 1) Try dev-only auto-login to admin
             const forceResp = await fetch(
-              `${import.meta.env.PUBLIC_API_URL}/api/auth/debug/force-admin-login`,
+              `${apiUrl}/api/auth/debug/force-admin-login`,
               {
                 method: 'POST',
                 credentials: 'include',
@@ -143,7 +146,7 @@ export default function PostManagement() {
 
             // 2) If not available (e.g., 403 in non-dev), upgrade current user to admin
             if (!forceResp.ok) {
-              await fetch(`${import.meta.env.PUBLIC_API_URL}/api/auth/assign-admin-role`, {
+              await fetch(`${apiUrl}/api/auth/assign-admin-role`, {
                 method: 'POST',
                 credentials: 'include',
                 headers: { 'Content-Type': 'application/json' },
@@ -152,7 +155,7 @@ export default function PostManagement() {
             }
 
             // 3) Retry posts fetch
-            const retry = await fetch(`${import.meta.env.PUBLIC_API_URL}/api/posts`, {
+            const retry = await fetch(`${apiUrl}/api/posts`, {
               credentials: 'include',
             });
             if (retry.ok) {
@@ -184,7 +187,7 @@ export default function PostManagement() {
   // Delete post
   const deletePost = async (postId: string) => {
     try {
-      const response = await fetch(`${import.meta.env.PUBLIC_API_URL}/api/posts/${postId}`, {
+      const response = await fetch(`${apiUrl}/api/posts/${postId}`, {
         method: 'DELETE',
         credentials: 'include',
       });
@@ -215,7 +218,7 @@ export default function PostManagement() {
   // Fetch categories
   const fetchCategories = async () => {
     try {
-      const res = await fetch(`${import.meta.env.PUBLIC_API_URL}/api/posts/categories`, {
+      const res = await fetch(`${apiUrl}/api/posts/categories`, {
         credentials: 'include',
       });
       if (!res.ok) throw new Error('Failed to fetch categories');

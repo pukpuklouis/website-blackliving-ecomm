@@ -59,6 +59,7 @@ import {
   type ColumnFiltersState,
 } from '@tanstack/react-table';
 import { toast } from 'sonner';
+import { useApiUrl } from '../../contexts/EnvironmentContext';
 
 interface OrderItem {
   productId: string;
@@ -141,6 +142,7 @@ const paymentMethodLabels = {
 };
 
 export default function OrdersPage() {
+  const apiUrl = useApiUrl();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [sorting, setSorting] = useState<SortingState>([]);
@@ -282,7 +284,7 @@ export default function OrdersPage() {
   const loadOrders = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${import.meta.env.PUBLIC_API_URL}/api/orders`);
+      const response = await fetch(`${apiUrl}/api/orders`);
       if (response.ok) {
         const result = await response.json();
         setOrders(result.success ? result.data.orders : []);
@@ -308,7 +310,7 @@ export default function OrdersPage() {
 
   const handleUpdateStatus = async (orderId: string, newStatus: Order['status']) => {
     try {
-      const response = await fetch(`${import.meta.env.PUBLIC_API_URL}/api/orders/${orderId}/status`, {
+      const response = await fetch(`${apiUrl}/api/orders/${orderId}/status`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -333,7 +335,7 @@ export default function OrdersPage() {
 
   const handleConfirmPayment = async (orderId: string) => {
     try {
-      const response = await fetch(`${import.meta.env.PUBLIC_API_URL}/api/orders/${orderId}/confirm-payment`, {
+      const response = await fetch(`${apiUrl}/api/orders/${orderId}/confirm-payment`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',

@@ -2,9 +2,10 @@ import type { Route } from './+types/dashboard.products';
 import { useLoaderData } from 'react-router';
 import ProductManagement from '../../components/ProductManagement';
 
-export const loader: Route.Loader = async ({ request }) => {
+export const loader: Route.Loader = async ({ request, context }) => {
   try {
-    const res = await fetch(`${import.meta.env.PUBLIC_API_URL}/api/products`, {
+    const apiUrl = context?.cloudflare?.env?.PUBLIC_API_URL || context?.env?.PUBLIC_API_URL || 'http://localhost:8787';
+    const res = await fetch(`${apiUrl}/api/products`, {
       // forward cookies for auth-required endpoints
       headers: { cookie: request.headers.get('cookie') ?? '' },
       credentials: 'include',

@@ -10,6 +10,7 @@ import {
 import type { Route } from './+types/root';
 import { AuthProvider } from './contexts/AuthContext';
 import { ImageUploadProvider } from './contexts/ImageUploadContext';
+import { EnvironmentProvider } from './contexts/EnvironmentContext';
 import './app.css';
 
 export const links: Route.LinksFunction = () => [
@@ -24,6 +25,22 @@ export const links: Route.LinksFunction = () => [
     href: 'https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap',
   },
 ];
+
+export const loader: Route.LoaderFunction = ({ context }) => {
+  // Extract environment variables from Cloudflare Worker context
+  const env = context?.cloudflare?.env || context?.env || {};
+
+  return {
+    env: {
+      PUBLIC_API_URL: env.PUBLIC_API_URL || '',
+      PUBLIC_API_BASE_URL: env.PUBLIC_API_BASE_URL || '',
+      PUBLIC_IMAGE_CDN_URL: env.PUBLIC_IMAGE_CDN_URL || '',
+      PUBLIC_SITE_URL: env.PUBLIC_SITE_URL || '',
+      PUBLIC_WEB_URL: env.PUBLIC_WEB_URL || '',
+      NODE_ENV: env.NODE_ENV || 'development',
+    },
+  };
+};
 
 export function Layout({ children }: { children: React.ReactNode }) {
   return (
@@ -43,13 +60,15 @@ export function Layout({ children }: { children: React.ReactNode }) {
   );
 }
 
-export default function App() {
+export default function App({ loaderData }: Route.ComponentProps) {
   return (
-    <AuthProvider>
-      <ImageUploadProvider>
-        <Outlet />
-      </ImageUploadProvider>
-    </AuthProvider>
+    <EnvironmentProvider env={loaderData?.env}>
+      <AuthProvider>
+        <ImageUploadProvider>
+          <Outlet />
+        </ImageUploadProvider>
+      </AuthProvider>
+    </EnvironmentProvider>
   );
 }
 

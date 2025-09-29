@@ -15,6 +15,8 @@ interface UploadOptions {
   folder?: string;
 }
 
+import { useEnvironment } from './EnvironmentContext';
+
 interface ImageUploadContextValue {
   isUploading: boolean;
   uploadImages: (files: FileList | File[] | null, options?: UploadOptions) => Promise<string[]>;
@@ -23,8 +25,9 @@ interface ImageUploadContextValue {
 const ImageUploadContext = createContext<ImageUploadContextValue | undefined>(undefined);
 
 export function ImageUploadProvider({ children }: { children: ReactNode }) {
-  const API_BASE = (import.meta.env.PUBLIC_API_URL as string | undefined) ?? '';
-  const cdnBase = (import.meta.env.PUBLIC_IMAGE_CDN_URL as string | undefined)?.trim();
+  const { PUBLIC_API_URL, PUBLIC_IMAGE_CDN_URL } = useEnvironment();
+  const API_BASE = PUBLIC_API_URL;
+  const cdnBase = PUBLIC_IMAGE_CDN_URL?.trim();
   const fallbackAssetBase = useMemo(
     () => (typeof window !== 'undefined' ? window.location.origin : undefined),
     []
