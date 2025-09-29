@@ -10,8 +10,9 @@
     "typecheck": "react-router typegen && tsc",
     "test": "playwright test",
     "test:unit": "vitest run",
-    "deploy": "wrangler deploy",
-    "deploy:staging": "wrangler deploy --env staging"
+    "deploy": "pnpm deploy:production",
+    "deploy:staging": "wrangler deploy --env staging",
+    "deploy:production": "wrangler deploy --env production"
   },
   "dependencies": {
     "@blackliving/auth": "workspace:*",

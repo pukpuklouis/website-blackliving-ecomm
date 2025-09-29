@@ -8,5 +8,8 @@
       "types": "./index.d.ts",
       "default": "./index.js"
     }
+  },
+  "dependencies": {
+    "react-router": "^7.7.1"
   }
 }
