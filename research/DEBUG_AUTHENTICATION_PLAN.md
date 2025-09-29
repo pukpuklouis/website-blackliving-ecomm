@@ -38,7 +38,7 @@ Diagnose and resolve the continuous login loop issue in the Black Living Admin a
         *   Inspect the response headers from the API call that completes the login (e.g., `/api/auth/sign-in/email` or the OAuth callback).
         *   **Focus:** Look for the `Set-Cookie` header. Verify that:
             *   `better-auth.session_token` is present.
-            *   Its `Domain` attribute is correctly set for the admin application's domain (e.g., `admin.blackliving.com` or `staging.blackliving-admin.pages.dev`).
+            *   Its `Domain` attribute is correctly set for the admin application's domain (e.g., `admin.blackliving.com` or `blackliving-admin-staging.pukpuk-tw.workers.dev`).
             *   Its `Path` attribute is `/`.
             *   The `Expires` date is in the future.
             *   `Secure` and `HttpOnly` flags are enabled (for security best practices).
