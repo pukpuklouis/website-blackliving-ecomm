@@ -1,0 +1,188 @@
+---
+import { Image } from 'astro:assets';
+
+// Feature product banner with configurable overlays
+export interface Props {
+  // Background image
+  imageUrl?: string;
+  alt?: string;
+
+  // Layout
+  height?: 'sm' | 'md' | 'lg' | 'xl';
+
+  // Gradient overlay
+  gradientDirection?: 'left-to-right' | 'right-to-left' | 'top-to-bottom' | 'bottom-to-top';
+  gradientFromColor?: string;
+  gradientToColor?: string;
+  gradientOpacity?: number;
+
+  // Text overlay
+  textPosition?: 'left' | 'right' | 'center';
+  textTitle?: string;
+  textDescription?: string;
+  textClassName?: string;
+
+  // Image overlay
+  overlayImageUrl?: string;
+  overlayImageAlt?: string;
+  overlayImagePosition?: 'left' | 'right';
+  overlayImageSize?: 'sm' | 'md' | 'lg';
+
+  // Interaction
+  href?: string;
+  hoverEffect?: boolean;
+}
+
+const {
+  imageUrl = '/feature-banner/blackliving-feature-banner.webp',
+  alt = 'Black Living 特別優惠',
+  height = 'lg',
+  gradientDirection = 'left-to-right',
+  gradientFromColor = 'transparent',
+  gradientToColor = 'black',
+  gradientOpacity = 0.3,
+  textPosition = 'left',
+  textTitle,
+  textDescription,
+  textClassName = '',
+  overlayImageUrl,
+  overlayImageAlt = '',
+  overlayImagePosition = 'right',
+  overlayImageSize = 'md',
+  href,
+  hoverEffect = false
+} = Astro.props;
+
+// Height classes
+const heightClasses = {
+  sm: 'h-48 sm:h-56 lg:h-64',
+  md: 'h-56 sm:h-64 lg:h-72',
+  lg: 'h-64 sm:h-80 lg:h-96',
+  xl: 'h-72 sm:h-96 lg:h-[28rem]'
+};
+
+// Gradient direction classes
+const gradientDirections = {
+  'left-to-right': 'bg-gradient-to-r',
+  'right-to-left': 'bg-gradient-to-l',
+  'top-to-bottom': 'bg-gradient-to-b',
+  'bottom-to-top': 'bg-gradient-to-t'
+};
+
+// Text position classes
+const textPositions = {
+  left: 'items-start justify-center pl-8 lg:pl-32',
+  right: 'items-end justify-center pr-8 lg:pr-32',
+  center: 'items-center justify-center'
+};
+
+// Overlay image size classes
+const overlayImageSizes = {
+  sm: 'w-24 h-24 lg:w-32 lg:h-32',
+  md: 'w-32 h-32 lg:w-48 lg:h-48',
+  lg: 'w-48 h-48 lg:w-64 lg:h-64'
+};
+
+// Overlay image position classes
+const overlayImagePositions = {
+  left: 'left-4 lg:left-8',
+  right: 'right-4 lg:right-8'
+};
+
+// Convert color names to Tailwind gradient classes
+const getGradientColors = (from: string, to: string) => {
+  const colorMap: Record<string, string> = {
+    transparent: 'transparent',
+    black: 'black',
+    white: 'white',
+    gray: 'gray-900',
+    'gray-light': 'gray-600',
+    red: 'red-500',
+    blue: 'blue-500',
+    green: 'green-500',
+    purple: 'purple-500'
+  };
+
+  return {
+    from: colorMap[from] || from,
+    to: colorMap[to] || to
+  };
+};
+
+const gradientColors = getGradientColors(gradientFromColor, gradientToColor);
+const Component = href ? 'a' : 'div';
+---
+
+<section class="bg-white">
+  <div class="container">
+    <div class="w-screen h-fit">
+      <Component
+        {...(href ? { href } : {})}
+        class={`relative block ${hoverEffect ? 'group' : ''}`}
+      >
+        <!-- Background Image -->
+        <Image
+          src={imageUrl}
+          alt={alt}
+          width={1920}
+          height={1080}
+          loading="lazy"
+          class={`w-full ${heightClasses[height]} object-cover ${hoverEffect ? 'group-hover:scale-105 transition-transform duration-300' : ''}`}
+        />
+
+        <!-- Gradient Overlay -->
+        {(gradientFromColor.startsWith('var(') || gradientToColor.startsWith('var(')) ? (
+          <div
+            class="absolute inset-0"
+            style={`background: linear-gradient(${gradientDirection === 'left-to-right' ? 'to right' : gradientDirection === 'right-to-left' ? 'to left' : gradientDirection === 'top-to-bottom' ? 'to bottom' : 'to top'}, ${gradientFromColor}, ${gradientToColor}); opacity: ${gradientOpacity}`}
+          >
+          </div>
+        ) : (
+          <div
+            class={`absolute inset-0 ${gradientDirections[gradientDirection]} from-${gradientColors.from} to-${gradientColors.to}`}
+            style={`opacity: ${gradientOpacity}`}
+          >
+          </div>
+        )}
+
+        <!-- Text Overlay -->
+        {(textTitle || textDescription) && (
+          <div class={`absolute inset-0 flex flex-col ${textPositions[textPosition]}  py-8`}>
+            <div class={`text-white max-w-md ${textClassName}`}>
+              {textTitle && (
+                <p class="text-2xl lg:text-4xl font-bold mb-2 drop-shadow-lg">
+                  {textTitle}
+                </p>
+              )}
+              {textDescription && (
+                <p class="text-2xl lg:text-4xl drop-shadow-lg">
+                  {textDescription}
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+
+        <!-- Image Overlay -->
+        {overlayImageUrl && (
+          <div class={`absolute top-1/2 -translate-y-1/2 ${overlayImagePositions[overlayImagePosition]}`}>
+            <Image
+              src={overlayImageUrl}
+              alt={overlayImageAlt}
+              width={200}
+              height={200}
+              loading="lazy"
+              class={`${overlayImageSizes[overlayImageSize]} object-contain drop-shadow-lg ${hoverEffect ? 'group-hover:scale-110 transition-transform duration-300' : ''}`}
+            />
+          </div>
+        )}
+
+        <!-- Hover Effect Overlay (if enabled and has link) -->
+        {hoverEffect && href && (
+          <div class="absolute inset-0 bg-black bg-opacity-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+          </div>
+        )}
+      </Component>
+    </div>
+  </div>
+</section>

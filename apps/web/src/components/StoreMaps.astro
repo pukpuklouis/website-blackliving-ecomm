@@ -1,0 +1,83 @@
+---
+interface Props {
+  embedUrl: string;
+  mapHeight?: string;
+  infoBox: {
+    name: string;
+    address: string;
+    hours?: string;
+    phone?: string;
+  };
+  bgColor?: string;
+  textColor?: string;
+  textAlign?: 'left' | 'center' | 'right';
+  infoBoxPosition?:
+    | 'top-left'
+    | 'top-right'
+    | 'bottom-left'
+    | 'bottom-right'
+    | 'center-left'
+    | 'center-right';
+  responsivePosition?: 'top' | 'bottom';
+}
+
+const {
+  embedUrl,
+  infoBox,
+  mapHeight = 'h-[32rem]',
+  bgColor = 'bg-white/90',
+  textColor = 'text-slate-800',
+  textAlign = 'left',
+  infoBoxPosition = 'top-left',
+  responsivePosition = 'bottom',
+} = Astro.props;
+
+const alignClass = `text-${textAlign}`;
+// Mobile classes - applied to all screen sizes, overridden by desktop
+const mobileClasses = responsivePosition === 'top'
+  ? 'top-4 w-full left-0 right-0 mx-auto'
+  : 'bottom-4 w-full left-0 right-0 mx-auto';
+
+// Desktop classes - completely override mobile positioning with proper resets
+let desktopClasses: string;
+switch (infoBoxPosition) {
+  case 'top-left':
+    desktopClasses = 'md:top-4 md:bottom-auto md:left-4 md:right-auto md:w-auto md:mx-0';
+    break;
+  case 'top-right':
+    desktopClasses = 'md:top-4 md:bottom-auto md:right-4 md:left-auto md:w-auto md:mx-0';
+    break;
+  case 'bottom-left':
+    desktopClasses = 'md:bottom-4 md:top-auto md:left-4 md:right-auto md:w-auto md:mx-0';
+    break;
+  case 'bottom-right':
+    desktopClasses = 'md:bottom-4 md:top-auto md:right-4 md:left-auto md:w-auto md:mx-0';
+    break;
+  case 'center-left':
+    desktopClasses = 'md:top-1/2 md:bottom-auto md:-translate-y-1/2 md:left-24 md:right-auto md:w-auto md:mx-0';
+    break;
+  case 'center-right':
+    desktopClasses = 'md:top-1/2 md:bottom-auto md:-translate-y-1/2 md:right-4 md:left-auto md:w-auto md:mx-0';
+    break;
+  default:
+    desktopClasses = 'md:top-4 md:bottom-auto md:left-4 md:right-auto md:w-auto md:mx-0';
+    break;
+}
+
+const positionClasses = `${mobileClasses} ${desktopClasses}`;
+---
+<div class={`relative w-screen ${mapHeight} overflow-hidden`}>
+    <iframe
+        src={embedUrl}
+        class="w-full h-full border-0"
+        allowfullscreen
+        loading="lazy"
+        referrerpolicy="no-referrer-when-downgrade"
+    ></iframe>
+    <div class={`absolute p-4 md:p-12 rounded-lg shadow-lg max-w-sm z-10 ${bgColor} ${textColor} ${alignClass} ${positionClasses}`}>
+        <h3 class="font-bold text-lg mb-2">{infoBox.name}</h3>
+        <p class="mb-1"><strong>地址:</strong> {infoBox.address}</p>
+        {infoBox.hours && <p class="mb-1"><strong>營業時間:</strong> {infoBox.hours}</p>}
+        {infoBox.phone && <p class="mb-1"><strong>電話:</strong> {infoBox.phone}</p>}
+    </div>
+</div>

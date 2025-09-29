@@ -97,9 +97,57 @@ const pages = defineCollection({
 const storeinfo = defineCollection({
   type: 'data',
   schema: z.object({
-    name: z.string(),
-    address: z.string(),
-    phone: z.string(),
+    stores: z.array(
+      z.object({
+        name: z.string(),
+        address: z.string(),
+        phone: z.string(),
+        embedUrl: z.string(),
+        infoBoxPosition: z.enum([
+          'top-left',
+          'top-right',
+          'bottom-left',
+          'bottom-right',
+          'center-left',
+          'center-right',
+        ]),
+        mapHeight: z.string(),
+        responsivePosition: z.enum(['top', 'bottom']),
+        bgColor: z.string(),
+        textColor: z.string(),
+        textAlign: z.enum(['left', 'center', 'right']),
+      })
+    ),
+  }),
+});
+
+const features = defineCollection({
+  type: 'data',
+  schema: z.object({
+    defaultFeatures: z.array(
+      z.object({
+        icon: z.string(),
+        title: z.string(),
+        description: z.string(),
+      })
+    ),
+  }),
+});
+
+const footer = defineCollection({
+  type: 'data',
+  schema: z.object({
+    sections: z.array(
+      z.object({
+        title: z.string(),
+        links: z.array(
+          z.object({
+            text: z.string(),
+            url: z.string(),
+          })
+        ),
+      })
+    ),
   }),
 });
 
@@ -111,4 +159,6 @@ export const collections = {
   categories,
   pages,
   storeinfo,
+  features,
+  footer,
 };
