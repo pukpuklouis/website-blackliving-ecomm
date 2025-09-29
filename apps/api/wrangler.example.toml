@@ -92,6 +92,8 @@ API_BASE_URL = "https://your-api.your-subdomain.workers.dev"
 WEB_BASE_URL = "https://your-web.pages.dev"
 ADMIN_BASE_URL = "https://your-admin.pages.dev"
 R2_PUBLIC_URL = "https://images.blackliving.com/media"
+# Email sending configuration
+RESEND_FROM_EMAIL = "Black Living <no-reply@yourdomain.com>"
 # Update with your actual deployment URLs
 ALLOWED_ORIGINS = "https://your-web-deployment.pages.dev,https://your-admin-deployment.pages.dev,https://yourdomain.com,https://admin.yourdomain.com"
 
@@ -101,6 +103,7 @@ API_BASE_URL = "http://localhost:8787"
 WEB_BASE_URL = "http://localhost:4321"
 ADMIN_BASE_URL = "http://localhost:5173"
 R2_PUBLIC_URL = "http://localhost:8787/media"
+RESEND_FROM_EMAIL = "Black Living <no-reply@localhost>"
 ALLOWED_ORIGINS = "http://localhost:4321,http://localhost:5173,http://localhost:8787"
 
 [env.staging.vars]
@@ -109,6 +112,7 @@ API_BASE_URL = "https://your-api-staging.your-subdomain.workers.dev"
 WEB_BASE_URL = "https://staging.your-web.pages.dev"
 ADMIN_BASE_URL = "https://staging.your-admin.pages.dev"
 R2_PUBLIC_URL = "https://pub-bdf23ffacc974ac28ddec02806cf30cb.r2.dev"
+RESEND_FROM_EMAIL = "Black Living <no-reply@staging.yourdomain.com>"
 ALLOWED_ORIGINS = "https://staging.your-web.pages.dev,https://staging.your-admin.pages.dev,https://your-api-staging.your-subdomain.workers.dev"
 
 
@@ -118,7 +122,10 @@ ALLOWED_ORIGINS = "https://staging.your-web.pages.dev,https://staging.your-admin
 # - BETTER_AUTH_SECRET (generate with: openssl rand -base64 32)
 # - GOOGLE_CLIENT_ID (from Google Cloud Console OAuth 2.0 credentials)
 # - GOOGLE_CLIENT_SECRET (from Google Cloud Console OAuth 2.0 credentials)
-# - JWT_SECRET (optional, for additional JWT operations - generate with: openssl rand -base64 32)
+# - JWT_SECRET (generate with: openssl rand -base64 32)
+# - TURNSTILE_SECRET_KEY (from Cloudflare Turnstile dashboard)
+# - RESEND_API_KEY (from Resend dashboard)
+# - RESEND_FROM_EMAIL (verified sender address in Resend)
 
 # To set secrets:
 # wrangler secret put BETTER_AUTH_SECRET --env production

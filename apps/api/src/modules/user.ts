@@ -125,60 +125,18 @@ user.post('/check-email', zValidator('json', checkEmailSchema), async c => {
   }
 });
 
-// POST /api/user/create-account - Create new account
+// POST /api/user/create-account - Legacy endpoint retained for compatibility
 user.post('/create-account', zValidator('json', createAccountSchema), async c => {
-  try {
-    const { email, name, phone, appointmentId } = c.req.valid('json');
-    const auth = c.get('auth');
+  const { email } = c.req.valid('json');
 
-    // Generate temporary password for account creation
-    const tempPassword = Math.random().toString(36).slice(-12);
-
-    // Create user account via Better Auth
-    const newUser = await auth.api.signUp({
-      email: email,
-      password: tempPassword,
-      name: name,
-      phone: phone,
-      role: 'customer',
-    });
-
-    // If appointment ID is provided, link the account to the appointment
-    if (appointmentId) {
-      await c.env.DB.prepare(
-        `
-          UPDATE appointments 
-          SET customer_id = ?, updated_at = ?
-          WHERE id = ?
-        `
-      )
-        .bind(newUser.user.id, Date.now(), appointmentId)
-        .run();
-    }
-
-    // TODO: Send welcome email with password reset link
-    // await sendWelcomeEmail(email, name);
-
-    return c.json(
-      {
-        success: true,
-        data: {
-          userId: newUser.user.id,
-          message: '帳戶建立成功！我們會發送密碼設定信件到您的信箱。',
-        },
-      },
-      201
-    );
-  } catch (error) {
-    console.error('Error creating account:', error);
-    return c.json(
-      {
-        error: 'Failed to create account',
-        message: '帳戶建立失敗，請稍後再試',
-      },
-      500
-    );
-  }
+  return c.json(
+    {
+      success: false,
+      error: '此端點已淘汰，請使用新的 Magic Link 登入流程',
+      message: `我們已更新預約流程，請使用 /api/auth/initiate 取得登入連結：${email}`,
+    },
+    410
+  );
 });
 
 export default user;

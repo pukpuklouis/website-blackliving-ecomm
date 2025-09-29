@@ -9,6 +9,7 @@ export const users = sqliteTable('users', {
   name: text('name'),
   email: text('email').notNull().unique(),
   emailVerified: integer('email_verified', { mode: 'boolean' }).default(false),
+  emailVerifiedAt: integer('email_verified_at', { mode: 'timestamp' }),
   image: text('image'),
   createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
@@ -16,6 +17,21 @@ export const users = sqliteTable('users', {
   phone: text('phone'),
   role: text('role').default('customer'), // customer, admin
   preferences: text('preferences', { mode: 'json' }).default('{}'),
+});
+
+export const authTokens = sqliteTable('auth_tokens', {
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => createId()),
+  userId: text('user_id').references(() => users.id, { onDelete: 'cascade' }),
+  email: text('email').notNull(),
+  tokenHash: text('token_hash').notNull(),
+  type: text('type').notNull(),
+  context: text('context', { mode: 'json' }).default('{}'),
+  expiresAt: integer('expires_at', { mode: 'timestamp' }).notNull(),
+  usedAt: integer('used_at', { mode: 'timestamp' }),
+  createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
 });
 
 // Better Auth session table - follows Better Auth's recommended schema
@@ -137,6 +153,21 @@ export const appointments = sqliteTable('appointments', {
   completedAt: integer('completed_at', { mode: 'timestamp' }), // 完成時間
   followUpRequired: integer('follow_up_required', { mode: 'boolean' }).default(false), // 是否需要後續追蹤
   followUpNotes: text('follow_up_notes').default(''), // 後續追蹤備註
+  createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
+});
+
+export const reservations = sqliteTable('reservations', {
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => createId()),
+  userId: text('user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  reservationData: text('reservation_data', { mode: 'json' }).notNull(),
+  status: text('status').default('pending'),
+  verificationPending: integer('verification_pending', { mode: 'boolean' }).default(true),
+  appointmentId: text('appointment_id').references(() => appointments.id, { onDelete: 'set null' }),
   createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
 });
