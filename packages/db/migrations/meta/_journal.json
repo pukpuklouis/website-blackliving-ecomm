@@ -29,6 +29,13 @@
       "when": 1758547855000,
       "tag": "0003_cmdk_search_indexes",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1759134733998,
+      "tag": "0004_magic_link_reservations",
+      "breakpoints": true
     }
   ]
 }

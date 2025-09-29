@@ -1,15 +1,15 @@
-import React from 'react';
-import { useAppointmentStore } from '../../stores/appointmentStore';
+import { useEffect, useState } from 'react';
 import { Button } from '@blackliving/ui';
-import AccountCheckStep from './steps/AccountCheckStep';
+import { useAppointmentStore } from '../../stores/appointmentStore';
+import { useAuthStore } from '../../stores/authStore';
 import StoreSelectionStep from './steps/StoreSelectionStep';
 import ProductSelectionStep from './steps/ProductSelectionStep';
 import PersonalInfoStep from './steps/PersonalInfoStep';
 import DateTimeStep from './steps/DateTimeStep';
 import ReviewStep from './steps/ReviewStep';
+import MagicLinkModal from '../auth/MagicLinkModal';
 
 const steps = [
-  { id: 'account', title: '帳戶檢查', component: AccountCheckStep },
   { id: 'store', title: '選擇門市', component: StoreSelectionStep },
   { id: 'product', title: '選擇產品', component: ProductSelectionStep },
   { id: 'personal', title: '個人資訊', component: PersonalInfoStep },
@@ -19,47 +19,99 @@ const steps = [
 
 export default function MultiStepAppointmentForm() {
   const { currentStep, nextStep, prevStep } = useAppointmentStore();
+  const { accessToken, accessTokenExpiresAt, ensureFreshAccessToken } = useAuthStore();
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [checkingSession, setCheckingSession] = useState(true);
 
   const CurrentStepComponent = steps[currentStep]?.component;
+
+  useEffect(() => {
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const token = await ensureFreshAccessToken();
+        if (cancelled) return;
+        if (!token) {
+          setAuthModalOpen(true);
+        }
+      } finally {
+        if (!cancelled) {
+          setCheckingSession(false);
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [ensureFreshAccessToken]);
+
+  useEffect(() => {
+    if (checkingSession) return;
+    const hasValidToken = accessToken && accessTokenExpiresAt && accessTokenExpiresAt > Date.now();
+    setAuthModalOpen(!hasValidToken);
+  }, [accessToken, accessTokenExpiresAt, checkingSession]);
+
+  useEffect(() => {
+    const handler = () => setAuthModalOpen(true);
+    window.addEventListener('reservation-auth-required', handler);
+    return () => window.removeEventListener('reservation-auth-required', handler);
+  }, []);
+
+  const handleCloseModal = () => {
+    const hasValidToken = accessToken && accessTokenExpiresAt && accessTokenExpiresAt > Date.now();
+    if (!hasValidToken) {
+      setAuthModalOpen(true);
+    } else {
+      setAuthModalOpen(false);
+    }
+  };
 
   if (!CurrentStepComponent) {
     return <div>步驟不存在</div>;
   }
 
   return (
-    <div className="max-w-2xl mx-auto">
+    <div className="relative mx-auto max-w-2xl">
+      <MagicLinkModal open={authModalOpen} onClose={handleCloseModal} onAuthenticated={() => setAuthModalOpen(false)} />
+
+      {authModalOpen && (
+        <div className="pointer-events-none absolute inset-0 z-40 rounded-2xl bg-white/60 backdrop-blur-sm" aria-hidden />
+      )}
+
       {/* Progress indicator */}
       <div className="mb-8">
-        <div className="flex items-center justify-between text-sm text-gray-500 mb-2">
+        <div className="mb-2 flex items-center justify-between text-sm text-gray-500">
           <span>
             步驟 {currentStep + 1} / {steps.length}
           </span>
           <span>{steps[currentStep]?.title}</span>
         </div>
 
-        <div className="w-full bg-gray-200 rounded-full h-2">
+        <div className="h-2 w-full rounded-full bg-gray-200">
           <div
-            className="bg-black h-2 rounded-full transition-all duration-300"
+            className="h-2 rounded-full bg-black transition-all duration-300"
             style={{ width: `${((currentStep + 1) / steps.length) * 100}%` }}
           />
         </div>
       </div>
 
       {/* Current step content */}
-      <div className="bg-white rounded-lg shadow-lg p-8 min-h-[500px]">
+      <div className="relative min-h-[500px] rounded-lg bg-white p-8 shadow-lg">
         <CurrentStepComponent />
       </div>
 
       {/* Navigation buttons */}
-      <div className="flex justify-between mt-6">
-        <Button variant="outline" onClick={prevStep} disabled={currentStep === 0} className="px-6">
+      <div className="mt-6 flex justify-between">
+        <Button variant="outline" onClick={prevStep} disabled={currentStep === 0 || authModalOpen} className="px-6">
           上一步
         </Button>
 
-        <div className="text-sm text-gray-500 self-center">按 Enter 繼續</div>
+        <div className="self-center text-sm text-gray-500">按 Enter 繼續</div>
 
         {currentStep < steps.length - 1 && (
-          <Button onClick={nextStep} className="px-6">
+          <Button onClick={nextStep} disabled={authModalOpen} className="px-6">
             下一步
           </Button>
         )}

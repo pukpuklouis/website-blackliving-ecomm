@@ -185,6 +185,14 @@ wrangler secret put BETTER_AUTH_SECRET --env staging
 
 **設定密鑰範例:**
 
+### Magic Link 驗證相關環境變數
+
+新的預約驗證流程需要額外設定以下變數：
+
+- `TURNSTILE_SECRET_KEY`、`PUBLIC_TURNSTILE_SITE_KEY`：分別供 API 與前端執行 Cloudflare Turnstile 驗證。
+- `RESEND_API_KEY`、`RESEND_FROM_EMAIL`：用於透過 Resend 寄送一次性 Magic Link。寄件位址必須先完成 Resend 驗證。
+- `JWT_SECRET`：重新簽發 Access/Refresh Token 時使用，請確保與 Cloudflare Workers 端設定一致。
+
 ```bash
 # 設定 Production 環境的 Google Client ID
 wrangler secret put GOOGLE_CLIENT_ID --env production
