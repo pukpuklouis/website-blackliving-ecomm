@@ -1,27 +1,31 @@
 {
   "stores": [
     {
-      "name": "黑哥家居 中和展間",
+      "name": "Black Living 中和館",
       "address": "新北市中和區景平路398號2樓",
       "phone": "02-2321-5678",
+      "opening": "星期一至星期日 10:00 - 19:00(採預約制)",
       "embedUrl": "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d24326.7122209988!2d121.4825323534128!3d24.99376493338753!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x346803f876536c15%3A0x29f48a27e8d870b1!2zQkxBQ0sgTElWSU5HIOm7keWTpeWxheWuti_pu5HmqJnnjovpoILntJrluK3lpKLmgJ3pu5HmqJnlsIjos6Mt5paw5YyX5Lit5ZKMIOmgkOe0hOWIti3mlrDljJfkuK3lkoznvo7lnIvluK3lpKLmgJ3pu5HmqJnluorlooog5a-i5YW3L-mbu-WLleW6ii_luormnrYv5pm66IO95bqK5aKKIOW4reWkouaAnem7keaomeS7o-izvC_lsIjos6Plupcg6LK755So5YO55qC85YO56Yyi6KmV5YO55o6o6JamIFBUVCBEY2FyZA!5e0!3m2!1sen!2stw!4v1758868282580!5m2!1sen!2stw",
       "mapHeight": "h-[32rem]",
       "infoBoxPosition": "center-left",
       "responsivePosition": "bottom",
       "bgColor": "bg-[var(--primary)]",
       "textColor": "text-black",
+      "borderColor": "border-black",
       "textAlign": "center"
     },
     {
-      "name": "黑哥家居 中壢展間",
+      "name": "Black Living 桃園館",
       "address": "桃園市中壢區義民路91號",
       "phone": "03-571-9988",
+      "opening": "星期一至星期日 10:00 - 19:00(採預約制)",
       "embedUrl": "https://www.google.com/maps/embed?pb=!1m14!1m8!1m3!1d57880.56052650376!2d121.19703!3d24.947905!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3468230c1a65a087%3A0x13b6491a6d68545a!2zQkxBQ0sgTElWSU5HIOm7keWTpeWxheWuti_pu5HmqJnnjovpoILntJrluK3lpKLmgJ3pu5HmqJnlsIjos6Mt5Lit5aOi5bqXIOmgkOe0hOWIti3moYPlnJLkuK3lo6Lnvo7lnIvluK3lpKLmgJ3pu5HmqJnluorlooog5bqK5aKKL-eNqOeri-etki_lr6Llhbcv5p6V6aCtL-iomOaGtuaelSDlhajlj7DmnIDkvr_lrpwv57ay6Lev5Y-j56KRL-S7o-izvC_lsIjos6Mg5YO55qC85o6o6Jam6KmV5YO5IFBUVCBEY2FyZA!5e0!3m2!1sen!2stw!4v1758868453049!5m2!1sen!2stw",
       "mapHeight": "h-[32rem]",
       "infoBoxPosition": "center-left",
       "responsivePosition": "bottom",
       "bgColor": "bg-black",
       "textColor": "text-[var(--primary)]",
+      "borderColor": "border-[var(--primary)]",
       "textAlign": "center"
     }
   ]

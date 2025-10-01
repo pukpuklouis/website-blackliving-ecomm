@@ -51,7 +51,7 @@ const stores = storeData?.data.stores || [];
     category="simmons-black"
     ctaText="查看完整產品系列"
     ctaHref="/simmons-black"
-    limit={3}
+    limit={4}
     class="!bg-primary/25"
   />
   <!-- Feature Product Banner -->
@@ -73,7 +73,7 @@ const stores = storeData?.data.stores || [];
     category="accessories"
     ctaText="查看更多配件"
     ctaHref="/accessories"
-    limit={3}
+    limit={4}
     class="!bg-primary/25"
   />
 
@@ -117,30 +117,6 @@ const stores = storeData?.data.stores || [];
     </div>
   </section>
 
-  <!-- Store Locations -->
-<section class='w-screen mx-auto bg-gray-50 '>
-    <div class=' flex flex-col items-center'>
-      <h2 class='text-3xl font-bold text-center mb-12'>我們的門市位置</h2>
-      {stores.map((store) => (
-        <div class='w-screen h-fit'>
-          <StoreMaps
-            embedUrl={store.embedUrl}
-            infoBox={{
-              name: store.name,
-              address: store.address,
-              phone: store.phone
-            }}
-            infoBoxPosition={store.infoBoxPosition}
-            mapHeight={store.mapHeight}
-            responsivePosition={store.responsivePosition}
-            bgColor={store.bgColor}
-            textColor={store.textColor}
-            textAlign={store.textAlign}
-          />
-        </div>
-      ))}
-    </div>
-  </section>
   <!-- CTA Section -->
   <CTA
     title="準備好體驗頂級睡眠了嗎？"
@@ -156,4 +132,30 @@ const stores = storeData?.data.stores || [];
     gradientOpacity={1}
     className="mt-0"
   />
+  <!-- Store Locations -->
+<section class='w-screen mx-auto bg-gray-50 '>
+    <div class=' flex flex-col items-center'>
+      <h2 class='text-3xl font-bold text-center mb-12'>我們的門市位置</h2>
+      {stores.map((store) => (
+        <div class='w-screen h-fit'>
+          <StoreMaps
+            embedUrl={store.embedUrl}
+            infoBox={{
+              name: store.name,
+              address: store.address,
+              phone: store.phone,
+              opening: store.opening,
+            }}
+            infoBoxPosition={store.infoBoxPosition}
+            mapHeight={store.mapHeight}
+            responsivePosition={store.responsivePosition}
+            bgColor={store.bgColor}
+            textColor={store.textColor}
+            textAlign={store.textAlign}
+            borderColor={store.borderColor}
+          />
+        </div>
+      ))}
+    </div>
+  </section>
 </BaseLayout>

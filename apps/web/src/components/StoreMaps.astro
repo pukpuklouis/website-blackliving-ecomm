@@ -5,11 +5,12 @@ interface Props {
   infoBox: {
     name: string;
     address: string;
-    hours?: string;
     phone?: string;
+    opening?: string;
   };
   bgColor?: string;
   textColor?: string;
+  borderColor?: string;
   textAlign?: 'left' | 'center' | 'right';
   infoBoxPosition?:
     | 'top-left'
@@ -27,6 +28,7 @@ const {
   mapHeight = 'h-[32rem]',
   bgColor = 'bg-white/90',
   textColor = 'text-slate-800',
+  borderColor = 'border-slate-200',
   textAlign = 'left',
   infoBoxPosition = 'top-left',
   responsivePosition = 'bottom',
@@ -76,8 +78,13 @@ const positionClasses = `${mobileClasses} ${desktopClasses}`;
     ></iframe>
     <div class={`absolute p-4 md:p-12 rounded-lg shadow-lg max-w-sm z-10 ${bgColor} ${textColor} ${alignClass} ${positionClasses}`}>
         <h3 class="font-bold text-lg mb-2">{infoBox.name}</h3>
-        <p class="mb-1"><strong>地址:</strong> {infoBox.address}</p>
-        {infoBox.hours && <p class="mb-1"><strong>營業時間:</strong> {infoBox.hours}</p>}
-        {infoBox.phone && <p class="mb-1"><strong>電話:</strong> {infoBox.phone}</p>}
+        <p class="mb-1"><strong>地址Address:</strong><br/>{infoBox.address}</p>
+        {infoBox.opening && <p class="mb-1"><strong>營業時間OpeningTime:</strong><br/> {infoBox.opening}</p>}
+        <button
+            class={`mt-4 px-4 py-2  rounded-lg border-1 ${borderColor} ${bgColor} ${textColor} ${alignClass} transition-colors w-full md:w-auto`}
+            onclick={`window.open('https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(infoBox.address)}', '_blank')`}
+        >
+            查看地圖
+        </button>
     </div>
 </div>

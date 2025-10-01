@@ -102,6 +102,7 @@ const storeinfo = defineCollection({
         name: z.string(),
         address: z.string(),
         phone: z.string(),
+        opening: z.string(),
         embedUrl: z.string(),
         infoBoxPosition: z.enum([
           'top-left',
@@ -115,6 +116,7 @@ const storeinfo = defineCollection({
         responsivePosition: z.enum(['top', 'bottom']),
         bgColor: z.string(),
         textColor: z.string(),
+        borderColor: z.string(),
         textAlign: z.enum(['left', 'center', 'right']),
       })
     ),
