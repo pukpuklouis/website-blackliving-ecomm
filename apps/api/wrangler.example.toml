@@ -1,123 +1,124 @@
-# Example Cloudflare Workers configuration
-# Copy this file to wrangler.toml and update with your actual values
+# Cloudflare Workers configuration for Black Living API
+#
+# SECURITY: This is a TEMPLATE file. Copy to wrangler.toml and replace placeholder values.
+# NEVER commit wrangler.toml - it contains sensitive resource IDs!
+#
+# Setup Instructions:
+# 1. Copy this file: cp wrangler.example.toml wrangler.toml
+# 2. Replace all placeholder values (YOUR_*, <YOUR_*>) with your actual resource IDs
+# 3. Set secrets: wrangler secret put BETTER_AUTH_SECRET --env staging
+# 4. Verify .gitignore contains: **/wrangler.toml
 
-# Single source of truth for database migrations and remote sync
-# Production and staging share remote database, development uses local
-# All migrations controlled from packages/db/
-
-name = "your-api-name"
+name = "blackliving-api"
 main = "src/index.ts"
 compatibility_date = "2024-09-23"
 compatibility_flags = ["nodejs_compat"]
 
-[env.development]
-name = "your-api-name-dev"
-
 [env.staging]
-name = "your-api-name-staging"
+name = "blackliving-api-staging"
 
 [env.production]
-name = "your-api-name"
+name = "blackliving-api"
 
-# Production database (remote) - single source of truth
+# ==========================================
+# D1 DATABASE CONFIGURATION
+# ==========================================
+# Get database_id from: wrangler d1 list
+# Or create new: wrangler d1 create blackliving-db
+
+# Production database
 [[env.production.d1_databases]]
 binding = "DB"
-database_name = "your-db-name"
-database_id = "your-production-database-id"
+database_name = "blackliving-db"
+database_id = "YOUR_PRODUCTION_D1_DATABASE_ID"  # REPLACE THIS
 migrations_dir = "../../packages/db/migrations"
 
-# Staging uses same remote database as production
+# Staging database (can share with production or use separate)
 [[env.staging.d1_databases]]
 binding = "DB"
-database_name = "your-db-name"
-database_id = "your-staging-database-id"
+database_name = "blackliving-db-staging"  # Or use same as production
+database_id = "YOUR_STAGING_D1_DATABASE_ID"  # REPLACE THIS
 migrations_dir = "../../packages/db/migrations"
 
-# Development uses local database only
-[[env.development.d1_databases]]
-binding = "DB"
-database_name = "your-db-name"
-database_id = "local-dev-db-id"
-migrations_dir = "../../packages/db/migrations"
-
-# Default configurations (production)
+# Default configuration (production)
 [[d1_databases]]
 binding = "DB"
-database_name = "your-db-name"
-database_id = "your-production-database-id"
+database_name = "blackliving-db"
+database_id = "YOUR_PRODUCTION_D1_DATABASE_ID"  # REPLACE THIS
 migrations_dir = "../../packages/db/migrations"
 
+# ==========================================
+# R2 BUCKET CONFIGURATION
+# ==========================================
+# Get bucket info from: wrangler r2 bucket list
+# Or create new: wrangler r2 bucket create blackliving-images
+
+# Production R2 bucket
 [[env.production.r2_buckets]]
 binding = "R2"
-bucket_name = "your-images-bucket-prod"
+bucket_name = "YOUR_PRODUCTION_R2_BUCKET"  # REPLACE THIS
 
-# Cloudflare R2 Storage
-[[r2_buckets]]
-binding = "R2"
-bucket_name = "your-images-bucket-prod"
-
-[[env.development.r2_buckets]]
-binding = "R2"
-bucket_name = "your-images-bucket-dev"
-preview_bucket_name = "your-images-bucket-dev"
-
+# Staging R2 bucket
 [[env.staging.r2_buckets]]
 binding = "R2"
-bucket_name = "your-images-bucket-staging"
+bucket_name = "YOUR_STAGING_R2_BUCKET"  # REPLACE THIS (can share with production)
 
-# Cloudflare KV Storage
-[[kv_namespaces]]
-binding = "CACHE"
-id = "your-production-kv-id"
+# Default R2 bucket (production)
+[[r2_buckets]]
+binding = "R2"
+bucket_name = "YOUR_PRODUCTION_R2_BUCKET"  # REPLACE THIS
 
-[[env.development.kv_namespaces]]
-binding = "CACHE"
-id = "local-dev-kv-id"
-preview_id = "local-dev-preview-kv-id"
+# ==========================================
+# KV NAMESPACE CONFIGURATION
+# ==========================================
+# Get namespace ID from: wrangler kv:namespace list
+# Or create new: wrangler kv:namespace create CACHE
 
-[[env.staging.kv_namespaces]]
-binding = "CACHE"
-id = "your-staging-kv-id"
-preview_id = "your-staging-kv-id"
-
+# Production KV namespace
 [[env.production.kv_namespaces]]
 binding = "CACHE"
-id = "your-production-kv-id"
-preview_id = "your-production-kv-id"
+id = "YOUR_PRODUCTION_KV_NAMESPACE_ID"  # REPLACE THIS
 
-# Environment Variables (defaults to production)
+# Staging KV namespace
+[[env.staging.kv_namespaces]]
+binding = "CACHE"
+id = "YOUR_STAGING_KV_NAMESPACE_ID"  # REPLACE THIS (can share with production)
+
+# Default KV namespace (production)
+[[kv_namespaces]]
+binding = "CACHE"
+id = "YOUR_PRODUCTION_KV_NAMESPACE_ID"  # REPLACE THIS
+
+# ==========================================
+# ENVIRONMENT VARIABLES
+# ==========================================
+
+# Production
 [vars]
 NODE_ENV = "production"
-API_BASE_URL = "https://your-api.your-subdomain.workers.dev"
-WEB_BASE_URL = "https://your-web.pages.dev"
-ADMIN_BASE_URL = "https://your-admin.pages.dev"
-R2_PUBLIC_URL = "https://images.blackliving.com/media"
-# Email sending configuration
-RESEND_FROM_EMAIL = "Black Living <no-reply@yourdomain.com>"
-# Update with your actual deployment URLs
-ALLOWED_ORIGINS = "https://your-web-deployment.pages.dev,https://your-admin-deployment.pages.dev,https://yourdomain.com,https://admin.yourdomain.com"
+API_BASE_URL = "https://<YOUR_WORKER_NAME>.workers.dev"  # REPLACE THIS
+WEB_BASE_URL = "https://<YOUR_SITE>.pages.dev"  # REPLACE THIS
+ADMIN_BASE_URL = "https://<YOUR_ADMIN_WORKER>.workers.dev"  # REPLACE THIS
+R2_PUBLIC_URL = "https://<YOUR_WORKER_NAME>.workers.dev/media"  # REPLACE THIS
+RESEND_FROM_EMAIL = "Black Living <noreply@your-domain.com>"  # REPLACE THIS
+ALLOWED_ORIGINS = "https://<YOUR_SITE>.pages.dev,https://<YOUR_ADMIN>.workers.dev"  # REPLACE THIS
 
-[env.development.vars]
-NODE_ENV = "development"
-API_BASE_URL = "http://localhost:8787"
-WEB_BASE_URL = "http://localhost:4321"
-ADMIN_BASE_URL = "http://localhost:5173"
-R2_PUBLIC_URL = "http://localhost:8787/media"
-RESEND_FROM_EMAIL = "Black Living <no-reply@localhost>"
-ALLOWED_ORIGINS = "http://localhost:4321,http://localhost:5173,http://localhost:8787"
-
+# Staging
 [env.staging.vars]
 NODE_ENV = "staging"
-API_BASE_URL = "https://your-api-staging.your-subdomain.workers.dev"
-WEB_BASE_URL = "https://staging.your-web.pages.dev"
-ADMIN_BASE_URL = "https://staging.your-admin.pages.dev"
-R2_PUBLIC_URL = "https://pub-bdf23ffacc974ac28ddec02806cf30cb.r2.dev"
-RESEND_FROM_EMAIL = "Black Living <no-reply@staging.yourdomain.com>"
-ALLOWED_ORIGINS = "https://staging.your-web.pages.dev,https://staging.your-admin.pages.dev,https://your-api-staging.your-subdomain.workers.dev"
+API_BASE_URL = "https://<YOUR_WORKER_NAME>-staging.workers.dev"  # REPLACE THIS
+WEB_BASE_URL = "https://staging.<YOUR_SITE>.pages.dev"  # REPLACE THIS
+ADMIN_BASE_URL = "https://<YOUR_ADMIN_WORKER>-staging.workers.dev"  # REPLACE THIS
+R2_PUBLIC_URL = "https://<YOUR_WORKER_NAME>-staging.workers.dev/media"  # REPLACE THIS
+RESEND_FROM_EMAIL = "Black Living <noreply@your-domain.com>"  # REPLACE THIS
+ALLOWED_ORIGINS = "https://staging.<YOUR_SITE>.pages.dev,http://localhost:4321,http://localhost:5173"
 
+# ==========================================
+# SECRETS CONFIGURATION
+# ==========================================
+# Secrets are NEVER stored in this file!
+# Set them using: wrangler secret put <SECRET_NAME> --env <ENVIRONMENT>
 
-
-# Secrets (set via wrangler secret put <SECRET_NAME> <VALUE> --env <ENVIRONMENT>)
 # Required secrets for all environments:
 # - BETTER_AUTH_SECRET (generate with: openssl rand -base64 32)
 # - GOOGLE_CLIENT_ID (from Google Cloud Console OAuth 2.0 credentials)
@@ -125,14 +126,24 @@ ALLOWED_ORIGINS = "https://staging.your-web.pages.dev,https://staging.your-admin
 # - JWT_SECRET (generate with: openssl rand -base64 32)
 # - TURNSTILE_SECRET_KEY (from Cloudflare Turnstile dashboard)
 # - RESEND_API_KEY (from Resend dashboard)
-# - RESEND_FROM_EMAIL (verified sender address in Resend)
 
-# To set secrets:
-# wrangler secret put BETTER_AUTH_SECRET --env production
-# wrangler secret put GOOGLE_CLIENT_ID --env production  
-# wrangler secret put GOOGLE_CLIENT_SECRET --env production
+# Commands to set secrets:
+# wrangler secret put BETTER_AUTH_SECRET --env staging
+# wrangler secret put GOOGLE_CLIENT_ID --env staging
+# wrangler secret put GOOGLE_CLIENT_SECRET --env staging
+# wrangler secret put JWT_SECRET --env staging
+# wrangler secret put TURNSTILE_SECRET_KEY --env staging
+# wrangler secret put RESEND_API_KEY --env staging
 
-# For development, you can also use .dev.vars file:
+# For production, repeat with --env production
+
+# ==========================================
+# LOCAL DEVELOPMENT (.dev.vars file)
+# ==========================================
+# For local development, create a .dev.vars file in this directory with:
 # BETTER_AUTH_SECRET=your-dev-secret
 # GOOGLE_CLIENT_ID=your-google-client-id
 # GOOGLE_CLIENT_SECRET=your-google-client-secret
+# JWT_SECRET=your-dev-jwt-secret
+# TURNSTILE_SECRET_KEY=your-dev-turnstile-key
+# RESEND_API_KEY=your-dev-resend-key
