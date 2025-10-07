@@ -91,11 +91,11 @@ jobs:
       - name: Install dependencies
         run: pnpm install
         
-      - name: Build Web App
-        working-directory: apps/web
-        run: pnpm build
-        env:
-          NODE_ENV: ${{ github.ref == 'refs/heads/main' && 'production' || 'staging' }}
+       - name: Build Web App
+         working-directory: apps/web
+         run: ${{ github.ref == 'refs/heads/main' && 'pnpm build' || 'pnpm build:staging' }}
+         env:
+           NODE_ENV: ${{ github.ref == 'refs/heads/main' && 'production' || 'staging' }}
         
       - name: Deploy Web (Production)
         if: github.ref == 'refs/heads/main'
