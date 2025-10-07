@@ -49,13 +49,36 @@ const ProductDetail: FC<ProductDetailProps> = ({ product, categoryConfig, classN
   };
 
   // Convert product variants to ProductVariantSelector format
-  const convertedVariants = product.variants.map(variant => ({
-    size: variant.size || 'standard',
-    firmness: variant.firmness || 'medium',
-    price: variant.price,
-    stock: variant.stock || 0,
-    sku: variant.sku || variant.id,
-  }));
+  const convertedVariants = product.variants.map(variant => {
+    // Extract firmness from name field (e.g., "Extra Firm(最硬)" -> "extra-firm")
+    let firmness = 'medium';
+    if (variant.name && typeof variant.name === 'string') {
+      const nameLower = variant.name.toLowerCase();
+      if (nameLower.includes('extra firm')) firmness = 'extra-firm';
+      else if (nameLower.includes('firm')) firmness = 'firm';
+      else if (nameLower.includes('plush')) firmness = 'plush';
+      else if (nameLower.includes('medium')) firmness = 'medium';
+    }
+
+    // Extract size from size field (e.g., "Queen(150x200)" -> "queen")
+    let size = 'standard';
+    if (variant.size && typeof variant.size === 'string') {
+      const sizeLower = variant.size.toLowerCase();
+      if (sizeLower.includes('twin')) size = 'twin';
+      else if (sizeLower.includes('full')) size = 'full';
+      else if (sizeLower.includes('queen')) size = 'queen';
+      else if (sizeLower.includes('king')) size = 'king';
+      else if (sizeLower.includes('cal')) size = 'cal-king';
+    }
+
+    return {
+      size,
+      firmness,
+      price: variant.price || 0,
+      stock: variant.stock || 10, // Default to 10 since API doesn't provide stock
+      sku: variant.sku || variant.id || `${firmness}-${size}`,
+    };
+  });
 
   // Handle add to cart from ProductVariantSelector
   const handleAddToCart = async (variantData: any) => {
