@@ -210,7 +210,7 @@ class ProfileAPITests {
 
     // Get profile twice to test caching
     const response1 = await this.makeRequest('');
-    await new Promise(resolve => setTimeout(resolve, 100)); // Small delay
+    await new Promise((resolve) => setTimeout(resolve, 100)); // Small delay
     const response2 = await this.makeRequest('');
 
     if (response1.ok && response2.ok) {

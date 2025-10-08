@@ -29,11 +29,11 @@ Visit http://localhost:5173 → Click "Sign in with Google"
 
 ## Environment Overview
 
-| Environment | Database | OAuth App | Secrets |
-|------------|----------|-----------|---------|
-| **Development** (Local) | `blackliving-db-dev` ✅ | Localhost OAuth (manual setup needed) | `.dev.vars` |
-| **Staging** (Remote) | `blackliving-db` | Production OAuth | Cloudflare Dashboard |
-| **Production** (Remote) | `blackliving-db` | Production OAuth | Cloudflare Dashboard |
+| Environment             | Database                | OAuth App                             | Secrets              |
+| ----------------------- | ----------------------- | ------------------------------------- | -------------------- |
+| **Development** (Local) | `blackliving-db-dev` ✅ | Localhost OAuth (manual setup needed) | `.dev.vars`          |
+| **Staging** (Remote)    | `blackliving-db`        | Production OAuth                      | Cloudflare Dashboard |
+| **Production** (Remote) | `blackliving-db`        | Production OAuth                      | Cloudflare Dashboard |
 
 ---
 
@@ -70,12 +70,15 @@ cd apps/api && pnpm deploy
 ## Common Issues
 
 ### Login redirects to staging
+
 → Restart API server to pick up .dev.vars changes
 
 ### OAuth redirect mismatch
+
 → Check Google Console has `http://localhost:8787/api/auth/callback/google`
 
 ### Table not found
+
 → Apply migrations: `wrangler d1 migrations apply blackliving-db-dev --env development --remote`
 
 ---
