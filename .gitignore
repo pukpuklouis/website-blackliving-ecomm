@@ -91,6 +91,7 @@ dev-debug.log
 
 # research
 research/*/*
+research/** */
 
 # claude  command
 .claude/*/*    

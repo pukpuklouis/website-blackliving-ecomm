@@ -204,29 +204,35 @@ wrangler secret put GOOGLE_CLIENT_ID --env production
 - Categories are cached in Cloudflare KV to avoid excessive DB queries. Cache is only invalidated when categories change.
 
 API Endpoints
+
 - `GET /api/posts/categories` — Returns active post categories. Cached with KV for 24h. Tag: `post-categories`.
 - `GET /api/posts/categories/:slug` — Returns a single category plus `postsCount`. Cached for 24h. Tag: `post-categories`.
 - `POST /api/posts/categories/cache/invalidate` — Admin-only. Invalidates all category caches (use after add/edit/delete category).
 
 Caching Details
+
 - KV keys: `blog:categories:active`, `blog:category:{slug}`.
 - TTL: 86400 seconds (24h).
 - Invalidation: tag-based via `post-categories`.
 
 Admin UI Behavior
+
 - File: `apps/admin/app/components/BlogComposer.tsx`
 - Loads categories from `PUBLIC_API_URL + /api/posts/categories` on mount.
 - Form stores `categoryId` and also syncs `category` (name) for compatibility.
 - On create, defaults to the first active category.
 
 Database Schema
+
 - Table: `post_categories` (see `packages/db/schema.ts`).
 - Seed sample categories in `apps/api/scripts/seed-database.ts` (function `seedPostCategories`).
 
 Environment
+
 - Admin app uses `PUBLIC_API_URL` to reach the API (see `apps/admin/package.json` dev script setting).
 
 Operational Notes
+
 - When you add or modify categories, call the invalidation endpoint to refresh cache:
   - Example:
     ```bash
@@ -236,6 +242,7 @@ Operational Notes
 - Consider wiring category CRUD (when implemented) to call this invalidation endpoint automatically upon mutations.
 
 Verification Checklist
+
 - Start API and Admin apps.
 - Ensure categories appear in the Blog Composer category dropdown.
 - Update or add a category in DB; call the invalidate endpoint; refresh the Admin page and confirm the list updates.

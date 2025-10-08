@@ -114,6 +114,7 @@ Agents integrate seamlessly with the PM command system:
 - Results → Consolidated back to main thread
 
 This creates a hierarchy that maximizes parallelism while preserving context at every level.
+
 # CLAUDE.md
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.

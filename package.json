@@ -3,7 +3,10 @@
   "version": "1.0.0",
   "description": "Black Living 黑哥家居 - Premium Simmons mattress e-commerce platform",
   "private": true,
-  "workspaces": ["apps/*", "packages/*"],
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev",
