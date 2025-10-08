@@ -1,0 +1,38 @@
+---
+import { Image } from 'astro:assets';
+
+interface Props {
+  src: string;
+  alt: string;
+  aspectRatio?: string;
+  className?: string;
+  focalPoint?: { x: string; y: string }; // e.g., { x: '50%', y: '50%' }
+  objectFit?: 'cover' | 'contain' | 'fill' | 'none' | 'scale-down';
+}
+
+const {
+  src,
+  alt,
+  aspectRatio = '16/9',
+  className = '',
+  focalPoint,
+  objectFit = 'cover'
+} = Astro.props;
+
+const objectPosition = focalPoint
+  ? `${focalPoint.x} ${focalPoint.y}`
+  : '50% 50%';
+---
+
+<div class={`relative w-full overflow-hidden ${className}`} style={`aspect-ratio: ${aspectRatio}`}>
+  <Image
+    src={src}
+    alt={alt}
+    width={1920}
+    height={1080}
+    class='w-full h-full'
+    style={`object-fit: ${objectFit}; object-position: ${objectPosition};`}
+    loading='lazy'
+    format='webp'
+  />
+</div>
