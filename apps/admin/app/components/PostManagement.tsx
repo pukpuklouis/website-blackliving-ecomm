@@ -134,15 +134,12 @@ export default function PostManagement() {
         if (response.status === 401 || response.status === 403) {
           try {
             // 1) Try dev-only auto-login to admin
-            const forceResp = await fetch(
-              `${apiUrl}/api/auth/debug/force-admin-login`,
-              {
-                method: 'POST',
-                credentials: 'include',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({}),
-              }
-            );
+            const forceResp = await fetch(`${apiUrl}/api/auth/debug/force-admin-login`, {
+              method: 'POST',
+              credentials: 'include',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({}),
+            });
 
             // 2) If not available (e.g., 403 in non-dev), upgrade current user to admin
             if (!forceResp.ok) {
@@ -244,7 +241,7 @@ export default function PostManagement() {
       minSize: 220,
       maxSize: 640,
       enableResizing: true,
-      cell: info => (
+      cell: (info) => (
         <div className="space-y-1 px-2 max-w-full">
           {info.row.original.featured && (
             <Badge variant="secondary" className="text-xs">
@@ -264,10 +261,10 @@ export default function PostManagement() {
     }),
     columnHelper.accessor('category', {
       header: '分類',
-      cell: info => {
+      cell: (info) => {
         const categoryName = info.getValue();
         const categoryId = info.row.original.categoryId;
-        const cat = categories.find(c =>
+        const cat = categories.find((c) =>
           categoryId ? c.id === categoryId : c.name === categoryName
         );
         return (
@@ -280,7 +277,7 @@ export default function PostManagement() {
     }),
     columnHelper.accessor('status', {
       header: '狀態',
-      cell: info => {
+      cell: (info) => {
         const status = info.getValue();
         const config = statusConfig[status];
         return <Badge className={`${config.color} text-xs font-medium`}>{config.label}</Badge>;
@@ -289,7 +286,7 @@ export default function PostManagement() {
     }),
     columnHelper.accessor('authorName', {
       header: '作者',
-      cell: info => (
+      cell: (info) => (
         <div className="flex items-center gap-2 text-sm text-gray-600">
           <User className="h-4 w-4" />
           {info.getValue() || '未知作者'}
@@ -299,7 +296,7 @@ export default function PostManagement() {
     }),
     columnHelper.accessor('viewCount', {
       header: '瀏覽數',
-      cell: info => (
+      cell: (info) => (
         <div className="flex items-center gap-2 text-sm text-gray-600">
           <EyeIcon className="h-4 w-4" />
           {(Number(info.getValue()) || 0).toLocaleString()}
@@ -309,14 +306,14 @@ export default function PostManagement() {
     }),
     columnHelper.accessor('readingTime', {
       header: '閱讀時間',
-      cell: info => (
+      cell: (info) => (
         <span className="text-sm text-gray-600">{Number(info.getValue()) || 0} 分鐘</span>
       ),
       size: 100,
     }),
     columnHelper.accessor('publishedAt', {
       header: '發布時間',
-      cell: info => {
+      cell: (info) => {
         const publishedAt = info.getValue();
         if (!publishedAt) return <span className="text-gray-400">未發布</span>;
 
@@ -331,7 +328,7 @@ export default function PostManagement() {
     columnHelper.display({
       id: 'actions',
       header: '操作',
-      cell: info => (
+      cell: (info) => (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="sm">
@@ -425,13 +422,13 @@ export default function PostManagement() {
         </div>
         <div className="bg-white p-6 rounded-lg border border-sidebar-border">
           <div className="text-2xl font-bold text-green-600">
-            {posts.filter(p => p.status === 'published').length}
+            {posts.filter((p) => p.status === 'published').length}
           </div>
           <div className="text-sm text-foreground/70">已發布</div>
         </div>
         <div className="bg-white p-6 rounded-lg border border-sidebar-border">
           <div className="text-2xl font-bold text-blue-600">
-            {posts.filter(p => p.status === 'draft').length}
+            {posts.filter((p) => p.status === 'draft').length}
           </div>
           <div className="text-sm text-foreground/70">草稿</div>
         </div>
@@ -452,7 +449,7 @@ export default function PostManagement() {
               <Input
                 placeholder="搜尋文章標題或內容..."
                 value={globalFilter ?? ''}
-                onChange={e => setGlobalFilter(e.target.value)}
+                onChange={(e) => setGlobalFilter(e.target.value)}
                 className="pl-10"
               />
             </div>
@@ -475,7 +472,7 @@ export default function PostManagement() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">全部分類</SelectItem>
-              {categories.map(cat => (
+              {categories.map((cat) => (
                 <SelectItem key={cat.id} value={cat.name}>
                   {cat.name}
                 </SelectItem>
@@ -489,9 +486,9 @@ export default function PostManagement() {
       <div className="bg-background rounded-lg border border-border-foreground overflow-hidden">
         <Table className="table-fixed">
           <TableHeader>
-            {table.getHeaderGroups().map(headerGroup => (
+            {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map(header => (
+                {headerGroup.headers.map((header) => (
                   <TableHead
                     key={header.id}
                     style={{
@@ -500,7 +497,11 @@ export default function PostManagement() {
                       maxWidth: header.column.columnDef.maxSize,
                     }}
                     className={`relative select-none ${header.column.getCanSort() ? 'cursor-pointer' : ''}`}
-                    onClick={header.column.getCanSort() ? header.column.getToggleSortingHandler() : undefined}
+                    onClick={
+                      header.column.getCanSort()
+                        ? header.column.getToggleSortingHandler()
+                        : undefined
+                    }
                   >
                     {header.isPlaceholder ? null : (
                       <div className="flex items-center justify-between gap-2">
@@ -525,7 +526,7 @@ export default function PostManagement() {
                       <div
                         onMouseDown={header.getResizeHandler()}
                         onTouchStart={header.getResizeHandler()}
-                        onClick={event => event.stopPropagation()}
+                        onClick={(event) => event.stopPropagation()}
                         className="absolute right-0 top-0 h-full w-1 cursor-col-resize select-none"
                       >
                         <div
@@ -540,9 +541,9 @@ export default function PostManagement() {
           </TableHeader>
           <TableBody>
             {table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map(row => (
+              table.getRowModel().rows.map((row) => (
                 <TableRow key={row.id}>
-                  {row.getVisibleCells().map(cell => (
+                  {row.getVisibleCells().map((cell) => (
                     <TableCell
                       key={cell.id}
                       style={{

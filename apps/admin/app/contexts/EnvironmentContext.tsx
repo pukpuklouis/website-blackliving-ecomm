@@ -27,18 +27,19 @@ export function EnvironmentProvider({ children, env = {} }: EnvironmentProviderP
   // Fallback to import.meta.env for development or when env is not provided
   const config: EnvironmentConfig = {
     PUBLIC_API_URL: env.PUBLIC_API_URL || import.meta.env.PUBLIC_API_URL || 'http://localhost:8787',
-    PUBLIC_API_BASE_URL: env.PUBLIC_API_BASE_URL || import.meta.env.PUBLIC_API_BASE_URL || 'http://localhost:8787',
-    PUBLIC_IMAGE_CDN_URL: env.PUBLIC_IMAGE_CDN_URL || import.meta.env.PUBLIC_IMAGE_CDN_URL || 'http://localhost:8787/media',
-    PUBLIC_SITE_URL: env.PUBLIC_SITE_URL || import.meta.env.PUBLIC_SITE_URL || 'http://localhost:5173',
+    PUBLIC_API_BASE_URL:
+      env.PUBLIC_API_BASE_URL || import.meta.env.PUBLIC_API_BASE_URL || 'http://localhost:8787',
+    PUBLIC_IMAGE_CDN_URL:
+      env.PUBLIC_IMAGE_CDN_URL ||
+      import.meta.env.PUBLIC_IMAGE_CDN_URL ||
+      'http://localhost:8787/media',
+    PUBLIC_SITE_URL:
+      env.PUBLIC_SITE_URL || import.meta.env.PUBLIC_SITE_URL || 'http://localhost:5173',
     PUBLIC_WEB_URL: env.PUBLIC_WEB_URL || import.meta.env.PUBLIC_WEB_URL || 'http://localhost:4321',
     NODE_ENV: env.NODE_ENV || import.meta.env.NODE_ENV || 'development',
   };
 
-  return (
-    <EnvironmentContext.Provider value={config}>
-      {children}
-    </EnvironmentContext.Provider>
-  );
+  return <EnvironmentContext.Provider value={config}>{children}</EnvironmentContext.Provider>;
 }
 
 export function useEnvironment(): EnvironmentConfig {

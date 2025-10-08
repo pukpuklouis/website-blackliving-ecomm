@@ -158,11 +158,11 @@ export default function OrdersPage() {
   const columns = [
     columnHelper.accessor('orderNumber', {
       header: '訂單編號',
-      cell: info => <div className="font-mono text-sm font-medium">{info.getValue()}</div>,
+      cell: (info) => <div className="font-mono text-sm font-medium">{info.getValue()}</div>,
     }),
     columnHelper.accessor('customerInfo', {
       header: '客戶資訊',
-      cell: info => {
+      cell: (info) => {
         const customer = info.getValue();
         return (
           <div>
@@ -175,15 +175,15 @@ export default function OrdersPage() {
     }),
     columnHelper.accessor('totalAmount', {
       header: '總金額',
-      cell: info => <div className="font-medium">NT${info.getValue().toLocaleString()}</div>,
+      cell: (info) => <div className="font-medium">NT${info.getValue().toLocaleString()}</div>,
     }),
     columnHelper.accessor('paymentMethod', {
       header: '付款方式',
-      cell: info => <Badge variant="outline">{paymentMethodLabels[info.getValue()]}</Badge>,
+      cell: (info) => <Badge variant="outline">{paymentMethodLabels[info.getValue()]}</Badge>,
     }),
     columnHelper.accessor('status', {
       header: '訂單狀態',
-      cell: info => (
+      cell: (info) => (
         <Badge className={`text-white ${statusColors[info.getValue()]}`}>
           {statusLabels[info.getValue()]}
         </Badge>
@@ -192,7 +192,7 @@ export default function OrdersPage() {
     }),
     columnHelper.accessor('paymentStatus', {
       header: '付款狀態',
-      cell: info => (
+      cell: (info) => (
         <Badge
           variant={info.getValue() === 'paid' ? 'default' : 'secondary'}
           className={
@@ -205,7 +205,7 @@ export default function OrdersPage() {
     }),
     columnHelper.accessor('createdAt', {
       header: '建立時間',
-      cell: info =>
+      cell: (info) =>
         new Date(info.getValue()).toLocaleDateString('zh-TW', {
           year: 'numeric',
           month: '2-digit',
@@ -318,8 +318,8 @@ export default function OrdersPage() {
       });
 
       if (response.ok) {
-        setOrders(prev =>
-          prev.map(order =>
+        setOrders((prev) =>
+          prev.map((order) =>
             order.id === orderId ? { ...order, status: newStatus, updatedAt: new Date() } : order
           )
         );
@@ -387,7 +387,7 @@ export default function OrdersPage() {
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">待付款</p>
                 <p className="text-2xl font-bold">
-                  {orders.filter(o => o.status === 'pending_payment').length}
+                  {orders.filter((o) => o.status === 'pending_payment').length}
                 </p>
               </div>
             </div>
@@ -400,7 +400,7 @@ export default function OrdersPage() {
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">已付款</p>
                 <p className="text-2xl font-bold">
-                  {orders.filter(o => o.status === 'paid').length}
+                  {orders.filter((o) => o.status === 'paid').length}
                 </p>
               </div>
             </div>
@@ -413,7 +413,7 @@ export default function OrdersPage() {
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">配送中</p>
                 <p className="text-2xl font-bold">
-                  {orders.filter(o => o.status === 'shipped').length}
+                  {orders.filter((o) => o.status === 'shipped').length}
                 </p>
               </div>
             </div>
@@ -426,7 +426,7 @@ export default function OrdersPage() {
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">已完成</p>
                 <p className="text-2xl font-bold">
-                  {orders.filter(o => o.status === 'delivered').length}
+                  {orders.filter((o) => o.status === 'delivered').length}
                 </p>
               </div>
             </div>
@@ -450,14 +450,14 @@ export default function OrdersPage() {
                 <Input
                   placeholder="搜尋訂單編號、客戶姓名、電話..."
                   value={globalFilter}
-                  onChange={e => setGlobalFilter(e.target.value)}
+                  onChange={(e) => setGlobalFilter(e.target.value)}
                   className="pl-10"
                 />
               </div>
             </div>
             <Select
               value={(table.getColumn('status')?.getFilterValue() as string) ?? ''}
-              onValueChange={value =>
+              onValueChange={(value) =>
                 table.getColumn('status')?.setFilterValue(value === 'all' ? '' : value)
               }
             >
@@ -488,9 +488,9 @@ export default function OrdersPage() {
           <div className="rounded-md border">
             <table className="w-full">
               <thead>
-                {table.getHeaderGroups().map(headerGroup => (
+                {table.getHeaderGroups().map((headerGroup) => (
                   <tr key={headerGroup.id} className="border-b bg-gray-50/50">
-                    {headerGroup.headers.map(header => (
+                    {headerGroup.headers.map((header) => (
                       <th key={header.id} className="px-4 py-3 text-left font-medium text-gray-900">
                         {header.isPlaceholder
                           ? null
@@ -501,9 +501,9 @@ export default function OrdersPage() {
                 ))}
               </thead>
               <tbody>
-                {table.getRowModel().rows.map(row => (
+                {table.getRowModel().rows.map((row) => (
                   <tr key={row.id} className="border-b hover:bg-gray-50/50">
-                    {row.getVisibleCells().map(cell => (
+                    {row.getVisibleCells().map((cell) => (
                       <td key={cell.id} className="px-4 py-3">
                         {flexRender(cell.column.columnDef.cell, cell.getContext())}
                       </td>

@@ -79,7 +79,7 @@ export function MediaLibraryDialog({
         sort: 'recent',
       });
 
-      setAssets(prev => (append ? [...prev, ...result.items] : result.items));
+      setAssets((prev) => (append ? [...prev, ...result.items] : result.items));
       setCursor(result.pageInfo.nextCursor);
       setHasMore(result.pageInfo.hasMore);
     },
@@ -158,7 +158,7 @@ export function MediaLibraryDialog({
 
           <Tabs
             value={category}
-            onValueChange={value => setCategory(value as PickerCategory)}
+            onValueChange={(value) => setCategory(value as PickerCategory)}
             className="flex h-full w-full flex-col overflow-hidden"
           >
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -171,7 +171,7 @@ export function MediaLibraryDialog({
                 <Input
                   placeholder="搜尋檔名…"
                   value={search}
-                  onChange={event => setSearch(event.target.value)}
+                  onChange={(event) => setSearch(event.target.value)}
                   className="pl-9"
                 />
               </div>
@@ -185,7 +185,7 @@ export function MediaLibraryDialog({
                 </div>
               ) : (
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                  {assets.map(asset => (
+                  {assets.map((asset) => (
                     <button
                       type="button"
                       key={`${asset.key}-${asset.lastModified}`}

@@ -15,7 +15,10 @@ export default defineConfig({
     alias: {
       // Lucide tree-shaking alias for individual icon imports
       '@lucide/react': 'lucide-react/dist/esm/icons',
-      '@tailwindcss/typography': resolve(projectDir, '../../packages/tailwindcss-typography/index.js'),
+      '@tailwindcss/typography': resolve(
+        projectDir,
+        '../../packages/tailwindcss-typography/index.js'
+      ),
     },
     // Prevent multiple React copies across workspace
     dedupe: ['react', 'react-dom'],

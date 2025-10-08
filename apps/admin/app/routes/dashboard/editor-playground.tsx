@@ -4,7 +4,9 @@ import { BlockNoteEditor } from '../../components/editor';
 import { Button, Textarea } from '@blackliving/ui';
 
 export default function EditorPlayground() {
-  const [md, setMd] = useState<string>(`# 測試 BlockNote 編輯器\n\n- 支援粗體、斜體、清單\n- 以 Markdown 形式儲存\n\n> 這是引用區塊\n\n\`\`\`ts\nconsole.log('Hello BlockNote');\n\`\`\``);
+  const [md, setMd] = useState<string>(
+    `# 測試 BlockNote 編輯器\n\n- 支援粗體、斜體、清單\n- 以 Markdown 形式儲存\n\n> 這是引用區塊\n\n\`\`\`ts\nconsole.log('Hello BlockNote');\n\`\`\``
+  );
 
   const copy = async () => {
     try {

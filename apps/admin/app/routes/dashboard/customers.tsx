@@ -165,11 +165,11 @@ export default function CustomersPage() {
   const columns = [
     columnHelper.accessor('customerNumber', {
       header: '客戶編號',
-      cell: info => <div className="font-mono text-sm font-medium">{info.getValue()}</div>,
+      cell: (info) => <div className="font-mono text-sm font-medium">{info.getValue()}</div>,
     }),
     columnHelper.accessor('name', {
       header: '客戶資訊',
-      cell: info => {
+      cell: (info) => {
         const customer = info.row.original;
         return (
           <div>
@@ -188,7 +188,7 @@ export default function CustomersPage() {
     }),
     columnHelper.accessor('segment', {
       header: '客戶分級',
-      cell: info => (
+      cell: (info) => (
         <Badge className={`text-white ${segmentColors[info.getValue()]}`}>
           {segmentLabels[info.getValue()]}
         </Badge>
@@ -197,11 +197,11 @@ export default function CustomersPage() {
     }),
     columnHelper.accessor('tags', {
       header: '標籤',
-      cell: info => {
+      cell: (info) => {
         const tags = info.getValue();
         return (
           <div className="flex flex-wrap gap-1 max-w-32">
-            {tags.slice(0, 2).map(tag => (
+            {tags.slice(0, 2).map((tag) => (
               <Badge
                 key={tag.id}
                 variant="outline"
@@ -222,7 +222,7 @@ export default function CustomersPage() {
     }),
     columnHelper.accessor('totalSpent', {
       header: '總消費',
-      cell: info => (
+      cell: (info) => (
         <div className="text-right">
           <div className="font-medium">NT${(info.getValue() || 0).toLocaleString()}</div>
           <div className="text-xs text-gray-500">{info.row.original.orderCount || 0} 筆訂單</div>
@@ -231,13 +231,13 @@ export default function CustomersPage() {
     }),
     columnHelper.accessor('avgOrderValue', {
       header: '平均客單價',
-      cell: info => (
+      cell: (info) => (
         <div className="font-medium text-right">NT${(info.getValue() || 0).toLocaleString()}</div>
       ),
     }),
     columnHelper.accessor('lastPurchaseAt', {
       header: '最後購買',
-      cell: info => {
+      cell: (info) => {
         const date = info.getValue();
         return date ? (
           <div className="text-sm">{new Date(date).toLocaleDateString('zh-TW')}</div>
@@ -248,7 +248,7 @@ export default function CustomersPage() {
     }),
     columnHelper.accessor('churnRisk', {
       header: '流失風險',
-      cell: info => (
+      cell: (info) => (
         <Badge className={`text-white ${churnRiskColors[info.getValue()]}`}>
           {churnRiskLabels[info.getValue()]}
         </Badge>
@@ -329,12 +329,9 @@ export default function CustomersPage() {
 
   const loadCustomerInteractions = async (customerId: string) => {
     try {
-      const response = await fetch(
-        `${apiUrl}/api/customers/${customerId}/interactions`,
-        {
-          credentials: 'include',
-        }
-      );
+      const response = await fetch(`${apiUrl}/api/customers/${customerId}/interactions`, {
+        credentials: 'include',
+      });
       if (response.ok) {
         const result = await response.json();
         setCustomerInteractions(result.success ? result.data.interactions : []);
@@ -405,7 +402,7 @@ export default function CustomersPage() {
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">VIP客戶</p>
                 <p className="text-2xl font-bold">
-                  {customers.filter(c => c.segment === 'vip').length}
+                  {customers.filter((c) => c.segment === 'vip').length}
                 </p>
               </div>
             </div>
@@ -437,7 +434,7 @@ export default function CustomersPage() {
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">回購客戶</p>
                 <p className="text-2xl font-bold">
-                  {customers.filter(c => c.orderCount > 1).length}
+                  {customers.filter((c) => c.orderCount > 1).length}
                 </p>
               </div>
             </div>
@@ -461,14 +458,14 @@ export default function CustomersPage() {
                 <Input
                   placeholder="搜尋客戶編號、姓名、電話、Email..."
                   value={globalFilter}
-                  onChange={e => setGlobalFilter(e.target.value)}
+                  onChange={(e) => setGlobalFilter(e.target.value)}
                   className="pl-10"
                 />
               </div>
             </div>
             <Select
               value={(table.getColumn('segment')?.getFilterValue() as string) ?? ''}
-              onValueChange={value =>
+              onValueChange={(value) =>
                 table.getColumn('segment')?.setFilterValue(value === 'all' ? '' : value)
               }
             >
@@ -497,9 +494,9 @@ export default function CustomersPage() {
           <div className="rounded-md border">
             <table className="w-full">
               <thead>
-                {table.getHeaderGroups().map(headerGroup => (
+                {table.getHeaderGroups().map((headerGroup) => (
                   <tr key={headerGroup.id} className="border-b bg-gray-50/50">
-                    {headerGroup.headers.map(header => (
+                    {headerGroup.headers.map((header) => (
                       <th key={header.id} className="px-4 py-3 text-left font-medium text-gray-900">
                         {header.isPlaceholder
                           ? null
@@ -510,9 +507,9 @@ export default function CustomersPage() {
                 ))}
               </thead>
               <tbody>
-                {table.getRowModel().rows.map(row => (
+                {table.getRowModel().rows.map((row) => (
                   <tr key={row.id} className="border-b hover:bg-gray-50/50">
-                    {row.getVisibleCells().map(cell => (
+                    {row.getVisibleCells().map((cell) => (
                       <td key={cell.id} className="px-4 py-3">
                         {flexRender(cell.column.columnDef.cell, cell.getContext())}
                       </td>
@@ -634,7 +631,7 @@ export default function CustomersPage() {
                       <div>
                         <Label className="text-sm text-gray-600">客戶標籤</Label>
                         <div className="flex flex-wrap gap-2 mt-1">
-                          {selectedCustomer.tags.map(tag => (
+                          {selectedCustomer.tags.map((tag) => (
                             <Badge
                               key={tag.id}
                               variant="outline"
@@ -697,7 +694,7 @@ export default function CustomersPage() {
               <TabsContent value="interactions" className="space-y-4">
                 <div className="space-y-4">
                   {customerInteractions.length > 0 ? (
-                    customerInteractions.map(interaction => (
+                    customerInteractions.map((interaction) => (
                       <div key={interaction.id} className="border rounded-lg p-4">
                         <div className="flex justify-between items-start">
                           <div>

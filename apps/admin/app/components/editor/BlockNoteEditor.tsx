@@ -140,7 +140,7 @@ export default function BlockNoteEditor({
     setMediaCategory(category);
     setMediaDialogOpen(true);
 
-    await new Promise<void>(resolve => {
+    await new Promise<void>((resolve) => {
       pendingPickerRef.current = { resolve, blockId, category };
     });
   }, []);
@@ -204,7 +204,7 @@ export default function BlockNoteEditor({
         className="min-h-[24rem] w-full rounded-md border border-input bg-background px-4 py-3"
       >
         <SideMenuController
-          sideMenu={props => <MediaSideMenu {...props} onLaunchPicker={openMediaPicker} />}
+          sideMenu={(props) => <MediaSideMenu {...props} onLaunchPicker={openMediaPicker} />}
         />
       </BlockNoteView>
       <div className="mt-2 text-xs text-foreground/30">輸入 / 開啟指令選單</div>

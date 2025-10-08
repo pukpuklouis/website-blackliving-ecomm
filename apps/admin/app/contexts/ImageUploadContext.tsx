@@ -1,11 +1,4 @@
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useMemo,
-  useState,
-  type ReactNode,
-} from 'react';
+import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
 import { toast } from 'sonner';
 import { resolveAssetUrl, type UploadResult } from '../lib/assets';
 import { safeParseJSON } from '../lib/http';
@@ -34,9 +27,7 @@ export function ImageUploadProvider({ children }: { children: ReactNode }) {
   );
   const [isUploading, setIsUploading] = useState(false);
 
-  const uploadImages = useCallback<
-    ImageUploadContextValue['uploadImages']
-  >(
+  const uploadImages = useCallback<ImageUploadContextValue['uploadImages']>(
     async (input, options = {}) => {
       const files = normalizeFileInput(input);
       if (!files.length) return [];
@@ -50,9 +41,9 @@ export function ImageUploadProvider({ children }: { children: ReactNode }) {
       setIsUploading(true);
       try {
         const folder = options.folder ?? 'uploads';
-        const convertedFiles = await Promise.all(files.map(file => convertFileToWebP(file)));
+        const convertedFiles = await Promise.all(files.map((file) => convertFileToWebP(file)));
         const form = new FormData();
-        convertedFiles.forEach(file => form.append('files', file, file.name));
+        convertedFiles.forEach((file) => form.append('files', file, file.name));
         form.append('folder', folder);
 
         const response = await fetch(`${API_BASE}/api/admin/upload`, {
@@ -72,7 +63,7 @@ export function ImageUploadProvider({ children }: { children: ReactNode }) {
           ? ((payload as any).data as UploadResult[])
           : [];
         const resolved = uploadResults
-          .map(file => resolveAssetUrl(file, cdnBase, fallbackAssetBase))
+          .map((file) => resolveAssetUrl(file, cdnBase, fallbackAssetBase))
           .filter(Boolean);
 
         toast.success(`已上傳 ${resolved.length} 張圖片`);

@@ -160,8 +160,8 @@ export default function ProductManagement({ initialProducts }: { initialProducts
     const specs = formData.specifications || {};
     if (specOrder.length > 0) {
       return specOrder
-        .filter(key => key in specs)
-        .map(key => [key, specs[key] as string] as [string, string]);
+        .filter((key) => key in specs)
+        .map((key) => [key, specs[key] as string] as [string, string]);
     }
     return Object.entries(specs) as Array<[string, string]>;
   }, [formData.specifications, specOrder]);
@@ -171,7 +171,7 @@ export default function ProductManagement({ initialProducts }: { initialProducts
   const columns = [
     columnHelper.accessor('name', {
       header: '產品名稱',
-      cell: info => (
+      cell: (info) => (
         <div className="font-medium">
           {info.getValue()}
           {info.row.original.featured && (
@@ -184,15 +184,15 @@ export default function ProductManagement({ initialProducts }: { initialProducts
     }),
     columnHelper.accessor('category', {
       header: '分類',
-      cell: info => <Badge variant="outline">{categoryLabels[info.getValue()]}</Badge>,
+      cell: (info) => <Badge variant="outline">{categoryLabels[info.getValue()]}</Badge>,
       filterFn: 'equals',
     }),
     columnHelper.accessor('variants', {
       header: '價格範圍',
-      cell: info => {
+      cell: (info) => {
         const variants = info.getValue();
         if (variants.length === 0) return '未設定';
-        const prices = variants.map(v => v.price);
+        const prices = variants.map((v) => v.price);
         const min = Math.min(...prices);
         const max = Math.max(...prices);
         return min === max
@@ -202,7 +202,7 @@ export default function ProductManagement({ initialProducts }: { initialProducts
     }),
     columnHelper.accessor('inStock', {
       header: '庫存狀態',
-      cell: info => (
+      cell: (info) => (
         <Badge
           variant={info.getValue() ? 'secondary' : 'destructive'}
           className={info.getValue() ? 'bg-green-500 text-white hover:bg-green-500/90' : ''}
@@ -213,7 +213,7 @@ export default function ProductManagement({ initialProducts }: { initialProducts
     }),
     columnHelper.accessor('updatedAt', {
       header: '最後更新',
-      cell: info => new Date(info.getValue()).toLocaleDateString('zh-TW'),
+      cell: (info) => new Date(info.getValue()).toLocaleDateString('zh-TW'),
     }),
     columnHelper.display({
       id: 'actions',
@@ -225,11 +225,7 @@ export default function ProductManagement({ initialProducts }: { initialProducts
           </Button>
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                disabled={!!deletingProductIds[row.original.id]}
-              >
+              <Button variant="ghost" size="sm" disabled={!!deletingProductIds[row.original.id]}>
                 <Trash2 className="h-4 w-4" />
               </Button>
             </AlertDialogTrigger>
@@ -276,7 +272,7 @@ export default function ProductManagement({ initialProducts }: { initialProducts
   // Initialize with server data if provided; otherwise fetch
   useEffect(() => {
     if (Array.isArray(initialProducts) && initialProducts.length > 0) {
-      const sanitized = initialProducts.map(product =>
+      const sanitized = initialProducts.map((product) =>
         sanitizeProduct(product, cdnBase, fallbackAssetBase)
       );
       setProducts(sanitized);
@@ -349,13 +345,13 @@ export default function ProductManagement({ initialProducts }: { initialProducts
 
   const handleDelete = async (id: string) => {
     try {
-      setDeletingProductIds(prev => ({ ...prev, [id]: true }));
+      setDeletingProductIds((prev) => ({ ...prev, [id]: true }));
       const response = await fetch(`${API_BASE}/api/admin/products/${id}`, {
         method: 'DELETE',
         credentials: 'include',
       });
       if (response.ok) {
-        setProducts(prev => prev.filter(p => p.id !== id));
+        setProducts((prev) => prev.filter((p) => p.id !== id));
         // Ensure local state matches server truth when caches were stale
         await loadProducts();
         toast.success('產品刪除成功');
@@ -366,9 +362,8 @@ export default function ProductManagement({ initialProducts }: { initialProducts
     } catch (error) {
       console.error('Delete failed:', error);
       toast.error(error instanceof Error ? error.message : '刪除產品失敗');
-    }
-    finally {
-      setDeletingProductIds(prev => {
+    } finally {
+      setDeletingProductIds((prev) => {
         const next = { ...prev };
         delete next[id];
         return next;
@@ -401,7 +396,7 @@ export default function ProductManagement({ initialProducts }: { initialProducts
       const validationResult = validateProductWithFallback(normalized);
       if (!validationResult.success) {
         if (validationResult.errors) {
-          setFormErrors(prev => ({ ...prev, ...validationResult.errors }));
+          setFormErrors((prev) => ({ ...prev, ...validationResult.errors }));
         }
         toast.error('請確認表單欄位填寫正確');
         return;
@@ -426,10 +421,10 @@ export default function ProductManagement({ initialProducts }: { initialProducts
         const savedProduct = sanitizeProduct(result.data, cdnBase, fallbackAssetBase);
 
         if (isEdit) {
-          setProducts(prev => prev.map(p => (p.id === selectedProduct?.id ? savedProduct : p)));
+          setProducts((prev) => prev.map((p) => (p.id === selectedProduct?.id ? savedProduct : p)));
           setIsEditDialogOpen(false);
         } else {
-          setProducts(prev => [...prev, savedProduct]);
+          setProducts((prev) => [...prev, savedProduct]);
           setIsCreateDialogOpen(false);
         }
 
@@ -450,11 +445,11 @@ export default function ProductManagement({ initialProducts }: { initialProducts
   };
 
   const handleAddVariant = () => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       variants: [...(prev.variants || []), { name: '', price: 0, sku: '', size: '' }],
     }));
-    setFormErrors(prev => {
+    setFormErrors((prev) => {
       if (!prev.variants) return prev;
       const { variants, ...rest } = prev;
       return rest;
@@ -466,7 +461,7 @@ export default function ProductManagement({ initialProducts }: { initialProducts
     field: keyof ProductFormData['variants'][number],
     value: string
   ) => {
-    setFormData(prev => {
+    setFormData((prev) => {
       const variants = [...(prev.variants || [])];
       const current = { ...(variants[index] || { name: '', price: 0 }) } as any;
       if (field === 'price') {
@@ -481,11 +476,11 @@ export default function ProductManagement({ initialProducts }: { initialProducts
 
   const handleRemoveVariant = (index: number) => {
     const nextVariants = (formData.variants || []).filter((_, i) => i !== index);
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       variants: nextVariants,
     }));
-    setFormErrors(prev => {
+    setFormErrors((prev) => {
       if (nextVariants.length === 0) {
         return { ...prev, variants: '至少需要一個產品變體' };
       }
@@ -499,11 +494,11 @@ export default function ProductManagement({ initialProducts }: { initialProducts
   const handleAddFeature = () => {
     const val = featureInput.trim();
     if (!val) return;
-    setFormData(prev => ({ ...prev, features: [...(prev.features || []), val] }));
+    setFormData((prev) => ({ ...prev, features: [...(prev.features || []), val] }));
     setFeatureInput('');
   };
   const handleRemoveFeature = (i: number) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       features: (prev.features || []).filter((_, idx) => idx !== i),
     }));
@@ -515,26 +510,26 @@ export default function ProductManagement({ initialProducts }: { initialProducts
     const k = specKey.trim();
     const v = specVal.trim();
     if (!k || !v) return;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       specifications: { ...(prev.specifications || {}), [k]: v },
     }));
-    setSpecOrder(prev => (prev.includes(k) ? prev : [...prev, k]));
+    setSpecOrder((prev) => (prev.includes(k) ? prev : [...prev, k]));
     setSpecKey('');
     setSpecVal('');
   };
   const handleRemoveSpec = (k: string) => {
-    setFormData(prev => {
+    setFormData((prev) => {
       const next = { ...(prev.specifications || {}) } as Record<string, string>;
       delete next[k];
       return { ...prev, specifications: next };
     });
-    setSpecOrder(prev => prev.filter(key => key !== k));
+    setSpecOrder((prev) => prev.filter((key) => key !== k));
   };
 
   const handleProductImagesChange = (images: string[]) => {
-    setFormData(prev => ({ ...prev, images }));
-    setFormErrors(prev => {
+    setFormData((prev) => ({ ...prev, images }));
+    setFormErrors((prev) => {
       if (images.length === 0) {
         return { ...prev, images: '至少需要一張產品圖片' };
       }
@@ -544,17 +539,13 @@ export default function ProductManagement({ initialProducts }: { initialProducts
     });
   };
 
-
-
-
-
   const handleFeatureDragStart = (index: number) => {
     featureDragIndexRef.current = index;
   };
 
   const handleFeatureDragEnter = (index: number) => {
     if (featureDragIndexRef.current === null || featureDragIndexRef.current === index) return;
-    setFormData(prev => {
+    setFormData((prev) => {
       const features = prev.features || [];
       const from = featureDragIndexRef.current;
       if (
@@ -582,7 +573,7 @@ export default function ProductManagement({ initialProducts }: { initialProducts
 
   const handleSpecDragEnter = (index: number) => {
     if (specDragIndexRef.current === null || specDragIndexRef.current === index) return;
-    setSpecOrder(prev => {
+    setSpecOrder((prev) => {
       const from = specDragIndexRef.current;
       if (from === null || from < 0 || from >= prev.length || index < 0 || index >= prev.length) {
         return prev;
@@ -596,8 +587,6 @@ export default function ProductManagement({ initialProducts }: { initialProducts
   const handleSpecDragEnd = () => {
     specDragIndexRef.current = null;
   };
-
-
 
   if (loading) {
     return (
@@ -646,14 +635,14 @@ export default function ProductManagement({ initialProducts }: { initialProducts
                 <Input
                   placeholder="搜尋產品名稱、描述..."
                   value={globalFilter}
-                  onChange={e => setGlobalFilter(e.target.value)}
+                  onChange={(e) => setGlobalFilter(e.target.value)}
                   className="pl-10"
                 />
               </div>
             </div>
             <Select
               value={(table.getColumn('category')?.getFilterValue() as string) ?? ''}
-              onValueChange={value =>
+              onValueChange={(value) =>
                 table.getColumn('category')?.setFilterValue(value === 'all' ? '' : value)
               }
             >
@@ -681,9 +670,9 @@ export default function ProductManagement({ initialProducts }: { initialProducts
           <div className="rounded-md border">
             <table className="w-full">
               <thead>
-                {table.getHeaderGroups().map(headerGroup => (
+                {table.getHeaderGroups().map((headerGroup) => (
                   <tr key={headerGroup.id} className="border-b bg-gray-50/50">
-                    {headerGroup.headers.map(header => (
+                    {headerGroup.headers.map((header) => (
                       <th key={header.id} className="px-4 py-3 text-left font-medium text-gray-900">
                         {header.isPlaceholder
                           ? null
@@ -694,9 +683,9 @@ export default function ProductManagement({ initialProducts }: { initialProducts
                 ))}
               </thead>
               <tbody>
-                {table.getRowModel().rows.map(row => (
+                {table.getRowModel().rows.map((row) => (
                   <tr key={row.id} className="border-b hover:bg-gray-50/50">
-                    {row.getVisibleCells().map(cell => (
+                    {row.getVisibleCells().map((cell) => (
                       <td key={cell.id} className="px-4 py-3">
                         {flexRender(cell.column.columnDef.cell, cell.getContext())}
                       </td>
@@ -743,7 +732,7 @@ export default function ProductManagement({ initialProducts }: { initialProducts
       {/* Create/Edit Product Dialog */}
       <Dialog
         open={isCreateDialogOpen || isEditDialogOpen}
-        onOpenChange={open => {
+        onOpenChange={(open) => {
           if (!open) {
             setIsCreateDialogOpen(false);
             setIsEditDialogOpen(false);
@@ -770,7 +759,7 @@ export default function ProductManagement({ initialProducts }: { initialProducts
                   <Input
                     id="name"
                     value={formData.name || ''}
-                    onChange={e => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
                     className={formErrors.name ? 'border-red-500' : ''}
                   />
                   {formErrors.name && (
@@ -782,7 +771,7 @@ export default function ProductManagement({ initialProducts }: { initialProducts
                   <Input
                     id="slug"
                     value={formData.slug || ''}
-                    onChange={e => setFormData(prev => ({ ...prev, slug: e.target.value }))}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, slug: e.target.value }))}
                     className={formErrors.slug ? 'border-red-500' : ''}
                   />
                   {formErrors.slug && (
@@ -796,7 +785,9 @@ export default function ProductManagement({ initialProducts }: { initialProducts
                 <Textarea
                   id="description"
                   value={formData.description || ''}
-                  onChange={e => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                  onChange={(e) =>
+                    setFormData((prev) => ({ ...prev, description: e.target.value }))
+                  }
                   className={formErrors.description ? 'border-red-500' : ''}
                   rows={4}
                 />
@@ -809,8 +800,8 @@ export default function ProductManagement({ initialProducts }: { initialProducts
                 <Label htmlFor="category">產品分類 *</Label>
                 <Select
                   value={formData.category || ''}
-                  onValueChange={value =>
-                    setFormData(prev => ({ ...prev, category: value as any }))
+                  onValueChange={(value) =>
+                    setFormData((prev) => ({ ...prev, category: value as any }))
                   }
                 >
                   <SelectTrigger className={formErrors.category ? 'border-red-500' : ''}>
@@ -837,8 +828,8 @@ export default function ProductManagement({ initialProducts }: { initialProducts
                 <div className="flex items-center space-x-2">
                   <Switch
                     checked={formData.inStock ?? true}
-                    onCheckedChange={checked =>
-                      setFormData(prev => ({ ...prev, inStock: checked }))
+                    onCheckedChange={(checked) =>
+                      setFormData((prev) => ({ ...prev, inStock: checked }))
                     }
                   />
                   <Label>有庫存</Label>
@@ -846,8 +837,8 @@ export default function ProductManagement({ initialProducts }: { initialProducts
                 <div className="flex items-center space-x-2">
                   <Switch
                     checked={formData.featured ?? false}
-                    onCheckedChange={checked =>
-                      setFormData(prev => ({ ...prev, featured: checked }))
+                    onCheckedChange={(checked) =>
+                      setFormData((prev) => ({ ...prev, featured: checked }))
                     }
                   />
                   <Label>精選產品</Label>
@@ -879,7 +870,7 @@ export default function ProductManagement({ initialProducts }: { initialProducts
                       <Label>名稱</Label>
                       <Input
                         value={v?.name || ''}
-                        onChange={e => handleUpdateVariant(i, 'name', e.target.value)}
+                        onChange={(e) => handleUpdateVariant(i, 'name', e.target.value)}
                       />
                     </div>
                     <div className="col-span-3 flex flex-col gap-2">
@@ -888,21 +879,21 @@ export default function ProductManagement({ initialProducts }: { initialProducts
                         type="number"
                         inputMode="decimal"
                         value={v?.price?.toString() ?? '0'}
-                        onChange={e => handleUpdateVariant(i, 'price', e.target.value)}
+                        onChange={(e) => handleUpdateVariant(i, 'price', e.target.value)}
                       />
                     </div>
                     <div className="col-span-3 flex flex-col gap-2">
                       <Label>SKU</Label>
                       <Input
                         value={v?.sku || ''}
-                        onChange={e => handleUpdateVariant(i, 'sku', e.target.value)}
+                        onChange={(e) => handleUpdateVariant(i, 'sku', e.target.value)}
                       />
                     </div>
                     <div className="col-span-2 flex flex-col gap-2">
                       <Label>尺寸</Label>
                       <Input
                         value={v?.size || ''}
-                        onChange={e => handleUpdateVariant(i, 'size', e.target.value)}
+                        onChange={(e) => handleUpdateVariant(i, 'size', e.target.value)}
                       />
                     </div>
                     <div className="col-span-1">
@@ -933,8 +924,8 @@ export default function ProductManagement({ initialProducts }: { initialProducts
                 <Input
                   placeholder="新增特色..."
                   value={featureInput}
-                  onChange={e => setFeatureInput(e.target.value)}
-                  onKeyDown={e => {
+                  onChange={(e) => setFeatureInput(e.target.value)}
+                  onKeyDown={(e) => {
                     if (e.key === 'Enter') {
                       e.preventDefault();
                       handleAddFeature();
@@ -954,7 +945,7 @@ export default function ProductManagement({ initialProducts }: { initialProducts
                       draggable
                       onDragStart={() => handleFeatureDragStart(i)}
                       onDragEnter={() => handleFeatureDragEnter(i)}
-                      onDragOver={e => e.preventDefault()}
+                      onDragOver={(e) => e.preventDefault()}
                       onDragEnd={handleFeatureDragEnd}
                       onDrop={handleFeatureDragEnd}
                       aria-label={`重新排序特色 ${i + 1}`}
@@ -980,11 +971,11 @@ export default function ProductManagement({ initialProducts }: { initialProducts
               <div className="grid grid-cols-12 gap-2 items-end">
                 <div className="col-span-3 flex flex-col gap-2">
                   <Label>規格名稱</Label>
-                  <Input value={specKey} onChange={e => setSpecKey(e.target.value)} />
+                  <Input value={specKey} onChange={(e) => setSpecKey(e.target.value)} />
                 </div>
                 <div className="col-span-6 flex flex-col gap-2">
                   <Label>規格數據</Label>
-                  <Input value={specVal} onChange={e => setSpecVal(e.target.value)} />
+                  <Input value={specVal} onChange={(e) => setSpecVal(e.target.value)} />
                 </div>
                 <div className="col-span-2">
                   <Button type="button" onClick={handleAddSpec}>
@@ -1004,7 +995,7 @@ export default function ProductManagement({ initialProducts }: { initialProducts
                         draggable
                         onDragStart={() => handleSpecDragStart(i)}
                         onDragEnter={() => handleSpecDragEnter(i)}
-                        onDragOver={e => e.preventDefault()}
+                        onDragOver={(e) => e.preventDefault()}
                         onDragEnd={handleSpecDragEnd}
                         onDrop={handleSpecDragEnd}
                         aria-label={`重新排序規格 ${k}`}
@@ -1041,8 +1032,8 @@ export default function ProductManagement({ initialProducts }: { initialProducts
                     type="number"
                     inputMode="numeric"
                     value={(formData.sortOrder ?? 0).toString()}
-                    onChange={e =>
-                      setFormData(prev => ({ ...prev, sortOrder: Number(e.target.value) || 0 }))
+                    onChange={(e) =>
+                      setFormData((prev) => ({ ...prev, sortOrder: Number(e.target.value) || 0 }))
                     }
                   />
                 </div>
@@ -1050,7 +1041,7 @@ export default function ProductManagement({ initialProducts }: { initialProducts
                   <Label>SEO 標題</Label>
                   <Input
                     value={formData.seoTitle || ''}
-                    onChange={e => setFormData(prev => ({ ...prev, seoTitle: e.target.value }))}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, seoTitle: e.target.value }))}
                   />
                 </div>
                 <div className="col-span-3 flex flex-col gap-2">
@@ -1058,8 +1049,8 @@ export default function ProductManagement({ initialProducts }: { initialProducts
                   <Textarea
                     rows={3}
                     value={formData.seoDescription || ''}
-                    onChange={e =>
-                      setFormData(prev => ({ ...prev, seoDescription: e.target.value }))
+                    onChange={(e) =>
+                      setFormData((prev) => ({ ...prev, seoDescription: e.target.value }))
                     }
                   />
                 </div>
@@ -1101,7 +1092,7 @@ export function normalizeFormData(
   specOrder: string[] = []
 ): ProductFormData {
   const variants = Array.isArray(fd.variants)
-    ? fd.variants.map(variant => ({
+    ? fd.variants.map((variant) => ({
         name: (variant?.name ?? '').toString().trim(),
         price:
           typeof variant?.price === 'number'
@@ -1113,12 +1104,12 @@ export function normalizeFormData(
     : [];
 
   const images = Array.isArray(fd.images)
-    ? fd.images.map(img => (typeof img === 'string' ? img.trim() : '')).filter(Boolean)
+    ? fd.images.map((img) => (typeof img === 'string' ? img.trim() : '')).filter(Boolean)
     : [];
 
   const features = Array.isArray(fd.features)
     ? fd.features
-        .map(feature => (typeof feature === 'string' ? feature.trim() : ''))
+        .map((feature) => (typeof feature === 'string' ? feature.trim() : ''))
         .filter(Boolean)
     : [];
 
@@ -1141,11 +1132,11 @@ export function normalizeFormData(
     .filter(([key, value]) => key.length > 0 && value.length > 0);
 
   const orderedKeys = specOrder.length
-    ? specOrder.filter(orderKey => specificationEntries.some(([key]) => key === orderKey))
+    ? specOrder.filter((orderKey) => specificationEntries.some(([key]) => key === orderKey))
     : specificationEntries.map(([key]) => key);
 
   const specifications: Record<string, string> = {};
-  orderedKeys.forEach(key => {
+  orderedKeys.forEach((key) => {
     const entry = specificationEntries.find(([specKey]) => specKey === key);
     if (entry) {
       specifications[entry[0]] = entry[1];
@@ -1178,7 +1169,6 @@ export function normalizeFormData(
   };
 }
 
-
 interface ValidationResult {
   success: boolean;
   data?: ProductFormData;
@@ -1206,7 +1196,7 @@ export function validateProductWithFallback(data: ProductFormData): ValidationRe
 
 function mapZodIssues(issues: ZodIssue[]): Record<string, string> {
   const mapped: Record<string, string> = {};
-  issues.forEach(issue => {
+  issues.forEach((issue) => {
     const key = issue.path.length > 0 ? issue.path.join('.') : 'form';
     mapped[key] = issue.message;
   });
@@ -1275,7 +1265,7 @@ export function sanitizeProduct(
   const safeProduct = (product ?? {}) as Product;
 
   const images = Array.isArray(safeProduct.images)
-    ? safeProduct.images.filter(Boolean).map(image => {
+    ? safeProduct.images.filter(Boolean).map((image) => {
         const imgString = String(image);
         const key = extractAssetKey(imgString);
         return resolveAssetUrl({ key, url: imgString }, cdnUrl, fallbackBase);

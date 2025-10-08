@@ -55,30 +55,30 @@ const blogPostSchema = z.object({
   featured: z.boolean().default(false),
   allowComments: z.boolean().default(true),
   // Safe null handling - only convert null/undefined, preserve other falsy values
-  featuredImage: z.preprocess(val => (val === null || val === undefined ? '' : val), z.string()),
+  featuredImage: z.preprocess((val) => (val === null || val === undefined ? '' : val), z.string()),
   // SEO Fields - explicit null/undefined handling with validation
   seoTitle: z.preprocess(
-    val => (val === null || val === undefined ? '' : val),
+    (val) => (val === null || val === undefined ? '' : val),
     z.string().max(60, 'SEO標題不能超過60個字元').optional()
   ),
   seoDescription: z.preprocess(
-    val => (val === null || val === undefined ? '' : val),
+    (val) => (val === null || val === undefined ? '' : val),
     z.string().max(160, 'SEO描述不能超過160個字元').optional()
   ),
   seoKeywords: z.array(z.string()).default([]),
-  canonicalUrl: z.preprocess(val => (val === null || val === undefined ? '' : val), z.string()),
+  canonicalUrl: z.preprocess((val) => (val === null || val === undefined ? '' : val), z.string()),
   // Social Media - explicit null/undefined handling
   ogTitle: z.preprocess(
-    val => (val === null || val === undefined ? '' : val),
+    (val) => (val === null || val === undefined ? '' : val),
     z.string().max(60, 'Open Graph標題不能超過60個字元').optional()
   ),
   ogDescription: z.preprocess(
-    val => (val === null || val === undefined ? '' : val),
+    (val) => (val === null || val === undefined ? '' : val),
     z.string().max(160, 'Open Graph描述不能超過160個字元').optional()
   ),
-  ogImage: z.preprocess(val => (val === null || val === undefined ? '' : val), z.string()),
+  ogImage: z.preprocess((val) => (val === null || val === undefined ? '' : val), z.string()),
   // Publishing - allow any string or empty
-  scheduledAt: z.preprocess(val => (val === null || val === undefined ? '' : val), z.string()),
+  scheduledAt: z.preprocess((val) => (val === null || val === undefined ? '' : val), z.string()),
   readingTime: z.number().min(1).max(60).default(5),
 });
 
@@ -163,7 +163,7 @@ export default function BlogComposer() {
       PUBLIC_WEB_URL,
       (import.meta as any)?.env?.PUBLIC_WEB_URL,
       (import.meta as any)?.env?.PUBLIC_SITE_URL,
-    ].find(value => typeof value === 'string' && value.trim().length > 0);
+    ].find((value) => typeof value === 'string' && value.trim().length > 0);
 
     if (envCandidate) {
       return String(envCandidate).replace(/\/$/, '');
@@ -195,7 +195,7 @@ export default function BlogComposer() {
   // Compute canonical URL from slug and keep it in sync
   useEffect(() => {
     const canonical = watchedSlug ? `${canonicalBase}/posts/${watchedSlug}` : '';
-    setCanonicalPreview(prev => (prev === canonical ? prev : canonical));
+    setCanonicalPreview((prev) => (prev === canonical ? prev : canonical));
 
     const currentCanonical = getValues('canonicalUrl');
     if (currentCanonical !== canonical) {
@@ -245,13 +245,10 @@ export default function BlogComposer() {
   const invalidateCategoriesCache = async () => {
     try {
       setRefreshingCategories(true);
-      const res = await fetch(
-        `${apiUrl}/api/posts/categories/cache/invalidate`,
-        {
-          method: 'POST',
-          credentials: 'include',
-        }
-      );
+      const res = await fetch(`${apiUrl}/api/posts/categories/cache/invalidate`, {
+        method: 'POST',
+        credentials: 'include',
+      });
       if (!res.ok) throw new Error('Failed to invalidate categories cache');
       await fetchCategories();
       toast.success('分類快取已更新');
@@ -286,8 +283,8 @@ export default function BlogComposer() {
 
         if (!normalizedCatId && normalizedCatName && cats.length > 0) {
           const match =
-            cats.find(c => c.name === normalizedCatName) ||
-            cats.find(c => c.slug === normalizedCatName);
+            cats.find((c) => c.name === normalizedCatName) ||
+            cats.find((c) => c.slug === normalizedCatName);
           if (match) {
             setValue('categoryId', match.id, { shouldDirty: false });
             setValue('category', match.name, { shouldDirty: false });
@@ -382,12 +379,12 @@ export default function BlogComposer() {
 
           // Try matching by name first
           if (derivedCategory.name) {
-            matchedCategory = categoryPool.find(cat => cat.name === derivedCategory.name);
+            matchedCategory = categoryPool.find((cat) => cat.name === derivedCategory.name);
           }
 
           // Try matching by slug if name match failed
           if (!matchedCategory && derivedCategory.slug) {
-            matchedCategory = categoryPool.find(cat => cat.slug === derivedCategory.slug);
+            matchedCategory = categoryPool.find((cat) => cat.slug === derivedCategory.slug);
           }
 
           // Fallback to first category if no match found
@@ -413,7 +410,7 @@ export default function BlogComposer() {
     }
   };
 
-  const onSubmit: SubmitHandler<BlogPostFormData> = async data => {
+  const onSubmit: SubmitHandler<BlogPostFormData> = async (data) => {
     // Show immediate feedback
     toast.info(isEditing ? '正在更新文章...' : '正在儲存文章...');
 
@@ -465,7 +462,7 @@ export default function BlogComposer() {
       }
 
       // Remove undefined fields to avoid sending null values
-      Object.keys(payload).forEach(key => {
+      Object.keys(payload).forEach((key) => {
         if (payload[key] === undefined || payload[key] === null || payload[key] === '') {
           delete payload[key];
         }
@@ -473,7 +470,7 @@ export default function BlogComposer() {
 
       // Ensure category name is aligned with selected categoryId
       if (data.categoryId) {
-        const found = categories.find(c => c.id === data.categoryId);
+        const found = categories.find((c) => c.id === data.categoryId);
         if (found) {
           payload.category = found.name;
         }
@@ -613,7 +610,7 @@ export default function BlogComposer() {
     const currentTags = getValues('tags');
     setValue(
       'tags',
-      currentTags.filter(tag => tag !== tagToRemove),
+      currentTags.filter((tag) => tag !== tagToRemove),
       { shouldDirty: true }
     );
   };
@@ -631,7 +628,7 @@ export default function BlogComposer() {
     const currentKeywords = getValues('seoKeywords');
     setValue(
       'seoKeywords',
-      currentKeywords.filter(kw => kw !== keywordToRemove),
+      currentKeywords.filter((kw) => kw !== keywordToRemove),
       { shouldDirty: true }
     );
   };
@@ -663,7 +660,7 @@ export default function BlogComposer() {
           <Button
             type="button"
             variant="outline"
-            onClick={() => handleSubmit(d => onSubmit({ ...d, status: 'draft' }))()}
+            onClick={() => handleSubmit((d) => onSubmit({ ...d, status: 'draft' }))()}
             disabled={saving || loadingCategories || !watchedCategoryId}
             className="disabled:opacity-60 disabled:cursor-not-allowed"
           >
@@ -681,7 +678,7 @@ export default function BlogComposer() {
                 console.warn('⚠️ Found null values in form:', nullFields);
               }
 
-              handleSubmit(onSubmit, validationErrors => {
+              handleSubmit(onSubmit, (validationErrors) => {
                 // Clean up null values and retry
                 const cleanedData = Object.fromEntries(
                   Object.entries(getValues()).map(([key, value]) => [
@@ -886,10 +883,10 @@ export default function BlogComposer() {
                       <div className="flex gap-2 mt-1">
                         <Input
                           value={keywordInput}
-                          onChange={e => setKeywordInput(e.target.value)}
+                          onChange={(e) => setKeywordInput(e.target.value)}
                           placeholder="輸入關鍵字"
                           className={`placeholder:opacity-55 placeholder:text-sm`}
-                          onKeyPress={e => {
+                          onKeyPress={(e) => {
                             if (e.key === 'Enter') {
                               e.preventDefault();
                               addKeyword();
@@ -975,7 +972,7 @@ export default function BlogComposer() {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          {statusOptions.map(option => (
+                          {statusOptions.map((option) => (
                             <SelectItem key={option.value} value={option.value}>
                               <div>
                                 <div className="font-medium">{option.label}</div>
@@ -1044,9 +1041,9 @@ export default function BlogComposer() {
                     render={({ field }) => (
                       <Select
                         value={field.value}
-                        onValueChange={val => {
+                        onValueChange={(val) => {
                           field.onChange(val);
-                          const found = categories.find(c => c.id === val);
+                          const found = categories.find((c) => c.id === val);
                           if (found) setValue('category', found.name, { shouldDirty: false });
                         }}
                       >
@@ -1054,7 +1051,7 @@ export default function BlogComposer() {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          {categories.map(cat => (
+                          {categories.map((cat) => (
                             <SelectItem key={cat.id} value={cat.id}>
                               <div>
                                 <div className="font-medium">{cat.name}</div>
@@ -1078,9 +1075,9 @@ export default function BlogComposer() {
                   <div className="flex gap-2 mt-1">
                     <Input
                       value={tagInput}
-                      onChange={e => setTagInput(e.target.value)}
+                      onChange={(e) => setTagInput(e.target.value)}
                       placeholder="新增標籤"
-                      onKeyPress={e => {
+                      onKeyPress={(e) => {
                         if (e.key === 'Enter') {
                           e.preventDefault();
                           addTag();
@@ -1125,7 +1122,7 @@ export default function BlogComposer() {
                       <div className="space-y-4">
                         <ImageUpload
                           value={value ? [value] : []}
-                          onChange={images => onChange(images[0] ?? '')}
+                          onChange={(images) => onChange(images[0] ?? '')}
                           folder="blog-featured"
                           multiple={false}
                           emptyHint="上傳後會自動轉換為 WebP，確保載入速度"
@@ -1137,7 +1134,7 @@ export default function BlogComposer() {
                             id="featuredImageInput"
                             ref={ref}
                             value={value ?? ''}
-                            onChange={event => onChange(event.target.value)}
+                            onChange={(event) => onChange(event.target.value)}
                             onBlur={onBlur}
                             placeholder="圖片 URL 或上傳圖片"
                           />

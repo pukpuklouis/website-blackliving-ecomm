@@ -37,7 +37,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [loading, setLoading] = useState(true);
   const apiUrl = useApiUrl();
 
-
   const checkAuth = useCallback(async () => {
     try {
       const data = await checkSession();
@@ -103,7 +102,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           onSuccess: () => {
             console.log('Better Auth logout successful');
           },
-          onError: error => {
+          onError: (error) => {
             console.warn('Better Auth logout error:', error);
           },
         },

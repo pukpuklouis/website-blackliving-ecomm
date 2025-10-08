@@ -74,7 +74,7 @@ export default function Login() {
                   id="email"
                   type="email"
                   value={email}
-                  onChange={e => setEmail(e.target.value)}
+                  onChange={(e) => setEmail(e.target.value)}
                   placeholder="admin@blackliving.com"
                   required
                   disabled={loading}
@@ -87,7 +87,7 @@ export default function Login() {
                   id="password"
                   type="password"
                   value={password}
-                  onChange={e => setPassword(e.target.value)}
+                  onChange={(e) => setPassword(e.target.value)}
                   placeholder="請輸入密碼"
                   required
                   disabled={loading}

@@ -1,5 +1,5 @@
-import { createPagesFunctionHandler } from "@remix-run/cloudflare";
-import * as build from "./build/server/index.js";
+import { createPagesFunctionHandler } from '@remix-run/cloudflare';
+import * as build from './build/server/index.js';
 
 type Env = Record<string, unknown> & {
   ASSETS?: { fetch(request: Request): Promise<Response> };

@@ -1,7 +1,7 @@
-import type { AppLoadContext, EntryContext } from "react-router";
-import { ServerRouter } from "react-router";
-import { isbot } from "isbot";
-import { renderToReadableStream } from "react-dom/server.edge";
+import type { AppLoadContext, EntryContext } from 'react-router';
+import { ServerRouter } from 'react-router';
+import { isbot } from 'isbot';
+import { renderToReadableStream } from 'react-dom/server.edge';
 
 export const streamTimeout = 5_000;
 
@@ -10,7 +10,7 @@ export default async function handleRequest(
   responseStatusCode: number,
   responseHeaders: Headers,
   routerContext: EntryContext,
-  loadContext: AppLoadContext,
+  loadContext: AppLoadContext
 ) {
   const body = await renderToReadableStream(
     <ServerRouter context={routerContext} url={request.url} />,
@@ -20,10 +20,10 @@ export default async function handleRequest(
         responseStatusCode = 500;
         console.error(error);
       },
-    },
+    }
   );
 
-  const userAgent = request.headers.get("user-agent");
+  const userAgent = request.headers.get('user-agent');
   if ((routerContext.isSpaMode || (userAgent && isbot(userAgent))) && body.allReady) {
     await Promise.race([
       body.allReady,
@@ -31,7 +31,7 @@ export default async function handleRequest(
     ]);
   }
 
-  responseHeaders.set("Content-Type", "text/html");
+  responseHeaders.set('Content-Type', 'text/html');
 
   return new Response(body, {
     headers: responseHeaders,

@@ -105,7 +105,7 @@ export async function fetchMediaLibrary(
       nextCursor:
         pageInfo && typeof pageInfo.nextCursor === 'string'
           ? pageInfo.nextCursor
-          : pageInfo?.nextCursor ?? null,
+          : (pageInfo?.nextCursor ?? null),
       hasMore: Boolean(pageInfo?.hasMore),
     },
   };

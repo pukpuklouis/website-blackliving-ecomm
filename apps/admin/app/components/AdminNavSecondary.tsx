@@ -25,7 +25,7 @@ export function AdminNavSecondary({
     <SidebarGroup {...props}>
       <SidebarGroupContent>
         <SidebarMenu>
-          {items.map(item => {
+          {items.map((item) => {
             const isActive = location.pathname === item.url;
             return (
               <SidebarMenuItem key={item.title}>

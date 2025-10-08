@@ -92,8 +92,8 @@ export function ImageUpload({
 
       <div
         className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center mt-4"
-        onDragOver={event => event.preventDefault()}
-        onDrop={event => {
+        onDragOver={(event) => event.preventDefault()}
+        onDrop={(event) => {
           event.preventDefault();
           handleFilesSelected(event.dataTransfer.files);
         }}
@@ -108,7 +108,7 @@ export function ImageUpload({
               accept="image/*"
               multiple={multiple}
               className="hidden"
-              onChange={event => {
+              onChange={(event) => {
                 handleFilesSelected(event.target.files);
                 event.target.value = '';
               }}
@@ -128,7 +128,7 @@ export function ImageUpload({
               draggable={multiple}
               onDragStart={() => handleDragStart(index)}
               onDragEnter={() => handleDragEnter(index)}
-              onDragOver={event => event.preventDefault()}
+              onDragOver={(event) => event.preventDefault()}
               onDragEnd={handleDragEnd}
               onDrop={handleDragEnd}
             >
@@ -207,7 +207,7 @@ export function mergeImages(current: string[], uploaded: string[], multiple: boo
 
   const combined = [...current, ...uploaded];
   const seen = new Set<string>();
-  return combined.filter(url => {
+  return combined.filter((url) => {
     if (seen.has(url)) return false;
     seen.add(url);
     return true;

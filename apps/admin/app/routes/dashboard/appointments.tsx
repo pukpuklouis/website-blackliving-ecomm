@@ -143,11 +143,11 @@ export default function AppointmentsPage() {
   const columns = [
     columnHelper.accessor('appointmentNumber', {
       header: '預約編號',
-      cell: info => <div className="font-mono text-sm font-medium">{info.getValue()}</div>,
+      cell: (info) => <div className="font-mono text-sm font-medium">{info.getValue()}</div>,
     }),
     columnHelper.accessor('customerInfo', {
       header: '客戶資訊',
-      cell: info => {
+      cell: (info) => {
         const customer = info.getValue();
         return (
           <div>
@@ -166,7 +166,7 @@ export default function AppointmentsPage() {
     }),
     columnHelper.accessor('storeLocation', {
       header: '門市',
-      cell: info => (
+      cell: (info) => (
         <Badge variant="outline" className="flex items-center gap-1 w-fit">
           <MapPin className="h-3 w-3" />
           {storeLabels[info.getValue()]}
@@ -176,7 +176,7 @@ export default function AppointmentsPage() {
     }),
     columnHelper.accessor('preferredDate', {
       header: '預約日期',
-      cell: info => {
+      cell: (info) => {
         const appointment = info.row.original;
         return (
           <div>
@@ -194,11 +194,11 @@ export default function AppointmentsPage() {
     }),
     columnHelper.accessor('visitPurpose', {
       header: '目的',
-      cell: info => <Badge variant="secondary">{purposeLabels[info.getValue()]}</Badge>,
+      cell: (info) => <Badge variant="secondary">{purposeLabels[info.getValue()]}</Badge>,
     }),
     columnHelper.accessor('status', {
       header: '狀態',
-      cell: info => (
+      cell: (info) => (
         <Badge className={`text-white ${statusColors[info.getValue()]}`}>
           {statusLabels[info.getValue()]}
         </Badge>
@@ -207,11 +207,11 @@ export default function AppointmentsPage() {
     }),
     columnHelper.accessor('staffAssigned', {
       header: '服務人員',
-      cell: info => info.getValue() || <span className="text-gray-400">未指派</span>,
+      cell: (info) => info.getValue() || <span className="text-gray-400">未指派</span>,
     }),
     columnHelper.accessor('createdAt', {
       header: '建立時間',
-      cell: info =>
+      cell: (info) =>
         new Date(info.getValue()).toLocaleDateString('zh-TW', {
           month: '2-digit',
           day: '2-digit',
@@ -316,19 +316,16 @@ export default function AppointmentsPage() {
 
   const handleUpdateStatus = async (appointmentId: string, newStatus: Appointment['status']) => {
     try {
-      const response = await fetch(
-        `${apiUrl}/api/appointments/${appointmentId}/status`,
-        {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify({ status: newStatus }),
-        }
-      );
+      const response = await fetch(`${apiUrl}/api/appointments/${appointmentId}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ status: newStatus }),
+      });
 
       if (response.ok) {
-        setAppointments(prev =>
-          prev.map(appointment =>
+        setAppointments((prev) =>
+          prev.map((appointment) =>
             appointment.id === appointmentId
               ? { ...appointment, status: newStatus, updatedAt: new Date() }
               : appointment
@@ -346,18 +343,15 @@ export default function AppointmentsPage() {
 
   const handleConfirmAppointment = async (appointmentId: string, confirmedDateTime: string) => {
     try {
-      const response = await fetch(
-        `${apiUrl}/api/appointments/${appointmentId}/confirm`,
-        {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify({
-            status: 'confirmed',
-            confirmedDateTime: new Date(confirmedDateTime).toISOString(),
-          }),
-        }
-      );
+      const response = await fetch(`${apiUrl}/api/appointments/${appointmentId}/confirm`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          status: 'confirmed',
+          confirmedDateTime: new Date(confirmedDateTime).toISOString(),
+        }),
+      });
 
       if (response.ok) {
         await loadAppointments();
@@ -399,7 +393,7 @@ export default function AppointmentsPage() {
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">待確認</p>
                 <p className="text-2xl font-bold">
-                  {appointments.filter(a => a.status === 'pending').length}
+                  {appointments.filter((a) => a.status === 'pending').length}
                 </p>
               </div>
             </div>
@@ -412,7 +406,7 @@ export default function AppointmentsPage() {
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">已確認</p>
                 <p className="text-2xl font-bold">
-                  {appointments.filter(a => a.status === 'confirmed').length}
+                  {appointments.filter((a) => a.status === 'confirmed').length}
                 </p>
               </div>
             </div>
@@ -425,7 +419,7 @@ export default function AppointmentsPage() {
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">已完成</p>
                 <p className="text-2xl font-bold">
-                  {appointments.filter(a => a.status === 'completed').length}
+                  {appointments.filter((a) => a.status === 'completed').length}
                 </p>
               </div>
             </div>
@@ -438,7 +432,7 @@ export default function AppointmentsPage() {
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">未到場</p>
                 <p className="text-2xl font-bold">
-                  {appointments.filter(a => a.status === 'no_show').length}
+                  {appointments.filter((a) => a.status === 'no_show').length}
                 </p>
               </div>
             </div>
@@ -451,7 +445,7 @@ export default function AppointmentsPage() {
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">需追蹤</p>
                 <p className="text-2xl font-bold">
-                  {appointments.filter(a => a.followUpRequired).length}
+                  {appointments.filter((a) => a.followUpRequired).length}
                 </p>
               </div>
             </div>
@@ -475,14 +469,14 @@ export default function AppointmentsPage() {
                 <Input
                   placeholder="搜尋預約編號、客戶姓名、電話..."
                   value={globalFilter}
-                  onChange={e => setGlobalFilter(e.target.value)}
+                  onChange={(e) => setGlobalFilter(e.target.value)}
                   className="pl-10"
                 />
               </div>
             </div>
             <Select
               value={(table.getColumn('status')?.getFilterValue() as string) ?? ''}
-              onValueChange={value =>
+              onValueChange={(value) =>
                 table.getColumn('status')?.setFilterValue(value === 'all' ? '' : value)
               }
             >
@@ -500,7 +494,7 @@ export default function AppointmentsPage() {
             </Select>
             <Select
               value={(table.getColumn('storeLocation')?.getFilterValue() as string) ?? ''}
-              onValueChange={value =>
+              onValueChange={(value) =>
                 table.getColumn('storeLocation')?.setFilterValue(value === 'all' ? '' : value)
               }
             >
@@ -527,9 +521,9 @@ export default function AppointmentsPage() {
           <div className="rounded-md border">
             <table className="w-full">
               <thead>
-                {table.getHeaderGroups().map(headerGroup => (
+                {table.getHeaderGroups().map((headerGroup) => (
                   <tr key={headerGroup.id} className="border-b bg-gray-50/50">
-                    {headerGroup.headers.map(header => (
+                    {headerGroup.headers.map((header) => (
                       <th key={header.id} className="px-4 py-3 text-left font-medium text-gray-900">
                         {header.isPlaceholder
                           ? null
@@ -540,9 +534,9 @@ export default function AppointmentsPage() {
                 ))}
               </thead>
               <tbody>
-                {table.getRowModel().rows.map(row => (
+                {table.getRowModel().rows.map((row) => (
                   <tr key={row.id} className="border-b hover:bg-gray-50/50">
-                    {row.getVisibleCells().map(cell => (
+                    {row.getVisibleCells().map((cell) => (
                       <td key={cell.id} className="px-4 py-3">
                         {flexRender(cell.column.columnDef.cell, cell.getContext())}
                       </td>

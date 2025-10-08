@@ -51,9 +51,7 @@ async function tryCreateImageBitmap(file: File): Promise<ImageBitmap | null> {
   }
 }
 
-async function loadImageElement(
-  file: File
-): Promise<{
+async function loadImageElement(file: File): Promise<{
   width: number;
   height: number;
   draw: (ctx: CanvasRenderingContext2D) => void;
@@ -74,7 +72,7 @@ async function loadImageElement(
       });
     };
 
-    image.onerror = event => {
+    image.onerror = (event) => {
       URL.revokeObjectURL(objectUrl);
       reject(new Error('Unable to load image for WebP conversion.'));
       console.error('Image load error during WebP conversion:', event);
@@ -110,7 +108,7 @@ async function canvasToBlob(
   const htmlCanvas = canvas as HTMLCanvasElement;
   return new Promise((resolve, reject) => {
     htmlCanvas.toBlob(
-      blob => {
+      (blob) => {
         if (!blob) {
           reject(new Error('Failed to convert canvas to WebP blob.'));
           return;
