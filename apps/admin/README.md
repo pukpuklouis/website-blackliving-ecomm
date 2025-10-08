@@ -101,5 +101,6 @@ curl -X POST -H "Authorization: Bearer <admin-token>" \
 ```
 
 Files involved:
+
 - Admin UI: `apps/admin/app/components/BlogComposer.tsx`
 - API + cache: `apps/api/src/modules/posts.ts`, `apps/api/src/lib/cache.ts`

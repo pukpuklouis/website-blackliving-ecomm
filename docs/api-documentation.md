@@ -1023,7 +1023,7 @@ async function createProduct(productData) {
 async function uploadProductImages(files) {
   const formData = new FormData();
 
-  files.forEach(file => {
+  files.forEach((file) => {
     formData.append('files', file);
   });
   formData.append('folder', 'products');
@@ -1039,7 +1039,7 @@ async function uploadProductImages(files) {
   const result = await response.json();
 
   if (result.success) {
-    return result.data.map(file => file.url);
+    return result.data.map((file) => file.url);
   }
   throw new Error(result.error);
 }
