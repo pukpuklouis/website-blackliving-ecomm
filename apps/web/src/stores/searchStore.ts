@@ -62,7 +62,7 @@ function loadRecentEntries(): RecentSearchEntry[] {
     if (!Array.isArray(parsed)) return [];
 
     return parsed
-      .filter(entry => typeof entry?.id === 'string' && typeof entry?.query === 'string')
+      .filter((entry) => typeof entry?.id === 'string' && typeof entry?.query === 'string')
       .slice(0, MAX_RECENT_ITEMS);
   } catch (error) {
     console.warn('Failed to parse recent searches', error);
@@ -84,7 +84,10 @@ function persistRecentEntries(entries: RecentSearchEntry[]) {
 
 function createRecentEntry(query: string): RecentSearchEntry {
   return {
-    id: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`,
+    id:
+      typeof crypto !== 'undefined' && crypto.randomUUID
+        ? crypto.randomUUID()
+        : `${Date.now()}-${Math.random()}`,
     query,
     executedAt: new Date().toISOString(),
   };
@@ -103,12 +106,12 @@ export const useSearchStore = create<SearchStoreState>((set, get) => ({
 
   openModal: () => set({ isOpen: true }),
   closeModal: () => set({ isOpen: false }),
-  toggleModal: () => set(state => ({ isOpen: !state.isOpen })),
+  toggleModal: () => set((state) => ({ isOpen: !state.isOpen })),
 
-  setQuery: value => set({ query: value }),
+  setQuery: (value) => set({ query: value }),
 
   clearResults: () =>
-    set(state => {
+    set((state) => {
       const hasData =
         state.results.products.length > 0 ||
         state.results.posts.length > 0 ||
@@ -127,9 +130,9 @@ export const useSearchStore = create<SearchStoreState>((set, get) => ({
       };
     }),
 
-  setLoading: loading => set({ isLoading: loading }),
+  setLoading: (loading) => set({ isLoading: loading }),
 
-  setError: message => set({ error: message }),
+  setError: (message) => set({ error: message }),
 
   hydrate: () => {
     if (get().hasHydrated) return;
@@ -137,30 +140,30 @@ export const useSearchStore = create<SearchStoreState>((set, get) => ({
     set({ recent: entries, hasHydrated: true });
   },
 
-  addRecent: query => {
+  addRecent: (query) => {
     const trimmed = query.trim();
     if (!trimmed) return;
 
     const { recent } = get();
-    const filtered = recent.filter(entry => entry.query !== trimmed);
+    const filtered = recent.filter((entry) => entry.query !== trimmed);
     const nextEntries = [createRecentEntry(trimmed), ...filtered].slice(0, MAX_RECENT_ITEMS);
 
     set({ recent: nextEntries });
     persistRecentEntries(nextEntries);
   },
 
-  removeRecent: id => {
-    const nextEntries = get().recent.filter(entry => entry.id !== id);
+  removeRecent: (id) => {
+    const nextEntries = get().recent.filter((entry) => entry.id !== id);
     set({ recent: nextEntries });
     persistRecentEntries(nextEntries);
   },
 
-  registerResultClick: result => {
+  registerResultClick: (result) => {
     const state = get();
     state.addRecent(state.query || result.title);
   },
 
-  search: async options => {
+  search: async (options) => {
     const state = get();
     const query = (options?.query ?? state.query).trim();
 

@@ -93,7 +93,7 @@ export function ProfileForm({ className, onSuccess, onError }: ProfileFormProps)
 
   // Handle input changes with validation
   const handleInputChange = (field: keyof FormData, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
     setSuccessMessage(''); // Clear success message on edit
 
     // Real-time validation
@@ -113,7 +113,7 @@ export function ProfileForm({ className, onSuccess, onError }: ProfileFormProps)
         break;
     }
 
-    setErrors(prev => ({ ...prev, [field]: error || undefined }));
+    setErrors((prev) => ({ ...prev, [field]: error || undefined }));
   };
 
   // Validate entire form
@@ -158,7 +158,7 @@ export function ProfileForm({ className, onSuccess, onError }: ProfileFormProps)
       };
 
       // Remove empty strings and convert to undefined
-      Object.keys(updateData).forEach(key => {
+      Object.keys(updateData).forEach((key) => {
         const value = updateData[key as keyof ProfileUpdateRequest];
         if (value === '') {
           delete updateData[key as keyof ProfileUpdateRequest];
@@ -261,7 +261,7 @@ export function ProfileForm({ className, onSuccess, onError }: ProfileFormProps)
                 id="firstName"
                 type="text"
                 value={formData.firstName}
-                onChange={e => handleInputChange('firstName', e.target.value)}
+                onChange={(e) => handleInputChange('firstName', e.target.value)}
                 className={errors.firstName ? 'border-red-500' : ''}
                 placeholder="請輸入姓氏"
                 required
@@ -274,7 +274,7 @@ export function ProfileForm({ className, onSuccess, onError }: ProfileFormProps)
                 id="lastName"
                 type="text"
                 value={formData.lastName}
-                onChange={e => handleInputChange('lastName', e.target.value)}
+                onChange={(e) => handleInputChange('lastName', e.target.value)}
                 className={errors.lastName ? 'border-red-500' : ''}
                 placeholder="請輸入名字"
                 required
@@ -290,7 +290,7 @@ export function ProfileForm({ className, onSuccess, onError }: ProfileFormProps)
               id="phone"
               type="tel"
               value={formData.phone}
-              onChange={e => handleInputChange('phone', e.target.value)}
+              onChange={(e) => handleInputChange('phone', e.target.value)}
               className={errors.phone ? 'border-red-500' : ''}
               placeholder="09xxxxxxxx"
             />
@@ -305,7 +305,7 @@ export function ProfileForm({ className, onSuccess, onError }: ProfileFormProps)
               id="birthday"
               type="date"
               value={formData.birthday}
-              onChange={e => handleInputChange('birthday', e.target.value)}
+              onChange={(e) => handleInputChange('birthday', e.target.value)}
             />
           </div>
 
@@ -315,7 +315,7 @@ export function ProfileForm({ className, onSuccess, onError }: ProfileFormProps)
             <Select
               key={formData.gender}
               value={formData.gender}
-              onValueChange={value => handleInputChange('gender', value)}
+              onValueChange={(value) => handleInputChange('gender', value)}
             >
               <SelectTrigger>
                 <SelectValue placeholder="請選擇性別" />
@@ -335,7 +335,7 @@ export function ProfileForm({ className, onSuccess, onError }: ProfileFormProps)
             <Select
               key={formData.contactPreference}
               value={formData.contactPreference}
-              onValueChange={value => handleInputChange('contactPreference', value)}
+              onValueChange={(value) => handleInputChange('contactPreference', value)}
             >
               <SelectTrigger>
                 <SelectValue />
@@ -366,7 +366,7 @@ export function ProfileForm({ className, onSuccess, onError }: ProfileFormProps)
               disabled={
                 !localIsDirty ||
                 isSubmitting ||
-                Object.keys(errors).some(key => errors[key as keyof FormData])
+                Object.keys(errors).some((key) => errors[key as keyof FormData])
               }
               className="flex items-center gap-2"
             >

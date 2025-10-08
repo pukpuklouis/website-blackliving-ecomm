@@ -11,7 +11,7 @@ export default function ProductSelectionStep() {
     { id: 'us-imports', name: '美國進口商品', icon: '🇺🇸' },
   ];
 
-  const filteredProducts = products.filter(product => product.category === selectedCategory);
+  const filteredProducts = products.filter((product) => product.category === selectedCategory);
 
   const handleProductSelect = (product: (typeof products)[0]) => {
     updateAppointmentData({ selectedProduct: product });
@@ -36,7 +36,7 @@ export default function ProductSelectionStep() {
       {/* Category tabs */}
       <div className="flex justify-center mb-8">
         <div className="flex bg-gray-100 rounded-lg p-1">
-          {categories.map(category => (
+          {categories.map((category) => (
             <button
               key={category.id}
               onClick={() => setSelectedCategory(category.id)}
@@ -62,7 +62,7 @@ export default function ProductSelectionStep() {
           <div
             key={product.id}
             onClick={() => handleProductSelect(product)}
-            onKeyPress={e => handleKeyPress(e, product)}
+            onKeyPress={(e) => handleKeyPress(e, product)}
             tabIndex={0}
             className={`
               p-6 rounded-lg border-2 cursor-pointer transition-all duration-200 text-left

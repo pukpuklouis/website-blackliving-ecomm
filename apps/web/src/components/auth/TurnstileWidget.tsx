@@ -73,7 +73,7 @@ export function TurnstileWidget({ onToken, siteKey, disabled = false }: Turnstil
 
     widgetIdRef.current = window.turnstile.render(containerRef.current, {
       sitekey: siteKey,
-      callback: token => onToken(token),
+      callback: (token) => onToken(token),
       'expired-callback': () => onToken(null),
       'error-callback': () => onToken(null),
     });

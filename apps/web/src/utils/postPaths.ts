@@ -93,7 +93,7 @@ export async function generateBlogPaths(category?: string): Promise<
   try {
     const posts = await fetchAllBlogPosts({ category, published: true });
 
-    return posts.map(post => ({
+    return posts.map((post) => ({
       params: { postSlug: post.slug },
       props: { post },
     }));
@@ -136,7 +136,7 @@ function getSampleBlogPaths(category?: string): Array<{
 }> {
   const samplePosts = getSampleBlogPosts({ category });
 
-  return samplePosts.map(post => ({
+  return samplePosts.map((post) => ({
     params: { postSlug: post.slug },
     props: { post },
   }));
@@ -191,7 +191,7 @@ function getSampleBlogPosts(options: StaticPathOptions = {}): BlogPost[] {
 
   // Filter by category if specified
   if (category) {
-    return allSamplePosts.filter(post => post.category === category);
+    return allSamplePosts.filter((post) => post.category === category);
   }
 
   return allSamplePosts;
@@ -212,7 +212,7 @@ export async function getRelatedPosts(
     });
 
     // Filter out current post and limit results
-    return relatedPosts.filter(post => post.id !== currentPost.id).slice(0, limit);
+    return relatedPosts.filter((post) => post.id !== currentPost.id).slice(0, limit);
   } catch (error) {
     console.warn('Error fetching related posts:', error);
     return [];

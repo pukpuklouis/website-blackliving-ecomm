@@ -151,7 +151,7 @@ const CheckoutForm: FC<CheckoutFormProps> = ({ onSuccess }) => {
       {/* Progress Steps */}
       <div className="mb-8">
         <div className="flex items-center justify-center space-x-4">
-          {[1, 2, 3].map(step => (
+          {[1, 2, 3].map((step) => (
             <div key={step} className="flex items-center">
               <div
                 className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold ${
@@ -198,8 +198,8 @@ const CheckoutForm: FC<CheckoutFormProps> = ({ onSuccess }) => {
                     type="text"
                     required
                     value={localCustomerInfo.name}
-                    onChange={e =>
-                      setLocalCustomerInfo(prev => ({ ...prev, name: e.target.value }))
+                    onChange={(e) =>
+                      setLocalCustomerInfo((prev) => ({ ...prev, name: e.target.value }))
                     }
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
                   />
@@ -211,8 +211,8 @@ const CheckoutForm: FC<CheckoutFormProps> = ({ onSuccess }) => {
                     type="email"
                     required
                     value={localCustomerInfo.email}
-                    onChange={e =>
-                      setLocalCustomerInfo(prev => ({ ...prev, email: e.target.value }))
+                    onChange={(e) =>
+                      setLocalCustomerInfo((prev) => ({ ...prev, email: e.target.value }))
                     }
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
                   />
@@ -224,8 +224,8 @@ const CheckoutForm: FC<CheckoutFormProps> = ({ onSuccess }) => {
                     type="tel"
                     required
                     value={localCustomerInfo.phone}
-                    onChange={e =>
-                      setLocalCustomerInfo(prev => ({ ...prev, phone: e.target.value }))
+                    onChange={(e) =>
+                      setLocalCustomerInfo((prev) => ({ ...prev, phone: e.target.value }))
                     }
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
                     placeholder="例：0912345678"
@@ -264,8 +264,8 @@ const CheckoutForm: FC<CheckoutFormProps> = ({ onSuccess }) => {
                     type="text"
                     required
                     value={localShippingAddress.name}
-                    onChange={e =>
-                      setLocalShippingAddress(prev => ({ ...prev, name: e.target.value }))
+                    onChange={(e) =>
+                      setLocalShippingAddress((prev) => ({ ...prev, name: e.target.value }))
                     }
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
                   />
@@ -279,8 +279,8 @@ const CheckoutForm: FC<CheckoutFormProps> = ({ onSuccess }) => {
                     type="tel"
                     required
                     value={localShippingAddress.phone}
-                    onChange={e =>
-                      setLocalShippingAddress(prev => ({ ...prev, phone: e.target.value }))
+                    onChange={(e) =>
+                      setLocalShippingAddress((prev) => ({ ...prev, phone: e.target.value }))
                     }
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
                   />
@@ -292,13 +292,13 @@ const CheckoutForm: FC<CheckoutFormProps> = ({ onSuccess }) => {
                     <select
                       required
                       value={localShippingAddress.city}
-                      onChange={e =>
-                        setLocalShippingAddress(prev => ({ ...prev, city: e.target.value }))
+                      onChange={(e) =>
+                        setLocalShippingAddress((prev) => ({ ...prev, city: e.target.value }))
                       }
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
                     >
                       <option value="">請選擇城市</option>
-                      {cities.map(city => (
+                      {cities.map((city) => (
                         <option key={city} value={city}>
                           {city}
                         </option>
@@ -312,8 +312,8 @@ const CheckoutForm: FC<CheckoutFormProps> = ({ onSuccess }) => {
                       type="text"
                       required
                       value={localShippingAddress.district}
-                      onChange={e =>
-                        setLocalShippingAddress(prev => ({ ...prev, district: e.target.value }))
+                      onChange={(e) =>
+                        setLocalShippingAddress((prev) => ({ ...prev, district: e.target.value }))
                       }
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
                       placeholder="例：信義區"
@@ -327,8 +327,8 @@ const CheckoutForm: FC<CheckoutFormProps> = ({ onSuccess }) => {
                     type="text"
                     required
                     value={localShippingAddress.address}
-                    onChange={e =>
-                      setLocalShippingAddress(prev => ({ ...prev, address: e.target.value }))
+                    onChange={(e) =>
+                      setLocalShippingAddress((prev) => ({ ...prev, address: e.target.value }))
                     }
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
                     placeholder="例：忠孝東路四段123號5樓"
@@ -341,8 +341,8 @@ const CheckoutForm: FC<CheckoutFormProps> = ({ onSuccess }) => {
                     type="text"
                     required
                     value={localShippingAddress.postalCode}
-                    onChange={e =>
-                      setLocalShippingAddress(prev => ({ ...prev, postalCode: e.target.value }))
+                    onChange={(e) =>
+                      setLocalShippingAddress((prev) => ({ ...prev, postalCode: e.target.value }))
                     }
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
                     placeholder="例：110"
@@ -383,7 +383,7 @@ const CheckoutForm: FC<CheckoutFormProps> = ({ onSuccess }) => {
                           name="paymentMethod"
                           value="bank_transfer"
                           checked={paymentMethod === 'bank_transfer'}
-                          onChange={e => setPaymentMethod(e.target.value as any)}
+                          onChange={(e) => setPaymentMethod(e.target.value as any)}
                           className="mr-2"
                         />
                         銀行轉帳
@@ -394,7 +394,7 @@ const CheckoutForm: FC<CheckoutFormProps> = ({ onSuccess }) => {
                           name="paymentMethod"
                           value="credit_card"
                           checked={paymentMethod === 'credit_card'}
-                          onChange={e => setPaymentMethod(e.target.value as any)}
+                          onChange={(e) => setPaymentMethod(e.target.value as any)}
                           className="mr-2"
                         />
                         信用卡付款
@@ -405,7 +405,7 @@ const CheckoutForm: FC<CheckoutFormProps> = ({ onSuccess }) => {
                           name="paymentMethod"
                           value="cash_on_delivery"
                           checked={paymentMethod === 'cash_on_delivery'}
-                          onChange={e => setPaymentMethod(e.target.value as any)}
+                          onChange={(e) => setPaymentMethod(e.target.value as any)}
                           className="mr-2"
                         />
                         貨到付款
@@ -417,7 +417,7 @@ const CheckoutForm: FC<CheckoutFormProps> = ({ onSuccess }) => {
                     <label className="block text-sm font-medium text-gray-700 mb-1">備註</label>
                     <textarea
                       value={localNotes}
-                      onChange={e => setLocalNotes(e.target.value)}
+                      onChange={(e) => setLocalNotes(e.target.value)}
                       rows={3}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
                       placeholder="如有特殊需求請註明..."
@@ -443,7 +443,7 @@ const CheckoutForm: FC<CheckoutFormProps> = ({ onSuccess }) => {
             <h3 className="text-lg font-semibold mb-4">訂單摘要</h3>
 
             <div className="space-y-3 mb-4">
-              {items.map(item => {
+              {items.map((item) => {
                 const itemKey = item.variantId
                   ? `${item.productId}-${item.variantId}`
                   : item.productId;

@@ -117,8 +117,8 @@ export function AppointmentsManager({ className, onSuccess, onError }: Appointme
 
       if (result.success) {
         // Update local state
-        setAppointments(prev =>
-          prev.map(apt =>
+        setAppointments((prev) =>
+          prev.map((apt) =>
             apt.id === appointmentId ? { ...apt, status: 'cancelled' as const } : apt
           )
         );
@@ -211,7 +211,7 @@ export function AppointmentsManager({ className, onSuccess, onError }: Appointme
           </div>
         ) : (
           <div className="space-y-4">
-            {appointments.map(appointment => (
+            {appointments.map((appointment) => (
               <Card key={appointment.id} className="relative">
                 <CardContent className="pt-4">
                   <div className="flex justify-between items-start">

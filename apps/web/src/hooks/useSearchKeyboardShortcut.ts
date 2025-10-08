@@ -12,10 +12,10 @@ function isFocusableElement(target: EventTarget | null): boolean {
 }
 
 export function useSearchKeyboardShortcut() {
-  const openModal = useSearchStore(state => state.openModal);
-  const closeModal = useSearchStore(state => state.closeModal);
-  const toggleModal = useSearchStore(state => state.toggleModal);
-  const isOpen = useSearchStore(state => state.isOpen);
+  const openModal = useSearchStore((state) => state.openModal);
+  const closeModal = useSearchStore((state) => state.closeModal);
+  const toggleModal = useSearchStore((state) => state.toggleModal);
+  const isOpen = useSearchStore((state) => state.isOpen);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {

@@ -49,7 +49,7 @@ export const useAuthStore = create<AuthState>()(
           isRefreshing: false,
         });
       },
-      setLastEmail: email => set({ lastEmail: email }),
+      setLastEmail: (email) => set({ lastEmail: email }),
       clearAuth: () =>
         set({
           accessToken: null,
@@ -102,7 +102,7 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: 'reservation-auth',
-      partialize: state => ({
+      partialize: (state) => ({
         accessToken: state.accessToken,
         refreshToken: state.refreshToken,
         accessTokenExpiresAt: state.accessTokenExpiresAt,

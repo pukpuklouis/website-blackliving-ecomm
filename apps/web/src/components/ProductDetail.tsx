@@ -49,7 +49,7 @@ const ProductDetail: FC<ProductDetailProps> = ({ product, categoryConfig, classN
   };
 
   // Convert product variants to ProductVariantSelector format
-  const convertedVariants = product.variants.map(variant => {
+  const convertedVariants = product.variants.map((variant) => {
     // Extract firmness from name field (e.g., "Extra Firm(最硬)" -> "extra-firm")
     let firmness = 'medium';
     if (variant.name && typeof variant.name === 'string') {

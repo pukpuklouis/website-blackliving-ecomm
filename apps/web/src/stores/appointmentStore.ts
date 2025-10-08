@@ -129,16 +129,17 @@ export const useAppointmentStore = create<AppointmentStore>()(
         },
       ],
 
-      setCurrentStep: step => set({ currentStep: step }),
+      setCurrentStep: (step) => set({ currentStep: step }),
 
-      updateAppointmentData: data =>
-        set(state => ({
+      updateAppointmentData: (data) =>
+        set((state) => ({
           appointmentData: { ...state.appointmentData, ...data },
         })),
 
-      nextStep: () => set(state => ({ currentStep: Math.min(state.currentStep + 1, MAX_STEP_INDEX) })),
+      nextStep: () =>
+        set((state) => ({ currentStep: Math.min(state.currentStep + 1, MAX_STEP_INDEX) })),
 
-      prevStep: () => set(state => ({ currentStep: Math.max(state.currentStep - 1, 0) })),
+      prevStep: () => set((state) => ({ currentStep: Math.max(state.currentStep - 1, 0) })),
 
       resetForm: () =>
         set({
@@ -147,14 +148,14 @@ export const useAppointmentStore = create<AppointmentStore>()(
           isSubmitting: false,
         }),
 
-      setIsSubmitting: submitting => set({ isSubmitting: submitting }),
+      setIsSubmitting: (submitting) => set({ isSubmitting: submitting }),
 
-      setStores: stores => set({ stores }),
-      setProducts: products => set({ products }),
+      setStores: (stores) => set({ stores }),
+      setProducts: (products) => set({ products }),
     }),
     {
       name: 'appointment-store',
-      partialize: state => ({
+      partialize: (state) => ({
         appointmentData: state.appointmentData,
         currentStep: state.currentStep,
       }),

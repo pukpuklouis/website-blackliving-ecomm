@@ -67,13 +67,13 @@ export function useProfile(options: UseProfileOptions = {}) {
       if (!force) {
         const cached = getCache<FullUserProfile>(cacheKey);
         if (cached) {
-          setState(prev => ({ ...prev, profile: cached }));
+          setState((prev) => ({ ...prev, profile: cached }));
           setOriginalData(cached);
           return cached;
         }
       }
 
-      setState(prev => ({ ...prev, loading: true, error: null }));
+      setState((prev) => ({ ...prev, loading: true, error: null }));
 
       try {
         const response = await fetch(API_BASE, {
@@ -118,7 +118,7 @@ export function useProfile(options: UseProfileOptions = {}) {
           };
 
           setCache(cacheKey, transformedData, cacheTimeout);
-          setState(prev => ({
+          setState((prev) => ({
             ...prev,
             profile: transformedData,
             loading: false,
@@ -131,7 +131,7 @@ export function useProfile(options: UseProfileOptions = {}) {
         }
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-        setState(prev => ({ ...prev, error: errorMessage, loading: false }));
+        setState((prev) => ({ ...prev, error: errorMessage, loading: false }));
         return null;
       }
     },
@@ -141,7 +141,7 @@ export function useProfile(options: UseProfileOptions = {}) {
   // Update profile
   const updateProfile = useCallback(
     async (updateData: ProfileUpdateRequest) => {
-      setState(prev => ({ ...prev, loading: true, error: null }));
+      setState((prev) => ({ ...prev, loading: true, error: null }));
 
       try {
         const requestBody: Record<string, any> = {};
@@ -181,7 +181,7 @@ export function useProfile(options: UseProfileOptions = {}) {
         }
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-        setState(prev => ({ ...prev, error: errorMessage, loading: false }));
+        setState((prev) => ({ ...prev, error: errorMessage, loading: false }));
         return { success: false, error: errorMessage };
       }
     },
@@ -262,7 +262,7 @@ export function useProfile(options: UseProfileOptions = {}) {
     refresh: () => loadProfile(true),
     clearCache: () => {
       profileCache.clear();
-      setState(prev => ({ ...prev, lastUpdated: null }));
+      setState((prev) => ({ ...prev, lastUpdated: null }));
     },
   };
 }

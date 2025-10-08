@@ -27,7 +27,7 @@ export default function SearchModal() {
     clearResults,
     setError,
   } = useSearchStore(
-    useShallow(state => ({
+    useShallow((state) => ({
       isOpen: state.isOpen,
       query: state.query,
       results: state.results,
@@ -104,16 +104,16 @@ export default function SearchModal() {
   return (
     <SearchCommandUI
       open={isOpen}
-      onOpenChange={open => (open ? openModal() : closeModal())}
+      onOpenChange={(open) => (open ? openModal() : closeModal())}
       query={query}
-      onQueryChange={value => {
+      onQueryChange={(value) => {
         setError(null);
         setQuery(value);
       }}
       results={results}
       isLoading={isLoading}
       recentSearches={recent}
-      onRecentSelect={entry => setQuery(entry.query)}
+      onRecentSelect={(entry) => setQuery(entry.query)}
       onResultSelect={handleResultSelect}
       footer={footerMessage}
       placeholder="搜尋商品、文章與頁面"

@@ -55,7 +55,7 @@ const AddToCartButton: FC<AddToCartButtonProps> = ({
 
   // Get selected variant or first variant
   const selectedVariant = selectedVariantId
-    ? product.variants.find(v => v.id === selectedVariantId)
+    ? product.variants.find((v) => v.id === selectedVariantId)
     : product.variants[0];
 
   // If no variants, create a default one from product

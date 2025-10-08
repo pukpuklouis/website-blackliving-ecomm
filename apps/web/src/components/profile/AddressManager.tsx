@@ -122,11 +122,11 @@ export function AddressManager({ className, onSuccess, onError }: AddressManager
 
   // Handle form input changes
   const handleInputChange = (field: keyof AddressFormData, value: string | boolean) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
 
     // Clear field error when user types
     if (formErrors[field]) {
-      setFormErrors(prev => ({ ...prev, [field]: '' }));
+      setFormErrors((prev) => ({ ...prev, [field]: '' }));
     }
   };
 
@@ -293,7 +293,7 @@ export function AddressManager({ className, onSuccess, onError }: AddressManager
                 <Label>地址類型 *</Label>
                 <Select
                   value={formData.type}
-                  onValueChange={value => handleInputChange('type', value as any)}
+                  onValueChange={(value) => handleInputChange('type', value as any)}
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -312,7 +312,7 @@ export function AddressManager({ className, onSuccess, onError }: AddressManager
                 <Input
                   id="label"
                   value={formData.label}
-                  onChange={e => handleInputChange('label', e.target.value)}
+                  onChange={(e) => handleInputChange('label', e.target.value)}
                   placeholder="例如：家裡、公司"
                 />
               </div>
@@ -324,7 +324,7 @@ export function AddressManager({ className, onSuccess, onError }: AddressManager
                   <Input
                     id="recipientName"
                     value={formData.recipientName}
-                    onChange={e => handleInputChange('recipientName', e.target.value)}
+                    onChange={(e) => handleInputChange('recipientName', e.target.value)}
                     className={formErrors.recipientName ? 'border-red-500' : ''}
                     required
                   />
@@ -338,7 +338,7 @@ export function AddressManager({ className, onSuccess, onError }: AddressManager
                   <Input
                     id="recipientPhone"
                     value={formData.recipientPhone}
-                    onChange={e => handleInputChange('recipientPhone', e.target.value)}
+                    onChange={(e) => handleInputChange('recipientPhone', e.target.value)}
                     className={formErrors.recipientPhone ? 'border-red-500' : ''}
                     placeholder="09xxxxxxxx"
                     required
@@ -355,13 +355,13 @@ export function AddressManager({ className, onSuccess, onError }: AddressManager
                   <Label>縣市 *</Label>
                   <Select
                     value={formData.city}
-                    onValueChange={value => handleInputChange('city', value)}
+                    onValueChange={(value) => handleInputChange('city', value)}
                   >
                     <SelectTrigger className={formErrors.city ? 'border-red-500' : ''}>
                       <SelectValue placeholder="選擇縣市" />
                     </SelectTrigger>
                     <SelectContent>
-                      {taiwanCities.map(city => (
+                      {taiwanCities.map((city) => (
                         <SelectItem key={city} value={city}>
                           {city}
                         </SelectItem>
@@ -376,7 +376,7 @@ export function AddressManager({ className, onSuccess, onError }: AddressManager
                   <Input
                     id="district"
                     value={formData.district}
-                    onChange={e => handleInputChange('district', e.target.value)}
+                    onChange={(e) => handleInputChange('district', e.target.value)}
                     className={formErrors.district ? 'border-red-500' : ''}
                     placeholder="例如：中正區"
                     required
@@ -391,7 +391,7 @@ export function AddressManager({ className, onSuccess, onError }: AddressManager
                   <Input
                     id="postalCode"
                     value={formData.postalCode}
-                    onChange={e => handleInputChange('postalCode', e.target.value)}
+                    onChange={(e) => handleInputChange('postalCode', e.target.value)}
                     className={formErrors.postalCode ? 'border-red-500' : ''}
                     placeholder="100"
                     required
@@ -408,7 +408,7 @@ export function AddressManager({ className, onSuccess, onError }: AddressManager
                 <Input
                   id="street"
                   value={formData.street}
-                  onChange={e => handleInputChange('street', e.target.value)}
+                  onChange={(e) => handleInputChange('street', e.target.value)}
                   className={formErrors.street ? 'border-red-500' : ''}
                   placeholder="例如：中山南路1號"
                   required
@@ -423,7 +423,7 @@ export function AddressManager({ className, onSuccess, onError }: AddressManager
                   <Input
                     id="building"
                     value={formData.building}
-                    onChange={e => handleInputChange('building', e.target.value)}
+                    onChange={(e) => handleInputChange('building', e.target.value)}
                     placeholder="選填"
                   />
                 </div>
@@ -433,7 +433,7 @@ export function AddressManager({ className, onSuccess, onError }: AddressManager
                   <Input
                     id="floor"
                     value={formData.floor}
-                    onChange={e => handleInputChange('floor', e.target.value)}
+                    onChange={(e) => handleInputChange('floor', e.target.value)}
                     placeholder="例如：3F"
                   />
                 </div>
@@ -443,7 +443,7 @@ export function AddressManager({ className, onSuccess, onError }: AddressManager
                   <Input
                     id="room"
                     value={formData.room}
-                    onChange={e => handleInputChange('room', e.target.value)}
+                    onChange={(e) => handleInputChange('room', e.target.value)}
                     placeholder="例如：A室"
                   />
                 </div>
@@ -456,7 +456,7 @@ export function AddressManager({ className, onSuccess, onError }: AddressManager
                   <Input
                     id="deliveryInstructions"
                     value={formData.deliveryInstructions}
-                    onChange={e => handleInputChange('deliveryInstructions', e.target.value)}
+                    onChange={(e) => handleInputChange('deliveryInstructions', e.target.value)}
                     placeholder="特殊配送要求"
                   />
                 </div>
@@ -466,7 +466,7 @@ export function AddressManager({ className, onSuccess, onError }: AddressManager
                   <Input
                     id="accessCode"
                     value={formData.accessCode}
-                    onChange={e => handleInputChange('accessCode', e.target.value)}
+                    onChange={(e) => handleInputChange('accessCode', e.target.value)}
                     placeholder="大樓門禁或密碼"
                   />
                 </div>
@@ -478,7 +478,7 @@ export function AddressManager({ className, onSuccess, onError }: AddressManager
                   type="checkbox"
                   id="isDefault"
                   checked={formData.isDefault}
-                  onChange={e => handleInputChange('isDefault', e.target.checked)}
+                  onChange={(e) => handleInputChange('isDefault', e.target.checked)}
                 />
                 <Label htmlFor="isDefault">設為預設地址</Label>
               </div>
@@ -524,7 +524,7 @@ export function AddressManager({ className, onSuccess, onError }: AddressManager
           </div>
         ) : (
           <div className="space-y-4">
-            {addresses.map(address => (
+            {addresses.map((address) => (
               <Card key={address.id} className="relative">
                 <CardContent className="pt-4">
                   <div className="flex justify-between items-start">

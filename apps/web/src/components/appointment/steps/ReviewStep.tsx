@@ -14,9 +14,10 @@ export default function ReviewStep() {
 
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [submissionError, setSubmissionError] = useState<string | null>(null);
-  const [reservationSummary, setReservationSummary] = useState<{ appointmentNumber: string; verificationPending: boolean } | null>(
-    null
-  );
+  const [reservationSummary, setReservationSummary] = useState<{
+    appointmentNumber: string;
+    verificationPending: boolean;
+  } | null>(null);
 
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
@@ -106,7 +107,12 @@ export default function ReviewStep() {
         <div className="mb-6">
           <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100 text-green-500">
             <svg className="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M5 13l4 4L19 7"
+              />
             </svg>
           </div>
           <h2 className="mb-4 text-3xl font-bold text-gray-900">預約已送出！</h2>
@@ -118,7 +124,9 @@ export default function ReviewStep() {
           <ul className="space-y-2 text-green-700">
             <li className="flex items-start">
               <span className="mr-2">預約編號</span>
-              <span className="font-medium">{reservationSummary?.appointmentNumber || '建立中'}</span>
+              <span className="font-medium">
+                {reservationSummary?.appointmentNumber || '建立中'}
+              </span>
             </li>
             <li className="flex items-start">
               <span className="mr-2">姓名</span>
@@ -283,12 +291,11 @@ export default function ReviewStep() {
       </div>
 
       <p className="mt-4 text-sm text-gray-500">
-        完成提交後，系統會保留您的預約資料並以 Email 通知。請確保信箱可收到 blackliving.com 寄出的郵件。
+        完成提交後，系統會保留您的預約資料並以 Email 通知。請確保信箱可收到 blackliving.com
+        寄出的郵件。
       </p>
 
-      {user && (
-        <p className="mt-2 text-xs text-gray-400">目前以 {user.email} 身份預約</p>
-      )}
+      {user && <p className="mt-2 text-xs text-gray-400">目前以 {user.email} 身份預約</p>}
     </div>
   );
 }

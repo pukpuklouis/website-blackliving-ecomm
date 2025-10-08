@@ -41,7 +41,7 @@ export function useAddresses(options: UseAddressesOptions = {}) {
 
   // Load all addresses
   const loadAddresses = useCallback(async () => {
-    setState(prev => ({ ...prev, loading: true, error: null }));
+    setState((prev) => ({ ...prev, loading: true, error: null }));
 
     try {
       const response = await fetch(API_BASE, {
@@ -57,7 +57,7 @@ export function useAddresses(options: UseAddressesOptions = {}) {
       }
 
       if (result.success && result.data) {
-        setState(prev => ({
+        setState((prev) => ({
           ...prev,
           addresses: result.data!,
           loading: false,
@@ -70,14 +70,14 @@ export function useAddresses(options: UseAddressesOptions = {}) {
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       console.error('[useAddresses] Error loading addresses:', errorMessage);
-      setState(prev => ({ ...prev, error: errorMessage, loading: false }));
+      setState((prev) => ({ ...prev, error: errorMessage, loading: false }));
       return null;
     }
   }, []);
 
   // Create new address
   const createAddress = useCallback(async (addressData: AddressCreateRequest) => {
-    setState(prev => ({ ...prev, loading: true, error: null }));
+    setState((prev) => ({ ...prev, loading: true, error: null }));
 
     try {
       const response = await fetch(API_BASE, {
@@ -95,7 +95,7 @@ export function useAddresses(options: UseAddressesOptions = {}) {
 
       if (result.success && result.data) {
         // Add new address to state
-        setState(prev => ({
+        setState((prev) => ({
           ...prev,
           addresses: [...prev.addresses, result.data!],
           loading: false,
@@ -108,14 +108,14 @@ export function useAddresses(options: UseAddressesOptions = {}) {
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      setState(prev => ({ ...prev, error: errorMessage, loading: false }));
+      setState((prev) => ({ ...prev, error: errorMessage, loading: false }));
       return { success: false, error: errorMessage };
     }
   }, []);
 
   // Update existing address
   const updateAddress = useCallback(async (addressId: string, updateData: AddressUpdateRequest) => {
-    setState(prev => ({ ...prev, loading: true, error: null }));
+    setState((prev) => ({ ...prev, loading: true, error: null }));
 
     try {
       const response = await fetch(`${API_BASE}/${addressId}`, {
@@ -133,9 +133,9 @@ export function useAddresses(options: UseAddressesOptions = {}) {
 
       if (result.success && result.data) {
         // Update address in state
-        setState(prev => ({
+        setState((prev) => ({
           ...prev,
-          addresses: prev.addresses.map(addr => (addr.id === addressId ? result.data! : addr)),
+          addresses: prev.addresses.map((addr) => (addr.id === addressId ? result.data! : addr)),
           loading: false,
           lastUpdated: new Date(),
         }));
@@ -146,14 +146,14 @@ export function useAddresses(options: UseAddressesOptions = {}) {
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      setState(prev => ({ ...prev, error: errorMessage, loading: false }));
+      setState((prev) => ({ ...prev, error: errorMessage, loading: false }));
       return { success: false, error: errorMessage };
     }
   }, []);
 
   // Delete address
   const deleteAddress = useCallback(async (addressId: string) => {
-    setState(prev => ({ ...prev, loading: true, error: null }));
+    setState((prev) => ({ ...prev, loading: true, error: null }));
 
     try {
       const response = await fetch(`${API_BASE}/${addressId}`, {
@@ -170,9 +170,9 @@ export function useAddresses(options: UseAddressesOptions = {}) {
 
       if (result.success) {
         // Remove address from state
-        setState(prev => ({
+        setState((prev) => ({
           ...prev,
-          addresses: prev.addresses.filter(addr => addr.id !== addressId),
+          addresses: prev.addresses.filter((addr) => addr.id !== addressId),
           loading: false,
           lastUpdated: new Date(),
         }));
@@ -183,14 +183,14 @@ export function useAddresses(options: UseAddressesOptions = {}) {
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      setState(prev => ({ ...prev, error: errorMessage, loading: false }));
+      setState((prev) => ({ ...prev, error: errorMessage, loading: false }));
       return { success: false, error: errorMessage };
     }
   }, []);
 
   // Set address as default
   const setDefaultAddress = useCallback(async (addressId: string) => {
-    setState(prev => ({ ...prev, loading: true, error: null }));
+    setState((prev) => ({ ...prev, loading: true, error: null }));
 
     try {
       const response = await fetch(`${API_BASE}/${addressId}/default`, {
@@ -207,9 +207,9 @@ export function useAddresses(options: UseAddressesOptions = {}) {
 
       if (result.success && result.data) {
         // Update addresses: set the selected as default, others as not default
-        setState(prev => ({
+        setState((prev) => ({
           ...prev,
-          addresses: prev.addresses.map(addr => ({
+          addresses: prev.addresses.map((addr) => ({
             ...addr,
             isDefault: addr.id === addressId,
           })),
@@ -223,20 +223,20 @@ export function useAddresses(options: UseAddressesOptions = {}) {
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      setState(prev => ({ ...prev, error: errorMessage, loading: false }));
+      setState((prev) => ({ ...prev, error: errorMessage, loading: false }));
       return { success: false, error: errorMessage };
     }
   }, []);
 
   // Get default address
   const getDefaultAddress = useCallback(() => {
-    return state.addresses.find(addr => addr.isDefault) || null;
+    return state.addresses.find((addr) => addr.isDefault) || null;
   }, [state.addresses]);
 
   // Get addresses by type
   const getAddressesByType = useCallback(
     (type: 'shipping' | 'billing' | 'both') => {
-      return state.addresses.filter(addr => addr.type === type || addr.type === 'both');
+      return state.addresses.filter((addr) => addr.type === type || addr.type === 'both');
     },
     [state.addresses]
   );
@@ -268,6 +268,6 @@ export function useAddresses(options: UseAddressesOptions = {}) {
 
     // Utilities
     refresh: loadAddresses,
-    findById: (id: string) => state.addresses.find(addr => addr.id === id) || null,
+    findById: (id: string) => state.addresses.find((addr) => addr.id === id) || null,
   };
 }

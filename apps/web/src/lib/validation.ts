@@ -145,7 +145,7 @@ export function validatePasswordForm(data: {
 // Form state validation
 export function isFormDirty(current: Record<string, any>, original: Record<string, any>): boolean {
   return Object.keys(current).some(
-    key => current[key] !== original[key] && !(current[key] === '' && original[key] === null)
+    (key) => current[key] !== original[key] && !(current[key] === '' && original[key] === null)
   );
 }
 

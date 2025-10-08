@@ -66,7 +66,7 @@ const AddToCartSection: FC<AddToCartSectionProps> = ({
 
   // Get selected variant or first variant
   const selectedVariant = selectedVariantId
-    ? product.variants.find(v => v.id === selectedVariantId)
+    ? product.variants.find((v) => v.id === selectedVariantId)
     : product.variants[0];
 
   // If no variants, create a default one from product
@@ -85,7 +85,7 @@ const AddToCartSection: FC<AddToCartSectionProps> = ({
 
   // Check if item is already in cart
   const cartItem = items.find(
-    item => item.productId === product.id && item.variantId === selectedVariantId
+    (item) => item.productId === product.id && item.variantId === selectedVariantId
   );
   const currentQuantityInCart = cartItem?.quantity || 0;
 

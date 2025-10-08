@@ -116,11 +116,11 @@ export const useToast = () => {
   const addToast = (toast: Omit<ToastNotification, 'id'>) => {
     const id = Math.random().toString(36).slice(2);
     const newToast = { ...toast, id };
-    setToasts(prev => [...prev, newToast]);
+    setToasts((prev) => [...prev, newToast]);
   };
 
   const removeToast = (id: string) => {
-    setToasts(prev => prev.filter(toast => toast.id !== id));
+    setToasts((prev) => prev.filter((toast) => toast.id !== id));
   };
 
   return { toasts, addToast, removeToast };
@@ -145,7 +145,7 @@ export const ToastContainer: FC<ToastContainerProps> = ({ toasts, onRemoveToast 
   return createPortal(
     <div className="fixed top-0 right-0 p-4 z-50 pointer-events-none">
       <div className="space-y-2 pointer-events-auto">
-        {toasts.map(toast => (
+        {toasts.map((toast) => (
           <Toast
             key={toast.id}
             id={toast.id}

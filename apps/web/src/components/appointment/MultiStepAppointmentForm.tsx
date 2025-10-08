@@ -74,10 +74,17 @@ export default function MultiStepAppointmentForm() {
 
   return (
     <div className="relative mx-auto max-w-2xl">
-      <MagicLinkModal open={authModalOpen} onClose={handleCloseModal} onAuthenticated={() => setAuthModalOpen(false)} />
+      <MagicLinkModal
+        open={authModalOpen}
+        onClose={handleCloseModal}
+        onAuthenticated={() => setAuthModalOpen(false)}
+      />
 
       {authModalOpen && (
-        <div className="pointer-events-none absolute inset-0 z-40 rounded-2xl bg-white/60 backdrop-blur-sm" aria-hidden />
+        <div
+          className="pointer-events-none absolute inset-0 z-40 rounded-2xl bg-white/60 backdrop-blur-sm"
+          aria-hidden
+        />
       )}
 
       {/* Progress indicator */}
@@ -104,7 +111,12 @@ export default function MultiStepAppointmentForm() {
 
       {/* Navigation buttons */}
       <div className="mt-6 flex justify-between">
-        <Button variant="outline" onClick={prevStep} disabled={currentStep === 0 || authModalOpen} className="px-6">
+        <Button
+          variant="outline"
+          onClick={prevStep}
+          disabled={currentStep === 0 || authModalOpen}
+          className="px-6"
+        >
           上一步
         </Button>
 

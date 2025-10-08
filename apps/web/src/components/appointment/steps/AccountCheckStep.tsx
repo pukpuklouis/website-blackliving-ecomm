@@ -79,7 +79,7 @@ export default function AccountCheckStep() {
               <input
                 type="email"
                 value={email}
-                onChange={e => setEmail(e.target.value)}
+                onChange={(e) => setEmail(e.target.value)}
                 onKeyPress={handleKeyPress}
                 placeholder="請輸入您的 Email 地址"
                 className="w-full px-4 py-3 text-lg border-b-2 border-gray-300 focus:border-black focus:outline-none bg-transparent"

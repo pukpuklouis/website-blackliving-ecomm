@@ -29,7 +29,7 @@ export default function StoreSelectionStep() {
           <div
             key={store.id}
             onClick={() => handleStoreSelect(store)}
-            onKeyPress={e => handleKeyPress(e, store)}
+            onKeyPress={(e) => handleKeyPress(e, store)}
             tabIndex={0}
             className={`
               p-6 rounded-lg border-2 cursor-pointer transition-all duration-200

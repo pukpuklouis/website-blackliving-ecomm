@@ -131,7 +131,7 @@ const createOrder = async (
   try {
     const orderData = {
       customerInfo,
-      items: items.map(item => ({
+      items: items.map((item) => ({
         productId: item.productId,
         variantId: item.variantId,
         name: item.name,
@@ -205,11 +205,11 @@ export const useCartStore = create<CartStore>()(
       },
 
       // Actions
-      addItem: newItem => {
-        set(state => {
+      addItem: (newItem) => {
+        set((state) => {
           const itemKey = getItemKey(newItem.productId, newItem.variantId);
           const existingItemIndex = state.items.findIndex(
-            item => getItemKey(item.productId, item.variantId) === itemKey
+            (item) => getItemKey(item.productId, item.variantId) === itemKey
           );
 
           if (existingItemIndex >= 0) {
@@ -230,30 +230,30 @@ export const useCartStore = create<CartStore>()(
       },
 
       removeItem: (productId, variantId) => {
-        set(state => {
+        set((state) => {
           const itemKey = getItemKey(productId, variantId);
           return {
             items: state.items.filter(
-              item => getItemKey(item.productId, item.variantId) !== itemKey
+              (item) => getItemKey(item.productId, item.variantId) !== itemKey
             ),
           };
         });
       },
 
       updateQuantity: (productId, quantity, variantId) => {
-        set(state => {
+        set((state) => {
           if (quantity <= 0) {
             // Remove item if quantity is 0 or less
             const itemKey = getItemKey(productId, variantId);
             return {
               items: state.items.filter(
-                item => getItemKey(item.productId, item.variantId) !== itemKey
+                (item) => getItemKey(item.productId, item.variantId) !== itemKey
               ),
             };
           }
 
           return {
-            items: state.items.map(item => {
+            items: state.items.map((item) => {
               const itemKey = getItemKey(item.productId, item.variantId);
               const targetKey = getItemKey(productId, variantId);
 
@@ -276,7 +276,7 @@ export const useCartStore = create<CartStore>()(
         });
       },
 
-      setCustomerInfo: info => {
+      setCustomerInfo: (info) => {
         try {
           customerInfoSchema.parse(info);
           set({ customerInfo: info, error: null });
@@ -287,7 +287,7 @@ export const useCartStore = create<CartStore>()(
         }
       },
 
-      setShippingAddress: address => {
+      setShippingAddress: (address) => {
         try {
           shippingAddressSchema.parse(address);
           set({ shippingAddress: address, error: null });
@@ -298,11 +298,11 @@ export const useCartStore = create<CartStore>()(
         }
       },
 
-      setPaymentMethod: method => {
+      setPaymentMethod: (method) => {
         set({ paymentMethod: method });
       },
 
-      setNotes: notes => {
+      setNotes: (notes) => {
         set({ notes });
       },
 
@@ -343,8 +343,8 @@ export const useCartStore = create<CartStore>()(
         }
       },
 
-      setError: error => set({ error }),
-      setLoading: loading => set({ isLoading: loading }),
+      setError: (error) => set({ error }),
+      setLoading: (loading) => set({ isLoading: loading }),
 
       validateCart: () => {
         const state = get();
@@ -359,9 +359,9 @@ export const useCartStore = create<CartStore>()(
         }
 
         // Check stock availability
-        const outOfStockItems = state.items.filter(item => !item.inStock);
+        const outOfStockItems = state.items.filter((item) => !item.inStock);
         if (outOfStockItems.length > 0) {
-          errors.push(`以下商品缺貨：${outOfStockItems.map(item => item.name).join(', ')}`);
+          errors.push(`以下商品缺貨：${outOfStockItems.map((item) => item.name).join(', ')}`);
         }
 
         return {
@@ -374,7 +374,7 @@ export const useCartStore = create<CartStore>()(
     }),
     {
       name: 'cart-store',
-      partialize: state => ({
+      partialize: (state) => ({
         items: state.items,
         customerInfo: state.customerInfo,
         shippingAddress: state.shippingAddress,

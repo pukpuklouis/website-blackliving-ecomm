@@ -67,7 +67,7 @@ const ShoppingCart: FC = () => {
             <div className="lg:col-span-2">
               <h2 className="text-2xl font-semibold mb-6">購物車項目</h2>
               <div className="space-y-4">
-                {cartItems.map(item => {
+                {cartItems.map((item) => {
                   const itemKey = item.variantId
                     ? `${item.productId}-${item.variantId}`
                     : item.productId;
@@ -78,7 +78,7 @@ const ShoppingCart: FC = () => {
                           src={item.image}
                           alt={item.name}
                           className="w-20 h-20 object-cover rounded-lg"
-                          onError={e => {
+                          onError={(e) => {
                             e.currentTarget.src = '/images/placeholder-product.jpg';
                           }}
                         />
@@ -169,13 +169,13 @@ const ShoppingCart: FC = () => {
 
                 <button
                   onClick={() => setShowCheckout(true)}
-                  disabled={isSubmittingOrder || cartItems.some(item => !item.inStock)}
+                  disabled={isSubmittingOrder || cartItems.some((item) => !item.inStock)}
                   className="w-full bg-black text-white py-3 rounded-lg hover:bg-gray-800 transition-colors mb-3 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isSubmittingOrder ? '處理中...' : '前往結帳'}
                 </button>
 
-                {cartItems.some(item => !item.inStock) && (
+                {cartItems.some((item) => !item.inStock) && (
                   <p className="text-red-500 text-sm text-center mb-3">
                     購物車中有缺貨商品，請移除後再結帳
                   </p>

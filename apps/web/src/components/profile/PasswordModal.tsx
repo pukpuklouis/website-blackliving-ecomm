@@ -42,17 +42,17 @@ export function PasswordModal({ onSuccess, onError }: PasswordModalProps) {
 
   // Handle input changes
   const handleInputChange = (field: keyof PasswordFormData, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
 
     // Clear field error when user types
     if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: '' }));
+      setErrors((prev) => ({ ...prev, [field]: '' }));
     }
   };
 
   // Toggle password visibility
   const togglePasswordVisibility = (field: 'current' | 'new' | 'confirm') => {
-    setShowPasswords(prev => ({ ...prev, [field]: !prev[field] }));
+    setShowPasswords((prev) => ({ ...prev, [field]: !prev[field] }));
   };
 
   // Validate form
@@ -156,7 +156,7 @@ export function PasswordModal({ onSuccess, onError }: PasswordModalProps) {
                 id="currentPassword"
                 type={showPasswords.current ? 'text' : 'password'}
                 value={formData.currentPassword}
-                onChange={e => handleInputChange('currentPassword', e.target.value)}
+                onChange={(e) => handleInputChange('currentPassword', e.target.value)}
                 className={errors.currentPassword ? 'border-red-500 pr-10' : 'pr-10'}
                 placeholder="請輸入目前密碼"
                 required
@@ -188,7 +188,7 @@ export function PasswordModal({ onSuccess, onError }: PasswordModalProps) {
                 id="newPassword"
                 type={showPasswords.new ? 'text' : 'password'}
                 value={formData.newPassword}
-                onChange={e => handleInputChange('newPassword', e.target.value)}
+                onChange={(e) => handleInputChange('newPassword', e.target.value)}
                 className={errors.newPassword ? 'border-red-500 pr-10' : 'pr-10'}
                 placeholder="請輸入新密碼"
                 required
@@ -215,7 +215,7 @@ export function PasswordModal({ onSuccess, onError }: PasswordModalProps) {
                 id="confirmPassword"
                 type={showPasswords.confirm ? 'text' : 'password'}
                 value={formData.confirmPassword}
-                onChange={e => handleInputChange('confirmPassword', e.target.value)}
+                onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
                 className={errors.confirmPassword ? 'border-red-500 pr-10' : 'pr-10'}
                 placeholder="請再次輸入新密碼"
                 required

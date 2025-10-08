@@ -53,7 +53,7 @@ export function MagicLinkModal({ open, onClose, onAuthenticated }: MagicLinkModa
   useEffect(() => {
     if (cooldown <= 0) return;
     const interval = setInterval(() => {
-      setCooldown(prev => (prev > 0 ? prev - 1 : 0));
+      setCooldown((prev) => (prev > 0 ? prev - 1 : 0));
     }, 1000);
     return () => clearInterval(interval);
   }, [cooldown]);
@@ -96,7 +96,7 @@ export function MagicLinkModal({ open, onClose, onAuthenticated }: MagicLinkModa
         setLastEmail(email);
         setState('sent');
         setCooldown(60);
-        setResendCount(count => count + 1);
+        setResendCount((count) => count + 1);
       } catch (err) {
         console.error('Failed to initiate magic link', err);
         setState('error');
@@ -132,10 +132,14 @@ export function MagicLinkModal({ open, onClose, onAuthenticated }: MagicLinkModa
         <div className="mb-6 flex items-center justify-between">
           <div>
             <h2 className="text-2xl font-semibold text-gray-900">登入以完成預約</h2>
-            <p className="mt-1 text-sm text-gray-500">輸入 Email 並通過驗證後，我們會寄送一次性登入連結給您</p>
+            <p className="mt-1 text-sm text-gray-500">
+              輸入 Email 並通過驗證後，我們會寄送一次性登入連結給您
+            </p>
           </div>
           {isAuthenticated ? (
-            <span className="rounded-full bg-emerald-100 px-3 py-1 text-sm font-medium text-emerald-700">已登入</span>
+            <span className="rounded-full bg-emerald-100 px-3 py-1 text-sm font-medium text-emerald-700">
+              已登入
+            </span>
           ) : (
             <span className="rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-600">未登入</span>
           )}
@@ -151,7 +155,7 @@ export function MagicLinkModal({ open, onClose, onAuthenticated }: MagicLinkModa
                 id="magic-email"
                 type="email"
                 value={email}
-                onChange={event => setEmail(event.target.value)}
+                onChange={(event) => setEmail(event.target.value)}
                 className="mt-2 w-full rounded-lg border border-gray-200 px-4 py-3 text-base shadow-sm focus:border-black focus:outline-none focus:ring-1 focus:ring-black"
                 placeholder="example@mail.com"
                 autoFocus
@@ -161,7 +165,11 @@ export function MagicLinkModal({ open, onClose, onAuthenticated }: MagicLinkModa
             <div className="space-y-2">
               <span className="block text-sm font-medium text-gray-700">安全驗證</span>
               {TURNSTILE_SITE_KEY ? (
-                <TurnstileWidget onToken={handleToken} siteKey={TURNSTILE_SITE_KEY} disabled={isSubmitting} />
+                <TurnstileWidget
+                  onToken={handleToken}
+                  siteKey={TURNSTILE_SITE_KEY}
+                  disabled={isSubmitting}
+                />
               ) : (
                 <p className="rounded-lg bg-amber-50 p-3 text-sm text-amber-700">
                   尚未設定 Turnstile Site Key，請聯絡網站管理員完成設定。
@@ -171,7 +179,11 @@ export function MagicLinkModal({ open, onClose, onAuthenticated }: MagicLinkModa
 
             {error && <p className="text-sm text-rose-600">{error}</p>}
 
-            <Button type="submit" disabled={isSubmitting || !TURNSTILE_SITE_KEY} className="w-full justify-center px-6 py-3 text-base">
+            <Button
+              type="submit"
+              disabled={isSubmitting || !TURNSTILE_SITE_KEY}
+              className="w-full justify-center px-6 py-3 text-base"
+            >
               {isSubmitting ? '寄送中…' : '寄送登入連結'}
             </Button>
 
@@ -195,7 +207,12 @@ export function MagicLinkModal({ open, onClose, onAuthenticated }: MagicLinkModa
         {state === 'sent' && (
           <div className="space-y-6 text-center">
             <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" viewBox="0 0 20 20" fill="currentColor">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-8 w-8"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
                 <path
                   fillRule="evenodd"
                   d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
@@ -213,7 +230,12 @@ export function MagicLinkModal({ open, onClose, onAuthenticated }: MagicLinkModa
               <p>寄送至：{email}</p>
               <p>若未收到，請檢查垃圾信件，或於稍後重新寄送。</p>
             </div>
-            <Button onClick={handleResend} disabled={cooldown > 0} variant="outline" className="w-full justify-center">
+            <Button
+              onClick={handleResend}
+              disabled={cooldown > 0}
+              variant="outline"
+              className="w-full justify-center"
+            >
               {cooldown > 0 ? `重新寄送 (${cooldown}s)` : '重新發送驗證信'}
             </Button>
             <button
@@ -229,7 +251,12 @@ export function MagicLinkModal({ open, onClose, onAuthenticated }: MagicLinkModa
         {state === 'error' && (
           <div className="space-y-5 text-center">
             <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-rose-100 text-rose-600">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" viewBox="0 0 20 20" fill="currentColor">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-8 w-8"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
                 <path
                   fillRule="evenodd"
                   d="M10 18a8 8 0 100-16 8 8 0 000 16zM9 7a1 1 0 112 0v4a1 1 0 11-2 0V7zm1 7a1.5 1.5 0 100-3 1.5 1.5 0 000 3z"
@@ -239,7 +266,9 @@ export function MagicLinkModal({ open, onClose, onAuthenticated }: MagicLinkModa
             </div>
             <div>
               <h3 className="text-xl font-semibold text-gray-900">驗證信寄送失敗</h3>
-              <p className="mt-2 text-sm text-gray-600">{error ?? '請稍後重新嘗試，或聯絡客服協助。'}</p>
+              <p className="mt-2 text-sm text-gray-600">
+                {error ?? '請稍後重新嘗試，或聯絡客服協助。'}
+              </p>
             </div>
             <div className="space-y-3">
               <Button onClick={handleResend} className="w-full justify-center">

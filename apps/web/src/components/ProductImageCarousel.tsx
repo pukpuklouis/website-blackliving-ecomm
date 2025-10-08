@@ -30,11 +30,11 @@ export default function ProductImageCarousel({
   };
 
   const handlePrevious = () => {
-    setSelectedImageIndex(prev => (prev === 0 ? displayImages.length - 1 : prev - 1));
+    setSelectedImageIndex((prev) => (prev === 0 ? displayImages.length - 1 : prev - 1));
   };
 
   const handleNext = () => {
-    setSelectedImageIndex(prev => (prev === displayImages.length - 1 ? 0 : prev + 1));
+    setSelectedImageIndex((prev) => (prev === displayImages.length - 1 ? 0 : prev + 1));
   };
 
   return (

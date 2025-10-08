@@ -76,7 +76,7 @@ export default function AccountNav({ currentPage, className }: AccountNavProps) 
   return (
     <div className={cn('md:col-span-1', className)}>
       <nav className="space-y-2">
-        {navItems.map(item => {
+        {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = currentPage === item.page;
 

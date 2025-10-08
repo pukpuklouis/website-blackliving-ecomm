@@ -75,7 +75,7 @@ export default function DateTimeStep() {
           <input
             type="date"
             value={selectedDate}
-            onChange={e => handleDateChange(e.target.value)}
+            onChange={(e) => handleDateChange(e.target.value)}
             min={minDate}
             max={maxDateStr}
             className="w-full px-4 py-3 text-lg border-2 border-gray-300 rounded-lg focus:border-black focus:outline-none"
@@ -99,7 +99,7 @@ export default function DateTimeStep() {
         <div className="text-left">
           <label className="block text-lg font-medium text-gray-900 mb-4">選擇時段</label>
           <div className="grid gap-3">
-            {timeSlots.map(slot => (
+            {timeSlots.map((slot) => (
               <div
                 key={slot.id}
                 onClick={() => handleTimeSelect(slot.id)}
@@ -113,7 +113,7 @@ export default function DateTimeStep() {
                   }
                 `}
                 tabIndex={0}
-                onKeyPress={e => {
+                onKeyPress={(e) => {
                   if (e.key === 'Enter' || e.key === ' ') {
                     e.preventDefault();
                     handleTimeSelect(slot.id);
@@ -149,7 +149,7 @@ export default function DateTimeStep() {
           <label className="block text-lg font-medium text-gray-900 mb-4">備註說明 (選填)</label>
           <textarea
             value={message}
-            onChange={e => handleMessageChange(e.target.value)}
+            onChange={(e) => handleMessageChange(e.target.value)}
             placeholder="如有特殊需求或想了解的產品細節，請告訴我們..."
             rows={3}
             className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-black focus:outline-none resize-none"

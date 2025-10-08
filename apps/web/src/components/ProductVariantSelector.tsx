@@ -4,8 +4,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 
 // Dynamic validation schema that adapts to available variants
 const createVariantSchema = (variants: ProductVariant[]) => {
-  const availableSizes = [...new Set(variants.map(v => v.size))];
-  const availableFirmness = [...new Set(variants.map(v => v.firmness))];
+  const availableSizes = [...new Set(variants.map((v) => v.size))];
+  const availableFirmness = [...new Set(variants.map((v) => v.firmness))];
 
   return z.object({
     size: z.enum(availableSizes as [string, ...string[]], { message: '請選擇尺寸' }),
@@ -55,7 +55,7 @@ export default function ProductVariantSelector({
   useEffect(() => {
     if (variants.length === 1) {
       const singleVariant = variants[0];
-      setSelectedVariant(prev => ({
+      setSelectedVariant((prev) => ({
         ...prev,
         size: singleVariant.size,
         firmness: singleVariant.firmness,
@@ -64,15 +64,15 @@ export default function ProductVariantSelector({
   }, [variants]);
 
   // Generate dynamic options from variant data
-  const availableSizes = [...new Set(variants.map(v => v.size))];
-  const availableFirmness = [...new Set(variants.map(v => v.firmness))];
+  const availableSizes = [...new Set(variants.map((v) => v.size))];
+  const availableFirmness = [...new Set(variants.map((v) => v.firmness))];
 
-  const sizeOptions = availableSizes.map(size => ({
+  const sizeOptions = availableSizes.map((size) => ({
     value: size,
     label: size,
   }));
 
-  const firmnessOptions = availableFirmness.map(firmness => ({
+  const firmnessOptions = availableFirmness.map((firmness) => ({
     value: firmness,
     label: firmness,
   }));
@@ -81,7 +81,7 @@ export default function ProductVariantSelector({
   useEffect(() => {
     if (selectedVariant.size && selectedVariant.firmness) {
       const variant = variants.find(
-        v => v.size === selectedVariant.size && v.firmness === selectedVariant.firmness
+        (v) => v.size === selectedVariant.size && v.firmness === selectedVariant.firmness
       );
 
       if (variant) {
@@ -104,11 +104,11 @@ export default function ProductVariantSelector({
   }, [selectedVariant, variants, onVariantChange]);
 
   const handleVariantChange = (field: keyof VariantData, value: string | number) => {
-    setSelectedVariant(prev => ({ ...prev, [field]: value }));
+    setSelectedVariant((prev) => ({ ...prev, [field]: value }));
 
     // Clear error when user makes a selection
     if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: undefined }));
+      setErrors((prev) => ({ ...prev, [field]: undefined }));
     }
   };
 
@@ -122,7 +122,7 @@ export default function ProductVariantSelector({
       const variantSchema = createVariantSchema(variants);
       const validatedVariant = variantSchema.parse(selectedVariant);
       const variant = variants.find(
-        v => v.size === validatedVariant.size && v.firmness === validatedVariant.firmness
+        (v) => v.size === validatedVariant.size && v.firmness === validatedVariant.firmness
       );
 
       if (!variant) {
@@ -141,7 +141,7 @@ export default function ProductVariantSelector({
     } catch (error) {
       if (error instanceof z.ZodError) {
         const fieldErrors: Partial<Record<keyof VariantData, string>> = {};
-        error.errors.forEach(err => {
+        error.errors.forEach((err) => {
           if (err.path[0]) {
             fieldErrors[err.path[0] as keyof VariantData] = err.message;
           }
@@ -158,7 +158,7 @@ export default function ProductVariantSelector({
   const getCurrentStock = () => {
     if (!selectedVariant.size || !selectedVariant.firmness) return null;
     const variant = variants.find(
-      v => v.size === selectedVariant.size && v.firmness === selectedVariant.firmness
+      (v) => v.size === selectedVariant.size && v.firmness === selectedVariant.firmness
     );
     return variant?.stock || 0;
   };
@@ -178,7 +178,7 @@ export default function ProductVariantSelector({
             <SelectValue placeholder="請選擇尺寸" />
           </SelectTrigger>
           <SelectContent>
-            {sizeOptions.map(option => (
+            {sizeOptions.map((option) => (
               <SelectItem key={option.value} value={option.value}>
                 <span className="font-medium">{option.label}</span>
               </SelectItem>
@@ -199,7 +199,7 @@ export default function ProductVariantSelector({
             <SelectValue placeholder="請選擇軟硬度" />
           </SelectTrigger>
           <SelectContent>
-            {firmnessOptions.map(option => (
+            {firmnessOptions.map((option) => (
               <SelectItem key={option.value} value={option.value}>
                 <span className="font-medium">{option.label}</span>
               </SelectItem>
@@ -243,7 +243,7 @@ export default function ProductVariantSelector({
             min="1"
             max={Math.min(10, currentStock || 10)}
             value={selectedVariant.quantity || 1}
-            onChange={e => handleVariantChange('quantity', parseInt(e.target.value) || 1)}
+            onChange={(e) => handleVariantChange('quantity', parseInt(e.target.value) || 1)}
             className="w-20 text-center border border-gray-300 rounded-lg py-2"
           />
           <button

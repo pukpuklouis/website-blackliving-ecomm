@@ -70,9 +70,7 @@ describe('searchStore', () => {
   });
 
   it('hydrates recent searches from localStorage once', () => {
-    const stored = [
-      { id: '1', query: 'Simmons', executedAt: new Date().toISOString() },
-    ];
+    const stored = [{ id: '1', query: 'Simmons', executedAt: new Date().toISOString() }];
     globalThis.localStorage.setItem('blackliving:search:recent', JSON.stringify(stored));
 
     const { hydrate } = useSearchStore.getState();

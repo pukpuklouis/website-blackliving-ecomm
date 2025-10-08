@@ -35,18 +35,18 @@ export default function PersonalInfoStep() {
       } else if (field === 'email') {
         personalInfoSchema.shape.email.parse(value);
       }
-      setErrors(prev => ({ ...prev, [field]: '' }));
+      setErrors((prev) => ({ ...prev, [field]: '' }));
       return true;
     } catch (error) {
       if (error instanceof z.ZodError) {
-        setErrors(prev => ({ ...prev, [field]: error.errors[0].message }));
+        setErrors((prev) => ({ ...prev, [field]: error.errors[0].message }));
       }
       return false;
     }
   };
 
   const handleInputChange = (field: keyof typeof formData, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
     updateAppointmentData({ [field]: value });
 
     // Clear error when user starts typing
@@ -94,7 +94,7 @@ export default function PersonalInfoStep() {
           <input
             type="text"
             value={formData.name}
-            onChange={e => handleInputChange('name', e.target.value)}
+            onChange={(e) => handleInputChange('name', e.target.value)}
             onKeyPress={handleKeyPress}
             onFocus={() => setCurrentField('name')}
             placeholder="請輸入您的姓名"
@@ -118,7 +118,7 @@ export default function PersonalInfoStep() {
             id="phone-input"
             type="tel"
             value={formData.phone}
-            onChange={e => handleInputChange('phone', e.target.value)}
+            onChange={(e) => handleInputChange('phone', e.target.value)}
             onKeyPress={handleKeyPress}
             onFocus={() => setCurrentField('phone')}
             placeholder="0912-345-678"
@@ -141,7 +141,7 @@ export default function PersonalInfoStep() {
             id="email-input"
             type="email"
             value={formData.email}
-            onChange={e => handleInputChange('email', e.target.value)}
+            onChange={(e) => handleInputChange('email', e.target.value)}
             onKeyPress={handleKeyPress}
             onFocus={() => setCurrentField('email')}
             placeholder="your@email.com"
@@ -167,7 +167,7 @@ export default function PersonalInfoStep() {
             !formData.name.trim() ||
             !formData.phone.trim() ||
             !formData.email.trim() ||
-            Object.values(errors).some(error => error)
+            Object.values(errors).some((error) => error)
           }
           className="
             px-8 py-3 bg-black text-white rounded-lg font-medium

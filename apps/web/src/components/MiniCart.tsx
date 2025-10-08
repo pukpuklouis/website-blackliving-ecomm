@@ -133,7 +133,7 @@ const MiniCart: FC<MiniCartProps> = ({ isOpen, onClose, onCheckout, className = 
             <>
               {/* Cart Items */}
               <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                {items.map(item => (
+                {items.map((item) => (
                   <div
                     key={`${item.productId}-${item.variantId || 'default'}`}
                     className="flex space-x-3 p-3 border rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors"
@@ -144,7 +144,7 @@ const MiniCart: FC<MiniCartProps> = ({ isOpen, onClose, onCheckout, className = 
                         src={item.image}
                         alt={item.name}
                         className="w-16 h-16 object-cover rounded-lg bg-white border"
-                        onError={e => {
+                        onError={(e) => {
                           const target = e.target as HTMLImageElement;
                           target.src = '/images/placeholder-mattress.jpg';
                         }}
@@ -269,7 +269,7 @@ const MiniCart: FC<MiniCartProps> = ({ isOpen, onClose, onCheckout, className = 
                   <Button
                     onClick={handleCheckout}
                     className="w-full bg-black hover:bg-gray-800 text-white h-12 text-base font-semibold"
-                    disabled={items.some(item => !item.inStock)}
+                    disabled={items.some((item) => !item.inStock)}
                   >
                     <span className="flex items-center justify-center space-x-2">
                       <span>前往結帳</span>
