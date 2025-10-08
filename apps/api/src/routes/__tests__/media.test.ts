@@ -29,7 +29,10 @@ function createFakeBucket(data: Record<string, string | Uint8Array>, contentType
   let getCalls = 0;
   const encoder = new TextEncoder();
   const store = new Map<string, Uint8Array>(
-    Object.entries(data).map(([key, value]) => [key, typeof value === 'string' ? encoder.encode(value) : value])
+    Object.entries(data).map(([key, value]) => [
+      key,
+      typeof value === 'string' ? encoder.encode(value) : value,
+    ])
   );
 
   const bucket: Partial<R2Bucket> = {
@@ -64,8 +67,10 @@ function createObjectMeta(key: string, body: Uint8Array, contentType: string) {
     httpMetadata: { contentType, cacheControl: 'public, max-age=31536000, immutable' },
     customMetadata: {},
     writeHttpMetadata(headers: Headers) {
-      if (this.httpMetadata?.contentType) headers.set('Content-Type', this.httpMetadata.contentType);
-      if (this.httpMetadata?.cacheControl) headers.set('Cache-Control', this.httpMetadata.cacheControl);
+      if (this.httpMetadata?.contentType)
+        headers.set('Content-Type', this.httpMetadata.contentType);
+      if (this.httpMetadata?.cacheControl)
+        headers.set('Cache-Control', this.httpMetadata.cacheControl);
     },
   };
 }
@@ -81,7 +86,10 @@ function createObjectBody(key: string, body: Uint8Array, contentType: string, ra
       appliedRange = { suffix: length };
     } else {
       const offset = Math.max(0, range.offset ?? 0);
-      const length = range.length && range.length > 0 ? Math.min(range.length, body.length - offset) : body.length - offset;
+      const length =
+        range.length && range.length > 0
+          ? Math.min(range.length, body.length - offset)
+          : body.length - offset;
       slice = body.slice(offset, offset + length);
       appliedRange = { offset, length };
     }
@@ -158,7 +166,10 @@ describe('media delivery route', () => {
   });
 
   it('honors byte range requests', async () => {
-    const { bucket } = createFakeBucket({ 'uploads/data.bin': 'abcdefghijk' }, 'application/octet-stream');
+    const { bucket } = createFakeBucket(
+      { 'uploads/data.bin': 'abcdefghijk' },
+      'application/octet-stream'
+    );
     const { app, env } = createApp(bucket);
 
     const response = await app.request(
@@ -198,10 +209,17 @@ describe('media delivery route', () => {
   });
 
   it('supports HEAD metadata requests', async () => {
-    const { bucket } = createFakeBucket({ 'uploads/meta.png': new Uint8Array([0, 1, 2]) }, 'image/png');
+    const { bucket } = createFakeBucket(
+      { 'uploads/meta.png': new Uint8Array([0, 1, 2]) },
+      'image/png'
+    );
     const { app, env } = createApp(bucket);
 
-    const response = await app.request('http://example.dev/media/uploads/meta.png', { method: 'HEAD' }, env);
+    const response = await app.request(
+      'http://example.dev/media/uploads/meta.png',
+      { method: 'HEAD' },
+      env
+    );
 
     expect(response.status).toBe(200);
     expect(response.headers.get('Content-Type')).toBe('image/png');

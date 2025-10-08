@@ -88,7 +88,7 @@ const requireAdmin = async (c: any, next: any) => {
 };
 
 // GET /api/products - List all products with advanced filtering and search
-app.get('/', zValidator('query', productQuerySchema), async c => {
+app.get('/', zValidator('query', productQuerySchema), async (c) => {
   try {
     const db = c.get('db');
     const cache = c.get('cache');
@@ -192,7 +192,7 @@ app.get('/', zValidator('query', productQuerySchema), async c => {
 });
 
 // GET /api/products/featured - Get featured products for homepage
-app.get('/featured', async c => {
+app.get('/featured', async (c) => {
   try {
     const db = c.get('db');
     const cache = c.get('cache');
@@ -237,7 +237,7 @@ app.get('/featured', async c => {
 });
 
 // GET /api/products/categories - Get products grouped by category
-app.get('/categories', async c => {
+app.get('/categories', async (c) => {
   try {
     const db = c.get('db');
     const cache = c.get('cache');
@@ -312,7 +312,7 @@ app.get(
       offset: z.string().optional(),
     })
   ),
-  async c => {
+  async (c) => {
     try {
       const db = c.get('db');
       const query = c.req.valid('query');
@@ -360,7 +360,7 @@ app.get(
 );
 
 // GET /api/products/:identifier - Get single product by ID or slug
-app.get('/:identifier', async c => {
+app.get('/:identifier', async (c) => {
   try {
     const db = c.get('db');
     const identifier = c.req.param('identifier');
@@ -401,7 +401,7 @@ app.get('/:identifier', async c => {
 });
 
 // POST /api/products - Create new product (Admin only)
-app.post('/', requireAdmin, zValidator('json', createProductSchema), async c => {
+app.post('/', requireAdmin, zValidator('json', createProductSchema), async (c) => {
   try {
     const db = c.get('db');
     const cache = c.get('cache');
@@ -477,7 +477,7 @@ app.post('/', requireAdmin, zValidator('json', createProductSchema), async c => 
 });
 
 // PUT /api/products/:id - Update product (Admin only)
-app.put('/:id', requireAdmin, zValidator('json', updateProductSchema), async c => {
+app.put('/:id', requireAdmin, zValidator('json', updateProductSchema), async (c) => {
   try {
     const db = c.get('db');
     const cache = c.get('cache');
@@ -554,7 +554,7 @@ app.put('/:id', requireAdmin, zValidator('json', updateProductSchema), async c =
 });
 
 // DELETE /api/products/:id - Delete product (Admin only)
-app.delete('/:id', requireAdmin, async c => {
+app.delete('/:id', requireAdmin, async (c) => {
   try {
     const db = c.get('db');
     const cache = c.get('cache');

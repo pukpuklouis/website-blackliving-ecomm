@@ -49,7 +49,7 @@ export class CacheManager {
   async deleteByPrefix(prefix: string): Promise<void> {
     try {
       const keys = await this.kv.list({ prefix });
-      const deletePromises = keys.keys.map(key => this.kv.delete(key.name));
+      const deletePromises = keys.keys.map((key) => this.kv.delete(key.name));
       await Promise.all(deletePromises);
     } catch (error) {
       console.error('Cache clear by prefix error:', error);
@@ -127,7 +127,7 @@ export class CacheManager {
       const taggedKeys = (await this.get<string[]>(tagKey, true)) || [];
 
       // Delete all keys associated with this tag
-      const deletePromises = taggedKeys.map(key => this.delete(key));
+      const deletePromises = taggedKeys.map((key) => this.delete(key));
       await Promise.all(deletePromises);
 
       // Delete the tag key itself

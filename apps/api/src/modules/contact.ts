@@ -61,7 +61,7 @@ const requireAdmin = async (c: any, next: any) => {
 };
 
 // POST /api/contact - Submit contact form
-app.post('/', zValidator('json', contactCreateSchema), async c => {
+app.post('/', zValidator('json', contactCreateSchema), async (c) => {
   try {
     const db = c.get('db');
     const cache = c.get('cache');
@@ -128,7 +128,7 @@ app.post('/', zValidator('json', contactCreateSchema), async c => {
 });
 
 // GET /api/contact/admin - List contact submissions (admin only)
-app.get('/admin', requireAdmin, zValidator('query', contactQuerySchema), async c => {
+app.get('/admin', requireAdmin, zValidator('query', contactQuerySchema), async (c) => {
   try {
     const db = c.get('db');
     const cache = c.get('cache');
@@ -178,7 +178,7 @@ app.get('/admin', requireAdmin, zValidator('query', contactQuerySchema), async c
       // Filter results in application layer for search (not ideal for large datasets)
       if (query.search) {
         result = result.filter(
-          contact =>
+          (contact) =>
             contact.name.toLowerCase().includes(query.search!.toLowerCase()) ||
             contact.email.toLowerCase().includes(query.search!.toLowerCase()) ||
             contact.subject.toLowerCase().includes(query.search!.toLowerCase()) ||
@@ -233,7 +233,7 @@ app.get('/admin', requireAdmin, zValidator('query', contactQuerySchema), async c
 });
 
 // GET /api/contact/admin/stats - Get contact statistics (admin only)
-app.get('/admin/stats', requireAdmin, async c => {
+app.get('/admin/stats', requireAdmin, async (c) => {
   try {
     const db = c.get('db');
     const cache = c.get('cache');
@@ -308,7 +308,7 @@ app.get('/admin/stats', requireAdmin, async c => {
 });
 
 // GET /api/contact/admin/:id - Get single contact (admin only)
-app.get('/admin/:id', requireAdmin, async c => {
+app.get('/admin/:id', requireAdmin, async (c) => {
   try {
     const db = c.get('db');
     const id = c.req.param('id');
@@ -344,7 +344,7 @@ app.get('/admin/:id', requireAdmin, async c => {
 });
 
 // PUT /api/contact/admin/:id - Update contact status (admin only)
-app.put('/admin/:id', requireAdmin, zValidator('json', contactUpdateSchema), async c => {
+app.put('/admin/:id', requireAdmin, zValidator('json', contactUpdateSchema), async (c) => {
   try {
     const db = c.get('db');
     const cache = c.get('cache');
@@ -396,7 +396,7 @@ app.put('/admin/:id', requireAdmin, zValidator('json', contactUpdateSchema), asy
 });
 
 // DELETE /api/contact/admin/:id - Delete contact (admin only)
-app.delete('/admin/:id', requireAdmin, async c => {
+app.delete('/admin/:id', requireAdmin, async (c) => {
   try {
     const db = c.get('db');
     const cache = c.get('cache');

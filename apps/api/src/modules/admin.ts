@@ -24,7 +24,7 @@ admin.use('*', requireAdmin());
 admin.use('*', auditLog('admin-access'));
 
 // Dashboard Analytics
-admin.get('/dashboard/stats', async c => {
+admin.get('/dashboard/stats', async (c) => {
   const db = c.get('db');
   const cache = c.get('cache');
 
@@ -91,11 +91,11 @@ admin.get('/dashboard/stats', async c => {
           totalRevenue,
           pendingAppointments,
           publishedPosts,
-          recentOrders: recentOrders.map(order => ({
+          recentOrders: recentOrders.map((order) => ({
             ...order,
             createdAt: order.createdAt?.toISOString() || '',
           })),
-          recentAppointments: recentAppointments.map(appointment => ({
+          recentAppointments: recentAppointments.map((appointment) => ({
             ...appointment,
             createdAt: appointment.createdAt?.toISOString() || '',
           })),
@@ -124,7 +124,7 @@ admin.get(
       featured: z.string().optional(),
     })
   ),
-  async c => {
+  async (c) => {
     const db = c.get('db');
     const cache = c.get('cache');
     const { page, limit, category, search, featured } = c.req.valid('query');
@@ -209,7 +209,7 @@ admin.post(
       seoDescription: z.string().optional(),
     })
   ),
-  async c => {
+  async (c) => {
     const db = c.get('db');
     const cache = c.get('cache');
     const productData = c.req.valid('json');
@@ -249,7 +249,7 @@ admin.put(
       seoDescription: z.string().optional(),
     })
   ),
-  async c => {
+  async (c) => {
     const db = c.get('db');
     const cache = c.get('cache');
     const productId = c.req.param('id');
@@ -280,7 +280,7 @@ admin.put(
 );
 
 // Sensitive operations require fresh session
-admin.delete('/products/:id', requireFreshSession(15), auditLog('product-delete'), async c => {
+admin.delete('/products/:id', requireFreshSession(15), auditLog('product-delete'), async (c) => {
   const db = c.get('db');
   const cache = c.get('cache');
   const storage = c.get('storage');
@@ -316,7 +316,7 @@ admin.delete('/products/:id', requireFreshSession(15), auditLog('product-delete'
 });
 
 // File Upload API
-admin.post('/upload', async c => {
+admin.post('/upload', async (c) => {
   const storage = c.get('storage');
 
   try {
@@ -328,7 +328,7 @@ admin.post('/upload', async c => {
       return c.json({ success: false, error: 'No files provided' }, 400);
     }
 
-    const uploadPromises = files.map(async file => {
+    const uploadPromises = files.map(async (file) => {
       // Validate file
       const validation = StorageManager.validateFile(file, FileTypes.IMAGES, FileSizes.MEDIUM);
       if (!validation.valid) {
@@ -377,7 +377,7 @@ const mediaLibraryQuerySchema = z.object({
   sort: z.enum(['recent', 'name']).optional().default('recent'),
 });
 
-admin.get('/media/library', zValidator('query', mediaLibraryQuerySchema), async c => {
+admin.get('/media/library', zValidator('query', mediaLibraryQuerySchema), async (c) => {
   try {
     const storage = c.get('storage');
     const { prefix, cursor, limit, search, type, sort } = c.req.valid('query');
@@ -392,7 +392,7 @@ admin.get('/media/library', zValidator('query', mediaLibraryQuerySchema), async 
     });
 
     const items = listResult.items
-      .map(item => {
+      .map((item) => {
         const normalizedKey = stripDeliveryPrefix(item.key);
         const name = normalizedKey.split('/').pop() ?? normalizedKey;
         const contentType = item.contentType ?? inferMimeFromKey(name);
@@ -409,11 +409,14 @@ admin.get('/media/library', zValidator('query', mediaLibraryQuerySchema), async 
           isImage,
         };
       })
-      .filter(asset => {
+      .filter((asset) => {
         if (!searchTerm) return true;
-        return asset.name.toLowerCase().includes(searchTerm) || asset.key.toLowerCase().includes(searchTerm);
+        return (
+          asset.name.toLowerCase().includes(searchTerm) ||
+          asset.key.toLowerCase().includes(searchTerm)
+        );
       })
-      .filter(asset => {
+      .filter((asset) => {
         if (type === 'images') return asset.isImage;
         if (type === 'files') return !asset.isImage;
         return true;
@@ -426,7 +429,7 @@ admin.get('/media/library', zValidator('query', mediaLibraryQuerySchema), async 
       return new Date(b.lastModified).getTime() - new Date(a.lastModified).getTime();
     });
 
-    const nextCursor = listResult.truncated ? listResult.cursor ?? null : null;
+    const nextCursor = listResult.truncated ? (listResult.cursor ?? null) : null;
 
     return c.json({
       success: true,
@@ -468,7 +471,9 @@ function determineIsImage(contentType?: string, key?: string): boolean {
   const extension = key?.split('.').pop()?.toLowerCase();
   if (!extension) return false;
 
-  return ['jpg', 'jpeg', 'png', 'webp', 'gif', 'bmp', 'svg', 'avif', 'heic', 'heif'].includes(extension);
+  return ['jpg', 'jpeg', 'png', 'webp', 'gif', 'bmp', 'svg', 'avif', 'heic', 'heif'].includes(
+    extension
+  );
 }
 
 function inferMimeFromKey(key: string): string | undefined {
@@ -518,7 +523,7 @@ admin.get(
       search: z.string().optional(),
     })
   ),
-  async c => {
+  async (c) => {
     const db = c.get('db');
     const cache = c.get('cache');
     const { page, limit, status, search } = c.req.valid('query');
@@ -597,7 +602,7 @@ admin.post(
       publishedAt: z.string().optional(),
     })
   ),
-  async c => {
+  async (c) => {
     const db = c.get('db');
     const cache = c.get('cache');
     const user = c.get('user');
@@ -642,7 +647,7 @@ admin.put(
       publishedAt: z.string().optional(),
     })
   ),
-  async c => {
+  async (c) => {
     const db = c.get('db');
     const cache = c.get('cache');
     const postId = c.req.param('id');
@@ -678,7 +683,7 @@ admin.put(
   }
 );
 
-admin.delete('/posts/:id', requireFreshSession(15), auditLog('post-delete'), async c => {
+admin.delete('/posts/:id', requireFreshSession(15), auditLog('post-delete'), async (c) => {
   const db = c.get('db');
   const cache = c.get('cache');
   const postId = c.req.param('id');

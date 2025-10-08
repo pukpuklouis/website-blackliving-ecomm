@@ -46,7 +46,7 @@ const confirmAppointmentSchema = z.object({
 });
 
 // GET /api/appointments - List appointments (Admin only)
-appointments.get('/', requireAdmin(), async c => {
+appointments.get('/', requireAdmin(), async (c) => {
   try {
     const { status, store, date, limit = '50', offset = '0' } = c.req.query();
 
@@ -103,7 +103,7 @@ appointments.get('/', requireAdmin(), async c => {
 });
 
 // GET /api/appointments/:id - Get single appointment
-appointments.get('/:id', async c => {
+appointments.get('/:id', async (c) => {
   try {
     const id = c.req.param('id');
 
@@ -126,7 +126,7 @@ appointments.get('/:id', async c => {
 });
 
 // POST /api/appointments - Create new appointment
-appointments.post('/', zValidator('json', createAppointmentSchema), async c => {
+appointments.post('/', zValidator('json', createAppointmentSchema), async (c) => {
   try {
     const data = c.req.valid('json');
 
@@ -194,7 +194,7 @@ appointments.patch(
   '/:id/status',
   requireAdmin(),
   zValidator('json', updateAppointmentStatusSchema),
-  async c => {
+  async (c) => {
     try {
       const id = c.req.param('id');
       const { status, adminNotes, staffAssigned } = c.req.valid('json');
@@ -249,7 +249,7 @@ appointments.patch(
   '/:id/confirm',
   requireAdmin(),
   zValidator('json', confirmAppointmentSchema),
-  async c => {
+  async (c) => {
     try {
       const id = c.req.param('id');
       const { status, confirmedDateTime, adminNotes, staffAssigned } = c.req.valid('json');
@@ -299,7 +299,7 @@ appointments.patch(
 );
 
 // GET /api/appointments/customer/:phone - Get customer appointments
-appointments.get('/customer/:phone', async c => {
+appointments.get('/customer/:phone', async (c) => {
   try {
     // TODO: Add authentication middleware to ensure user can only access their own appointments
     const phone = c.req.param('phone');
@@ -325,7 +325,7 @@ appointments.get('/customer/:phone', async c => {
 });
 
 // GET /api/appointments/availability/:store/:date - Check availability
-appointments.get('/availability/:store/:date', async c => {
+appointments.get('/availability/:store/:date', async (c) => {
   try {
     const store = c.req.param('store');
     const date = c.req.param('date');

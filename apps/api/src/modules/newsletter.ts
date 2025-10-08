@@ -57,7 +57,7 @@ const requireAdmin = async (c: any, next: any) => {
 };
 
 // POST /api/newsletter/subscribe - Subscribe to newsletter
-app.post('/subscribe', zValidator('json', subscribeSchema), async c => {
+app.post('/subscribe', zValidator('json', subscribeSchema), async (c) => {
   try {
     const db = c.get('db');
     const cache = c.get('cache');
@@ -137,7 +137,7 @@ app.post('/subscribe', zValidator('json', subscribeSchema), async c => {
 });
 
 // DELETE /api/newsletter/unsubscribe/:email - Unsubscribe from newsletter
-app.delete('/unsubscribe/:email', async c => {
+app.delete('/unsubscribe/:email', async (c) => {
   try {
     const db = c.get('db');
     const cache = c.get('cache');
@@ -208,86 +208,91 @@ app.delete('/unsubscribe/:email', async c => {
 });
 
 // GET /api/newsletter/admin/subscribers - List subscribers (admin only)
-app.get('/admin/subscribers', requireAdmin, zValidator('query', subscriberQuerySchema), async c => {
-  try {
-    const db = c.get('db');
-    const cache = c.get('cache');
-    const query = c.req.valid('query');
+app.get(
+  '/admin/subscribers',
+  requireAdmin,
+  zValidator('query', subscriberQuerySchema),
+  async (c) => {
+    try {
+      const db = c.get('db');
+      const cache = c.get('cache');
+      const query = c.req.valid('query');
 
-    // Build cache key
-    const cacheKey = `newsletter:subscribers:${JSON.stringify(query)}`;
+      // Build cache key
+      const cacheKey = `newsletter:subscribers:${JSON.stringify(query)}`;
 
-    // Try cache first
-    const cached = await cache.get(cacheKey);
-    if (cached) {
+      // Try cache first
+      const cached = await cache.get(cacheKey);
+      if (cached) {
+        return c.json({
+          success: true,
+          data: JSON.parse(cached),
+          cached: true,
+        });
+      }
+
+      // Build query conditions
+      const conditions = [];
+
+      if (query.status) {
+        conditions.push(eq(newsletters.status, query.status));
+      }
+
+      if (query.source) {
+        conditions.push(eq(newsletters.source, query.source));
+      }
+
+      // Execute query with pagination
+      const limit = parseInt(query.limit || '50');
+      const offset = parseInt(query.offset || '0');
+
+      const result = await db
+        .select()
+        .from(newsletters)
+        .where(conditions.length > 0 ? and(...conditions) : undefined)
+        .orderBy(desc(newsletters.createdAt))
+        .limit(limit)
+        .offset(offset);
+
+      // Get total count for pagination
+      const [totalResult] = await db
+        .select({ count: count() })
+        .from(newsletters)
+        .where(conditions.length > 0 ? and(...conditions) : undefined);
+
+      const responseData = {
+        subscribers: result,
+        pagination: {
+          limit,
+          offset,
+          total: totalResult.count,
+          hasMore: offset + result.length < totalResult.count,
+        },
+      };
+
+      // Cache the result for 5 minutes
+      await cache.put(cacheKey, JSON.stringify(responseData), { expirationTtl: 300 });
+
       return c.json({
         success: true,
-        data: JSON.parse(cached),
-        cached: true,
+        data: responseData,
       });
+    } catch (error) {
+      console.error('Error fetching newsletter subscribers:', error);
+      return c.json(
+        {
+          success: false,
+          error: 'Internal Server Error',
+          message: 'Failed to fetch newsletter subscribers',
+        },
+        500
+      );
     }
-
-    // Build query conditions
-    const conditions = [];
-
-    if (query.status) {
-      conditions.push(eq(newsletters.status, query.status));
-    }
-
-    if (query.source) {
-      conditions.push(eq(newsletters.source, query.source));
-    }
-
-    // Execute query with pagination
-    const limit = parseInt(query.limit || '50');
-    const offset = parseInt(query.offset || '0');
-
-    const result = await db
-      .select()
-      .from(newsletters)
-      .where(conditions.length > 0 ? and(...conditions) : undefined)
-      .orderBy(desc(newsletters.createdAt))
-      .limit(limit)
-      .offset(offset);
-
-    // Get total count for pagination
-    const [totalResult] = await db
-      .select({ count: count() })
-      .from(newsletters)
-      .where(conditions.length > 0 ? and(...conditions) : undefined);
-
-    const responseData = {
-      subscribers: result,
-      pagination: {
-        limit,
-        offset,
-        total: totalResult.count,
-        hasMore: offset + result.length < totalResult.count,
-      },
-    };
-
-    // Cache the result for 5 minutes
-    await cache.put(cacheKey, JSON.stringify(responseData), { expirationTtl: 300 });
-
-    return c.json({
-      success: true,
-      data: responseData,
-    });
-  } catch (error) {
-    console.error('Error fetching newsletter subscribers:', error);
-    return c.json(
-      {
-        success: false,
-        error: 'Internal Server Error',
-        message: 'Failed to fetch newsletter subscribers',
-      },
-      500
-    );
   }
-});
+);
 
 // GET /api/newsletter/admin/stats - Get newsletter statistics (admin only)
-app.get('/admin/stats', requireAdmin, async c => {
+app.get('/admin/stats', requireAdmin, async (c) => {
   try {
     const db = c.get('db');
     const cache = c.get('cache');
@@ -386,7 +391,7 @@ app.get('/admin/stats', requireAdmin, async c => {
 });
 
 // DELETE /api/newsletter/admin/subscribers/:id - Remove subscriber (admin only)
-app.delete('/admin/subscribers/:id', requireAdmin, async c => {
+app.delete('/admin/subscribers/:id', requireAdmin, async (c) => {
   try {
     const db = c.get('db');
     const cache = c.get('cache');

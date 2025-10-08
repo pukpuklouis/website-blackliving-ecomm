@@ -159,7 +159,7 @@ export function createSecurityMiddleware(config: Partial<SecurityConfig> = {}) {
       /spider/i,
     ];
 
-    if (userAgent && suspiciousPatterns.some(pattern => pattern.test(userAgent))) {
+    if (userAgent && suspiciousPatterns.some((pattern) => pattern.test(userAgent))) {
       console.warn(`Suspicious user agent detected: ${userAgent}`);
       throw new HTTPException(403, { message: 'Access denied' });
     }
@@ -178,7 +178,7 @@ export function createSecurityMiddleware(config: Partial<SecurityConfig> = {}) {
       /javascript:/i, // XSS attempts
     ];
 
-    if (attackPatterns.some(pattern => pattern.test(url))) {
+    if (attackPatterns.some((pattern) => pattern.test(url))) {
       console.warn(`Malicious URL pattern detected: ${url}`);
       throw new HTTPException(403, { message: 'Access denied' });
     }
@@ -343,7 +343,7 @@ export function createCSRFMiddleware() {
     const isValidOrigin =
       origin &&
       allowedOrigins.some(
-        allowed => origin === allowed || origin.endsWith(allowed.replace(/^https?:\/\//, ''))
+        (allowed) => origin === allowed || origin.endsWith(allowed.replace(/^https?:\/\//, ''))
       );
 
     if (!isValidOrigin) {
@@ -373,7 +373,7 @@ export function createIPBlockingMiddleware() {
       }
     });
 
-    ipsToDelete.forEach(ip => suspiciousIPs.delete(ip));
+    ipsToDelete.forEach((ip) => suspiciousIPs.delete(ip));
   };
 
   return async (c: Context, next: Next) => {
@@ -458,7 +458,7 @@ export function createValidationMiddleware<T>(
       const result = schema.safeParse(data);
 
       if (!result.success) {
-        const errors = result.error.errors.map(err => ({
+        const errors = result.error.errors.map((err) => ({
           path: err.path.join('.'),
           message: err.message,
         }));

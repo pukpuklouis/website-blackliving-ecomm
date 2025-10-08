@@ -160,7 +160,7 @@ app.get(
   '/',
   requireRole(['customer', 'admin']),
   cacheMiddleware({ ttl: 300 }), // 5 minute cache
-  async c => {
+  async (c) => {
     const requestId = logRequest(c, 'GET_BASIC_PROFILE');
     try {
       const userId = c.get('user').id;
@@ -201,7 +201,7 @@ app.get(
   '/full',
   requireRole(['customer', 'admin']),
   cacheMiddleware({ ttl: 180 }), // 3 minute cache (less frequent)
-  async c => {
+  async (c) => {
     try {
       const userId = c.get('user').id;
 
@@ -233,7 +233,7 @@ app.get(
   '/analytics',
   requireRole(['customer', 'admin']),
   cacheMiddleware({ ttl: 600 }), // 10 minute cache (analytics change less frequently)
-  async c => {
+  async (c) => {
     try {
       const userId = c.get('user').id;
 
@@ -269,7 +269,7 @@ app.post(
   '/',
   requireRole(['customer', 'admin']),
   zValidator('json', createProfileSchema),
-  async c => {
+  async (c) => {
     try {
       const userData = c.req.valid('json');
 
@@ -310,7 +310,7 @@ app.patch(
   '/',
   requireRole(['customer', 'admin']),
   zValidator('json', updateProfileSchema),
-  async c => {
+  async (c) => {
     const requestId = logRequest(c, 'UPDATE_PROFILE_START');
     try {
       const userId = c.get('user').id;
@@ -332,7 +332,7 @@ app.patch(
       // Clear user's cache after update
       const cacheKeys = [`profile:${userId}`, `full-profile:${userId}`, `analytics:${userId}`];
       const cacheDelResults = await Promise.allSettled(
-        cacheKeys.map(key => c.env.CACHE.delete(key))
+        cacheKeys.map((key) => c.env.CACHE.delete(key))
       );
 
       // Log cache deletion results
@@ -385,7 +385,7 @@ app.patch(
       preferences: z.object({}).passthrough(),
     })
   ),
-  async c => {
+  async (c) => {
     try {
       const userId = c.get('user').id;
       const { preferences } = c.req.valid('json');
@@ -422,7 +422,7 @@ app.post(
       isFirstPurchase: z.boolean().optional(),
     })
   ),
-  async c => {
+  async (c) => {
     try {
       const user = c.get('user');
 
@@ -444,7 +444,7 @@ app.post(
       // Clear analytics cache
       const cacheKeys = [`analytics:${userId}`, `full-profile:${userId}`];
 
-      await Promise.all(cacheKeys.map(key => c.env.CACHE.delete(key)));
+      await Promise.all(cacheKeys.map((key) => c.env.CACHE.delete(key)));
 
       return c.json({
         success: true,
@@ -465,7 +465,7 @@ app.post(
  * DELETE /profile - Soft delete profile (anonymize)
  * Default deletion method for GDPR compliance
  */
-app.delete('/', requireRole(['customer', 'admin']), async c => {
+app.delete('/', requireRole(['customer', 'admin']), async (c) => {
   try {
     const userId = c.get('user').id;
 
@@ -474,7 +474,7 @@ app.delete('/', requireRole(['customer', 'admin']), async c => {
     // Clear all user cache
     const cacheKeys = [`profile:${userId}`, `full-profile:${userId}`, `analytics:${userId}`];
 
-    await Promise.all(cacheKeys.map(key => c.env.CACHE.delete(key)));
+    await Promise.all(cacheKeys.map((key) => c.env.CACHE.delete(key)));
 
     return c.json({
       success: true,
@@ -501,7 +501,7 @@ app.delete(
       reason: z.string().min(1).max(200),
     })
   ),
-  async c => {
+  async (c) => {
     try {
       const user = c.get('user');
       const { confirmEmail, reason } = c.req.valid('json');
@@ -519,7 +519,7 @@ app.delete(
       // Clear all cache
       const cacheKeys = [`profile:${user.id}`, `full-profile:${user.id}`, `analytics:${user.id}`];
 
-      await Promise.all(cacheKeys.map(key => c.env.CACHE.delete(key)));
+      await Promise.all(cacheKeys.map((key) => c.env.CACHE.delete(key)));
 
       return c.json({
         success: true,
@@ -545,7 +545,7 @@ app.post(
   '/batch',
   requireRole(['admin']), // Only admin for batch operations
   zValidator('json', batchUpdateSchema),
-  async c => {
+  async (c) => {
     try {
       const user = c.get('user');
 
@@ -559,7 +559,7 @@ app.post(
 
       // Clear cache for all affected users
       const cacheKeys: string[] = [];
-      updates.forEach(update => {
+      updates.forEach((update) => {
         cacheKeys.push(
           `profile:${update.userId}`,
           `full-profile:${update.userId}`,
@@ -567,7 +567,7 @@ app.post(
         );
       });
 
-      await Promise.all(cacheKeys.map(key => c.env.CACHE.delete(key)));
+      await Promise.all(cacheKeys.map((key) => c.env.CACHE.delete(key)));
 
       return c.json({
         success: true,
@@ -588,7 +588,7 @@ app.post(
 app.get(
   '/:userId/admin',
   requireRole(['admin']), // Only admin can view other users' profiles
-  async c => {
+  async (c) => {
     try {
       const user = c.get('user');
 
@@ -623,7 +623,7 @@ app.get(
 /**
  * GET /profile/health - Health check for profile service
  */
-app.get('/health', async c => {
+app.get('/health', async (c) => {
   try {
     // Simple health check - verify database connection
     const startTime = Date.now();
@@ -665,7 +665,7 @@ app.get(
   '/addresses',
   requireRole(['customer', 'admin']),
   cacheMiddleware({ ttl: 180 }), // 3 minute cache
-  async c => {
+  async (c) => {
     try {
       const userId = c.get('user').id;
       const db = createDB(c);
@@ -696,7 +696,7 @@ app.post(
   '/addresses',
   requireRole(['customer', 'admin']),
   zValidator('json', createAddressSchema),
-  async c => {
+  async (c) => {
     try {
       const userId = c.get('user').id;
       const addressData = c.req.valid('json');
@@ -764,7 +764,7 @@ app.patch(
   '/addresses/:id',
   requireRole(['customer', 'admin']),
   zValidator('json', updateAddressSchema),
-  async c => {
+  async (c) => {
     try {
       const userId = c.get('user').id;
       const addressId = c.req.param('id');
@@ -827,7 +827,7 @@ app.patch(
 /**
  * DELETE /addresses/:id - Delete address
  */
-app.delete('/addresses/:id', requireRole(['customer', 'admin']), async c => {
+app.delete('/addresses/:id', requireRole(['customer', 'admin']), async (c) => {
   try {
     const userId = c.get('user').id;
     const addressId = c.req.param('id');
@@ -877,7 +877,7 @@ app.delete('/addresses/:id', requireRole(['customer', 'admin']), async c => {
 /**
  * PATCH /addresses/:id/default - Set address as default
  */
-app.patch('/addresses/:id/default', requireRole(['customer', 'admin']), async c => {
+app.patch('/addresses/:id/default', requireRole(['customer', 'admin']), async (c) => {
   try {
     const userId = c.get('user').id;
     const addressId = c.req.param('id');

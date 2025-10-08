@@ -100,7 +100,7 @@ app.post(
   authMiddleware,
   adminOnly,
   zValidator('json', bulkUpdateSchema),
-  async c => {
+  async (c) => {
     try {
       const { userIds, updates } = c.req.valid('json');
 
@@ -108,10 +108,10 @@ app.post(
       const existingUsers = await db
         .select({ id: customerProfiles.userId })
         .from(customerProfiles)
-        .where(sql`${customerProfiles.userId} IN (${userIds.map(id => `'${id}'`).join(',')})`);
+        .where(sql`${customerProfiles.userId} IN (${userIds.map((id) => `'${id}'`).join(',')})`);
 
-      const validUserIds = existingUsers.map(u => u.id);
-      const invalidUserIds = userIds.filter(id => !validUserIds.includes(id));
+      const validUserIds = existingUsers.map((u) => u.id);
+      const invalidUserIds = userIds.filter((id) => !validUserIds.includes(id));
 
       if (invalidUserIds.length > 0) {
         return c.json(
@@ -134,14 +134,14 @@ app.post(
             ...updates,
             updatedAt: new Date(),
           })
-          .where(sql`${customerProfiles.userId} IN (${chunk.map(id => `'${id}'`).join(',')})`);
+          .where(sql`${customerProfiles.userId} IN (${chunk.map((id) => `'${id}'`).join(',')})`);
 
         totalUpdated += chunk.length;
       }
 
       // Clear cache for affected users
       const cacheInvalidator = new CacheInvalidator(c.env.CACHE);
-      await Promise.all(validUserIds.map(userId => cacheInvalidator.invalidateUserCache(userId)));
+      await Promise.all(validUserIds.map((userId) => cacheInvalidator.invalidateUserCache(userId)));
 
       return c.json({
         success: true,
@@ -172,7 +172,7 @@ app.post(
   authMiddleware,
   adminOnly,
   zValidator('json', customerExportSchema),
-  async c => {
+  async (c) => {
     try {
       const { filters = {}, format, fields } = c.req.valid('json');
 
@@ -207,13 +207,13 @@ app.post(
 
       if (filters.segment?.length) {
         conditions.push(
-          sql`${customerProfiles.segment} IN (${filters.segment.map(s => `'${s}'`).join(',')})`
+          sql`${customerProfiles.segment} IN (${filters.segment.map((s) => `'${s}'`).join(',')})`
         );
       }
 
       if (filters.churnRisk?.length) {
         conditions.push(
-          sql`${customerProfiles.churnRisk} IN (${filters.churnRisk.map(r => `'${r}'`).join(',')})`
+          sql`${customerProfiles.churnRisk} IN (${filters.churnRisk.map((r) => `'${r}'`).join(',')})`
         );
       }
 
@@ -263,9 +263,9 @@ app.post(
       // Filter fields if specified
       let exportData = customers;
       if (fields?.length) {
-        exportData = customers.map(customer => {
+        exportData = customers.map((customer) => {
           const filtered: any = {};
-          fields.forEach(field => {
+          fields.forEach((field) => {
             if (field in customer) {
               filtered[field] = customer[field as keyof typeof customer];
             }
@@ -311,7 +311,7 @@ app.post(
   authMiddleware,
   adminOnly,
   zValidator('json', segmentRecalculationSchema),
-  async c => {
+  async (c) => {
     try {
       const { userIds, force } = c.req.valid('json');
 
@@ -325,14 +325,14 @@ app.post(
           .select({ userId: customerProfiles.userId })
           .from(customerProfiles);
 
-        targetUsers = allCustomers.map(c => c.userId);
+        targetUsers = allCustomers.map((c) => c.userId);
       }
 
       let updated = 0;
       const chunks = chunkArray(targetUsers, 50); // Process in smaller chunks
 
       for (const chunk of chunks) {
-        const promises = chunk.map(async userId => {
+        const promises = chunk.map(async (userId) => {
           try {
             await CustomerProfileService.updateSegment(userId);
             updated++;
@@ -346,7 +346,7 @@ app.post(
 
       // Clear affected cache
       const cacheInvalidator = new CacheInvalidator(c.env.CACHE);
-      await Promise.all(targetUsers.map(userId => cacheInvalidator.invalidateUserCache(userId)));
+      await Promise.all(targetUsers.map((userId) => cacheInvalidator.invalidateUserCache(userId)));
 
       return c.json({
         success: true,
@@ -377,7 +377,7 @@ app.post(
   authMiddleware,
   adminOnly,
   zValidator('json', dataCleanupSchema),
-  async c => {
+  async (c) => {
     try {
       const { operations, dryRun } = c.req.valid('json');
 
@@ -434,7 +434,7 @@ app.post(
  * GET /admin/customer-analytics - Get customer analytics overview
  * For admin dashboard and reporting
  */
-app.get('/admin/customer-analytics', authMiddleware, adminOnly, async c => {
+app.get('/admin/customer-analytics', authMiddleware, adminOnly, async (c) => {
   try {
     // Get comprehensive customer analytics
     const [
@@ -486,9 +486,9 @@ function convertToCSV(data: any[]): string {
   const headers = Object.keys(data[0]);
   const csvHeaders = headers.join(',');
 
-  const csvRows = data.map(row => {
+  const csvRows = data.map((row) => {
     return headers
-      .map(header => {
+      .map((header) => {
         const value = row[header];
         // Escape CSV values
         if (typeof value === 'string' && (value.includes(',') || value.includes('"'))) {

@@ -11,7 +11,7 @@ interface MediaBindings {
 
 const media = new Hono<{ Bindings: MediaBindings }>();
 
-media.get('/:key{.+}', async c => {
+media.get('/:key{.+}', async (c) => {
   const rawKey = c.req.param('key');
   const key = sanitizeKey(rawKey);
 
@@ -21,7 +21,10 @@ media.get('/:key{.+}', async c => {
   }
 
   if (isProtectedKey(key)) {
-    console.warn('[media] attempted access to protected key', { key, ip: c.req.header('cf-connecting-ip') });
+    console.warn('[media] attempted access to protected key', {
+      key,
+      ip: c.req.header('cf-connecting-ip'),
+    });
     return c.json({ error: 'Forbidden' }, 403);
   }
 
@@ -64,7 +67,7 @@ media.get('/:key{.+}', async c => {
   return response;
 });
 
-media.on('HEAD', '/:key{.+}', async c => {
+media.on('HEAD', '/:key{.+}', async (c) => {
   const rawKey = c.req.param('key');
   const key = sanitizeKey(rawKey);
 
@@ -110,13 +113,13 @@ function sanitizeKey(rawKey?: string): string | null {
 }
 
 function isProtectedKey(key: string): boolean {
-  return PROTECTED_PREFIXES.some(prefix => key.startsWith(`${prefix}/`));
+  return PROTECTED_PREFIXES.some((prefix) => key.startsWith(`${prefix}/`));
 }
 
 function createCacheRequest(request: Request): Request {
   const headers = new Headers();
   const varyHeaders = ['accept'] as const;
-  varyHeaders.forEach(header => {
+  varyHeaders.forEach((header) => {
     const value = request.headers.get(header);
     if (value) headers.set(header, value);
   });
@@ -174,7 +177,10 @@ function buildGetOptions(range: ParsedRange | undefined, headers: Headers): R2Ge
 
   if (range) {
     if (range.type === 'bytes') {
-      options.range = range.end !== undefined ? { offset: range.start, length: range.end - range.start + 1 } : { offset: range.start };
+      options.range =
+        range.end !== undefined
+          ? { offset: range.start, length: range.end - range.start + 1 }
+          : { offset: range.start };
     } else {
       options.range = { suffix: range.length };
     }
@@ -183,7 +189,10 @@ function buildGetOptions(range: ParsedRange | undefined, headers: Headers): R2Ge
   return options;
 }
 
-function buildObjectResponse(object: R2ObjectBody | R2Object, requestedRange?: ParsedRange): Response {
+function buildObjectResponse(
+  object: R2ObjectBody | R2Object,
+  requestedRange?: ParsedRange
+): Response {
   const headers = new Headers();
   object.writeHttpMetadata(headers);
   headers.set('Cache-Control', IMMUTABLE_CACHE_CONTROL);

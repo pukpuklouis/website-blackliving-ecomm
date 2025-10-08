@@ -10,7 +10,10 @@ export class StorageManager {
   private publicUrl: string;
   private static readonly DEFAULT_CACHE_CONTROL = 'public, max-age=31536000, immutable';
 
-  constructor(private r2: R2Bucket, publicUrl: string) {
+  constructor(
+    private r2: R2Bucket,
+    publicUrl: string
+  ) {
     if (!publicUrl) {
       throw new Error('R2 public URL is not configured. Set R2_PUBLIC_URL in your environment.');
     }
@@ -74,7 +77,11 @@ export class StorageManager {
    * Upload multiple files
    */
   async uploadFiles(
-    files: Array<{ key: string; file: File | ArrayBuffer | Uint8Array | string; options?: UploadOptions }>
+    files: Array<{
+      key: string;
+      file: File | ArrayBuffer | Uint8Array | string;
+      options?: UploadOptions;
+    }>
   ): Promise<Array<{ key: string; url: string; size: number }>> {
     const uploadPromises = files.map(({ key, file, options = {} }) =>
       this.uploadFile(key, file, options)
@@ -99,7 +106,7 @@ export class StorageManager {
    * Delete multiple files
    */
   async deleteFiles(keys: string[]): Promise<void> {
-    const deletePromises = keys.map(key => this.deleteFile(key));
+    const deletePromises = keys.map((key) => this.deleteFile(key));
     await Promise.all(deletePromises);
   }
 
@@ -133,12 +140,14 @@ export class StorageManager {
   /**
    * List files with optional prefix
    */
-  async listFiles(options: {
-    prefix?: string;
-    limit?: number;
-    cursor?: string;
-    startAfter?: string;
-  } = {}): Promise<{
+  async listFiles(
+    options: {
+      prefix?: string;
+      limit?: number;
+      cursor?: string;
+      startAfter?: string;
+    } = {}
+  ): Promise<{
     items: Array<{
       key: string;
       size: number;
@@ -159,7 +168,7 @@ export class StorageManager {
       });
 
       return {
-        items: result.objects.map(obj => ({
+        items: result.objects.map((obj) => ({
           key: obj.key,
           size: obj.size,
           lastModified: obj.uploaded,

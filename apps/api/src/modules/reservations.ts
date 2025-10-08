@@ -42,7 +42,7 @@ function parseAccessToken(c: any) {
   return null;
 }
 
-reservationsRouter.post('/create', zValidator('json', reservationSchema), async c => {
+reservationsRouter.post('/create', zValidator('json', reservationSchema), async (c) => {
   try {
     const token = parseAccessToken(c);
     if (!token) {

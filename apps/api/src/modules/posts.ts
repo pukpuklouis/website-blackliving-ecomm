@@ -106,7 +106,7 @@ const calculateReadingTime = (content: string): number => {
 // POST CATEGORIES ENDPOINTS
 
 // GET /api/posts/categories - List all post categories (cached)
-postsRouter.get('/categories', async c => {
+postsRouter.get('/categories', async (c) => {
   try {
     const db = c.get('db');
     const cache = c.get('cache');
@@ -141,7 +141,7 @@ postsRouter.get('/categories', async c => {
 });
 
 // GET /api/posts/categories/:slug - Get category by slug with posts count
-postsRouter.get('/categories/:slug', async c => {
+postsRouter.get('/categories/:slug', async (c) => {
   try {
     const db = c.get('db');
     const cache = c.get('cache');
@@ -197,7 +197,7 @@ postsRouter.get('/categories/:slug', async c => {
 });
 
 // POST /api/posts/categories/cache/invalidate - Invalidate categories cache (admin only)
-postsRouter.post('/categories/cache/invalidate', requireAdmin(), async c => {
+postsRouter.post('/categories/cache/invalidate', requireAdmin(), async (c) => {
   try {
     const cache = c.get('cache');
     await cache.invalidateByTags(['post-categories']);
@@ -220,7 +220,7 @@ postsRouter.post('/categories/cache/invalidate', requireAdmin(), async c => {
 postsRouter.get(
   '/by-category/:slug',
   zValidator('query', querySchema.omit({ status: true, category: true })),
-  async c => {
+  async (c) => {
     try {
       const db = c.get('db');
       const categorySlug = c.req.param('slug');
@@ -338,7 +338,7 @@ postsRouter.get(
 );
 
 // GET /api/posts - List posts with filtering and pagination
-postsRouter.get('/', requireAdmin(), zValidator('query', querySchema), async c => {
+postsRouter.get('/', requireAdmin(), zValidator('query', querySchema), async (c) => {
   try {
     const db = c.get('db');
     const { page, limit, search, status, category, featured, author, sortBy, sortOrder } =
@@ -439,7 +439,7 @@ postsRouter.get('/', requireAdmin(), zValidator('query', querySchema), async c =
 });
 
 // GET /api/posts/static-paths - Generate static paths for build time (public, published only)
-postsRouter.get('/static-paths', async c => {
+postsRouter.get('/static-paths', async (c) => {
   try {
     const db = c.get('db');
     const cache = c.get('cache');
@@ -490,7 +490,7 @@ postsRouter.get('/static-paths', async c => {
 });
 
 // GET /api/posts/public - Public posts for website (published only)
-postsRouter.get('/public', zValidator('query', querySchema.omit({ status: true })), async c => {
+postsRouter.get('/public', zValidator('query', querySchema.omit({ status: true })), async (c) => {
   try {
     const db = c.get('db');
     const { page, limit, search, category, featured, sortBy, sortOrder } = c.req.valid('query');
@@ -592,12 +592,12 @@ postsRouter.get('/public', zValidator('query', querySchema.omit({ status: true }
 });
 
 // GET /api/posts/:id - Get single post with optional includes
-postsRouter.get('/:id', async c => {
+postsRouter.get('/:id', async (c) => {
   try {
     const db = c.get('db');
     const postIdOrSlug = c.req.param('id');
     const includeParam = c.req.query('include'); // e.g., "category" or "category,other"
-    const includes = includeParam ? includeParam.split(',').map(s => s.trim()) : [];
+    const includes = includeParam ? includeParam.split(',').map((s) => s.trim()) : [];
 
     // Try by ID first (robust to non-standard IDs like 'post-01'), then fallback to slug
     let whereCondition = eq(posts.id, postIdOrSlug);
@@ -671,7 +671,7 @@ postsRouter.get('/:id', async c => {
 });
 
 // POST /api/posts - Create new post
-postsRouter.post('/', requireAdmin(), zValidator('json', createPostSchema), async c => {
+postsRouter.post('/', requireAdmin(), zValidator('json', createPostSchema), async (c) => {
   try {
     const db = c.get('db');
     const user = c.get('user');
@@ -731,7 +731,7 @@ postsRouter.post('/', requireAdmin(), zValidator('json', createPostSchema), asyn
 });
 
 // PUT /api/posts/:id - Update post
-postsRouter.put('/:id', requireAdmin(), zValidator('json', updatePostSchema), async c => {
+postsRouter.put('/:id', requireAdmin(), zValidator('json', updatePostSchema), async (c) => {
   try {
     const db = c.get('db');
     const param = c.req.param('id');
@@ -811,15 +811,23 @@ postsRouter.put('/:id', requireAdmin(), zValidator('json', updatePostSchema), as
 });
 
 // DELETE /api/posts/:id - Delete post
-postsRouter.delete('/:id', requireAdmin(), async c => {
+postsRouter.delete('/:id', requireAdmin(), async (c) => {
   try {
     const db = c.get('db');
     const param = c.req.param('id');
 
     // Check if post exists by ID or slug
-    let existingPost = await db.select({ id: posts.id }).from(posts).where(eq(posts.id, param)).limit(1);
+    let existingPost = await db
+      .select({ id: posts.id })
+      .from(posts)
+      .where(eq(posts.id, param))
+      .limit(1);
     if (existingPost.length === 0) {
-      existingPost = await db.select({ id: posts.id }).from(posts).where(eq(posts.slug, param)).limit(1);
+      existingPost = await db
+        .select({ id: posts.id })
+        .from(posts)
+        .where(eq(posts.slug, param))
+        .limit(1);
     }
 
     if (existingPost.length === 0) {
@@ -851,7 +859,7 @@ postsRouter.delete('/:id', requireAdmin(), async c => {
 });
 
 // GET /api/posts/analytics/stats - Get blog analytics
-postsRouter.get('/analytics/stats', requireAdmin(), async c => {
+postsRouter.get('/analytics/stats', requireAdmin(), async (c) => {
   try {
     const db = c.get('db');
 
@@ -939,7 +947,7 @@ postsRouter.get('/analytics/stats', requireAdmin(), async c => {
 });
 
 // GET /api/posts/:id/related - Get related posts based on category and tags
-postsRouter.get('/:id/related', async c => {
+postsRouter.get('/:id/related', async (c) => {
   try {
     const db = c.get('db');
     const cache = c.get('cache');
@@ -1041,9 +1049,9 @@ postsRouter.get('/:id/related', async c => {
 
       // Exclude already selected posts
       if (relatedPosts.length > 0) {
-        const excludeIds = relatedPosts.map(p => p.id);
+        const excludeIds = relatedPosts.map((p) => p.id);
         additionalConditions.push(
-          sql`${posts.id} NOT IN (${excludeIds.map(id => `'${id}'`).join(', ')})`
+          sql`${posts.id} NOT IN (${excludeIds.map((id) => `'${id}'`).join(', ')})`
         );
       }
 
@@ -1090,7 +1098,7 @@ postsRouter.get('/:id/related', async c => {
 });
 
 // POST /api/posts/:id/duplicate - Duplicate post
-postsRouter.post('/:id/duplicate', requireAdmin(), async c => {
+postsRouter.post('/:id/duplicate', requireAdmin(), async (c) => {
   try {
     const db = c.get('db');
     const user = c.get('user');

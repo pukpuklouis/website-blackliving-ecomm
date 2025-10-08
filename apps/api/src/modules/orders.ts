@@ -70,9 +70,8 @@ const confirmPaymentSchema = z.object({
 });
 
 // GET /api/orders - List orders (Admin only)
-orders.get('/', requireAdmin(), async c => {
+orders.get('/', requireAdmin(), async (c) => {
   try {
-
     const { status, limit = '50', offset = '0' } = c.req.query();
     const db = c.get('db');
 
@@ -100,9 +99,8 @@ orders.get('/', requireAdmin(), async c => {
 });
 
 // GET /api/orders/:id - Get single order
-orders.get('/:id', requireAdmin(), async c => {
+orders.get('/:id', requireAdmin(), async (c) => {
   try {
-
     const id = c.req.param('id');
     const db = c.get('db');
 
@@ -123,7 +121,7 @@ orders.get('/:id', requireAdmin(), async c => {
 });
 
 // POST /api/orders - Create new order
-orders.post('/', zValidator('json', createOrderSchema), async c => {
+orders.post('/', zValidator('json', createOrderSchema), async (c) => {
   try {
     const data = c.req.valid('json');
     const db = c.get('db');
@@ -171,98 +169,106 @@ orders.post('/', zValidator('json', createOrderSchema), async c => {
 });
 
 // PATCH /api/orders/:id/status - Update order status (Admin only)
-orders.patch('/:id/status', requireAdmin(), zValidator('json', updateOrderStatusSchema), async c => {
-  try {
+orders.patch(
+  '/:id/status',
+  requireAdmin(),
+  zValidator('json', updateOrderStatusSchema),
+  async (c) => {
+    try {
+      const id = c.req.param('id');
+      const { status, adminNotes, trackingNumber, shippingCompany } = c.req.valid('json');
+      const db = c.get('db');
 
-    const id = c.req.param('id');
-    const { status, adminNotes, trackingNumber, shippingCompany } = c.req.valid('json');
-    const db = c.get('db');
+      // Build update object dynamically
+      const updateData: any = {
+        status,
+        updatedAt: new Date(),
+      };
 
-    // Build update object dynamically
-    const updateData: any = {
-      status,
-      updatedAt: new Date(),
-    };
+      if (adminNotes !== undefined) {
+        updateData.adminNotes = adminNotes;
+      }
 
-    if (adminNotes !== undefined) {
-      updateData.adminNotes = adminNotes;
+      if (trackingNumber !== undefined) {
+        updateData.trackingNumber = trackingNumber;
+      }
+
+      if (shippingCompany !== undefined) {
+        updateData.shippingCompany = shippingCompany;
+      }
+
+      // Set shipped_at when status becomes shipped
+      if (status === 'shipped') {
+        updateData.shippedAt = new Date();
+      }
+
+      // Set delivered_at when status becomes delivered
+      if (status === 'delivered') {
+        updateData.deliveredAt = new Date();
+      }
+
+      const result = await db.update(ordersTable).set(updateData).where(eq(ordersTable.id, id));
+
+      // Drizzle doesn't return changes count, so we could optionally check if order exists first
+      // For now, we'll assume the update succeeded if no error was thrown
+
+      // Send status update notification (implement later)
+      // await sendOrderStatusUpdateEmail(id, status);
+
+      return c.json({
+        success: true,
+        message: 'Order status updated successfully',
+      });
+    } catch (error) {
+      console.error('Error updating order status:', error);
+      return c.json({ error: 'Failed to update order status' }, 500);
     }
-
-    if (trackingNumber !== undefined) {
-      updateData.trackingNumber = trackingNumber;
-    }
-
-    if (shippingCompany !== undefined) {
-      updateData.shippingCompany = shippingCompany;
-    }
-
-    // Set shipped_at when status becomes shipped
-    if (status === 'shipped') {
-      updateData.shippedAt = new Date();
-    }
-
-    // Set delivered_at when status becomes delivered
-    if (status === 'delivered') {
-      updateData.deliveredAt = new Date();
-    }
-
-    const result = await db.update(ordersTable).set(updateData).where(eq(ordersTable.id, id));
-
-    // Drizzle doesn't return changes count, so we could optionally check if order exists first
-    // For now, we'll assume the update succeeded if no error was thrown
-
-    // Send status update notification (implement later)
-    // await sendOrderStatusUpdateEmail(id, status);
-
-    return c.json({
-      success: true,
-      message: 'Order status updated successfully',
-    });
-  } catch (error) {
-    console.error('Error updating order status:', error);
-    return c.json({ error: 'Failed to update order status' }, 500);
   }
-});
+);
 
 // PATCH /api/orders/:id/confirm-payment - Confirm payment (Admin only)
-orders.patch('/:id/confirm-payment', requireAdmin(), zValidator('json', confirmPaymentSchema), async c => {
-  try {
+orders.patch(
+  '/:id/confirm-payment',
+  requireAdmin(),
+  zValidator('json', confirmPaymentSchema),
+  async (c) => {
+    try {
+      const id = c.req.param('id');
+      const { paymentStatus, status, paymentVerifiedAt, paymentVerifiedBy, adminNotes } =
+        c.req.valid('json');
+      const db = c.get('db');
 
-    const id = c.req.param('id');
-    const { paymentStatus, status, paymentVerifiedAt, paymentVerifiedBy, adminNotes } =
-      c.req.valid('json');
-    const db = c.get('db');
+      // Build update object
+      const updateData: any = {
+        paymentStatus,
+        status,
+        paymentVerifiedAt: new Date(paymentVerifiedAt),
+        paymentVerifiedBy,
+        updatedAt: new Date(),
+      };
 
-    // Build update object
-    const updateData: any = {
-      paymentStatus,
-      status,
-      paymentVerifiedAt: new Date(paymentVerifiedAt),
-      paymentVerifiedBy,
-      updatedAt: new Date(),
-    };
+      if (adminNotes !== undefined) {
+        updateData.adminNotes = adminNotes;
+      }
 
-    if (adminNotes !== undefined) {
-      updateData.adminNotes = adminNotes;
+      await db.update(ordersTable).set(updateData).where(eq(ordersTable.id, id));
+
+      // Send payment confirmation notification (implement later)
+      // await sendPaymentConfirmationEmail(id);
+
+      return c.json({
+        success: true,
+        message: 'Payment confirmed successfully',
+      });
+    } catch (error) {
+      console.error('Error confirming payment:', error);
+      return c.json({ error: 'Failed to confirm payment' }, 500);
     }
-
-    await db.update(ordersTable).set(updateData).where(eq(ordersTable.id, id));
-
-    // Send payment confirmation notification (implement later)
-    // await sendPaymentConfirmationEmail(id);
-
-    return c.json({
-      success: true,
-      message: 'Payment confirmed successfully',
-    });
-  } catch (error) {
-    console.error('Error confirming payment:', error);
-    return c.json({ error: 'Failed to confirm payment' }, 500);
   }
-});
+);
 
 // GET /api/orders/customer/:email - Get customer orders
-orders.get('/customer/:email', requireAuth(), async c => {
+orders.get('/customer/:email', requireAuth(), async (c) => {
   try {
     const email = c.req.param('email');
     const user = c.get('user');

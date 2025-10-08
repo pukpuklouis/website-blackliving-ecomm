@@ -298,7 +298,7 @@ export class CacheInvalidator {
 
     const allPatterns = [...defaultPatterns, ...patterns];
 
-    const deletePromises = allPatterns.map(pattern => {
+    const deletePromises = allPatterns.map((pattern) => {
       const key = generateCacheKey(
         { req: { url: `/${pattern}` }, get: () => ({ id: userId }) } as any,
         'cache',

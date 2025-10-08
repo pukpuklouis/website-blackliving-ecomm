@@ -77,7 +77,7 @@ const assignTagSchema = z.object({
 });
 
 // Debug endpoint to test authentication and database (Admin only)
-customers.get('/debug', requireAdmin(), async c => {
+customers.get('/debug', requireAdmin(), async (c) => {
   const user = c.get('user');
   // Database from c.env.DB
 
@@ -107,7 +107,7 @@ customers.get('/debug', requireAdmin(), async c => {
 });
 
 // GET /api/customers - List customers with analytics (Admin only)
-customers.get('/', requireAdmin(), async c => {
+customers.get('/', requireAdmin(), async (c) => {
   try {
     const { segment, tag, churnRisk, limit = '50', offset = '0', search } = c.req.query();
     // Database from c.env.DB
@@ -213,7 +213,7 @@ customers.get('/', requireAdmin(), async c => {
 customers.route('/profile', customerProfileRoutes);
 
 // GET /api/customers/:id - Get single customer with detailed analytics
-customers.get('/:id', requireAdmin(), async c => {
+customers.get('/:id', requireAdmin(), async (c) => {
   try {
     const id = c.req.param('id');
     // Get customer profile with tags
@@ -276,7 +276,7 @@ customers.get('/:id', requireAdmin(), async c => {
 });
 
 // POST /api/customers - Create new customer profile (Admin only)
-customers.post('/', requireAdmin(), zValidator('json', createCustomerProfileSchema), async c => {
+customers.post('/', requireAdmin(), zValidator('json', createCustomerProfileSchema), async (c) => {
   try {
     const data = c.req.valid('json');
     // Generate customer number: CU + YYYYMMDD + sequence
@@ -331,7 +331,7 @@ customers.post('/', requireAdmin(), zValidator('json', createCustomerProfileSche
 });
 
 // PUT /api/customers/:id - Update customer profile (Admin only)
-customers.put('/:id', requireAdmin(), zValidator('json', updateCustomerSchema), async c => {
+customers.put('/:id', requireAdmin(), zValidator('json', updateCustomerSchema), async (c) => {
   try {
     const id = c.req.param('id');
     const data = c.req.valid('json');
@@ -340,7 +340,7 @@ customers.put('/:id', requireAdmin(), zValidator('json', updateCustomerSchema), 
     let params = [now];
 
     // Build dynamic update query
-    Object.keys(data).forEach(key => {
+    Object.keys(data).forEach((key) => {
       if (data[key as keyof typeof data] !== undefined) {
         updateQuery += `, ${key} = ?`;
         if (key === 'address') {
@@ -373,7 +373,7 @@ customers.put('/:id', requireAdmin(), zValidator('json', updateCustomerSchema), 
 });
 
 // GET /api/customers/:id/interactions - Get customer interaction history
-customers.get('/:id/interactions', requireAdmin(), async c => {
+customers.get('/:id/interactions', requireAdmin(), async (c) => {
   try {
     const id = c.req.param('id');
     // Database from c.env.DB
@@ -419,7 +419,7 @@ customers.post(
       metadata: z.record(z.any()).default({}),
     })
   ),
-  async c => {
+  async (c) => {
     try {
       const id = c.req.param('id');
       const data = c.req.valid('json');
@@ -476,7 +476,7 @@ customers.post(
 );
 
 // GET /api/customers/tags - List all customer tags
-customers.get('/tags', requireAdmin(), async c => {
+customers.get('/tags', requireAdmin(), async (c) => {
   try {
     // Database from c.env.DB
 
@@ -503,7 +503,7 @@ customers.get('/tags', requireAdmin(), async c => {
 });
 
 // POST /api/customers/tags - Create new customer tag
-customers.post('/tags', requireAdmin(), zValidator('json', createCustomerTagSchema), async c => {
+customers.post('/tags', requireAdmin(), zValidator('json', createCustomerTagSchema), async (c) => {
   try {
     const data = c.req.valid('json');
     // Database from c.env.DB
@@ -534,7 +534,7 @@ customers.post('/tags', requireAdmin(), zValidator('json', createCustomerTagSche
 });
 
 // POST /api/customers/tags/assign - Assign tag to customer
-customers.post('/tags/assign', requireAdmin(), zValidator('json', assignTagSchema), async c => {
+customers.post('/tags/assign', requireAdmin(), zValidator('json', assignTagSchema), async (c) => {
   try {
     const { customerProfileId, customerTagId } = c.req.valid('json');
     // Database from c.env.DB
@@ -563,7 +563,7 @@ customers.post('/tags/assign', requireAdmin(), zValidator('json', assignTagSchem
 });
 
 // DELETE /api/customers/tags/assign/:customerProfileId/:customerTagId - Remove tag from customer
-customers.delete('/tags/assign/:customerProfileId/:customerTagId', requireAdmin(), async c => {
+customers.delete('/tags/assign/:customerProfileId/:customerTagId', requireAdmin(), async (c) => {
   try {
     const customerProfileId = c.req.param('customerProfileId');
     const customerTagId = c.req.param('customerTagId');
@@ -593,7 +593,7 @@ customers.delete('/tags/assign/:customerProfileId/:customerTagId', requireAdmin(
 });
 
 // GET /api/customers/analytics - Customer analytics dashboard
-customers.get('/analytics', requireAdmin(), async c => {
+customers.get('/analytics', requireAdmin(), async (c) => {
   try {
     // Database from c.env.DB
 

@@ -68,7 +68,7 @@ const requireAdmin = async (c: any, next: any) => {
 };
 
 // GET /api/reviews - List reviews with filtering
-app.get('/', zValidator('query', reviewQuerySchema), async c => {
+app.get('/', zValidator('query', reviewQuerySchema), async (c) => {
   try {
     const db = c.get('db');
     const cache = c.get('cache');
@@ -156,7 +156,7 @@ app.get('/', zValidator('query', reviewQuerySchema), async c => {
 });
 
 // GET /api/reviews/stats - Review statistics for homepage
-app.get('/stats', async c => {
+app.get('/stats', async (c) => {
   try {
     const db = c.get('db');
     const cache = c.get('cache');
@@ -245,7 +245,7 @@ app.get('/stats', async c => {
 });
 
 // GET /api/reviews/:id - Get single review
-app.get('/:id', async c => {
+app.get('/:id', async (c) => {
   try {
     const db = c.get('db');
     const id = c.req.param('id');
@@ -296,7 +296,7 @@ app.get('/:id', async c => {
 });
 
 // POST /api/reviews - Create new review (public)
-app.post('/', zValidator('json', reviewCreateSchema), async c => {
+app.post('/', zValidator('json', reviewCreateSchema), async (c) => {
   try {
     const db = c.get('db');
     const cache = c.get('cache');
@@ -364,7 +364,7 @@ app.post('/', zValidator('json', reviewCreateSchema), async c => {
 });
 
 // PUT /api/reviews/:id - Update review (admin only)
-app.put('/:id', requireAdmin, zValidator('json', reviewUpdateSchema), async c => {
+app.put('/:id', requireAdmin, zValidator('json', reviewUpdateSchema), async (c) => {
   try {
     const db = c.get('db');
     const cache = c.get('cache');
@@ -439,7 +439,7 @@ app.put('/:id', requireAdmin, zValidator('json', reviewUpdateSchema), async c =>
 });
 
 // DELETE /api/reviews/:id - Delete review (admin only)
-app.delete('/:id', requireAdmin, async c => {
+app.delete('/:id', requireAdmin, async (c) => {
   try {
     const db = c.get('db');
     const cache = c.get('cache');

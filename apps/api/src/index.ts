@@ -68,7 +68,7 @@ app.use(
     origin: (origin, c) => {
       // Get allowed origins from environment variable
       const allowedOrigins = c.env.ALLOWED_ORIGINS
-        ? c.env.ALLOWED_ORIGINS.split(',').map(o => o.trim())
+        ? c.env.ALLOWED_ORIGINS.split(',').map((o) => o.trim())
         : [];
 
       // Add common allowed origins as fallback
@@ -143,7 +143,7 @@ app.use('*', async (c, next) => {
 });
 
 // Health check
-app.get('/', c => {
+app.get('/', (c) => {
   return c.json({
     message: 'Black Living API is running',
     timestamp: new Date().toISOString(),
@@ -156,13 +156,13 @@ app.route('/media', media);
 app.route('/api/auth', authRouter);
 app.route('/api/reservations', reservationsRouter);
 
-app.get('/api/auth/test', c => c.json({ message: 'Test route works' }));
+app.get('/api/auth/test', (c) => c.json({ message: 'Test route works' }));
 
 // Note: Better Auth handles OAuth endpoints automatically via the /api/auth/* handler below
 // Custom role assignment logic will be handled via middleware or callback hooks
 
 // Role assignment endpoint - for upgrading users to admin after OAuth
-app.post('/api/auth/assign-admin-role', async c => {
+app.post('/api/auth/assign-admin-role', async (c) => {
   try {
     const user = c.get('user');
     if (!user) {
@@ -200,7 +200,7 @@ app.post('/api/auth/assign-admin-role', async c => {
 // Session endpoint removed - Better Auth handler provides this automatically
 
 // Debug endpoint to check environment variables
-app.get('/api/auth/debug/env', async c => {
+app.get('/api/auth/debug/env', async (c) => {
   if (c.env.NODE_ENV !== 'development') {
     return c.json({ error: 'Only available in development' }, 403);
   }
@@ -217,7 +217,7 @@ app.get('/api/auth/debug/env', async c => {
 });
 
 // Debug endpoint to test Better Auth configuration
-app.get('/api/auth/debug/config', async c => {
+app.get('/api/auth/debug/config', async (c) => {
   if (c.env.NODE_ENV !== 'development') {
     return c.json({ error: 'Only available in development' }, 403);
   }
@@ -253,7 +253,7 @@ app.get('/api/auth/debug/config', async c => {
 });
 
 // Debug endpoint to test database connection
-app.get('/api/auth/debug/db', async c => {
+app.get('/api/auth/debug/db', async (c) => {
   if (c.env.NODE_ENV !== 'development') {
     return c.json({ error: 'Only available in development' }, 403);
   }
@@ -301,7 +301,7 @@ app.get('/api/auth/debug/db', async c => {
   }
 });
 
-app.get('/api/auth/debug/sessions', async c => {
+app.get('/api/auth/debug/sessions', async (c) => {
   if (c.env.NODE_ENV !== 'development') {
     return c.json({ error: 'Only available in development' }, 403);
   }
@@ -323,7 +323,7 @@ app.get('/api/auth/debug/sessions', async c => {
 });
 
 // Debug endpoint for development - force admin login
-app.post('/api/auth/debug/force-admin-login', async c => {
+app.post('/api/auth/debug/force-admin-login', async (c) => {
   if (c.env.NODE_ENV !== 'development') {
     return c.json({ error: 'Only available in development' }, 403);
   }
@@ -339,7 +339,7 @@ app.post('/api/auth/debug/force-admin-login', async c => {
       .from(users)
       .where(eq(users.email, email))
       .limit(1)
-      .then(r => r[0]);
+      .then((r) => r[0]);
 
     if (!user) {
       const [newUser] = await db
@@ -394,7 +394,7 @@ app.post('/api/auth/debug/force-admin-login', async c => {
 });
 
 // Enhanced OAuth debugging endpoint
-app.get('/api/auth/debug/oauth-flow', async c => {
+app.get('/api/auth/debug/oauth-flow', async (c) => {
   if (c.env.NODE_ENV !== 'development') {
     return c.json({ error: 'Only available in development' }, 403);
   }
@@ -434,21 +434,21 @@ app.get('/api/auth/debug/oauth-flow', async c => {
         sessionsCount: recentSessions.length,
         usersCount: recentUsers.length,
         accountsCount: recentAccounts.length,
-        recentSessions: recentSessions.map(s => ({
+        recentSessions: recentSessions.map((s) => ({
           id: s.id,
           userId: s.userId,
           ipAddress: s.ipAddress,
           userAgent: s.userAgent,
           createdAt: s.createdAt,
         })),
-        recentUsers: recentUsers.map(u => ({
+        recentUsers: recentUsers.map((u) => ({
           id: u.id,
           email: u.email,
           name: u.name,
           role: u.role,
           createdAt: u.createdAt,
         })),
-        recentAccounts: recentAccounts.map(a => ({
+        recentAccounts: recentAccounts.map((a) => ({
           id: a.id,
           userId: a.userId,
           provider: a.provider,
@@ -474,7 +474,7 @@ app.get('/api/auth/debug/oauth-flow', async c => {
 
 // Better Auth integration - handles all remaining /api/auth/* routes
 // MUST be placed AFTER custom auth routes to avoid intercepting them
-app.all('/api/auth/*', async c => {
+app.all('/api/auth/*', async (c) => {
   try {
     const auth = c.get('auth');
 
@@ -531,7 +531,7 @@ app.route('/api/posts', postsRouter);
 app.route('/api/search', searchRouter);
 
 // 404 handler
-app.notFound(c => {
+app.notFound((c) => {
   return c.json({ error: 'Not Found', message: 'The requested endpoint does not exist' }, 404);
 });
 

@@ -34,7 +34,7 @@ const createAccountSchema = z.object({
 });
 
 // PUT /api/user/profile - Update user profile
-user.put('/profile', requireAuth(), zValidator('json', updateProfileSchema), async c => {
+user.put('/profile', requireAuth(), zValidator('json', updateProfileSchema), async (c) => {
   try {
     const { name, phone } = c.req.valid('json');
     const currentUser = c.get('user');
@@ -68,7 +68,7 @@ user.put('/profile', requireAuth(), zValidator('json', updateProfileSchema), asy
 });
 
 // GET /api/user/profile - Get user profile
-user.get('/profile', requireAuth(), async c => {
+user.get('/profile', requireAuth(), async (c) => {
   try {
     const currentUser = c.get('user');
 
@@ -93,7 +93,7 @@ user.get('/profile', requireAuth(), async c => {
 });
 
 // POST /api/user/check-email - Check if email exists
-user.post('/check-email', zValidator('json', checkEmailSchema), async c => {
+user.post('/check-email', zValidator('json', checkEmailSchema), async (c) => {
   try {
     const { email } = c.req.valid('json');
     const auth = c.get('auth');
@@ -126,7 +126,7 @@ user.post('/check-email', zValidator('json', checkEmailSchema), async c => {
 });
 
 // POST /api/user/create-account - Legacy endpoint retained for compatibility
-user.post('/create-account', zValidator('json', createAccountSchema), async c => {
+user.post('/create-account', zValidator('json', createAccountSchema), async (c) => {
   const { email } = c.req.valid('json');
 
   return c.json(

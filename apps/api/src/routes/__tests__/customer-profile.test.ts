@@ -11,13 +11,13 @@ import { customerProfileRoutes } from '../customer-profile';
 const mockEnv = {
   DB: {
     prepare: jest.fn(),
-    batch: jest.fn()
+    batch: jest.fn(),
   },
   CACHE: {
     get: jest.fn(),
     put: jest.fn(),
-    delete: jest.fn()
-  }
+    delete: jest.fn(),
+  },
 };
 
 // Mock context
@@ -30,22 +30,22 @@ const mockContext = {
     header: jest.fn(),
     method: 'GET',
     url: 'http://localhost/api/customers/profile',
-    raw: new Request('http://localhost/api/customers/profile')
+    raw: new Request('http://localhost/api/customers/profile'),
   },
   res: {
-    headers: new Headers()
+    headers: new Headers(),
   },
   var: {
     user: {
       id: 'user-123',
-      email: 'test@example.com'
-    }
+      email: 'test@example.com',
+    },
   },
   json: jest.fn(),
   text: jest.fn(),
   html: jest.fn(),
   status: jest.fn(),
-  header: jest.fn()
+  header: jest.fn(),
 };
 
 // Mock database responses
@@ -58,7 +58,7 @@ const mockUser = {
   role: 'customer',
   preferences: {},
   created_at: '2024-01-01T00:00:00Z',
-  updated_at: '2024-01-01T00:00:00Z'
+  updated_at: '2024-01-01T00:00:00Z',
 };
 
 const mockCustomerProfile = {
@@ -67,7 +67,7 @@ const mockCustomerProfile = {
   gender: 'male',
   contact_preference: 'email',
   created_at: '2024-01-01T00:00:00Z',
-  updated_at: '2024-01-01T00:00:00Z'
+  updated_at: '2024-01-01T00:00:00Z',
 };
 
 const mockAddress = {
@@ -82,7 +82,7 @@ const mockAddress = {
   street: '中山南路1號',
   is_default: 1,
   created_at: '2024-01-01T00:00:00Z',
-  updated_at: '2024-01-01T00:00:00Z'
+  updated_at: '2024-01-01T00:00:00Z',
 };
 
 describe('Customer Profile API', () => {
@@ -91,18 +91,18 @@ describe('Customer Profile API', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     // Default successful DB preparations
     mockEnv.DB.prepare.mockReturnValue({
       first: jest.fn(),
       all: jest.fn(),
-      run: jest.fn()
+      run: jest.fn(),
     });
-    
+
     mockContext.json.mockImplementation((data, init) => ({
       json: () => Promise.resolve(data),
       status: init?.status || 200,
-      headers: new Headers()
+      headers: new Headers(),
     }));
   });
 
@@ -111,23 +111,21 @@ describe('Customer Profile API', () => {
       // Mock DB queries
       const userQuery = mockEnv.DB.prepare();
       userQuery.first.mockResolvedValue(mockUser);
-      
+
       const profileQuery = mockEnv.DB.prepare();
       profileQuery.first.mockResolvedValue(mockCustomerProfile);
-      
-      mockEnv.DB.prepare
-        .mockReturnValueOnce(userQuery)
-        .mockReturnValueOnce(profileQuery);
+
+      mockEnv.DB.prepare.mockReturnValueOnce(userQuery).mockReturnValueOnce(profileQuery);
 
       // Mock cache miss
       mockEnv.CACHE.get.mockResolvedValue(null);
 
       const response = await app.request('/api/customers/profile', {
-        headers: { 'Authorization': 'Bearer valid-token' }
+        headers: { Authorization: 'Bearer valid-token' },
       });
 
       expect(response.status).toBe(200);
-      
+
       const data = await response.json();
       expect(data.success).toBe(true);
       expect(data.data).toEqual({
@@ -140,7 +138,7 @@ describe('Customer Profile API', () => {
         preferences: {},
         birthday: '1990-01-01',
         gender: 'male',
-        contactPreference: 'email'
+        contactPreference: 'email',
       });
     });
 
@@ -148,16 +146,16 @@ describe('Customer Profile API', () => {
       const cachedProfile = {
         id: 'user-123',
         name: 'Cached User',
-        email: 'test@example.com'
+        email: 'test@example.com',
       };
 
       mockEnv.CACHE.get.mockResolvedValue(JSON.stringify(cachedProfile));
 
       const response = await app.request('/api/customers/profile', {
-        headers: { 
-          'Authorization': 'Bearer valid-token',
-          'If-None-Match': '"user-123-hash"'
-        }
+        headers: {
+          Authorization: 'Bearer valid-token',
+          'If-None-Match': '"user-123-hash"',
+        },
       });
 
       // Should return 304 Not Modified for matching ETag
@@ -167,16 +165,16 @@ describe('Customer Profile API', () => {
     it('should handle user not found', async () => {
       const userQuery = mockEnv.DB.prepare();
       userQuery.first.mockResolvedValue(null);
-      
+
       mockEnv.DB.prepare.mockReturnValue(userQuery);
       mockEnv.CACHE.get.mockResolvedValue(null);
 
       const response = await app.request('/api/customers/profile', {
-        headers: { 'Authorization': 'Bearer valid-token' }
+        headers: { Authorization: 'Bearer valid-token' },
       });
 
       expect(response.status).toBe(404);
-      
+
       const data = await response.json();
       expect(data.success).toBe(false);
       expect(data.error).toBe('User not found');
@@ -185,16 +183,16 @@ describe('Customer Profile API', () => {
     it('should handle database errors', async () => {
       const userQuery = mockEnv.DB.prepare();
       userQuery.first.mockRejectedValue(new Error('Database connection failed'));
-      
+
       mockEnv.DB.prepare.mockReturnValue(userQuery);
       mockEnv.CACHE.get.mockResolvedValue(null);
 
       const response = await app.request('/api/customers/profile', {
-        headers: { 'Authorization': 'Bearer valid-token' }
+        headers: { Authorization: 'Bearer valid-token' },
       });
 
       expect(response.status).toBe(500);
-      
+
       const data = await response.json();
       expect(data.success).toBe(false);
       expect(data.error).toBe('Internal server error');
@@ -208,26 +206,26 @@ describe('Customer Profile API', () => {
         phone: '0987654321',
         birthday: '1985-06-15',
         gender: 'female',
-        contactPreference: 'phone'
+        contactPreference: 'phone',
       };
 
       // Mock successful update
       const updateQuery = mockEnv.DB.prepare();
       updateQuery.run.mockResolvedValue({ success: true, changes: 1 });
-      
+
       mockEnv.DB.prepare.mockReturnValue(updateQuery);
 
       const response = await app.request('/api/customers/profile', {
         method: 'PATCH',
-        headers: { 
-          'Authorization': 'Bearer valid-token',
-          'Content-Type': 'application/json'
+        headers: {
+          Authorization: 'Bearer valid-token',
+          'Content-Type': 'application/json',
         },
-        body: JSON.stringify(updateData)
+        body: JSON.stringify(updateData),
       });
 
       expect(response.status).toBe(200);
-      
+
       const data = await response.json();
       expect(data.success).toBe(true);
       expect(data.message).toBe('Profile updated successfully');
@@ -237,20 +235,20 @@ describe('Customer Profile API', () => {
     it('should validate required fields', async () => {
       const invalidData = {
         name: '', // Empty name should fail
-        email: 'invalid-email' // Invalid email format
+        email: 'invalid-email', // Invalid email format
       };
 
       const response = await app.request('/api/customers/profile', {
         method: 'PATCH',
-        headers: { 
-          'Authorization': 'Bearer valid-token',
-          'Content-Type': 'application/json'
+        headers: {
+          Authorization: 'Bearer valid-token',
+          'Content-Type': 'application/json',
         },
-        body: JSON.stringify(invalidData)
+        body: JSON.stringify(invalidData),
       });
 
       expect(response.status).toBe(400);
-      
+
       const data = await response.json();
       expect(data.success).toBe(false);
       expect(data.error).toContain('validation');
@@ -261,20 +259,20 @@ describe('Customer Profile API', () => {
 
       const updateQuery = mockEnv.DB.prepare();
       updateQuery.run.mockRejectedValue(new Error('Update failed'));
-      
+
       mockEnv.DB.prepare.mockReturnValue(updateQuery);
 
       const response = await app.request('/api/customers/profile', {
         method: 'PATCH',
-        headers: { 
-          'Authorization': 'Bearer valid-token',
-          'Content-Type': 'application/json'
+        headers: {
+          Authorization: 'Bearer valid-token',
+          'Content-Type': 'application/json',
         },
-        body: JSON.stringify(updateData)
+        body: JSON.stringify(updateData),
       });
 
       expect(response.status).toBe(500);
-      
+
       const data = await response.json();
       expect(data.success).toBe(false);
       expect(data.error).toBe('Internal server error');
@@ -285,16 +283,16 @@ describe('Customer Profile API', () => {
 
       const updateQuery = mockEnv.DB.prepare();
       updateQuery.run.mockResolvedValue({ success: true, changes: 1 });
-      
+
       mockEnv.DB.prepare.mockReturnValue(updateQuery);
 
       const response = await app.request('/api/customers/profile', {
         method: 'PATCH',
-        headers: { 
-          'Authorization': 'Bearer valid-token',
-          'Content-Type': 'application/json'
+        headers: {
+          Authorization: 'Bearer valid-token',
+          'Content-Type': 'application/json',
         },
-        body: JSON.stringify(updateData)
+        body: JSON.stringify(updateData),
       });
 
       expect(response.status).toBe(200);
@@ -306,16 +304,16 @@ describe('Customer Profile API', () => {
     it('should return user addresses successfully', async () => {
       const addressQuery = mockEnv.DB.prepare();
       addressQuery.all.mockResolvedValue([mockAddress]);
-      
+
       mockEnv.DB.prepare.mockReturnValue(addressQuery);
       mockEnv.CACHE.get.mockResolvedValue(null);
 
       const response = await app.request('/api/customers/profile/addresses', {
-        headers: { 'Authorization': 'Bearer valid-token' }
+        headers: { Authorization: 'Bearer valid-token' },
       });
 
       expect(response.status).toBe(200);
-      
+
       const data = await response.json();
       expect(data.success).toBe(true);
       expect(data.data).toHaveLength(1);
@@ -330,23 +328,23 @@ describe('Customer Profile API', () => {
         street: '中山南路1號',
         isDefault: true,
         createdAt: '2024-01-01T00:00:00Z',
-        updatedAt: '2024-01-01T00:00:00Z'
+        updatedAt: '2024-01-01T00:00:00Z',
       });
     });
 
     it('should return empty array when no addresses found', async () => {
       const addressQuery = mockEnv.DB.prepare();
       addressQuery.all.mockResolvedValue([]);
-      
+
       mockEnv.DB.prepare.mockReturnValue(addressQuery);
       mockEnv.CACHE.get.mockResolvedValue(null);
 
       const response = await app.request('/api/customers/profile/addresses', {
-        headers: { 'Authorization': 'Bearer valid-token' }
+        headers: { Authorization: 'Bearer valid-token' },
       });
 
       expect(response.status).toBe(200);
-      
+
       const data = await response.json();
       expect(data.success).toBe(true);
       expect(data.data).toEqual([]);
@@ -363,25 +361,25 @@ describe('Customer Profile API', () => {
         district: '大安區',
         postalCode: '106',
         street: '忠孝東路四段1號',
-        isDefault: false
+        isDefault: false,
       };
 
       const insertQuery = mockEnv.DB.prepare();
       insertQuery.run.mockResolvedValue({ success: true, changes: 1 });
-      
+
       mockEnv.DB.prepare.mockReturnValue(insertQuery);
 
       const response = await app.request('/api/customers/profile/addresses', {
         method: 'POST',
-        headers: { 
-          'Authorization': 'Bearer valid-token',
-          'Content-Type': 'application/json'
+        headers: {
+          Authorization: 'Bearer valid-token',
+          'Content-Type': 'application/json',
         },
-        body: JSON.stringify(addressData)
+        body: JSON.stringify(addressData),
       });
 
       expect(response.status).toBe(201);
-      
+
       const data = await response.json();
       expect(data.success).toBe(true);
       expect(data.message).toBe('Address created successfully');
@@ -391,20 +389,20 @@ describe('Customer Profile API', () => {
       const invalidData = {
         type: 'invalid-type',
         recipientName: '',
-        recipientPhone: 'invalid-phone'
+        recipientPhone: 'invalid-phone',
       };
 
       const response = await app.request('/api/customers/profile/addresses', {
         method: 'POST',
-        headers: { 
-          'Authorization': 'Bearer valid-token',
-          'Content-Type': 'application/json'
+        headers: {
+          Authorization: 'Bearer valid-token',
+          'Content-Type': 'application/json',
         },
-        body: JSON.stringify(invalidData)
+        body: JSON.stringify(invalidData),
       });
 
       expect(response.status).toBe(400);
-      
+
       const data = await response.json();
       expect(data.success).toBe(false);
       expect(data.error).toContain('validation');
@@ -414,9 +412,9 @@ describe('Customer Profile API', () => {
   describe('Authentication and Authorization', () => {
     it('should require authentication', async () => {
       const response = await app.request('/api/customers/profile');
-      
+
       expect(response.status).toBe(401);
-      
+
       const data = await response.json();
       expect(data.success).toBe(false);
       expect(data.error).toBe('Authentication required');
@@ -424,11 +422,11 @@ describe('Customer Profile API', () => {
 
     it('should reject invalid tokens', async () => {
       const response = await app.request('/api/customers/profile', {
-        headers: { 'Authorization': 'Bearer invalid-token' }
+        headers: { Authorization: 'Bearer invalid-token' },
       });
-      
+
       expect(response.status).toBe(401);
-      
+
       const data = await response.json();
       expect(data.success).toBe(false);
       expect(data.error).toBe('Invalid token');
@@ -438,15 +436,15 @@ describe('Customer Profile API', () => {
   describe('Request Logging', () => {
     it('should log all requests with request ID', async () => {
       const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
-      
+
       const userQuery = mockEnv.DB.prepare();
       userQuery.first.mockResolvedValue(mockUser);
-      
+
       mockEnv.DB.prepare.mockReturnValue(userQuery);
       mockEnv.CACHE.get.mockResolvedValue(null);
 
       await app.request('/api/customers/profile', {
-        headers: { 'Authorization': 'Bearer valid-token' }
+        headers: { Authorization: 'Bearer valid-token' },
       });
 
       expect(consoleSpy).toHaveBeenCalledWith(
@@ -462,15 +460,15 @@ describe('Customer Profile API', () => {
     it('should handle malformed JSON requests', async () => {
       const response = await app.request('/api/customers/profile', {
         method: 'PATCH',
-        headers: { 
-          'Authorization': 'Bearer valid-token',
-          'Content-Type': 'application/json'
+        headers: {
+          Authorization: 'Bearer valid-token',
+          'Content-Type': 'application/json',
         },
-        body: 'invalid-json'
+        body: 'invalid-json',
       });
 
       expect(response.status).toBe(400);
-      
+
       const data = await response.json();
       expect(data.success).toBe(false);
       expect(data.error).toBe('Invalid JSON payload');
@@ -478,7 +476,7 @@ describe('Customer Profile API', () => {
 
     it('should include request ID in all responses', async () => {
       const response = await app.request('/api/customers/profile', {
-        headers: { 'Authorization': 'Bearer valid-token' }
+        headers: { Authorization: 'Bearer valid-token' },
       });
 
       const data = await response.json();

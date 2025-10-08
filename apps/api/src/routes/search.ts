@@ -12,24 +12,19 @@ const typeEnum = z.enum(['products', 'posts', 'pages']);
 const categoryEnum = z.enum(['simmons-black', 'accessories', 'us-imports']);
 
 const searchQuerySchema = z.object({
-  q: z
-    .string()
-    .trim()
-    .min(1, 'Search query is required')
-    .max(120, 'Search query is too long'),
-  types: z
-    .preprocess(value => {
-      if (typeof value === 'string') {
-        return value
-          .split(',')
-          .map(entry => entry.trim())
-          .filter(Boolean);
-      }
-      if (Array.isArray(value)) {
-        return value.map(String);
-      }
-      return undefined;
-    }, z.array(typeEnum).optional()),
+  q: z.string().trim().min(1, 'Search query is required').max(120, 'Search query is too long'),
+  types: z.preprocess((value) => {
+    if (typeof value === 'string') {
+      return value
+        .split(',')
+        .map((entry) => entry.trim())
+        .filter(Boolean);
+    }
+    if (Array.isArray(value)) {
+      return value.map(String);
+    }
+    return undefined;
+  }, z.array(typeEnum).optional()),
   category: categoryEnum.optional(),
   limit: z.coerce.number().min(1).max(20).default(5),
   includeContent: z.coerce.boolean().optional().default(false),
@@ -75,7 +70,7 @@ type Env = {
 
 const searchRouter = new Hono<Env>();
 
-searchRouter.get('/', zValidator('query', searchQuerySchema), async c => {
+searchRouter.get('/', zValidator('query', searchQuerySchema), async (c) => {
   const db = c.get('db');
   const cacheManager = c.get('cache');
   const query = c.req.valid('query');
@@ -114,21 +109,22 @@ searchRouter.get('/', zValidator('query', searchQuerySchema), async c => {
 
   if (types.has('products')) {
     // Build fuzzy search conditions for products
-    const searchConditions = searchTerms.length > 1
-      ? and(
-          ...searchTerms.map(term =>
-            or(
-              like(products.name, `%${term}%`),
-              like(products.description, `%${term}%`),
-              like(products.slug, `%${term}%`)
+    const searchConditions =
+      searchTerms.length > 1
+        ? and(
+            ...searchTerms.map((term) =>
+              or(
+                like(products.name, `%${term}%`),
+                like(products.description, `%${term}%`),
+                like(products.slug, `%${term}%`)
+              )
             )
           )
-        )
-      : or(
-          like(products.name, fullSearchTerm),
-          like(products.description, fullSearchTerm),
-          like(products.slug, fullSearchTerm)
-        );
+        : or(
+            like(products.name, fullSearchTerm),
+            like(products.description, fullSearchTerm),
+            like(products.slug, fullSearchTerm)
+          );
 
     const productConditions = [searchConditions];
     if (query.category) {
@@ -151,7 +147,7 @@ searchRouter.get('/', zValidator('query', searchQuerySchema), async c => {
       .orderBy(desc(products.featured), desc(products.createdAt))
       .limit(query.limit);
 
-    results.products = productRows.map(product => ({
+    results.products = productRows.map((product) => ({
       id: product.id,
       title: product.name,
       description: truncate(product.description, 160),
@@ -168,26 +164,27 @@ searchRouter.get('/', zValidator('query', searchQuerySchema), async c => {
 
   if (types.has('posts')) {
     // Build fuzzy search conditions for posts
-    const postSearchConditions = searchTerms.length > 1
-      ? and(
-          ...searchTerms.map(term => {
-            const termConditions = [
-              like(posts.title, `%${term}%`),
-              like(posts.description, `%${term}%`),
-              like(posts.slug, `%${term}%`)
-            ];
-            if (query.includeContent) {
-              termConditions.push(like(posts.content, `%${term}%`));
-            }
-            return or(...termConditions);
-          })
-        )
-      : or(
-          like(posts.title, fullSearchTerm),
-          like(posts.description, fullSearchTerm),
-          like(posts.slug, fullSearchTerm),
-          ...(query.includeContent ? [like(posts.content, fullSearchTerm)] : [])
-        );
+    const postSearchConditions =
+      searchTerms.length > 1
+        ? and(
+            ...searchTerms.map((term) => {
+              const termConditions = [
+                like(posts.title, `%${term}%`),
+                like(posts.description, `%${term}%`),
+                like(posts.slug, `%${term}%`),
+              ];
+              if (query.includeContent) {
+                termConditions.push(like(posts.content, `%${term}%`));
+              }
+              return or(...termConditions);
+            })
+          )
+        : or(
+            like(posts.title, fullSearchTerm),
+            like(posts.description, fullSearchTerm),
+            like(posts.slug, fullSearchTerm),
+            ...(query.includeContent ? [like(posts.content, fullSearchTerm)] : [])
+          );
 
     const postConditions = [postSearchConditions, eq(posts.status, 'published')];
 
@@ -207,7 +204,7 @@ searchRouter.get('/', zValidator('query', searchQuerySchema), async c => {
       .orderBy(desc(posts.featured), desc(posts.publishedAt), desc(posts.createdAt))
       .limit(query.limit);
 
-    results.posts = postRows.map(post => ({
+    results.posts = postRows.map((post) => ({
       id: post.id,
       title: post.title,
       description: truncate(post.description, 180),
@@ -217,9 +214,10 @@ searchRouter.get('/', zValidator('query', searchQuerySchema), async c => {
       type: 'post' as const,
       thumbnail: post.featuredImage ?? null,
       metadata: {
-        publishedAt: post.publishedAt && !isNaN(new Date(post.publishedAt).getTime())
-          ? new Date(post.publishedAt).toISOString()
-          : null,
+        publishedAt:
+          post.publishedAt && !isNaN(new Date(post.publishedAt).getTime())
+            ? new Date(post.publishedAt).toISOString()
+            : null,
         readingTime: post.readingTime ?? null,
       },
     }));
@@ -227,28 +225,29 @@ searchRouter.get('/', zValidator('query', searchQuerySchema), async c => {
 
   if (types.has('pages')) {
     // Enhanced fuzzy search for static pages
-    results.pages = STATIC_PAGES.filter(page => {
+    results.pages = STATIC_PAGES.filter((page) => {
       const pageTitle = page.title.toLowerCase();
       const pageDescription = page.description.toLowerCase();
       const pageSlug = page.slug.toLowerCase();
 
       // For multiple terms, all terms must match somewhere
       if (searchTerms.length > 1) {
-        return searchTerms.every(term =>
-          pageTitle.includes(term) ||
-          pageDescription.includes(term) ||
-          pageSlug.includes(term)
+        return searchTerms.every(
+          (term) =>
+            pageTitle.includes(term) || pageDescription.includes(term) || pageSlug.includes(term)
         );
       }
 
       // For single term, match anywhere
       const singleTerm = searchTerms[0] || '';
-      return pageTitle.includes(singleTerm) ||
-             pageDescription.includes(singleTerm) ||
-             pageSlug.includes(singleTerm);
+      return (
+        pageTitle.includes(singleTerm) ||
+        pageDescription.includes(singleTerm) ||
+        pageSlug.includes(singleTerm)
+      );
     })
       .slice(0, query.limit)
-      .map(page => ({
+      .map((page) => ({
         id: page.slug,
         title: page.title,
         description: page.description,
@@ -260,8 +259,7 @@ searchRouter.get('/', zValidator('query', searchQuerySchema), async c => {
       }));
   }
 
-  const total =
-    results.products.length + results.posts.length + results.pages.length;
+  const total = results.products.length + results.posts.length + results.pages.length;
 
   const response: UnifiedSearchResponse = {
     query: query.q,
@@ -292,7 +290,7 @@ function processSearchQuery(query: string): { searchTerms: string[]; fullSearchT
     .replace(/\s+/g, ' ')
     .trim();
 
-  const searchTerms = cleanQuery.split(/\s+/).filter(term => term.length > 0);
+  const searchTerms = cleanQuery.split(/\s+/).filter((term) => term.length > 0);
   const fullSearchTerm = `%${cleanQuery}%`;
 
   return { searchTerms, fullSearchTerm };

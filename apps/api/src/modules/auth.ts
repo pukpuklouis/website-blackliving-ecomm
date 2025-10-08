@@ -52,7 +52,7 @@ async function hashToken(token: string) {
   const encoded = new TextEncoder().encode(token);
   const digest = await crypto.subtle.digest('SHA-256', encoded);
   return Array.from(new Uint8Array(digest))
-    .map(b => b.toString(16).padStart(2, '0'))
+    .map((b) => b.toString(16).padStart(2, '0'))
     .join('');
 }
 
@@ -60,7 +60,7 @@ function generateToken() {
   const bytes = new Uint8Array(32);
   crypto.getRandomValues(bytes);
   return Array.from(bytes)
-    .map(byte => byte.toString(16).padStart(2, '0'))
+    .map((byte) => byte.toString(16).padStart(2, '0'))
     .join('');
 }
 
@@ -105,9 +105,10 @@ async function checkRateLimit(cache: any, key: string, limit: number, windowSeco
     return false;
   }
 
-  const updated = existing && now - existing.firstAttempt < windowSeconds * 1000
-    ? { count: existing.count + 1, firstAttempt: existing.firstAttempt }
-    : { count: 1, firstAttempt: now };
+  const updated =
+    existing && now - existing.firstAttempt < windowSeconds * 1000
+      ? { count: existing.count + 1, firstAttempt: existing.firstAttempt }
+      : { count: 1, firstAttempt: now };
 
   await cache.set(key, updated, windowSeconds);
   return true;
@@ -209,18 +210,31 @@ async function storeRefreshToken(db: any, token: string, user: { id: string; ema
   });
 }
 
-async function setAuthCookies(c: any, tokens: {
-  accessToken: string;
-  refreshToken: string;
-  accessTokenExpiresAt: number;
-  refreshTokenExpiresAt: number;
-}) {
+async function setAuthCookies(
+  c: any,
+  tokens: {
+    accessToken: string;
+    refreshToken: string;
+    accessTokenExpiresAt: number;
+    refreshTokenExpiresAt: number;
+  }
+) {
   const secure = c.env.NODE_ENV === 'production';
-  setCookie(c, 'bl_access_token', tokens.accessToken, TOKEN_COOKIE_OPTIONS(secure, ACCESS_TOKEN_TTL_SECONDS));
-  setCookie(c, 'bl_refresh_token', tokens.refreshToken, TOKEN_COOKIE_OPTIONS(secure, REFRESH_TOKEN_TTL_SECONDS));
+  setCookie(
+    c,
+    'bl_access_token',
+    tokens.accessToken,
+    TOKEN_COOKIE_OPTIONS(secure, ACCESS_TOKEN_TTL_SECONDS)
+  );
+  setCookie(
+    c,
+    'bl_refresh_token',
+    tokens.refreshToken,
+    TOKEN_COOKIE_OPTIONS(secure, REFRESH_TOKEN_TTL_SECONDS)
+  );
 }
 
-authRouter.post('/initiate', zValidator('json', initiateSchema), async c => {
+authRouter.post('/initiate', zValidator('json', initiateSchema), async (c) => {
   const { email, turnstileToken, redirectTo } = c.req.valid('json');
   const normalizedEmail = normalizeEmail(email);
   const cache = c.get('cache');
@@ -234,14 +248,27 @@ authRouter.post('/initiate', zValidator('json', initiateSchema), async c => {
     'unknown';
   const ipRateKey = `magic:initiate:ip:${ip}`;
 
-  const emailAllowed = await checkRateLimit(cache, emailRateKey, RATE_LIMIT_ATTEMPTS, RATE_LIMIT_WINDOW_SECONDS);
-  const ipAllowed = await checkRateLimit(cache, ipRateKey, RATE_LIMIT_ATTEMPTS, RATE_LIMIT_WINDOW_SECONDS);
+  const emailAllowed = await checkRateLimit(
+    cache,
+    emailRateKey,
+    RATE_LIMIT_ATTEMPTS,
+    RATE_LIMIT_WINDOW_SECONDS
+  );
+  const ipAllowed = await checkRateLimit(
+    cache,
+    ipRateKey,
+    RATE_LIMIT_ATTEMPTS,
+    RATE_LIMIT_WINDOW_SECONDS
+  );
 
   if (!emailAllowed || !ipAllowed) {
-    return c.json({
-      success: false,
-      error: '請稍後再試，您請求驗證信的頻率過高',
-    }, 429);
+    return c.json(
+      {
+        success: false,
+        error: '請稍後再試，您請求驗證信的頻率過高',
+      },
+      429
+    );
   }
 
   let verified = false;
@@ -271,7 +298,13 @@ authRouter.post('/initiate', zValidator('json', initiateSchema), async c => {
   await db
     .update(authTokens)
     .set({ usedAt: new Date(), updatedAt: new Date() })
-    .where(and(eq(authTokens.email, normalizedEmail), eq(authTokens.type, 'magic_link'), isNull(authTokens.usedAt)));
+    .where(
+      and(
+        eq(authTokens.email, normalizedEmail),
+        eq(authTokens.type, 'magic_link'),
+        isNull(authTokens.usedAt)
+      )
+    );
 
   await db.insert(authTokens).values({
     id: createId(),
@@ -296,7 +329,7 @@ authRouter.post('/initiate', zValidator('json', initiateSchema), async c => {
   });
 });
 
-authRouter.post('/callback', zValidator('json', callbackSchema), async c => {
+authRouter.post('/callback', zValidator('json', callbackSchema), async (c) => {
   const { token } = c.req.valid('json');
   const db = c.get('db');
   const now = new Date();
@@ -325,7 +358,8 @@ authRouter.post('/callback', zValidator('json', callbackSchema), async c => {
   let redirectTo = `${c.env.WEB_BASE_URL}/appointment`;
   try {
     if (record.context) {
-      const parsed = typeof record.context === 'string' ? JSON.parse(record.context) : record.context;
+      const parsed =
+        typeof record.context === 'string' ? JSON.parse(record.context) : record.context;
       if (parsed?.redirectTo && typeof parsed.redirectTo === 'string') {
         redirectTo = parsed.redirectTo;
       }
@@ -397,7 +431,7 @@ authRouter.post('/callback', zValidator('json', callbackSchema), async c => {
   });
 });
 
-authRouter.post('/refresh', zValidator('json', refreshSchema), async c => {
+authRouter.post('/refresh', zValidator('json', refreshSchema), async (c) => {
   const { refreshToken: bodyToken } = c.req.valid('json');
   const cookieToken = c.req.cookie('bl_refresh_token');
   const refreshToken = bodyToken || cookieToken;
