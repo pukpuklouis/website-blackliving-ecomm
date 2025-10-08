@@ -24,4 +24,8 @@ export type PagesFunctionHandler<Env = unknown> = (
 export function createPagesFunctionHandler<Env = unknown>(
   init: CreatePagesFunctionHandlerArgs<Env>
 ): PagesFunctionHandler<Env> &
-  ((request: Request, env?: Env, context?: { waitUntil?: (promise: Promise<unknown>) => void }) => Promise<Response>);
+  ((
+    request: Request,
+    env?: Env,
+    context?: { waitUntil?: (promise: Promise<unknown>) => void }
+  ) => Promise<Response>);

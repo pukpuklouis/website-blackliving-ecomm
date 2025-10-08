@@ -48,7 +48,7 @@ function getAllTables() {
     }
 
     const data = JSON.parse(jsonMatch[0]);
-    const tables = data[0]?.results?.map(row => row.name) || [];
+    const tables = data[0]?.results?.map((row) => row.name) || [];
 
     console.log(`  Found ${tables.length} tables: ${tables.join(', ')}`);
     return tables;
@@ -103,8 +103,8 @@ function exportTableData(tableName) {
 
     // Generate proper SQL INSERT statements
     const columns = Object.keys(records[0]);
-    const sqlStatements = records.map(record => {
-      const values = columns.map(col => {
+    const sqlStatements = records.map((record) => {
+      const values = columns.map((col) => {
         const val = record[col];
         if (val === null) return 'NULL';
         if (typeof val === 'string') {
@@ -114,7 +114,7 @@ function exportTableData(tableName) {
         return String(val);
       });
 
-      return `INSERT INTO ${tableName} (${columns.map(c => `"${c}"`).join(', ')}) VALUES (${values.join(', ')});`;
+      return `INSERT INTO ${tableName} (${columns.map((c) => `"${c}"`).join(', ')}) VALUES (${values.join(', ')});`;
     });
 
     return sqlStatements.join('\n');

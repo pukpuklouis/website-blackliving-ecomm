@@ -144,7 +144,7 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
             table.getIsAllPageRowsSelected() ||
             (table.getIsSomePageRowsSelected() && 'indeterminate')
           }
-          onCheckedChange={value => table.toggleAllPageRowsSelected(!!value)}
+          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
           aria-label="Select all"
         />
       </div>
@@ -153,7 +153,7 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
       <div className="flex items-center justify-center">
         <Checkbox
           checked={row.getIsSelected()}
-          onCheckedChange={value => row.toggleSelected(!!value)}
+          onCheckedChange={(value) => row.toggleSelected(!!value)}
           aria-label="Select row"
         />
       </div>
@@ -199,9 +199,9 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
     header: () => <div className="w-full text-right">Target</div>,
     cell: ({ row }) => (
       <form
-        onSubmit={e => {
+        onSubmit={(e) => {
           e.preventDefault();
-          toast.promise(new Promise(resolve => setTimeout(resolve, 1000)), {
+          toast.promise(new Promise((resolve) => setTimeout(resolve, 1000)), {
             loading: `Saving ${row.original.header}`,
             success: 'Done',
             error: 'Error',
@@ -224,9 +224,9 @@ const columns: ColumnDef<z.infer<typeof schema>>[] = [
     header: () => <div className="w-full text-right">Limit</div>,
     cell: ({ row }) => (
       <form
-        onSubmit={e => {
+        onSubmit={(e) => {
           e.preventDefault();
-          toast.promise(new Promise(resolve => setTimeout(resolve, 1000)), {
+          toast.promise(new Promise((resolve) => setTimeout(resolve, 1000)), {
             loading: `Saving ${row.original.header}`,
             success: 'Done',
             error: 'Error',
@@ -318,7 +318,7 @@ function DraggableRow({ row }: { row: Row<z.infer<typeof schema>> }) {
         transition: transition,
       }}
     >
-      {row.getVisibleCells().map(cell => (
+      {row.getVisibleCells().map((cell) => (
         <TableCell key={cell.id}>
           {flexRender(cell.column.columnDef.cell, cell.getContext())}
         </TableCell>
@@ -356,7 +356,7 @@ export function DataTable({ data: initialData }: { data: z.infer<typeof schema>[
       columnFilters,
       pagination,
     },
-    getRowId: row => row.id.toString(),
+    getRowId: (row) => row.id.toString(),
     enableRowSelection: true,
     onRowSelectionChange: setRowSelection,
     onSortingChange: setSorting,
@@ -374,7 +374,7 @@ export function DataTable({ data: initialData }: { data: z.infer<typeof schema>[
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
     if (active && over && active.id !== over.id) {
-      setData(data => {
+      setData((data) => {
         const oldIndex = dataIds.indexOf(active.id);
         const newIndex = dataIds.indexOf(over.id);
         return arrayMove(data, oldIndex, newIndex);
@@ -422,14 +422,14 @@ export function DataTable({ data: initialData }: { data: z.infer<typeof schema>[
             <DropdownMenuContent align="end" className="w-56">
               {table
                 .getAllColumns()
-                .filter(column => typeof column.accessorFn !== 'undefined' && column.getCanHide())
-                .map(column => {
+                .filter((column) => typeof column.accessorFn !== 'undefined' && column.getCanHide())
+                .map((column) => {
                   return (
                     <DropdownMenuCheckboxItem
                       key={column.id}
                       className="capitalize"
                       checked={column.getIsVisible()}
-                      onCheckedChange={value => column.toggleVisibility(!!value)}
+                      onCheckedChange={(value) => column.toggleVisibility(!!value)}
                     >
                       {column.id}
                     </DropdownMenuCheckboxItem>
@@ -457,9 +457,9 @@ export function DataTable({ data: initialData }: { data: z.infer<typeof schema>[
           >
             <Table>
               <TableHeader className="bg-muted sticky top-0 z-10">
-                {table.getHeaderGroups().map(headerGroup => (
+                {table.getHeaderGroups().map((headerGroup) => (
                   <TableRow key={headerGroup.id}>
-                    {headerGroup.headers.map(header => {
+                    {headerGroup.headers.map((header) => {
                       return (
                         <TableHead key={header.id} colSpan={header.colSpan}>
                           {header.isPlaceholder
@@ -474,7 +474,7 @@ export function DataTable({ data: initialData }: { data: z.infer<typeof schema>[
               <TableBody className="**:data-[slot=table-cell]:first:w-8">
                 {table.getRowModel().rows?.length ? (
                   <SortableContext items={dataIds} strategy={verticalListSortingStrategy}>
-                    {table.getRowModel().rows.map(row => (
+                    {table.getRowModel().rows.map((row) => (
                       <DraggableRow key={row.id} row={row} />
                     ))}
                   </SortableContext>
@@ -501,7 +501,7 @@ export function DataTable({ data: initialData }: { data: z.infer<typeof schema>[
               </Label>
               <Select
                 value={`${table.getState().pagination.pageSize}`}
-                onValueChange={value => {
+                onValueChange={(value) => {
                   table.setPageSize(Number(value));
                 }}
               >
@@ -509,7 +509,7 @@ export function DataTable({ data: initialData }: { data: z.infer<typeof schema>[
                   <SelectValue placeholder={table.getState().pagination.pageSize} />
                 </SelectTrigger>
                 <SelectContent side="top">
-                  {[10, 20, 30, 40, 50].map(pageSize => (
+                  {[10, 20, 30, 40, 50].map((pageSize) => (
                     <SelectItem key={pageSize} value={`${pageSize}`}>
                       {pageSize}
                     </SelectItem>
@@ -630,7 +630,7 @@ function TableCellViewer({ item }: { item: z.infer<typeof schema> }) {
                     tickLine={false}
                     axisLine={false}
                     tickMargin={8}
-                    tickFormatter={value => value.slice(0, 3)}
+                    tickFormatter={(value) => value.slice(0, 3)}
                     hide
                   />
                   <ChartTooltip cursor={false} content={<ChartTooltipContent indicator="dot" />} />

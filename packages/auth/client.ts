@@ -19,7 +19,7 @@ const getBaseURL = () => {
     ];
 
     const isValidHost = allowedHosts.some(
-      allowed => hostname === allowed || hostname.endsWith('.' + allowed)
+      (allowed) => hostname === allowed || hostname.endsWith('.' + allowed)
     );
 
     if (!isValidHost) {
@@ -326,10 +326,11 @@ export async function secureSignOut() {
     if (typeof window !== 'undefined') {
       // Only clear auth-related data, not all localStorage
       const authKeys = Object.keys(localStorage).filter(
-        key => key.startsWith('auth_') || key.startsWith('session_') || key.includes('better-auth')
+        (key) =>
+          key.startsWith('auth_') || key.startsWith('session_') || key.includes('better-auth')
       );
 
-      authKeys.forEach(key => localStorage.removeItem(key));
+      authKeys.forEach((key) => localStorage.removeItem(key));
       sessionStorage.clear();
     }
 

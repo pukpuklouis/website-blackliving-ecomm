@@ -85,8 +85,7 @@ export function SearchCommand({
   placeholder = 'Search products, articles, and pages…',
   footer,
 }: SearchCommandProps) {
-  const hasResults =
-    results.products.length + results.posts.length + results.pages.length > 0;
+  const hasResults = results.products.length + results.posts.length + results.pages.length > 0;
 
   const handleRecentSelect = (entry: RecentSearchEntry) => {
     onQueryChange(entry.query);
@@ -121,7 +120,7 @@ export function SearchCommand({
 
             {!isLoading && !query && recentSearches && recentSearches.length > 0 && (
               <CommandGroup heading="Recent Searches" data-testid="recent-searches">
-                {recentSearches.map(entry => (
+                {recentSearches.map((entry) => (
                   <CommandItem
                     key={entry.id}
                     value={entry.query}
@@ -169,12 +168,8 @@ function renderSection(
   if (items.length === 0) return null;
 
   return (
-    <CommandGroup
-      key={key}
-      heading={DEFAULT_LABELS[key]}
-      data-testid={`${key}-results`}
-    >
-      {items.map(item => (
+    <CommandGroup key={key} heading={DEFAULT_LABELS[key]} data-testid={`${key}-results`}>
+      {items.map((item) => (
         <CommandItem
           key={item.id}
           onSelect={() => onResultSelect(item)}
@@ -184,13 +179,9 @@ function renderSection(
         >
           {ICON_MAP[item.type]}
           <div className="flex flex-1 flex-col gap-1">
-            <span className="text-base font-medium leading-none">
-              {item.title}
-            </span>
+            <span className="text-base font-medium leading-none">{item.title}</span>
             {item.description && (
-              <span className="text-sm text-muted-foreground line-clamp-2">
-                {item.description}
-              </span>
+              <span className="text-sm text-muted-foreground line-clamp-2">{item.description}</span>
             )}
           </div>
           {item.category && (

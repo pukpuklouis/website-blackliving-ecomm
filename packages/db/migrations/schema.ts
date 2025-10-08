@@ -60,7 +60,7 @@ export const appointments = sqliteTable(
     createdAt: integer('created_at'),
     updatedAt: integer('updated_at'),
   },
-  table => [uniqueIndex('appointments_appointment_number_unique').on(table.appointmentNumber)]
+  (table) => [uniqueIndex('appointments_appointment_number_unique').on(table.appointmentNumber)]
 );
 
 export const contacts = sqliteTable('contacts', {
@@ -120,7 +120,7 @@ export const customerProfiles = sqliteTable(
     createdAt: integer('created_at'),
     updatedAt: integer('updated_at'),
   },
-  table => [uniqueIndex('customer_profiles_customer_number_unique').on(table.customerNumber)]
+  (table) => [uniqueIndex('customer_profiles_customer_number_unique').on(table.customerNumber)]
 );
 
 export const customerTagAssignments = sqliteTable('customer_tag_assignments', {
@@ -144,7 +144,7 @@ export const customerTags = sqliteTable(
     isSystem: integer('is_system').default(false),
     createdAt: integer('created_at'),
   },
-  table => [uniqueIndex('customer_tags_name_unique').on(table.name)]
+  (table) => [uniqueIndex('customer_tags_name_unique').on(table.name)]
 );
 
 export const newsletters = sqliteTable(
@@ -156,7 +156,7 @@ export const newsletters = sqliteTable(
     source: text().default('website'),
     createdAt: integer('created_at'),
   },
-  table => [uniqueIndex('newsletters_email_unique').on(table.email)]
+  (table) => [uniqueIndex('newsletters_email_unique').on(table.email)]
 );
 
 export const orders = sqliteTable(
@@ -186,7 +186,7 @@ export const orders = sqliteTable(
     createdAt: integer('created_at'),
     updatedAt: integer('updated_at'),
   },
-  table => [uniqueIndex('orders_order_number_unique').on(table.orderNumber)]
+  (table) => [uniqueIndex('orders_order_number_unique').on(table.orderNumber)]
 );
 
 export const products = sqliteTable(
@@ -209,7 +209,7 @@ export const products = sqliteTable(
     createdAt: integer('created_at'),
     updatedAt: integer('updated_at'),
   },
-  table => [uniqueIndex('products_slug_unique').on(table.slug)]
+  (table) => [uniqueIndex('products_slug_unique').on(table.slug)]
 );
 
 export const reviews = sqliteTable('reviews', {
@@ -238,7 +238,7 @@ export const sessions = sqliteTable(
       .notNull()
       .references(() => users.id, { onDelete: 'cascade' }),
   },
-  table => [uniqueIndex('sessions_token_unique').on(table.token)]
+  (table) => [uniqueIndex('sessions_token_unique').on(table.token)]
 );
 
 export const users = sqliteTable(
@@ -255,7 +255,7 @@ export const users = sqliteTable(
     role: text().default('customer'),
     preferences: text().default('{}'),
   },
-  table => [uniqueIndex('users_email_unique').on(table.email)]
+  (table) => [uniqueIndex('users_email_unique').on(table.email)]
 );
 
 export const verifications = sqliteTable('verifications', {
@@ -451,7 +451,7 @@ export const postCategories = sqliteTable(
     createdAt: integer('created_at'),
     updatedAt: integer('updated_at'),
   },
-  table => [
+  (table) => [
     uniqueIndex('post_categories_slug_unique').on(table.slug),
     uniqueIndex('post_categories_name_unique').on(table.name),
   ]
@@ -490,5 +490,5 @@ export const posts = sqliteTable(
     createdAt: integer('created_at'),
     updatedAt: integer('updated_at'),
   },
-  table => [uniqueIndex('posts_slug_unique').on(table.slug)]
+  (table) => [uniqueIndex('posts_slug_unique').on(table.slug)]
 );
