@@ -6,7 +6,7 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from '@blackliving/ui';
-import { Button } from '@blackliving/ui';
+
 import Autoplay from 'embla-carousel-autoplay';
 
 interface HeroSlide {
@@ -17,15 +17,17 @@ interface HeroSlide {
     logo?: string;
     buttonText: string;
     buttonLink: string;
+    showContent: boolean;
     order: number;
   };
 }
 
 interface HeroCarouselProps {
   slides: HeroSlide[];
+  aspectRatio?: 'horizontal' | 'vertical' | 'full';
 }
 
-export default function HeroCarousel({ slides }: HeroCarouselProps) {
+export default function HeroCarousel({ slides, aspectRatio }: HeroCarouselProps) {
   const plugin = React.useRef(Autoplay({ delay: 5000, stopOnInteraction: true }));
 
   return (
@@ -38,24 +40,29 @@ export default function HeroCarousel({ slides }: HeroCarouselProps) {
       <CarouselContent>
         {slides.map((slide, index) => (
           <CarouselItem key={index}>
-            <div className="relative w-full h-[calc(100dvh-8rem)]">
+            <div
+              className={`relative w-full ${aspectRatio === 'vertical' ? 'aspect-[256/341]' : aspectRatio === 'horizontal' ? 'aspect-[512/213]' : 'h-[calc(100dvh-8rem)]'} `}
+            >
               <img
                 src={slide.data.image}
                 alt={slide.data.title}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-contain"
               />
               {/*overlay gradient*/}
               {/*<div className="absolute inset-0 bg-black/40"></div>*/}
-              <div className="absolute inset-0 z-10 flex flex-col items-start justify-center text-center text-white p-4 px-24">
-                <img
-                  src={slide.data.logo}
-                  alt={slide.data.title}
-                  className="w-72 h-auto mb-6 animate-fade-in-down"
-                />
-                <h1 className="text-5xl md:text-5xl font-medium mb-6 animate-fade-in-down">
-                  {slide.data.title}
-                </h1>
-              </div>
+              {slide.data.showContent && (
+                <div className="absolute inset-0 z-10 flex flex-col items-start justify-center text-center text-white p-4 px-24">
+                  <img
+                    src={slide.data.logo}
+                    alt={slide.data.title}
+                    className="w-72 h-auto mb-6 animate-fade-in-down"
+                  />
+                  <h1 className="text-5xl md:text-5xl font-medium mb-6 animate-fade-in-down">
+                    {slide.data.title}
+                  </h1>
+                  <p className="text-lg mb-6 animate-fade-in-up">{slide.data.subtitle}</p>
+                </div>
+              )}
             </div>
           </CarouselItem>
         ))}

@@ -4,19 +4,23 @@
       {
         "title": "席夢思黑標床墊",
         "subtitle": "專櫃價2-3折起，全台最低價保證",
-        "image": "/images/blackliving-heroheader-secrion-img-1.webp",
+        "image": "/images/heroslide/blackliving-heroslide-slide1.webp",
+        "mobileImage": "/images/heroslide/blackliving-heroslide-slide1-mobile.webp",
         "logo": "/beautyrest-logo.svg",
         "buttonText": "立即選購",
         "buttonLink": "/simmons-black",
+        "showContent": false,
         "order": 1
       },
       {
         "title": "預約試躺體驗",
         "subtitle": "中和、中壢展間歡迎預約",
-        "image": "/images/blackliving-heroheader-secrion-img-1.webp",
+        "image": "/images/heroslide/blackliving-heroslide-slide1.webp",
+        "mobileImage": "/images/heroslide/blackliving-heroslide-slide1-mobile.webp",
         "logo": "/beautyrest-logo.svg",
         "buttonText": "預約試躺",
         "buttonLink": "/appointment",
+        "showContent": false,
         "order": 2
       }
     ]

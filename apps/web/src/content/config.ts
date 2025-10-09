@@ -46,9 +46,11 @@ const heroSlider = defineCollection({
           title: z.string(),
           subtitle: z.string(),
           image: z.string(),
+          mobileImage: z.string().optional(),
           logo: z.string().optional(),
           buttonText: z.string(),
           buttonLink: z.string(),
+          showContent: z.boolean().default(true),
           order: z.number(),
         })
       ),
@@ -63,6 +65,7 @@ const navigation = defineCollection({
       z.object({
         label: z.string(),
         href: z.string(),
+        showContent: z.boolean().default(true),
         order: z.number(),
       })
     ),

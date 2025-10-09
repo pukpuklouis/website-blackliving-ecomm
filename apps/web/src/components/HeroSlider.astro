@@ -4,43 +4,27 @@ import { getCollection } from 'astro:content';
 import HeroCarousel from './HeroCarousel.tsx';
 
 const heroSliderCollection = await getCollection('hero-slider');
-const slides = heroSliderCollection[0]?.data.slideset.slides?.map(s => ({
-  data: s,
-})) || [];
+const slides =
+  heroSliderCollection[0]?.data.slideset.slides?.map((s) => ({
+    data: s,
+  })) || [];
+
+// Prepare desktop and mobile slides with appropriate images
+const desktopSlides = slides.map((slide) => ({
+  data: { ...slide.data, image: slide.data.image },
+}));
+
+const mobileSlides = slides.map((slide) => ({
+  data: { ...slide.data, image: slide.data.mobileImage || slide.data.image },
+}));
 ---
 
-<section class='relative h-[calc(100dvh-8rem)] overflow-hidden'>
-  {slides?.length && <HeroCarousel slides={slides} client:load />}
+<!-- Desktop version (md and up) -->
+<section class="hidden md:block relative overflow-hidden">
+  {slides?.length && <HeroCarousel slides={desktopSlides} aspectRatio="horizontal" client:load />}
 </section>
 
-<style>
-  @keyframes fade-in-down {
-    from {
-      opacity: 0;
-      transform: translateY(-20px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  @keyframes fade-in-up {
-    from {
-      opacity: 0;
-      transform: translateY(20px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  .animate-fade-in-down {
-    animation: fade-in-down 0.8s ease-out forwards;
-  }
-
-  .animate-fade-in-up {
-    animation: fade-in-up 0.8s ease-out 0.2s forwards;
-  }
-</style>
+<!-- Mobile version (below md) -->
+<section class="block md:hidden relative overflow-hidden">
+  {slides?.length && <HeroCarousel slides={mobileSlides} aspectRatio="vertical" client:load />}
+</section>
