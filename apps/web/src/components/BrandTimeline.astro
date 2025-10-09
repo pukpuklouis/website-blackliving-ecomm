@@ -35,7 +35,7 @@ const { items } = Astro.props;
           {/* Content card */}
           <div class='flex'>
             <div class='flex flex-row items-center justify-center gap-5 transition-all duration-300 group-hover:text-shadow-lg group-hover:scale-110'>
-              <div class='md:text-2xl text-lg font-medium text-gray-800 leading-none group-hover:scale-110'>{item.year}</div>
+              <div class='md:text-xl text-lg font-medium text-gray-800 leading-none group-hover:scale-110 whitespace-nowrap'>{item.year}</div>
               <p class='md:text-xl text-base leading-relaxed border-l-1 border-gray-600 pl-4 text-gray-800  '>{item.description}</p>
             </div>
           </div>

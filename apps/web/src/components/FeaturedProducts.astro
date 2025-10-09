@@ -22,6 +22,16 @@ const {
   class: className = ''
 } = Astro.props;
 
+// Map limit to valid Tailwind classes
+const gridColsMap: Record<number, string> = {
+  2: 'md:grid-cols-2',
+  3: 'md:grid-cols-3',
+  4: 'md:grid-cols-4',
+  6: 'md:grid-cols-6',
+};
+
+const mdGridCols = gridColsMap[limit] || 'md:grid-cols-3';
+
 // Fetch featured products from API
 let products = [];
 let error = null;
@@ -71,7 +81,7 @@ try {
       </div>
     ) : (
       <>
-        <div class='grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-8 mx-auto'>
+        <div class={`grid grid-cols-2 ${mdGridCols} gap-4 md:gap-8 mx-auto`}>
           {products.map((product: any) => <ProductCard product={product} />)}
         </div>
 

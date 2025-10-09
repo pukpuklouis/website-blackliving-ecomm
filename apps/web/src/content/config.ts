@@ -136,6 +136,20 @@ const features = defineCollection({
   }),
 });
 
+const testimonials = defineCollection({
+  type: 'data',
+  schema: z.object({
+    testimonials: z.array(
+      z.object({
+        rating: z.number().min(1).max(5),
+        source: z.string(),
+        text: z.string(),
+        image: z.string().optional(),
+      })
+    ),
+  }),
+});
+
 const footer = defineCollection({
   type: 'data',
   schema: z.object({
@@ -162,5 +176,6 @@ export const collections = {
   pages,
   storeinfo,
   features,
+  testimonials,
   footer,
 };

@@ -16,7 +16,7 @@ export interface Props {
 const { features = [] } = Astro.props;
 
 // Get default features from content collection
-const featuresCollection = await getEntry('features', 'default');
+const featuresCollection = await getEntry('features', 'featureicon');
 const defaultFeatures = featuresCollection?.data.defaultFeatures || [];
 
 const featuresToShow: FeatureItem[] = features.length > 0 ? features : defaultFeatures;

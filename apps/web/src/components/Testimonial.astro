@@ -1,0 +1,25 @@
+---
+import { getCollection } from 'astro:content';
+import TestimonialCard from './testimonialCard.astro';
+
+const testimonialsData = await getCollection('testimonials');
+const testimonials = testimonialsData[0]?.data.testimonials || [];
+---
+
+<section class="py-16 bg-gray-50">
+  <div class="container mx-auto px-4">
+    <h2 class="text-3xl font-bold text-center mb-12">顧客好評</h2>
+
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-8">
+      {
+        testimonials.map((testimonial, index) => (
+          <TestimonialCard testimonial={testimonial} key={index} />
+        ))
+      }
+    </div>
+
+    <div class="text-center mt-8">
+      <a href="/testimonials" class="text-black font-semibold hover:underline">查看更多好評 →</a>
+    </div>
+  </div>
+</section>
