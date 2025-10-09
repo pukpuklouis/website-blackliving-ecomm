@@ -35,11 +35,27 @@ const stores = storeData?.data.stores || [];
   <FeatureProductBanner
     imageUrl="/feature-banner/blackliving-feature-banner.webp"
     alt="席夢思黑標床墊"
-    height="xl"
+    aspectRatio="standard"
+    showOnDesktop={true}
+    showOnMobile={false}
     gradientDirection="left-to-right"
     gradientFromColor="transparent"
     gradientToColor="black"
-    gradientOpacity={1}
+    gradientOpacity={0}
+    textPosition="right"
+    textTitle="席夢思黑標系列"
+    textDescription="Beautyrest Black"
+  />
+  <FeatureProductBanner
+    imageUrl="/feature-banner/blackliving-feature-banner-mobile.webp"
+    alt="席夢思黑標床墊"
+    aspectRatio="wide"
+    showOnDesktop={false}
+    showOnMobile={true}
+    gradientDirection="left-to-right"
+    gradientFromColor="transparent"
+    gradientToColor="black"
+    gradientOpacity={0}
     textPosition="right"
     textTitle="席夢思黑標系列"
     textDescription="Beautyrest Black"
@@ -57,11 +73,27 @@ const stores = storeData?.data.stores || [];
   <FeatureProductBanner
     imageUrl="/feature-banner/blackliving-feature-banner-accesories.webp"
     alt="席夢思黑標床墊"
-    height="xl"
+    aspectRatio="standard"
+    showOnDesktop={true}
+    showOnMobile={false}
     gradientDirection="right-to-left"
     gradientFromColor="transparent"
     gradientToColor="var(--primary)"
-    gradientOpacity={1}
+    gradientOpacity={0}
+    textPosition="left"
+    textTitle="精選周邊系列"
+    textDescription="Selected Peripheral Series"
+  />
+  <FeatureProductBanner
+    imageUrl="/feature-banner/blackliving-feature-banner-accesories-mobile.webp"
+    alt="席夢思黑標床墊"
+    aspectRatio="wide"
+    showOnDesktop={false}
+    showOnMobile={true}
+    gradientDirection="right-to-left"
+    gradientFromColor="transparent"
+    gradientToColor="var(--primary)"
+    gradientOpacity={0}
     textPosition="left"
     textTitle="精選周邊系列"
     textDescription="Selected Peripheral Series"

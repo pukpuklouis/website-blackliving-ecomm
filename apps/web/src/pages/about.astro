@@ -18,8 +18,7 @@ if (!aboutPage) {
 const timelineItems = [
   {
     year: '2018',
-    description:
-      '創立「黑標王」，於蝦皮開設席夢思黑標專賣店，同年在中壢成立首間實體門市。',
+    description: '創立「黑標王」，於蝦皮開設席夢思黑標專賣店，同年在中壢成立首間實體門市。',
   },
   {
     year: '2023',
@@ -55,8 +54,8 @@ const warehousePhotos = [
     gradientFrom: '#F1E9DE',
     gradientCoverage: 30,
     gradientTo: 'transparent',
-  }
-  ];
+  },
+];
 
 // Beautyrest photos with text overlays and gradients
 const beautyrestPhotos = [
@@ -85,72 +84,72 @@ const logisticsPhotos = [
     gradientFrom: '#F1E9DE',
     gradientCoverage: 30,
     gradientTo: 'transparent',
-  }
+  },
 ];
 ---
 
 <BaseLayout
   title={aboutPage.data.seoTitle || aboutPage.data.title}
   description={aboutPage.data.seoDescription || aboutPage.data.description}
-  type='website'
+  type="website"
 >
   <!-- 1. Brand Introduction (Beige Background) -->
   <BrandIntroduction
-    headline='品牌介紹'
-    body='黑哥居家 Black Living｜Simmons Black Label 平行輸入首選\n黑哥居家是全台最大 Simmons 席夢思黑標床墊平行輸入商，擁有多年貿易經驗，商品100%美國製造、原廠直送，提供最齊全的款式與現貨庫存，長期服務設計師、建案與家具通路。'
+    headline="品牌介紹"
+    body="黑哥居家 Black Living｜Simmons Black Label 平行輸入首選\n黑哥居家是全台最大 Simmons 席夢思黑標床墊平行輸入商，擁有多年貿易經驗，商品100%美國製造、原廠直送，提供最齊全的款式與現貨庫存，長期服務設計師、建案與家具通路。"
   />
 
   <!-- 2. Brand Timeline -->
-  <section class='py-20 bg-white'>
-    <div class='container mx-auto px-4'>
-      <h2 class='text-3xl md:text-4xl font-bold text-center mb-16 text-gray-800'>品牌發展</h2>
+  <section class="py-20 bg-white">
+    <div class="container mx-auto px-4">
+      <h2 class="text-3xl md:text-4xl font-bold text-center mb-16 text-gray-800">品牌發展</h2>
       <BrandTimeline items={timelineItems} />
     </div>
   </section>
 
   <!-- 3. Four Advantages (Cloud Diagram) -->
-  <section class='relative py-20 bg-primary/25'>
+  <section class="relative py-20 bg-primary/25">
     <!-- Inverted arc mask at top -->
-    <div class='absolute top-0 left-0 right-0 w-full text-white overflow-hidden' style='height: 120px;'>
+    <div
+      class="absolute top-0 left-0 right-0 w-full text-white overflow-hidden"
+      style="height: 120px;"
+    >
       <svg
-        class='absolute top-0 left-0 w-full'
-        viewBox='0 0 1440 120'
-        preserveAspectRatio='none'
-        xmlns='http://www.w3.org/2000/svg'
+        class="absolute top-0 left-0 w-full"
+        viewBox="0 0 1440 120"
+        preserveAspectRatio="none"
+        xmlns="http://www.w3.org/2000/svg"
       >
-        <path
-          d='M0,120 L0,0 L1440,0 L1440,120 Q720,0 0,120 Z'
-          fill='currentColor'
-        />
+        <path d="M0,120 L0,0 L1440,0 L1440,120 Q720,0 0,120 Z" fill="currentColor"></path>
       </svg>
     </div>
 
-    <div class='container mx-auto px-4'>
-      <div class='flex justify-center items-center'>
+    <div class="container mx-auto px-4">
+      <div class="flex justify-center items-center">
         <CircularAdvantages />
       </div>
     </div>
   </section>
 
   <!-- 4. Beautyrest BLACK Banner -->
-  <section class='py-2 bg-primary/25 overflow-hidden'>
-    <PhotoGrid photos={beautyrestPhotos} columns={1} gap='0' fullWidth={true} />
+  <section class="py-2 bg-primary/25 overflow-hidden">
+    <PhotoGrid photos={beautyrestPhotos} columns={1} gap="0" fullWidth={true} />
   </section>
 
   <!-- 5. Warehouse Photos -->
-  <section class='py-2 bg-primary/25 overflow-hidden'>
-    <PhotoGrid photos={warehousePhotos} columns={1} gap='0' fullWidth={true} />
+  <section class="py-2 bg-primary/25 overflow-hidden">
+    <PhotoGrid photos={warehousePhotos} columns={1} gap="0" fullWidth={true} />
   </section>
 
   <!-- 6. Logistics Photos -->
-  <section class='py-2 bg-primary/25 overflow-hidden'>
-    <PhotoGrid photos={logisticsPhotos} columns={1} gap='0' fullWidth={true} />
+  <section class="py-2 bg-primary/25 overflow-hidden">
+    <PhotoGrid photos={logisticsPhotos} columns={1} gap="0" fullWidth={true} />
   </section>
 
   <!-- 7. Comparison Table: 我們為什麼可以這麼便宜？ -->
-  <section class='py-20 bg-primary/25'>
-    <div class='container mx-auto px-4'>
-      <h2 class='text-2xl md:text-4xl font-bold text-center mb-18 text-gray-800'>
+  <section class="py-20 bg-primary/25">
+    <div class="container mx-auto px-4">
+      <h2 class="text-2xl md:text-4xl font-bold text-center mb-18 text-gray-800">
         我們為什麼可以這麼便宜？
       </h2>
       <ComparisonTable />
@@ -158,22 +157,23 @@ const logisticsPhotos = [
   </section>
 
   <!-- 8. Lifestyle Section: 好睡，才是好生活 -->
-  <section class='py-20 bg-primary/25'>
-    <div class='container mx-auto px-4'>
-      <div class='text-center mb-12'>
-        <h2 class='text-3xl md:text-4xl font-bold mb-6 text-gray-800'>好睡，才是好生活</h2>
-        <p class='text-md md:text-xl text-gray-700 max-w-3xl mx-auto leading-relaxed'>
-          從黑標王到 Black Living<br/>我們起步於專營席夢思「黑標」床墊，憑藉對品質的堅持與對客戶的承諾，成為蝦皮第一賣家。如今，我們已將服務領域拓展至整個居家生活，致力於為每個家庭提供更高品質的居家環境，並全面提升生活品味。
+  <section class="py-20 bg-primary/25">
+    <div class="container mx-auto px-4">
+      <div class="text-center mb-12">
+        <h2 class="text-3xl md:text-4xl font-bold mb-6 text-gray-800">好睡，才是好生活</h2>
+        <p class="text-md md:text-xl text-gray-700 max-w-3xl mx-auto leading-relaxed">
+          從黑標王到 Black Living<br
+          />我們起步於專營席夢思「黑標」床墊，憑藉對品質的堅持與對客戶的承諾，成為蝦皮第一賣家。如今，我們已將服務領域拓展至整個居家生活，致力於為每個家庭提供更高品質的居家環境，並全面提升生活品味。
         </p>
       </div>
-      <div class='max-w-6xl flex justify-center mx-auto'>
+      <div class="max-w-6xl flex justify-center mx-auto">
         <ImageBanner
-          src='/images/about/blackliving-about-sleepwell.webp'
-          alt='優質睡眠環境'
-          aspectRatio='16/6'
+          src="/images/about/blackliving-about-sleepwell.webp"
+          alt="優質睡眠環境"
+          aspectRatio="16/9"
           focalPoint={{ x: '50%', y: '60%' }}
-          objectFit='cover'
-          className='w-full md:w-[60vw] rounded-lg'
+          objectFit="cover"
+          className="w-full md:w-[60vw] rounded-lg"
         />
       </div>
     </div>
