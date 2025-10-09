@@ -8,7 +8,11 @@ export interface Props {
   alt?: string;
 
   // Layout
-  height?: 'sm' | 'md' | 'lg' | 'xl';
+  aspectRatio?: 'wide' | 'standard';
+
+  // Visibility
+  showOnDesktop?: boolean;
+  showOnMobile?: boolean;
 
   // Gradient overlay
   gradientDirection?: 'left-to-right' | 'right-to-left' | 'top-to-bottom' | 'bottom-to-top';
@@ -36,7 +40,9 @@ export interface Props {
 const {
   imageUrl = '/feature-banner/blackliving-feature-banner.webp',
   alt = 'Black Living 特別優惠',
-  height = 'lg',
+  aspectRatio = 'wide',
+  showOnDesktop = true,
+  showOnMobile = true,
   gradientDirection = 'left-to-right',
   gradientFromColor = 'transparent',
   gradientToColor = 'black',
@@ -50,43 +56,57 @@ const {
   overlayImagePosition = 'right',
   overlayImageSize = 'md',
   href,
-  hoverEffect = false
+  hoverEffect = false,
 } = Astro.props;
 
-// Height classes
-const heightClasses = {
-  sm: 'h-48 sm:h-56 lg:h-64',
-  md: 'h-56 sm:h-64 lg:h-72',
-  lg: 'h-64 sm:h-80 lg:h-96',
-  xl: 'h-72 sm:h-96 lg:h-[28rem]'
+// Aspect ratio classes
+const aspectRatioClasses = {
+  wide: 'aspect-[32/9]',
+  standard: 'aspect-[2/1]',
 };
+
+// Visibility classes based on device
+const getVisibilityClasses = (showOnDesktop: boolean, showOnMobile: boolean) => {
+  if (showOnDesktop && showOnMobile) {
+    return '';
+  } else if (showOnDesktop && !showOnMobile) {
+    return 'hidden md:block';
+  } else if (!showOnDesktop && showOnMobile) {
+    return 'block md:hidden';
+  } else {
+    return 'hidden';
+  }
+};
+
+const visibilityClasses = getVisibilityClasses(showOnDesktop, showOnMobile);
 
 // Gradient direction classes
 const gradientDirections = {
   'left-to-right': 'bg-gradient-to-r',
   'right-to-left': 'bg-gradient-to-l',
   'top-to-bottom': 'bg-gradient-to-b',
-  'bottom-to-top': 'bg-gradient-to-t'
+  'bottom-to-top': 'bg-gradient-to-t',
 };
 
 // Text position classes
 const textPositions = {
   left: 'items-start justify-center pl-8 lg:pl-32',
   right: 'items-end justify-center pr-8 lg:pr-32',
-  center: 'items-center justify-center'
+  center: 'items-center justify-center',
 };
 
 // Overlay image size classes
+// Overlay image sizes proportional to banner dimensions
 const overlayImageSizes = {
-  sm: 'w-24 h-24 lg:w-32 lg:h-32',
-  md: 'w-32 h-32 lg:w-48 lg:h-48',
-  lg: 'w-48 h-48 lg:w-64 lg:h-64'
+  sm: 'w-[12%] h-[12%]',
+  md: 'w-[18%] h-[18%]',
+  lg: 'w-[24%] h-[24%]',
 };
 
 // Overlay image position classes
 const overlayImagePositions = {
   left: 'left-4 lg:left-8',
-  right: 'right-4 lg:right-8'
+  right: 'right-4 lg:right-8',
 };
 
 // Convert color names to Tailwind gradient classes
@@ -100,12 +120,12 @@ const getGradientColors = (from: string, to: string) => {
     red: 'red-500',
     blue: 'blue-500',
     green: 'green-500',
-    purple: 'purple-500'
+    purple: 'purple-500',
   };
 
   return {
     from: colorMap[from] || from,
-    to: colorMap[to] || to
+    to: colorMap[to] || to,
   };
 };
 
@@ -113,13 +133,10 @@ const gradientColors = getGradientColors(gradientFromColor, gradientToColor);
 const Component = href ? 'a' : 'div';
 ---
 
-<section class="bg-white">
+<section class={`bg-primary/25 ${visibilityClasses}`.trim()}>
   <div class="container">
     <div class="w-screen h-fit">
-      <Component
-        {...(href ? { href } : {})}
-        class={`relative block ${hoverEffect ? 'group' : ''}`}
-      >
+      <Component {...href ? { href } : {}} class={`relative block ${hoverEffect ? 'group' : ''}`}>
         <!-- Background Image -->
         <Image
           src={imageUrl}
@@ -127,61 +144,64 @@ const Component = href ? 'a' : 'div';
           width={1920}
           height={1080}
           loading="lazy"
-          class={`w-full ${heightClasses[height]} object-cover ${hoverEffect ? 'group-hover:scale-105 transition-transform duration-300' : ''}`}
+          class={`w-full ${aspectRatioClasses[aspectRatio]} object-contain ${hoverEffect ? 'group-hover:scale-105 transition-transform duration-300' : ''}`}
         />
 
         <!-- Gradient Overlay -->
-        {(gradientFromColor.startsWith('var(') || gradientToColor.startsWith('var(')) ? (
-          <div
-            class="absolute inset-0"
-            style={`background: linear-gradient(${gradientDirection === 'left-to-right' ? 'to right' : gradientDirection === 'right-to-left' ? 'to left' : gradientDirection === 'top-to-bottom' ? 'to bottom' : 'to top'}, ${gradientFromColor}, ${gradientToColor}); opacity: ${gradientOpacity}`}
-          >
-          </div>
-        ) : (
-          <div
-            class={`absolute inset-0 ${gradientDirections[gradientDirection]} from-${gradientColors.from} to-${gradientColors.to}`}
-            style={`opacity: ${gradientOpacity}`}
-          >
-          </div>
-        )}
+        {
+          gradientFromColor.startsWith('var(') || gradientToColor.startsWith('var(') ? (
+            <div
+              class="absolute inset-0"
+              style={`background: linear-gradient(${gradientDirection === 'left-to-right' ? 'to right' : gradientDirection === 'right-to-left' ? 'to left' : gradientDirection === 'top-to-bottom' ? 'to bottom' : 'to top'}, ${gradientFromColor}, ${gradientToColor}); opacity: ${gradientOpacity}`}
+            />
+          ) : (
+            <div
+              class={`absolute inset-0 ${gradientDirections[gradientDirection]} from-${gradientColors.from} to-${gradientColors.to}`}
+              style={`opacity: ${gradientOpacity}`}
+            />
+          )
+        }
 
         <!-- Text Overlay -->
-        {(textTitle || textDescription) && (
-          <div class={`absolute inset-0 flex flex-col ${textPositions[textPosition]}  py-8`}>
-            <div class={`text-white max-w-md ${textClassName}`}>
-              {textTitle && (
-                <p class="text-2xl lg:text-4xl font-bold mb-2 drop-shadow-lg">
-                  {textTitle}
-                </p>
-              )}
-              {textDescription && (
-                <p class="text-2xl lg:text-4xl drop-shadow-lg">
-                  {textDescription}
-                </p>
-              )}
+        {
+          (textTitle || textDescription) && (
+            <div class={`absolute inset-0 flex flex-col ${textPositions[textPosition]}  py-8`}>
+              <div class={`text-white max-w-md ${textClassName}`}>
+                {textTitle && (
+                  <p class="text-2xl lg:text-4xl font-bold mb-2 drop-shadow-lg">{textTitle}</p>
+                )}
+                {textDescription && (
+                  <p class="text-2xl lg:text-4xl drop-shadow-lg">{textDescription}</p>
+                )}
+              </div>
             </div>
-          </div>
-        )}
+          )
+        }
 
         <!-- Image Overlay -->
-        {overlayImageUrl && (
-          <div class={`absolute top-1/2 -translate-y-1/2 ${overlayImagePositions[overlayImagePosition]}`}>
-            <Image
-              src={overlayImageUrl}
-              alt={overlayImageAlt}
-              width={200}
-              height={200}
-              loading="lazy"
-              class={`${overlayImageSizes[overlayImageSize]} object-contain drop-shadow-lg ${hoverEffect ? 'group-hover:scale-110 transition-transform duration-300' : ''}`}
-            />
-          </div>
-        )}
+        {
+          overlayImageUrl && (
+            <div
+              class={`absolute top-1/2 -translate-y-1/2 ${overlayImagePositions[overlayImagePosition]}`}
+            >
+              <Image
+                src={overlayImageUrl}
+                alt={overlayImageAlt}
+                width={200}
+                height={200}
+                loading="lazy"
+                class={`${overlayImageSizes[overlayImageSize]} object-contain drop-shadow-lg ${hoverEffect ? 'group-hover:scale-110 transition-transform duration-300' : ''}`}
+              />
+            </div>
+          )
+        }
 
         <!-- Hover Effect Overlay (if enabled and has link) -->
-        {hoverEffect && href && (
-          <div class="absolute inset-0 bg-black bg-opacity-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-          </div>
-        )}
+        {
+          hoverEffect && href && (
+            <div class="absolute inset-0 bg-black bg-opacity-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          )
+        }
       </Component>
     </div>
   </div>
