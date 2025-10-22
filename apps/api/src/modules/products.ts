@@ -2,7 +2,7 @@ import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
 import { eq, desc, asc, and, or, like, count, sql } from 'drizzle-orm';
-import { products } from '@blackliving/db';
+import { products, productCategories } from '@blackliving/db';
 import { createId } from '@paralleldrive/cuid2';
 
 type Env = {
@@ -31,7 +31,10 @@ const createProductSchema = z.object({
     .min(1, 'Product slug is required')
     .regex(/^[a-z0-9-]+$/, 'Slug must contain only lowercase letters, numbers, and hyphens'),
   description: z.string().min(10, 'Description must be at least 10 characters'),
-  category: z.enum(['simmons-black', 'accessories', 'us-imports']),
+  category: z
+    .string()
+    .min(1, 'Category is required')
+    .regex(/^[a-z0-9-]+$/, 'Category must be a lowercase slug'),
   images: z.array(z.string().url()).default([]),
   variants: z
     .array(
@@ -61,7 +64,10 @@ const createProductSchema = z.object({
 const updateProductSchema = createProductSchema.partial();
 
 const productQuerySchema = z.object({
-  category: z.enum(['simmons-black', 'accessories', 'us-imports']).optional(),
+  category: z
+    .string()
+    .regex(/^[a-z0-9-]+$/, 'Category must be a lowercase slug')
+    .optional(),
   featured: z.string().optional(),
   inStock: z.string().optional(),
   search: z.string().optional(),
@@ -236,7 +242,7 @@ app.get('/featured', async (c) => {
   }
 });
 
-// GET /api/products/categories - Get products grouped by category
+// GET /api/products/categories - Fetch product categories with stats
 app.get('/categories', async (c) => {
   try {
     const db = c.get('db');
@@ -244,7 +250,6 @@ app.get('/categories', async (c) => {
 
     const cacheKey = 'products:categories';
 
-    // Try cache first
     const cached = await cache.get(cacheKey);
     if (cached) {
       return c.json({
@@ -254,38 +259,52 @@ app.get('/categories', async (c) => {
       });
     }
 
-    // Get products count by category
-    const categoryStats = await db
+    const categories = await db
+      .select()
+      .from(productCategories)
+      .where(eq(productCategories.isActive, true))
+      .orderBy(asc(productCategories.sortOrder), asc(productCategories.title));
+
+    const stats = await db
       .select({
         category: products.category,
-        count: count(),
+        productCount: count(),
         inStockCount: sql<number>`SUM(CASE WHEN ${products.inStock} = TRUE THEN 1 ELSE 0 END)`,
       })
       .from(products)
       .groupBy(products.category);
 
-    // Get sample products for each category
-    const categories = {};
-    for (const stat of categoryStats) {
-      const sampleProducts = await db
-        .select()
-        .from(products)
-        .where(and(eq(products.category, stat.category), eq(products.inStock, true)))
-        .orderBy(desc(products.featured), desc(products.createdAt))
-        .limit(4);
+    const statsMap = new Map(stats.map((entry) => [entry.category, entry]));
 
-      categories[stat.category] = {
-        ...stat,
-        sampleProducts,
-      };
-    }
+    const enrichedCategories = await Promise.all(
+      categories.map(async (category) => {
+        const stat = statsMap.get(category.slug) ?? { productCount: 0, inStockCount: 0 };
 
-    // Cache for 30 minutes
-    await cache.set(cacheKey, JSON.stringify(categories), { expirationTtl: 1800 });
+        const sampleProducts = await db
+          .select()
+          .from(products)
+          .where(and(eq(products.category, category.slug), eq(products.inStock, true)))
+          .orderBy(desc(products.featured), desc(products.createdAt))
+          .limit(4);
+
+        return {
+          category,
+          stats: {
+            productCount: Number(stat.productCount ?? 0),
+            inStockCount: Number(stat.inStockCount ?? 0),
+          },
+          sampleProducts,
+        };
+      })
+    );
+
+    const payload = { categories: enrichedCategories };
+
+    await cache.set(cacheKey, JSON.stringify(payload), { expirationTtl: 1800 });
 
     return c.json({
       success: true,
-      data: categories,
+      data: payload,
     });
   } catch (error) {
     console.error('Error fetching product categories:', error);
@@ -300,6 +319,84 @@ app.get('/categories', async (c) => {
   }
 });
 
+// GET /api/products/categories/:slug - Fetch single product category
+app.get('/categories/:slug', async (c) => {
+  try {
+    const db = c.get('db');
+    const cache = c.get('cache');
+    const slug = c.req.param('slug');
+
+    const cacheKey = `products:category:${slug}`;
+
+    const cached = await cache.get(cacheKey);
+    if (cached) {
+      return c.json({
+        success: true,
+        data: JSON.parse(cached),
+        cached: true,
+      });
+    }
+
+    const [category] = await db
+      .select()
+      .from(productCategories)
+      .where(eq(productCategories.slug, slug))
+      .limit(1);
+
+    if (!category || !category.isActive) {
+      return c.json(
+        {
+          success: false,
+          error: 'Not Found',
+          message: 'Category not found',
+        },
+        404
+      );
+    }
+
+    const [stat] = await db
+      .select({
+        productCount: count(),
+        inStockCount: sql<number>`SUM(CASE WHEN ${products.inStock} = TRUE THEN 1 ELSE 0 END)`,
+      })
+      .from(products)
+      .where(eq(products.category, slug));
+
+    const sampleProducts = await db
+      .select()
+      .from(products)
+      .where(and(eq(products.category, slug), eq(products.inStock, true)))
+      .orderBy(desc(products.featured), desc(products.createdAt))
+      .limit(4);
+
+    const payload = {
+      category,
+      stats: {
+        productCount: Number(stat?.productCount ?? 0),
+        inStockCount: Number(stat?.inStockCount ?? 0),
+      },
+      sampleProducts,
+    };
+
+    await cache.set(cacheKey, JSON.stringify(payload), { expirationTtl: 1800 });
+
+    return c.json({
+      success: true,
+      data: payload,
+    });
+  } catch (error) {
+    console.error('Error fetching product category:', error);
+    return c.json(
+      {
+        success: false,
+        error: 'Internal Server Error',
+        message: 'Failed to fetch product category',
+      },
+      500
+    );
+  }
+});
+
 // GET /api/products/search - Advanced product search
 app.get(
   '/search',
@@ -307,7 +404,10 @@ app.get(
     'query',
     z.object({
       q: z.string().min(1, 'Search query is required'),
-      category: z.enum(['simmons-black', 'accessories', 'us-imports']).optional(),
+      category: z
+        .string()
+        .regex(/^[a-z0-9-]+$/)
+        .optional(),
       limit: z.string().optional(),
       offset: z.string().optional(),
     })
@@ -424,6 +524,23 @@ app.post('/', requireAdmin, zValidator('json', createProductSchema), async (c) =
       );
     }
 
+    // Ensure category exists
+    const [resolvedCategory] = await db
+      .select({ id: productCategories.id })
+      .from(productCategories)
+      .where(and(eq(productCategories.slug, productData.category), eq(productCategories.isActive, true)));
+
+    if (!resolvedCategory) {
+      return c.json(
+        {
+          success: false,
+          error: 'Invalid Category',
+          message: 'Specified category does not exist or is inactive',
+        },
+        400
+      );
+    }
+
     const productId = createId();
     const now = new Date();
 
@@ -452,6 +569,7 @@ app.post('/', requireAdmin, zValidator('json', createProductSchema), async (c) =
     // Clear relevant caches so new product appears immediately everywhere
     await cache.delete('products:featured');
     await cache.delete('products:categories');
+    await cache.deleteByPrefix('products:category:');
     await cache.deleteByPrefix('products:list:');
     await cache.deleteByPrefix('products:detail:');
 
@@ -520,6 +638,24 @@ app.put('/:id', requireAdmin, zValidator('json', updateProductSchema), async (c)
       }
     }
 
+    if (updateData.category) {
+      const [resolvedCategory] = await db
+        .select({ id: productCategories.id })
+        .from(productCategories)
+        .where(and(eq(productCategories.slug, updateData.category), eq(productCategories.isActive, true)));
+
+      if (!resolvedCategory) {
+        return c.json(
+          {
+            success: false,
+            error: 'Invalid Category',
+            message: 'Specified category does not exist or is inactive',
+          },
+          400
+        );
+      }
+    }
+
     const [updatedProduct] = await db
       .update(products)
       .set({
@@ -532,6 +668,7 @@ app.put('/:id', requireAdmin, zValidator('json', updateProductSchema), async (c)
     // Clear relevant caches so updated data is reflected immediately
     await cache.delete('products:featured');
     await cache.delete('products:categories');
+    await cache.deleteByPrefix('products:category:');
     await cache.deleteByPrefix('products:list:');
     await cache.deleteByPrefix('products:detail:');
 
@@ -582,6 +719,7 @@ app.delete('/:id', requireAdmin, async (c) => {
     // Clear relevant caches so removed product disappears everywhere
     await cache.delete('products:featured');
     await cache.delete('products:categories');
+    await cache.deleteByPrefix('products:category:');
     await cache.deleteByPrefix('products:list:');
     await cache.deleteByPrefix('products:detail:');
 

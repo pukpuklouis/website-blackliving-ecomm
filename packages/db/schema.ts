@@ -102,6 +102,25 @@ export const products = sqliteTable('products', {
   updatedAt: integer('updated_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
 });
 
+// Product Categories table - 類別設定管理
+export const productCategories = sqliteTable('product_categories', {
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => createId()),
+  slug: text('slug').notNull().unique(), // URL slug (e.g. simmons-black)
+  title: text('title').notNull(), // 中文顯示標題
+  description: text('description').notNull(),
+  series: text('series').notNull(),
+  brand: text('brand').notNull(),
+  features: text('features', { mode: 'json' }).notNull().default('[]'),
+  seoKeywords: text('seo_keywords'),
+  urlPath: text('url_path').notNull(),
+  isActive: integer('is_active', { mode: 'boolean' }).default(true),
+  sortOrder: integer('sort_order').default(0),
+  createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
+});
+
 // Orders table - Taiwan e-commerce order management
 export const orders = sqliteTable('orders', {
   id: text('id')

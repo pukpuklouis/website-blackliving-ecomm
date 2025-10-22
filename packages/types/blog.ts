@@ -15,6 +15,7 @@ export interface BlogPost {
   authorName: string;
   category: string;
   categoryId: string;
+  categorySlug?: string;
   tags: string[];
   featuredImage: string;
   publishedAt: string;
@@ -39,7 +40,7 @@ export interface BlogPostSummary {
   description?: string;
   featuredImage?: string;
   category: string;
-  readingTime: string;
+  readingTime?: string;
   authorName: string;
   publishedAt: string;
 }

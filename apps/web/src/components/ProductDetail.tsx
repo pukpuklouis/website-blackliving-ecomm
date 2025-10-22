@@ -29,6 +29,7 @@ interface Product {
 
 interface CategoryConfig {
   series: string;
+  title: string;
   category: string;
 }
 
@@ -112,7 +113,7 @@ const ProductDetail: FC<ProductDetailProps> = ({ product, categoryConfig, classN
       {/* Series Information */}
       <div className="mb-4">
         <div className="inline-block bg-black text-white text-sm px-3 py-1 rounded">
-          {categoryConfig.series}
+          {categoryConfig.title}
         </div>
       </div>
 

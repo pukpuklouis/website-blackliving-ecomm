@@ -20,7 +20,7 @@ const products = defineCollection({
   schema: z.object({
     name: z.string(),
     description: z.string(),
-    category: z.enum(['simmons-black', 'accessories', 'us-imports']),
+    category: z.string().regex(/^[a-z0-9-]+$/, 'Category must be a lowercase slug'),
     images: z.array(z.string()),
     variants: z.array(
       z.object({
@@ -67,22 +67,16 @@ const navigation = defineCollection({
         href: z.string(),
         showContent: z.boolean().default(true),
         order: z.number(),
+        subItems: z
+          .array(
+            z.object({
+              label: z.string(),
+              href: z.string(),
+            })
+          )
+          .optional(),
       })
     ),
-  }),
-});
-
-const categories = defineCollection({
-  type: 'data',
-  schema: z.object({
-    title: z.string(),
-    description: z.string(),
-    series: z.string(),
-    brand: z.string(),
-    features: z.array(z.string()),
-    seoKeywords: z.string(),
-    category: z.string(),
-    urlPath: z.string(),
   }),
 });
 
@@ -175,7 +169,6 @@ export const collections = {
   products,
   'hero-slider': heroSlider,
   navigation,
-  categories,
   pages,
   storeinfo,
   features,

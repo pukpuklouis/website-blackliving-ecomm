@@ -3,7 +3,7 @@ import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
 import { eq, desc, asc, and, like, count, sql } from 'drizzle-orm';
 import { requireAdmin, auditLog, requireFreshSession } from '../middleware/auth';
-import { products, posts, orders, appointments, reviews } from '@blackliving/db';
+import { products, posts, orders, appointments, reviews, productCategories } from '@blackliving/db';
 import type {
   CreateProductRequest,
   UpdateProductRequest,
@@ -13,11 +13,41 @@ import type {
   UpdateAppointmentRequest,
   DashboardStats,
   SalesAnalytics,
+  ProductCategory,
 } from '@blackliving/types';
 import { CacheTTL } from '../lib/cache';
 import { FileTypes, FileSizes, StorageManager } from '../lib/storage';
+import { createId } from '@paralleldrive/cuid2';
 
 const admin = new Hono();
+
+const categorySlugSchema = z.string().regex(/^[a-z0-9-]+$/);
+
+const productCategoryBodySchema = z.object({
+  slug: categorySlugSchema,
+  title: z.string().min(1),
+  description: z.string().min(1),
+  series: z.string().min(1),
+  brand: z.string().min(1),
+  features: z.array(z.string()).default([]),
+  seoKeywords: z.string().optional().default(''),
+  urlPath: z.string().optional().default(''),
+  isActive: z.boolean().optional().default(true),
+  sortOrder: z.number().int().min(0).optional().default(0),
+});
+
+const productCategoryUpdateSchema = z.object({
+  slug: categorySlugSchema.optional(),
+  title: z.string().min(1).optional(),
+  description: z.string().min(1).optional(),
+  series: z.string().min(1).optional(),
+  brand: z.string().min(1).optional(),
+  features: z.array(z.string()).optional(),
+  seoKeywords: z.string().optional(),
+  urlPath: z.string().optional(),
+  isActive: z.boolean().optional(),
+  sortOrder: z.number().int().optional(),
+});
 
 // Apply comprehensive admin authentication to all routes
 admin.use('*', requireAdmin());
@@ -111,6 +141,294 @@ admin.get('/dashboard/stats', async (c) => {
   }
 });
 
+admin.get('/products/categories', async (c) => {
+  const db = c.get('db');
+
+  try {
+    const categories = await db
+      .select()
+      .from(productCategories)
+      .orderBy(asc(productCategories.sortOrder), asc(productCategories.title));
+
+    const stats = await db
+      .select({
+        category: products.category,
+        productCount: count(),
+        inStockCount: sql<number>`SUM(CASE WHEN ${products.inStock} = TRUE THEN 1 ELSE 0 END)`,
+      })
+      .from(products)
+      .groupBy(products.category);
+
+    const statsMap = new Map(stats.map((entry) => [entry.category, entry]));
+
+    const payload = categories.map((category) =>
+      normalizeCategoryRecord(
+        category,
+        statsMap.get(category.slug) ?? { productCount: 0, inStockCount: 0 }
+      )
+    );
+
+    return c.json({ success: true, data: payload });
+  } catch (error) {
+    console.error('Fetch product categories error:', error);
+    return c.json({ success: false, error: 'Failed to fetch product categories' }, 500);
+  }
+});
+
+admin.post(
+  '/products/categories',
+  requireFreshSession(15),
+  auditLog('product-category-create'),
+  zValidator('json', productCategoryBodySchema),
+  async (c) => {
+    const db = c.get('db');
+    const cache = c.get('cache');
+    const body = c.req.valid('json');
+
+    try {
+      const slug = body.slug.trim();
+
+      const [existing] = await db
+        .select({ id: productCategories.id })
+        .from(productCategories)
+        .where(eq(productCategories.slug, slug))
+        .limit(1);
+
+      if (existing) {
+        return c.json(
+          {
+            success: false,
+            error: 'Category already exists',
+            message: '分類 slug 已存在，請使用其他名稱',
+          },
+          409
+        );
+      }
+
+      const now = new Date();
+      const features = parseCategoryFeaturesInput(body.features);
+
+      const [inserted] = await db
+        .insert(productCategories)
+        .values({
+          id: createId(),
+          slug,
+          title: body.title.trim(),
+          description: body.description.trim(),
+          series: body.series.trim(),
+          brand: body.brand.trim(),
+          features,
+          seoKeywords: body.seoKeywords?.trim() ? body.seoKeywords.trim() : null,
+          urlPath: normalizeCategoryUrlPath(body.urlPath, slug),
+          isActive: body.isActive ?? true,
+          sortOrder: body.sortOrder ?? 0,
+          createdAt: now,
+          updatedAt: now,
+        })
+        .returning();
+
+      await cache.delete('products:categories');
+      await cache.deleteByPrefix('products:category:');
+      await cache.deleteByPrefix('products:list:');
+      await cache.deleteByPrefix('admin:products');
+
+      return c.json(
+        {
+          success: true,
+          data: normalizeCategoryRecord(inserted, { productCount: 0, inStockCount: 0 }),
+        },
+        201
+      );
+    } catch (error) {
+      console.error('Create product category error:', error);
+      return c.json({ success: false, error: 'Failed to create product category' }, 500);
+    }
+  }
+);
+
+admin.put(
+  '/products/categories/:slug',
+  requireFreshSession(15),
+  auditLog('product-category-update'),
+  zValidator('json', productCategoryUpdateSchema),
+  async (c) => {
+    const db = c.get('db');
+    const cache = c.get('cache');
+    const slugParam = c.req.param('slug');
+    const body = c.req.valid('json');
+
+    if (!body || Object.keys(body).length === 0) {
+      return c.json(
+        {
+          success: false,
+          error: 'No fields provided',
+          message: '請提供至少一個需要更新的欄位',
+        },
+        400
+      );
+    }
+
+    try {
+      const [existing] = await db
+        .select()
+        .from(productCategories)
+        .where(eq(productCategories.slug, slugParam))
+        .limit(1);
+
+      if (!existing) {
+        return c.json({ success: false, error: 'Category not found' }, 404);
+      }
+
+      const now = new Date();
+      const nextSlug = body.slug ? body.slug.trim() : slugParam;
+
+      if (nextSlug !== slugParam) {
+        const [conflict] = await db
+          .select({ id: productCategories.id })
+          .from(productCategories)
+          .where(eq(productCategories.slug, nextSlug))
+          .limit(1);
+
+        if (conflict) {
+          return c.json(
+            {
+              success: false,
+              error: 'Category already exists',
+              message: '新的分類 slug 已存在，請使用其他名稱',
+            },
+            409
+          );
+        }
+      }
+
+      const updateValues: Partial<typeof productCategories.$inferInsert> = {
+        updatedAt: now,
+      };
+
+      if (body.title !== undefined) {
+        updateValues.title = body.title.trim();
+      }
+      if (body.description !== undefined) {
+        updateValues.description = body.description.trim();
+      }
+      if (body.series !== undefined) {
+        updateValues.series = body.series.trim();
+      }
+      if (body.brand !== undefined) {
+        updateValues.brand = body.brand.trim();
+      }
+      if (body.features !== undefined) {
+        updateValues.features = parseCategoryFeaturesInput(body.features);
+      }
+      if (body.seoKeywords !== undefined) {
+        const trimmed = body.seoKeywords.trim();
+        updateValues.seoKeywords = trimmed.length > 0 ? trimmed : null;
+      }
+      if (body.urlPath !== undefined) {
+        updateValues.urlPath = normalizeCategoryUrlPath(body.urlPath, nextSlug);
+      }
+      if (body.isActive !== undefined) {
+        updateValues.isActive = body.isActive;
+      }
+      if (body.sortOrder !== undefined) {
+        updateValues.sortOrder = body.sortOrder ?? 0;
+      }
+      if (nextSlug !== slugParam) {
+        updateValues.slug = nextSlug;
+      }
+
+      const [updatedCategory] = await db
+        .update(productCategories)
+        .set(updateValues)
+        .where(eq(productCategories.slug, slugParam))
+        .returning();
+
+      if (!updatedCategory) {
+        return c.json({ success: false, error: 'Failed to update category' }, 500);
+      }
+
+      if (nextSlug !== slugParam) {
+        await db
+          .update(products)
+          .set({ category: nextSlug })
+          .where(eq(products.category, slugParam));
+      }
+
+      const [stats] = await db
+        .select({
+          productCount: count(),
+          inStockCount: sql<number>`SUM(CASE WHEN ${products.inStock} = TRUE THEN 1 ELSE 0 END)`,
+        })
+        .from(products)
+        .where(eq(products.category, nextSlug));
+
+      await cache.delete('products:categories');
+      await cache.deleteByPrefix('products:category:');
+      await cache.deleteByPrefix('products:list:');
+      await cache.deleteByPrefix('admin:products');
+
+      return c.json({
+        success: true,
+        data: normalizeCategoryRecord(updatedCategory, stats),
+      });
+    } catch (error) {
+      console.error('Update product category error:', error);
+      return c.json({ success: false, error: 'Failed to update product category' }, 500);
+    }
+  }
+);
+
+admin.delete(
+  '/products/categories/:slug',
+  requireFreshSession(15),
+  auditLog('product-category-delete'),
+  async (c) => {
+    const db = c.get('db');
+    const cache = c.get('cache');
+    const slug = c.req.param('slug');
+
+    try {
+      const [category] = await db
+        .select()
+        .from(productCategories)
+        .where(eq(productCategories.slug, slug))
+        .limit(1);
+
+      if (!category) {
+        return c.json({ success: false, error: 'Category not found' }, 404);
+      }
+
+      const [usage] = await db
+        .select({ count: count() })
+        .from(products)
+        .where(eq(products.category, slug));
+
+      if ((usage?.count ?? 0) > 0) {
+        return c.json(
+          {
+            success: false,
+            error: 'Category in use',
+            message: '無法刪除仍有產品使用的分類',
+          },
+          409
+        );
+      }
+
+      await db.delete(productCategories).where(eq(productCategories.slug, slug));
+
+      await cache.delete('products:categories');
+      await cache.deleteByPrefix('products:category:');
+      await cache.deleteByPrefix('products:list:');
+      await cache.deleteByPrefix('admin:products');
+
+      return c.json({ success: true, message: 'Category deleted successfully' });
+    } catch (error) {
+      console.error('Delete product category error:', error);
+      return c.json({ success: false, error: 'Failed to delete product category' }, 500);
+    }
+  }
+);
+
 // Product Management APIs
 admin.get(
   '/products',
@@ -197,7 +515,7 @@ admin.post(
       name: z.string().min(1),
       slug: z.string().min(1),
       description: z.string().min(1),
-      category: z.enum(['simmons-black', 'accessories', 'us-imports']),
+      category: categorySlugSchema,
       images: z.array(z.string()).default([]),
       variants: z.array(z.any()).default([]),
       features: z.array(z.string()).default([]),
@@ -237,7 +555,7 @@ admin.put(
       name: z.string().optional(),
       slug: z.string().optional(),
       description: z.string().optional(),
-      category: z.enum(['simmons-black', 'accessories', 'us-imports']).optional(),
+      category: categorySlugSchema.optional(),
       images: z.array(z.string()).optional(),
       variants: z.array(z.any()).optional(),
       features: z.array(z.string()).optional(),
@@ -706,5 +1024,101 @@ admin.delete('/posts/:id', requireFreshSession(15), auditLog('post-delete'), asy
     return c.json({ success: false, error: 'Failed to delete post' }, 500);
   }
 });
+
+export function parseCategoryFeaturesInput(features: unknown): string[] {
+  if (Array.isArray(features)) {
+    return features
+      .map((feature) => (typeof feature === 'string' ? feature.trim() : String(feature ?? '').trim()))
+      .filter((feature) => feature.length > 0);
+  }
+
+  if (typeof features === 'string') {
+    try {
+      const parsed = JSON.parse(features);
+      if (Array.isArray(parsed)) {
+        return parsed
+          .map((feature) => (typeof feature === 'string' ? feature.trim() : String(feature ?? '').trim()))
+          .filter((feature) => feature.length > 0);
+      }
+    } catch {
+      // fall through to manual splitting
+    }
+
+    return features
+      .split(/\r?\n|,/)
+      .map((feature) => feature.trim())
+      .filter((feature) => feature.length > 0);
+  }
+
+  return [];
+}
+
+export function normalizeCategoryUrlPath(
+  urlPath: string | undefined | null,
+  slug: string
+): string {
+  if (!urlPath) {
+    return `/${slug}`;
+  }
+  const trimmed = urlPath.trim();
+  if (!trimmed) {
+    return `/${slug}`;
+  }
+  return trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
+}
+
+export function toCategoryIsoString(value: unknown): string {
+  if (value instanceof Date) {
+    return value.toISOString();
+  }
+  if (typeof value === 'number') {
+    return new Date(value).toISOString();
+  }
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    if (!trimmed) {
+      return new Date(0).toISOString();
+    }
+    const numeric = Number(trimmed);
+    if (!Number.isNaN(numeric)) {
+      return new Date(numeric).toISOString();
+    }
+    const parsed = Date.parse(trimmed);
+    if (!Number.isNaN(parsed)) {
+      return new Date(parsed).toISOString();
+    }
+    return trimmed;
+  }
+  return new Date().toISOString();
+}
+
+export function normalizeCategoryRecord(
+  category: typeof productCategories.$inferSelect,
+  stats?: { productCount?: number; inStockCount?: number }
+): ProductCategory {
+  const features = parseCategoryFeaturesInput(category.features);
+  const productCount = Number(stats?.productCount ?? 0);
+  const inStockCount = Number(stats?.inStockCount ?? 0);
+
+  return {
+    id: category.id,
+    slug: category.slug,
+    title: category.title,
+    description: category.description,
+    series: category.series,
+    brand: category.brand,
+    features,
+    seoKeywords: category.seoKeywords ?? undefined,
+    urlPath: normalizeCategoryUrlPath(category.urlPath, category.slug),
+    isActive: Boolean(category.isActive),
+    sortOrder: Number(category.sortOrder ?? 0),
+    createdAt: toCategoryIsoString(category.createdAt),
+    updatedAt: toCategoryIsoString(category.updatedAt),
+    stats: {
+      productCount,
+      inStockCount,
+    },
+  };
+}
 
 export default admin;

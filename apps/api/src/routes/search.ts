@@ -2,14 +2,14 @@ import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
 import { and, desc, eq, like, or } from 'drizzle-orm';
-import { posts, products } from '@blackliving/db/schema';
+import { posts, products, postCategories } from '@blackliving/db/schema';
 import type { UnifiedSearchResponse, SearchResultSections } from '@blackliving/types/search';
 
 import { SearchCache } from '../lib/search-cache';
 import type { CacheManager } from '../lib/cache';
 
 const typeEnum = z.enum(['products', 'posts', 'pages']);
-const categoryEnum = z.enum(['simmons-black', 'accessories', 'us-imports']);
+const categorySlugSchema = z.string().regex(/^[a-z0-9-]+$/);
 
 const searchQuerySchema = z.object({
   q: z.string().trim().min(1, 'Search query is required').max(120, 'Search query is too long'),
@@ -25,7 +25,7 @@ const searchQuerySchema = z.object({
     }
     return undefined;
   }, z.array(typeEnum).optional()),
-  category: categoryEnum.optional(),
+  category: categorySlugSchema.optional(),
   limit: z.coerce.number().min(1).max(20).default(5),
   includeContent: z.coerce.boolean().optional().default(false),
 });
@@ -56,6 +56,23 @@ const STATIC_PAGES = [
     href: '/appointment',
   },
 ];
+
+const normalizeCategorySlug = (input?: string | null): string => {
+  if (!input) return 'blog-post';
+  const value = input.trim().toLowerCase();
+  if (['customer-reviews', '顧客好評', '客戶評價'].includes(value)) {
+    return 'customer-reviews';
+  }
+  if (['blog-post', '好文分享', '部落格文章', 'blog'].includes(value)) {
+    return 'blog-post';
+  }
+  if (value.startsWith('cat_')) {
+    // Fallback mapping for known category ids
+    if (value === 'cat_002') return 'customer-reviews';
+    return 'blog-post';
+  }
+  return value.replace(/\s+/g, '-');
+};
 
 type Env = {
   Bindings: {
@@ -195,32 +212,45 @@ searchRouter.get('/', zValidator('query', searchQuerySchema), async (c) => {
         slug: posts.slug,
         description: posts.description,
         category: posts.category,
+        categorySlug: postCategories.slug,
         featuredImage: posts.featuredImage,
         publishedAt: posts.publishedAt,
         readingTime: posts.readingTime,
       })
       .from(posts)
+      .leftJoin(postCategories, eq(posts.categoryId, postCategories.id))
       .where(and(...postConditions))
       .orderBy(desc(posts.featured), desc(posts.publishedAt), desc(posts.createdAt))
       .limit(query.limit);
 
-    results.posts = postRows.map((post) => ({
-      id: post.id,
-      title: post.title,
-      description: truncate(post.description, 180),
-      category: post.category,
-      slug: post.slug,
-      href: `/posts/${post.slug}`,
-      type: 'post' as const,
-      thumbnail: post.featuredImage ?? null,
-      metadata: {
-        publishedAt:
-          post.publishedAt && !isNaN(new Date(post.publishedAt).getTime())
-            ? new Date(post.publishedAt).toISOString()
-            : null,
-        readingTime: post.readingTime ?? null,
-      },
-    }));
+    results.posts = postRows.map((post) => {
+      const categorySlug = normalizeCategorySlug(post.categorySlug ?? post.category);
+      const categoryLabel =
+        post.category ||
+        (categorySlug === 'customer-reviews'
+          ? '顧客好評'
+          : categorySlug === 'blog-post'
+            ? '好文分享'
+            : categorySlug);
+
+      return {
+        id: post.id,
+        title: post.title,
+        description: truncate(post.description, 180),
+        category: categoryLabel,
+        slug: post.slug,
+        href: `/${categorySlug}/${post.slug}`,
+        type: 'post' as const,
+        thumbnail: post.featuredImage ?? null,
+        metadata: {
+          publishedAt:
+            post.publishedAt && !isNaN(new Date(post.publishedAt).getTime())
+              ? new Date(post.publishedAt).toISOString()
+              : null,
+          readingTime: post.readingTime ?? null,
+        },
+      };
+    });
   }
 
   if (types.has('pages')) {

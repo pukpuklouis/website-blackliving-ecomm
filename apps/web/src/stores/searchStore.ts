@@ -50,12 +50,11 @@ interface SearchStoreState {
 }
 
 function loadRecentEntries(): RecentSearchEntry[] {
-  if (typeof window === 'undefined') {
-    return [];
-  }
+  const storage = (globalThis as typeof globalThis & { localStorage?: Storage }).localStorage;
+  if (!storage) return [];
 
   try {
-    const raw = window.localStorage.getItem(RECENT_STORAGE_KEY);
+    const raw = storage.getItem(RECENT_STORAGE_KEY);
     if (!raw) return [];
 
     const parsed = JSON.parse(raw) as RecentSearchEntry[];
@@ -71,12 +70,11 @@ function loadRecentEntries(): RecentSearchEntry[] {
 }
 
 function persistRecentEntries(entries: RecentSearchEntry[]) {
-  if (typeof window === 'undefined') {
-    return;
-  }
+  const storage = (globalThis as typeof globalThis & { localStorage?: Storage }).localStorage;
+  if (!storage) return;
 
   try {
-    window.localStorage.setItem(RECENT_STORAGE_KEY, JSON.stringify(entries));
+    storage.setItem(RECENT_STORAGE_KEY, JSON.stringify(entries));
   } catch (error) {
     console.warn('Failed to persist recent searches', error);
   }

@@ -18,7 +18,6 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
   Badge,
   Separator,
   Textarea,
@@ -60,6 +59,7 @@ import { reorderList } from '../lib/array';
 import { safeParseJSON } from '../lib/http';
 import { ImageUpload } from './ImageUpload';
 import { useEnvironment } from '../contexts/EnvironmentContext';
+import type { ProductCategory as ProductCategoryDTO } from '@blackliving/types';
 
 // Product types based on database schema
 export interface Product {
@@ -67,7 +67,7 @@ export interface Product {
   name: string;
   slug: string;
   description: string;
-  category: 'simmons-black' | 'accessories' | 'us-imports';
+  category: string;
   images: string[];
   variants: Array<{
     id: string;
@@ -94,9 +94,10 @@ export const productSchema = z.object({
   name: z.string().min(1, '產品名稱為必填'),
   slug: z.string().min(1, 'URL slug 為必填').regex(slugRegex, '只能包含小寫字母、數字和連字符'),
   description: z.string().min(10, '產品描述至少需要 10 個字元'),
-  category: z.enum(['simmons-black', 'accessories', 'us-imports'], {
-    errorMap: () => ({ message: '請選擇產品分類' }),
-  }),
+  category: z
+    .string()
+    .min(1, '請輸入產品分類 slug')
+    .regex(slugRegex, '分類 slug 只能包含小寫字母、數字和連字符'),
   images: z.array(z.string().url()).min(1, '至少需要一張產品圖片'),
   variants: z
     .array(
@@ -119,10 +120,32 @@ export const productSchema = z.object({
 
 type ProductFormData = z.infer<typeof productSchema>;
 
-const categoryLabels = {
-  'simmons-black': '席夢思黑牌',
-  accessories: '配件',
-  'us-imports': '美國進口',
+type ProductCategoryRecord = ProductCategoryDTO;
+
+interface ProductCategoryFormState {
+  slug: string;
+  title: string;
+  description: string;
+  series: string;
+  brand: string;
+  featuresRaw: string;
+  seoKeywords: string;
+  urlPath: string;
+  isActive: boolean;
+  sortOrder: number;
+}
+
+const initialCategoryForm: ProductCategoryFormState = {
+  slug: '',
+  title: '',
+  description: '',
+  series: '',
+  brand: '',
+  featuresRaw: '',
+  seoKeywords: '',
+  urlPath: '',
+  isActive: true,
+  sortOrder: 0,
 };
 
 export default function ProductManagement({ initialProducts }: { initialProducts?: Product[] }) {
@@ -130,6 +153,8 @@ export default function ProductManagement({ initialProducts }: { initialProducts
   const API_BASE = PUBLIC_API_URL;
   const cdnBase = PUBLIC_IMAGE_CDN_URL?.trim();
   const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<ProductCategoryRecord[]>([]);
+  const [categoriesLoading, setCategoriesLoading] = useState(true);
   const [loading, setLoading] = useState(true);
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -142,6 +167,13 @@ export default function ProductManagement({ initialProducts }: { initialProducts
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [deletingProductIds, setDeletingProductIds] = useState<Record<string, boolean>>({});
   const [specOrder, setSpecOrder] = useState<string[]>([]);
+  const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
+  const [categoryDialogMode, setCategoryDialogMode] = useState<'create' | 'edit'>('create');
+  const [categoryEditingSlug, setCategoryEditingSlug] = useState<string | null>(null);
+  const [categoryForm, setCategoryForm] = useState<ProductCategoryFormState>(initialCategoryForm);
+  const [categoryFormErrors, setCategoryFormErrors] = useState<Record<string, string>>({});
+  const [isCategorySubmitting, setIsCategorySubmitting] = useState(false);
+  const [deletingCategorySlug, setDeletingCategorySlug] = useState<string | null>(null);
 
   const fallbackAssetBase = useMemo(
     () => (typeof window !== 'undefined' ? window.location.origin : undefined),
@@ -155,7 +187,8 @@ export default function ProductManagement({ initialProducts }: { initialProducts
     () => (formData.variants?.length ?? 0) > 0,
     [formData.variants]
   );
-  const isSubmitDisabled = isSubmitting || !hasAtLeastOneImage || !hasAtLeastOneVariant;
+  const isSubmitDisabled =
+    isSubmitting || !hasAtLeastOneImage || !hasAtLeastOneVariant || categories.length === 0;
   const specificationEntries = useMemo(() => {
     const specs = formData.specifications || {};
     if (specOrder.length > 0) {
@@ -165,6 +198,17 @@ export default function ProductManagement({ initialProducts }: { initialProducts
     }
     return Object.entries(specs) as Array<[string, string]>;
   }, [formData.specifications, specOrder]);
+  const categoryLabelMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    categories.forEach((category) => {
+      map[category.slug] = category.title;
+    });
+    return map;
+  }, [categories]);
+
+  const sortedCategories = useMemo(() => {
+    return [...categories].sort(compareCategories);
+  }, [categories]);
 
   const columnHelper = createColumnHelper<Product>();
 
@@ -184,7 +228,11 @@ export default function ProductManagement({ initialProducts }: { initialProducts
     }),
     columnHelper.accessor('category', {
       header: '分類',
-      cell: (info) => <Badge variant="outline">{categoryLabels[info.getValue()]}</Badge>,
+      cell: (info) => {
+        const slug = info.getValue();
+        const label = categoryLabelMap[slug] || slug;
+        return <Badge variant="outline">{label}</Badge>;
+      },
       filterFn: 'equals',
     }),
     columnHelper.accessor('variants', {
@@ -269,6 +317,33 @@ export default function ProductManagement({ initialProducts }: { initialProducts
     getSortedRowModel: getSortedRowModel(),
   });
 
+  const loadCategories = async () => {
+    try {
+      setCategoriesLoading(true);
+      const response = await fetch(`${API_BASE}/api/admin/products/categories`, {
+        credentials: 'include',
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        const rawCategories = Array.isArray(result.data) ? result.data : [];
+        const normalized = rawCategories
+          .map((category: ProductCategoryDTO) => normalizeCategory(category))
+          .sort(compareCategories);
+        setCategories(normalized);
+      } else {
+        const err = await safeParseJSON(response);
+        throw new Error(err?.error || err?.message || 'Failed to load categories');
+      }
+    } catch (error) {
+      console.error('Failed to load categories:', error);
+      toast.error('載入產品分類失敗');
+      setCategories([]);
+    } finally {
+      setCategoriesLoading(false);
+    }
+  };
+
   // Initialize with server data if provided; otherwise fetch
   useEffect(() => {
     if (Array.isArray(initialProducts) && initialProducts.length > 0) {
@@ -277,13 +352,24 @@ export default function ProductManagement({ initialProducts }: { initialProducts
       );
       setProducts(sanitized);
       setLoading(false);
+      loadCategories();
       return;
     }
 
     // No initial data or server-side fetch failed; hydrate from API instead
     loadProducts();
+    loadCategories();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    const categoryColumn = table.getColumn('category');
+    if (!categoryColumn) return;
+    const currentFilter = categoryColumn.getFilterValue() as string | undefined;
+    if (currentFilter && !categories.some((category) => category.slug === currentFilter)) {
+      categoryColumn.setFilterValue('');
+    }
+  }, [categories, table]);
 
   const loadProducts = async () => {
     try {
@@ -312,9 +398,14 @@ export default function ProductManagement({ initialProducts }: { initialProducts
   };
 
   const handleCreate = () => {
+    if (categories.length === 0) {
+      toast.error('請先建立至少一個產品分類');
+      return;
+    }
+    const defaultCategory = categories[0]?.slug ?? '';
     setSelectedProduct(null);
     setFormData({
-      category: 'simmons-black',
+      category: defaultCategory,
       images: [],
       variants: [],
       features: [],
@@ -371,6 +462,243 @@ export default function ProductManagement({ initialProducts }: { initialProducts
     }
   };
 
+  const resetCategoryForm = () => {
+    setCategoryForm(initialCategoryForm);
+    setCategoryFormErrors({});
+  };
+
+  const openCreateCategoryDialog = () => {
+    const nextSort = categories.reduce(
+      (max, category) => Math.max(max, category.sortOrder ?? 0),
+      0
+    );
+    setCategoryDialogMode('create');
+    setCategoryEditingSlug(null);
+    setCategoryForm({
+      ...initialCategoryForm,
+      sortOrder: nextSort + 1,
+    });
+    setCategoryFormErrors({});
+    setCategoryDialogOpen(true);
+  };
+
+  const openEditCategoryDialog = (category: ProductCategoryRecord) => {
+    setCategoryDialogMode('edit');
+    setCategoryEditingSlug(category.slug);
+    setCategoryForm({
+      slug: category.slug,
+      title: category.title,
+      description: category.description,
+      series: category.series,
+      brand: category.brand,
+      featuresRaw: category.features.join('\n'),
+      seoKeywords: category.seoKeywords ?? '',
+      urlPath: category.urlPath ?? '',
+      isActive: category.isActive,
+      sortOrder: category.sortOrder ?? 0,
+    });
+    setCategoryFormErrors({});
+    setCategoryDialogOpen(true);
+  };
+
+  const closeCategoryDialog = () => {
+    setCategoryDialogOpen(false);
+    setCategoryDialogMode('create');
+    setCategoryEditingSlug(null);
+    resetCategoryForm();
+    setIsCategorySubmitting(false);
+  };
+
+  const handleCategoryFieldChange = <T extends keyof ProductCategoryFormState>(
+    field: T,
+    value: ProductCategoryFormState[T]
+  ) => {
+    setCategoryForm((prev) => ({ ...prev, [field]: value }));
+    setCategoryFormErrors((prev) => {
+      if (!prev[field]) return prev;
+      const next = { ...prev };
+      delete next[field];
+      return next;
+    });
+  };
+
+  const validateCategoryForm = (editingSlug: string | null) => {
+    const errors: Record<string, string> = {};
+    const slug = categoryForm.slug.trim();
+    const title = categoryForm.title.trim();
+    const description = categoryForm.description.trim();
+    const series = categoryForm.series.trim();
+    const brand = categoryForm.brand.trim();
+    const urlPath = categoryForm.urlPath.trim();
+
+    if (!slug) {
+      errors.slug = '請輸入分類 slug';
+    } else if (!slugRegex.test(slug)) {
+      errors.slug = 'slug 僅能包含小寫字母、數字與連字符';
+    } else if (
+      categories.some((category) => category.slug === slug && category.slug !== editingSlug)
+    ) {
+      errors.slug = '此 slug 已存在';
+    }
+
+    if (!title) {
+      errors.title = '請輸入分類標題';
+    }
+    if (!description) {
+      errors.description = '請輸入分類描述';
+    }
+    if (!series) {
+      errors.series = '請輸入系列名稱';
+    }
+    if (!brand) {
+      errors.brand = '請輸入品牌名稱';
+    }
+    if (urlPath && !urlPath.startsWith('/')) {
+      errors.urlPath = 'URL Path 需以 / 開頭';
+    }
+
+    return errors;
+  };
+
+  const handleCategorySubmit = async () => {
+    const errors = validateCategoryForm(categoryDialogMode === 'edit' ? categoryEditingSlug : null);
+    if (Object.keys(errors).length > 0) {
+      setCategoryFormErrors(errors);
+      toast.error('請確認分類欄位填寫正確');
+      return;
+    }
+
+    try {
+      setIsCategorySubmitting(true);
+      const slug = categoryForm.slug.trim();
+      const requestBody = {
+        slug,
+        title: categoryForm.title.trim(),
+        description: categoryForm.description.trim(),
+        series: categoryForm.series.trim(),
+        brand: categoryForm.brand.trim(),
+        features: parseFeatureList(categoryForm.featuresRaw),
+        seoKeywords: categoryForm.seoKeywords.trim() || undefined,
+        urlPath: categoryForm.urlPath.trim(),
+        isActive: categoryForm.isActive,
+        sortOrder: Number.isFinite(categoryForm.sortOrder)
+          ? categoryForm.sortOrder
+          : Number(categoryForm.sortOrder ?? 0) || 0,
+      };
+
+      if (!requestBody.urlPath) {
+        requestBody.urlPath = `/${slug}`;
+      } else if (!requestBody.urlPath.startsWith('/')) {
+        requestBody.urlPath = `/${requestBody.urlPath}`;
+      }
+
+      if (categoryDialogMode === 'edit' && categoryEditingSlug) {
+        const response = await fetch(
+          `${API_BASE}/api/admin/products/categories/${categoryEditingSlug}`,
+          {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify(requestBody),
+          }
+        );
+
+        if (response.ok) {
+          const result = await response.json();
+          const updatedCategory = normalizeCategory(result.data as ProductCategoryDTO);
+          const previousSlug = categoryEditingSlug;
+          setCategories((prev) => normalizeCategoryInsert(prev, updatedCategory));
+
+          if (previousSlug !== updatedCategory.slug) {
+            setProducts((prev) =>
+              prev.map((product) =>
+                product.category === previousSlug
+                  ? { ...product, category: updatedCategory.slug }
+                  : product
+              )
+            );
+            const column = table.getColumn('category');
+            if ((column?.getFilterValue() as string | undefined) === previousSlug) {
+              column?.setFilterValue(updatedCategory.slug);
+            }
+            setFormData((prev) =>
+              prev.category === previousSlug ? { ...prev, category: updatedCategory.slug } : prev
+            );
+          }
+
+          toast.success('分類更新成功');
+          closeCategoryDialog();
+        } else {
+          const err = await safeParseJSON(response);
+          throw new Error(err?.error || err?.message || 'Failed to update category');
+        }
+      } else {
+        const response = await fetch(`${API_BASE}/api/admin/products/categories`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify(requestBody),
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          const createdCategory = normalizeCategory(result.data as ProductCategoryDTO);
+          setCategories((prev) => normalizeCategoryInsert(prev, createdCategory));
+          toast.success('分類建立成功');
+          closeCategoryDialog();
+
+          // Update product form if no category selected yet
+          setFormData((prev) => {
+            if (prev.category) {
+              return prev;
+            }
+            return { ...prev, category: createdCategory.slug };
+          });
+        } else {
+          const err = await safeParseJSON(response);
+          throw new Error(err?.error || err?.message || 'Failed to create category');
+        }
+      }
+    } catch (error) {
+      console.error('Create category failed:', error);
+      toast.error(error instanceof Error ? error.message : '建立分類失敗');
+    } finally {
+      setIsCategorySubmitting(false);
+    }
+  };
+
+  const handleDeleteCategory = async (slug: string) => {
+    try {
+      setDeletingCategorySlug(slug);
+      const response = await fetch(`${API_BASE}/api/admin/products/categories/${slug}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+
+      if (response.ok) {
+        toast.success('分類刪除成功');
+        setCategories((prev) => prev.filter((category) => category.slug !== slug));
+        if ((table.getColumn('category')?.getFilterValue() as string) === slug) {
+          table.getColumn('category')?.setFilterValue('');
+        }
+        setFormData((prev) => {
+          if (prev.category === slug) {
+            return { ...prev, category: '' };
+          }
+          return prev;
+        });
+      } else {
+        const err = await safeParseJSON(response);
+        throw new Error(err?.error || err?.message || 'Failed to delete category');
+      }
+    } catch (error) {
+      console.error('Delete category failed:', error);
+      toast.error(error instanceof Error ? error.message : '刪除分類失敗');
+    } finally {
+      setDeletingCategorySlug(null);
+    }
+  };
+
   const handleSubmit = async (isEdit: boolean) => {
     try {
       setIsSubmitting(true);
@@ -403,6 +731,12 @@ export default function ProductManagement({ initialProducts }: { initialProducts
       }
 
       const validatedData = validationResult.data;
+
+      if (!categories.some((category) => category.slug === validatedData.category)) {
+        setFormErrors((prev) => ({ ...prev, category: '請選擇有效的產品分類' }));
+        toast.error('請先建立或選擇有效的產品分類');
+        return;
+      }
 
       const url = isEdit
         ? `${API_BASE}/api/admin/products/${selectedProduct?.id}`
@@ -619,6 +953,283 @@ export default function ProductManagement({ initialProducts }: { initialProducts
         </Button>
       </div>
 
+      {/* Category Management */}
+      <Card>
+        <CardHeader className="gap-4 md:flex md:flex-row md:items-center md:justify-between">
+          <div className="space-y-1">
+            <CardTitle>產品分類</CardTitle>
+            <CardDescription>建立或移除產品分類，供前台與商品維護使用。</CardDescription>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button onClick={openCreateCategoryDialog}>
+              <Plus className="h-4 w-4 mr-2" />
+              新增分類
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {categoriesLoading ? (
+            <div className="space-y-3">
+              <Skeleton className="h-20 w-full" />
+              <Skeleton className="h-20 w-full" />
+            </div>
+          ) : categories.length === 0 ? (
+            <div className="rounded-md border border-dashed p-6 text-center text-sm text-muted-foreground">
+              尚未建立任何產品分類，請先新增分類以供產品使用。
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {sortedCategories.map((category) => {
+                const productCount = category.stats?.productCount ?? 0;
+                const inUse = productCount > 0;
+                return (
+                  <div
+                    key={category.id}
+                    className="rounded-lg border p-4 flex flex-col gap-4 md:flex-row md:items-start md:justify-between"
+                  >
+                    <div className="space-y-3">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h3 className="text-lg font-semibold text-foreground">{category.title}</h3>
+                        <Badge variant="secondary">{category.slug}</Badge>
+                        {!category.isActive && (
+                          <Badge variant="outline" className="text-amber-600 border-amber-300">
+                            已停用
+                          </Badge>
+                        )}
+                      </div>
+                      <p className="text-sm text-muted-foreground max-w-2xl">
+                        {category.description}
+                      </p>
+                      <div className="flex flex-wrap gap-2 text-sm">
+                        <Badge variant="outline">系列：{category.series}</Badge>
+                        <Badge variant="outline">品牌：{category.brand}</Badge>
+                        <Badge variant="outline">URL：{category.urlPath}</Badge>
+                      </div>
+                      {category.features.length > 0 && (
+                        <div className="flex flex-wrap gap-2">
+                          {category.features.map((feature) => (
+                            <Badge
+                              key={feature}
+                              variant="secondary"
+                              className="bg-gray-100 text-gray-700"
+                            >
+                              {feature}
+                            </Badge>
+                          ))}
+                        </div>
+                      )}
+                      <div className="text-xs text-muted-foreground">
+                        產品數：{productCount}（有庫存 {category.stats?.inStockCount ?? 0}）
+                      </div>
+                    </div>
+                    <div className="flex flex-col gap-2 md:items-end">
+                      <Button
+                        variant="ghost"
+                        className="self-start"
+                        onClick={() => openEditCategoryDialog(category)}
+                      >
+                        <Edit className="h-4 w-4 mr-2" />
+                        編輯
+                      </Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            className="self-start"
+                            disabled={inUse || deletingCategorySlug === category.slug}
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            刪除
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>確認刪除分類</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              {inUse
+                                ? '此分類仍有產品使用，請先調整產品後再刪除。'
+                                : `確定要刪除分類「${category.title}」嗎？此操作無法復原。`}
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>取消</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => handleDeleteCategory(category.slug)}
+                              disabled={inUse || deletingCategorySlug === category.slug}
+                            >
+                              刪除
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Dialog
+        open={categoryDialogOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            closeCategoryDialog();
+          }
+        }}
+      >
+        <DialogContent className="max-w-xl">
+          <DialogHeader>
+            <DialogTitle>
+              {categoryDialogMode === 'edit' ? '編輯產品分類' : '新增產品分類'}
+            </DialogTitle>
+            <DialogDescription>
+              {categoryDialogMode === 'edit'
+                ? '更新分類資訊，相關產品將同步套用新的屬性。'
+                : '設定分類 slug 與顯示資訊，供產品與前台使用。'}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="category-slug">分類 Slug *</Label>
+                <Input
+                  id="category-slug"
+                  value={categoryForm.slug}
+                  onChange={(e) => handleCategoryFieldChange('slug', e.target.value)}
+                  className={categoryFormErrors.slug ? 'border-red-500' : ''}
+                  placeholder="例如 simmons-black"
+                />
+                {categoryFormErrors.slug && (
+                  <p className="text-sm text-red-500">{categoryFormErrors.slug}</p>
+                )}
+              </div>
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="category-sort">排序</Label>
+                <Input
+                  id="category-sort"
+                  type="number"
+                  value={categoryForm.sortOrder.toString()}
+                  onChange={(e) =>
+                    handleCategoryFieldChange('sortOrder', Number(e.target.value || 0))
+                  }
+                  min={0}
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="category-title">顯示名稱 *</Label>
+                <Input
+                  id="category-title"
+                  value={categoryForm.title}
+                  onChange={(e) => handleCategoryFieldChange('title', e.target.value)}
+                  className={categoryFormErrors.title ? 'border-red-500' : ''}
+                />
+                {categoryFormErrors.title && (
+                  <p className="text-sm text-red-500">{categoryFormErrors.title}</p>
+                )}
+              </div>
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="category-series">系列名稱 *</Label>
+                <Input
+                  id="category-series"
+                  value={categoryForm.series}
+                  onChange={(e) => handleCategoryFieldChange('series', e.target.value)}
+                  className={categoryFormErrors.series ? 'border-red-500' : ''}
+                />
+                {categoryFormErrors.series && (
+                  <p className="text-sm text-red-500">{categoryFormErrors.series}</p>
+                )}
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="category-brand">品牌 *</Label>
+                <Input
+                  id="category-brand"
+                  value={categoryForm.brand}
+                  onChange={(e) => handleCategoryFieldChange('brand', e.target.value)}
+                  className={categoryFormErrors.brand ? 'border-red-500' : ''}
+                />
+                {categoryFormErrors.brand && (
+                  <p className="text-sm text-red-500">{categoryFormErrors.brand}</p>
+                )}
+              </div>
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="category-url">URL Path</Label>
+                <Input
+                  id="category-url"
+                  value={categoryForm.urlPath}
+                  onChange={(e) => handleCategoryFieldChange('urlPath', e.target.value)}
+                  className={categoryFormErrors.urlPath ? 'border-red-500' : ''}
+                  placeholder="預設為 /slug"
+                />
+                {categoryFormErrors.urlPath && (
+                  <p className="text-sm text-red-500">{categoryFormErrors.urlPath}</p>
+                )}
+              </div>
+            </div>
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="category-description">分類描述 *</Label>
+              <Textarea
+                id="category-description"
+                value={categoryForm.description}
+                onChange={(e) => handleCategoryFieldChange('description', e.target.value)}
+                rows={3}
+                className={categoryFormErrors.description ? 'border-red-500' : ''}
+              />
+              {categoryFormErrors.description && (
+                <p className="text-sm text-red-500">{categoryFormErrors.description}</p>
+              )}
+            </div>
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="category-features">特色（每行或以逗號分隔）</Label>
+              <Textarea
+                id="category-features"
+                value={categoryForm.featuresRaw}
+                onChange={(e) => handleCategoryFieldChange('featuresRaw', e.target.value)}
+                rows={3}
+              />
+            </div>
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="category-seo">SEO 關鍵字</Label>
+              <Input
+                id="category-seo"
+                value={categoryForm.seoKeywords}
+                onChange={(e) => handleCategoryFieldChange('seoKeywords', e.target.value)}
+                placeholder="以逗號分隔"
+              />
+            </div>
+            <div className="flex items-center justify-between rounded-md border px-3 py-2">
+              <div>
+                <Label className="font-medium">啟用分類</Label>
+                <p className="text-sm text-muted-foreground">停用後前台不會顯示此分類。</p>
+              </div>
+              <Switch
+                checked={categoryForm.isActive}
+                onCheckedChange={(checked) => handleCategoryFieldChange('isActive', checked)}
+              />
+            </div>
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button variant="ghost" onClick={closeCategoryDialog}>
+              取消
+            </Button>
+            <Button onClick={handleCategorySubmit} disabled={isCategorySubmitting}>
+              {isCategorySubmitting
+                ? categoryDialogMode === 'edit'
+                  ? '更新中…'
+                  : '建立中…'
+                : categoryDialogMode === 'edit'
+                  ? '更新分類'
+                  : '建立分類'}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* Filters */}
       <Card>
         <CardHeader>
@@ -646,14 +1257,19 @@ export default function ProductManagement({ initialProducts }: { initialProducts
                 table.getColumn('category')?.setFilterValue(value === 'all' ? '' : value)
               }
             >
-              <SelectTrigger className="w-48">
+              <SelectTrigger
+                className="w-48"
+                disabled={categoriesLoading || sortedCategories.length === 0}
+              >
                 <SelectValue placeholder="篩選分類" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">全部分類</SelectItem>
-                <SelectItem value="simmons-black">席夢思黑牌</SelectItem>
-                <SelectItem value="accessories">配件</SelectItem>
-                <SelectItem value="us-imports">美國進口</SelectItem>
+                {sortedCategories.map((category) => (
+                  <SelectItem key={category.slug} value={category.slug}>
+                    {categoryLabelMap[category.slug] || category.slug}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -801,20 +1417,33 @@ export default function ProductManagement({ initialProducts }: { initialProducts
                 <Select
                   value={formData.category || ''}
                   onValueChange={(value) =>
-                    setFormData((prev) => ({ ...prev, category: value as any }))
+                    setFormData((prev) => ({
+                      ...prev,
+                      category: value as ProductFormData['category'],
+                    }))
                   }
                 >
-                  <SelectTrigger className={formErrors.category ? 'border-red-500' : ''}>
-                    <SelectValue placeholder="選擇分類" />
+                  <SelectTrigger
+                    className={formErrors.category ? 'border-red-500' : ''}
+                    disabled={sortedCategories.length === 0}
+                  >
+                    <SelectValue
+                      placeholder={sortedCategories.length === 0 ? '請先建立分類' : '選擇分類'}
+                    />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="simmons-black">席夢思黑牌</SelectItem>
-                    <SelectItem value="accessories">配件</SelectItem>
-                    <SelectItem value="us-imports">美國進口</SelectItem>
+                    {sortedCategories.map((category) => (
+                      <SelectItem key={category.slug} value={category.slug}>
+                        {categoryLabelMap[category.slug] || category.slug}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
                 {formErrors.category && (
                   <p className="text-sm text-red-500 mt-1">{formErrors.category}</p>
+                )}
+                {!formErrors.category && sortedCategories.length === 0 && (
+                  <p className="text-sm text-amber-600 mt-1">請先建立產品分類後再新增產品。</p>
                 )}
               </div>
             </div>
@@ -1153,7 +1782,7 @@ export function normalizeFormData(
     name: fd.name?.trim() ?? '',
     slug: fd.slug?.trim() ?? '',
     description: fd.description?.trim() ?? '',
-    category: (fd.category as ProductFormData['category']) ?? 'simmons-black',
+    category: typeof fd.category === 'string' ? fd.category.trim() : '',
     images,
     variants,
     features,
@@ -1221,7 +1850,7 @@ function manualValidateProduct(data: ProductFormData): ValidationResult {
     errors.description = '產品描述至少需要 10 個字元';
   }
 
-  if (!['simmons-black', 'accessories', 'us-imports'].includes(data.category)) {
+  if (!data.category || !slugRegex.test(data.category)) {
     errors.category = '請選擇產品分類';
   }
 
@@ -1279,4 +1908,112 @@ export function sanitizeProduct(
     features: Array.isArray(safeProduct.features) ? safeProduct.features : [],
     specifications: safeProduct.specifications || {},
   };
+}
+
+export function parseFeatureList(value: unknown): string[] {
+  if (Array.isArray(value)) {
+    return value
+      .map((item) => (typeof item === 'string' ? item.trim() : String(item ?? '').trim()))
+      .filter((item) => item.length > 0);
+  }
+
+  if (typeof value === 'string') {
+    try {
+      const parsed = JSON.parse(value);
+      if (Array.isArray(parsed)) {
+        return parsed
+          .map((item) => (typeof item === 'string' ? item.trim() : String(item ?? '').trim()))
+          .filter((item) => item.length > 0);
+      }
+    } catch {
+      // treat as delimited string
+    }
+
+    return value
+      .split(/\r?\n|,/)
+      .map((item) => item.trim())
+      .filter((item) => item.length > 0);
+  }
+
+  return [];
+}
+
+function toIsoString(value: unknown): string {
+  if (value instanceof Date) {
+    return value.toISOString();
+  }
+  if (typeof value === 'number') {
+    return new Date(value).toISOString();
+  }
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    if (trimmed.length === 0) {
+      return new Date(0).toISOString();
+    }
+    const numeric = Number(trimmed);
+    if (!Number.isNaN(numeric)) {
+      return new Date(numeric).toISOString();
+    }
+    const parsed = Date.parse(trimmed);
+    if (!Number.isNaN(parsed)) {
+      return new Date(parsed).toISOString();
+    }
+    return trimmed;
+  }
+
+  return new Date().toISOString();
+}
+
+export function normalizeCategory(category: ProductCategoryDTO): ProductCategoryRecord {
+  const features = parseFeatureList((category as any).features);
+  const seoKeywords =
+    typeof (category as any).seoKeywords === 'string'
+      ? (category as any).seoKeywords.trim()
+      : undefined;
+  const stats = category.stats
+    ? {
+        productCount: Number(category.stats.productCount ?? 0),
+        inStockCount: Number(category.stats.inStockCount ?? 0),
+      }
+    : undefined;
+
+  const urlPathRaw =
+    typeof (category as any).urlPath === 'string' ? (category as any).urlPath.trim() : '';
+  const ensuredUrlPath = urlPathRaw.startsWith('/')
+    ? urlPathRaw
+    : urlPathRaw.length > 0
+      ? `/${urlPathRaw}`
+      : `/${category.slug}`;
+
+  return {
+    ...category,
+    features,
+    seoKeywords,
+    urlPath: ensuredUrlPath,
+    isActive:
+      typeof (category as any).isActive === 'boolean'
+        ? (category as any).isActive
+        : Boolean((category as any).isActive),
+    sortOrder: Number((category as any).sortOrder ?? 0),
+    createdAt: toIsoString((category as any).createdAt),
+    updatedAt: toIsoString((category as any).updatedAt),
+    stats,
+  };
+}
+
+export function compareCategories(a: ProductCategoryRecord, b: ProductCategoryRecord) {
+  const orderDiff = (a.sortOrder ?? 0) - (b.sortOrder ?? 0);
+  if (orderDiff !== 0) {
+    return orderDiff;
+  }
+  return (a.title || a.slug).localeCompare(b.title || b.slug, 'zh-TW');
+}
+
+export function normalizeCategoryInsert(
+  existing: ProductCategoryRecord[],
+  category: ProductCategoryRecord
+) {
+  const next = existing.filter((item) => item.slug !== category.slug);
+  next.push(category);
+  return next.sort(compareCategories);
 }

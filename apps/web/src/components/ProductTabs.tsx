@@ -50,14 +50,14 @@ export default function ProductTabs({
   return (
     <div className="mt-8">
       <Tabs defaultValue="features" className="max-w-5xl mx-auto">
-        <TabsList className="grid w-full grid-cols-2 h-12">
-          <TabsTrigger value="features" className="text-sm font-medium">
+        <TabsList className="grid w-full grid-cols-2 h-14 md:h-16">
+          <TabsTrigger value="features" className="text-lg md:text-2xl font-medium">
             商品詳情
           </TabsTrigger>
           <TabsTrigger
             value="specifications"
             disabled={!hasSpecifications}
-            className="text-sm font-medium"
+            className="text-lg md:text-2xl font-medium"
           >
             產品規格
           </TabsTrigger>

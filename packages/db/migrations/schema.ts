@@ -212,6 +212,26 @@ export const products = sqliteTable(
   (table) => [uniqueIndex('products_slug_unique').on(table.slug)]
 );
 
+export const productCategories = sqliteTable(
+  'product_categories',
+  {
+    id: text().primaryKey().notNull(),
+    slug: text().notNull(),
+    title: text().notNull(),
+    description: text().notNull(),
+    series: text().notNull(),
+    brand: text().notNull(),
+    features: text().default('[]').notNull(),
+    seoKeywords: text('seo_keywords'),
+    urlPath: text('url_path').notNull(),
+    isActive: integer('is_active').default(true),
+    sortOrder: integer('sort_order').default(0),
+    createdAt: integer('created_at'),
+    updatedAt: integer('updated_at'),
+  },
+  (table) => [uniqueIndex('product_categories_slug_unique').on(table.slug)]
+);
+
 export const reviews = sqliteTable('reviews', {
   id: text().primaryKey().notNull(),
   customerName: text('customer_name').notNull(),

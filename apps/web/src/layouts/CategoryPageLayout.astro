@@ -9,13 +9,18 @@ export interface Props {
 
 const { categoryConfig } = Astro.props;
 
+const categorySlug = categoryConfig.slug || categoryConfig.category;
+const categoryUrlPath = categoryConfig.urlPath || `/${categorySlug}`;
+const features = Array.isArray(categoryConfig.features) ? categoryConfig.features : [];
+const [primaryFeature = '品質保證', secondaryFeature = '優質價格，物超所值', tertiaryFeature = '貼心服務'] = features;
+
 // API configuration
 const API_BASE = import.meta.env.PUBLIC_API_BASE_URL || 'http://localhost:8787';
 
 // SEO and page metadata
 const pageTitle = categoryConfig.title;
 const pageDescription = categoryConfig.description;
-const canonicalUrl = new URL(categoryConfig.urlPath, Astro.site || 'https://blackliving.com.tw');
+const canonicalUrl = new URL(categoryUrlPath, Astro.site || 'https://blackliving.com.tw');
 
 // Fetch products from API
 let products: any[] = [];
@@ -27,7 +32,7 @@ try {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
 
-  const response = await fetch(`${API_BASE}/api/products?category=${categoryConfig.category}`, {
+  const response = await fetch(`${API_BASE}/api/products?category=${categorySlug}`, {
     signal: controller.signal,
     headers: {
       Accept: 'application/json',
@@ -77,7 +82,7 @@ const transformedProducts = Array.isArray(products)
       features: product.features || [],
       priceFrom: product.variants?.[0]?.price || null,
       originalPrice: product.variants?.[0]?.originalPrice || null,
-      href: `${categoryConfig.urlPath}/${product.slug}`,
+      href: `${categoryUrlPath}/${product.slug}`,
       inStock: product.inStock ?? true,
       featured: product.featured ?? false,
     }))
@@ -183,7 +188,7 @@ const structuredData = {
       <p class='text-xl text-gray-600 mb-6'>{categoryConfig.description.split('。')[0]}。</p>
       <div class='flex flex-wrap justify-center gap-4 text-sm'>
         {
-          categoryConfig.features.map(feature => (
+          features.map(feature => (
             <span class='bg-black text-white px-3 py-1 rounded-full'>{feature}</span>
           ))
         }
@@ -306,7 +311,7 @@ const structuredData = {
               </svg>
             </div>
             <h3 class='font-semibold text-lg mb-2'>品質保證</h3>
-            <p class='text-gray-600'>美國原廠授權經銷商，{categoryConfig.features[0]}</p>
+            <p class='text-gray-600'>美國原廠授權經銷商，{primaryFeature}</p>
           </div>
           <div class='text-center'>
             <div
@@ -323,7 +328,7 @@ const structuredData = {
               </svg>
             </div>
             <h3 class='font-semibold text-lg mb-2'>最優價格</h3>
-            <p class='text-gray-600'>{categoryConfig.features[1] || '優質價格，物超所值'}</p>
+            <p class='text-gray-600'>{secondaryFeature || '優質價格，物超所值'}</p>
           </div>
           <div class='text-center'>
             <div
@@ -340,7 +345,7 @@ const structuredData = {
               </svg>
             </div>
             <h3 class='font-semibold text-lg mb-2'>貼心服務</h3>
-            <p class='text-gray-600'>{categoryConfig.features[2] || '專業服務，用心守護'}</p>
+            <p class='text-gray-600'>{tertiaryFeature || '專業服務，用心守護'}</p>
           </div>
         </div>
       </div>

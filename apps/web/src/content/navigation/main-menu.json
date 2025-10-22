@@ -13,7 +13,25 @@
     {
       "label": "席夢思小知識",
       "href": "/simmons-knowledge",
-      "order": 3
+      "order": 3,
+      "subItems": [
+        {
+          "label": "Beautyrest Black Label 床墊保固",
+          "href": "/simmons-knowledge/beautyrest-black-label-mattress-warranty"
+        },
+        {
+          "label": "席夢思床墊保養知識",
+          "href": "/simmons-knowledge/mattress-care-tips"
+        },
+        {
+          "label": "選擇適合的床墊指南",
+          "href": "/simmons-knowledge/how-to-choose-mattress"
+        },
+        {
+          "label": "席夢思科技介紹",
+          "href": "/simmons-knowledge/simmons-technology"
+        }
+      ]
     },
     {
       "label": "HEY BRO智能床墊",
@@ -27,8 +45,18 @@
     },
     {
       "label": "好好生活誌",
-      "href": "/posts",
-      "order": 6
+      "href": "/blog-post",
+      "order": 6,
+      "subItems": [
+        {
+          "label": "部落格文章",
+          "href": "/blog-post"
+        },
+        {
+          "label": "顧客評價",
+          "href": "/customer-reviews"
+        }
+      ]
     },
     {
       "label": "預約試躺",

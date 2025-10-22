@@ -7,7 +7,7 @@ export interface BlogPost {
   description?: string;
   featuredImage?: string;
   category: string;
-  readingTime: string;
+  readingTime?: string;
   authorName: string;
   publishedAt: string;
 }
@@ -86,7 +86,6 @@ export function BlogPostCard({ post, variant = 'vertical', className, href }: Bl
           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary text-primary-foreground opacity-80">
             {post.category}
           </span>
-          <span className="ml-2 text-sm text-gray-500">{post.readingTime} 分鐘閱讀</span>
         </div>
         <h2 className="text-xl font-semibold text-gray-900 mb-3">
           <a

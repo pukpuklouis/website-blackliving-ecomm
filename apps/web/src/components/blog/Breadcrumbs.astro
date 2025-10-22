@@ -23,14 +23,35 @@ function normalizeCategory(input: any): NormalizedCategory {
     if (['客戶評價', 'customer-reviews', 'Customer Reviews'].includes(raw)) {
       return { slug: 'customer-reviews', name: '顧客好評' };
     }
+    if (['simmons-knowledge', '席夢思小知識', 'Simmons Knowledge'].includes(raw)) {
+      return { slug: 'simmons-knowledge', name: '席夢思小知識' };
+    }
     // Default to blog posts
-    return { slug: 'blog-post', name: raw || '好文分享' };
+    if (['blog-post', '好文分享', 'Blog'].includes(raw)) {
+      return { slug: 'blog-post', name: '好文分享' };
+    }
+    if (raw.startsWith('cat_')) {
+      const slug =
+        raw === 'cat_002'
+          ? 'customer-reviews'
+          : raw === 'cat_001'
+            ? 'blog-post'
+            : raw.slice(4);
+      const name =
+        slug === 'customer-reviews'
+          ? '顧客好評'
+          : slug === 'blog-post'
+            ? '好文分享'
+            : raw;
+      return { slug, name };
+    }
+    return { slug: raw.toLowerCase().replace(/\s+/g, '-'), name: raw || '好文分享' };
   }
   return null;
 }
 
 const normalized = normalizeCategory(category);
-const basePath = normalized?.slug === 'customer-reviews' ? '/customer-reviews' : '/posts';
+const basePath = normalized ? `/${normalized.slug}` : '';
 ---
 
 <nav class="blog-breadcrumb mb-8" aria-label="麵包屑">

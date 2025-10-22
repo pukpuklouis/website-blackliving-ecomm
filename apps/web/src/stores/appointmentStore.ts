@@ -12,7 +12,7 @@ export interface Store {
 export interface Product {
   id: string;
   name: string;
-  category: 'simmons-black' | 'accessories' | 'us-imports';
+  category: string;
   description: string;
   image?: string;
 }

@@ -1,5 +1,9 @@
 import { z } from 'zod';
 
+const slugRegex = /^[a-z0-9-]+$/;
+
+const categorySlugSchema = z.string().regex(/^[a-z0-9-]+$/);
+
 // Product Types
 export const ProductVariantSchema = z.object({
   size: z.string(),
@@ -13,7 +17,7 @@ export const ProductSchema = z.object({
   name: z.string(),
   slug: z.string(),
   description: z.string(),
-  category: z.enum(['simmons-black', 'accessories', 'us-imports']),
+  category: categorySlugSchema,
   images: z.array(z.string()),
   variants: z.array(ProductVariantSchema),
   features: z.array(z.string()),
@@ -28,6 +32,30 @@ export const ProductSchema = z.object({
 
 export type Product = z.infer<typeof ProductSchema>;
 export type ProductVariant = z.infer<typeof ProductVariantSchema>;
+
+export const ProductCategorySchema = z.object({
+  id: z.string(),
+  slug: z.string().regex(slugRegex),
+  title: z.string(),
+  description: z.string(),
+  series: z.string(),
+  brand: z.string(),
+  features: z.array(z.string()),
+  seoKeywords: z.string().optional().nullable(),
+  urlPath: z.string(),
+  isActive: z.boolean(),
+  sortOrder: z.number(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+  stats: z
+    .object({
+      productCount: z.number(),
+      inStockCount: z.number(),
+    })
+    .optional(),
+});
+
+export type ProductCategory = z.infer<typeof ProductCategorySchema>;
 
 // Order Types
 export const OrderItemSchema = z.object({

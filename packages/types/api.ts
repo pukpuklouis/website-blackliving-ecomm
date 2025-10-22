@@ -42,7 +42,7 @@ export interface CreateProductRequest {
   name: string;
   slug: string;
   description: string;
-  category: 'simmons-black' | 'accessories' | 'us-imports';
+  category: string;
   images: UploadedFile[];
   variants: ProductVariant[];
   features: string[];
@@ -56,6 +56,29 @@ export interface CreateProductRequest {
 
 export interface UpdateProductRequest extends Partial<CreateProductRequest> {
   id: string;
+}
+
+export interface ProductCategoryInput {
+  slug: string;
+  title: string;
+  description: string;
+  series: string;
+  brand: string;
+  features: string[];
+  seoKeywords?: string;
+  urlPath: string;
+  isActive: boolean;
+  sortOrder: number;
+}
+
+export interface ProductCategory extends ProductCategoryInput {
+  id: string;
+  createdAt: string;
+  updatedAt: string;
+  stats?: {
+    productCount: number;
+    inStockCount: number;
+  };
 }
 
 export interface ProductVariant {

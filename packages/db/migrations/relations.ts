@@ -18,6 +18,7 @@ import {
   customerReviews,
   customerWishlists,
   userSecurity,
+  productCategories,
   postCategories,
   posts,
 } from './schema';
@@ -98,11 +99,15 @@ export const reviewsRelations = relations(reviews, ({ one }) => ({
   }),
 }));
 
-export const productsRelations = relations(products, ({ many }) => ({
+export const productsRelations = relations(products, ({ many, one }) => ({
   reviews: many(reviews),
   customerRecentlyVieweds: many(customerRecentlyViewed),
   customerReviews: many(customerReviews),
   customerWishlists: many(customerWishlists),
+  productCategory: one(productCategories, {
+    fields: [products.category],
+    references: [productCategories.slug],
+  }),
 }));
 
 export const sessionsRelations = relations(sessions, ({ one }) => ({
@@ -193,4 +198,8 @@ export const postsRelations = relations(posts, ({ one }) => ({
 
 export const postCategoriesRelations = relations(postCategories, ({ many }) => ({
   posts: many(posts),
+}));
+
+export const productCategoriesRelations = relations(productCategories, ({ many }) => ({
+  products: many(products),
 }));

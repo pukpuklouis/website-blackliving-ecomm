@@ -1,4 +1,5 @@
 export interface CategoryConfig {
+  slug: string;
   title: string;
   description: string;
   series: string;
@@ -7,4 +8,6 @@ export interface CategoryConfig {
   seoKeywords: string;
   category: string;
   urlPath: string;
+  isActive?: boolean;
+  sortOrder?: number;
 }

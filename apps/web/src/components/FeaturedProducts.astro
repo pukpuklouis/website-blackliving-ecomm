@@ -1,10 +1,11 @@
 ---
 // Reusable featured products component with category filtering
 import ProductCard from './ProductCard.astro';
+import { fetchCategories } from '../utils/productPaths.ts';
 
 export interface Props {
   title: string;
-  category: 'simmons-black' | 'accessories' | 'us-imports';
+  category: string;
   ctaText?: string;
   ctaHref?: string;
   image?: string;
@@ -36,6 +37,11 @@ const mdGridCols = gridColsMap[limit] || 'md:grid-cols-3';
 let products = [];
 let error = null;
 
+const availableCategories = await fetchCategories();
+const categoryLabelMap = new Map(
+  availableCategories.map((config) => [config.slug, config.series || config.title])
+);
+
 try {
   const apiBaseUrl = import.meta.env.PUBLIC_API_BASE_URL || 'http://localhost:8787';
   const apiUrl = `${apiBaseUrl}/api/products?category=${category}&featured=true&limit=${limit}`;
@@ -52,9 +58,7 @@ try {
     products = result.data.products.map((product: any) => ({
       id: product.id,
       name: product.name,
-      series: product.category === 'simmons-black' ? '席夢思黑標' :
-             product.category === 'accessories' ? '周邊配件' :
-             '美國進口',
+      series: categoryLabelMap.get(product.category) || product.category,
       image: product.images?.[0] || '/products/placeholder.jpg',
       features: product.features || [],
       priceFrom: product.variants?.[0]?.price || null,
