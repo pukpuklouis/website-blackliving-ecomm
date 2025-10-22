@@ -33,9 +33,15 @@ function normalizeCategorySlug(raw?: string | null): string {
   if (['blog-post', '好文分享', '部落格文章', 'blog'].includes(input)) {
     return 'blog-post';
   }
+  // Support Simmons Knowledge aliases
+  if (['simmons-knowledge', '席夢思小知識', 'simmons knowledge'].includes(input)) {
+    return 'simmons-knowledge';
+  }
   if (input.startsWith('cat_')) {
     if (input === 'cat_002') return 'customer-reviews';
     if (input === 'cat_001') return 'blog-post';
+    if (input === 'cat_003') return 'simmons-knowledge';
+
     return input.slice(4);
   }
   return input.replace(/\s+/g, '-');
@@ -60,9 +66,11 @@ function resolveCategoryMeta(category: ApiPost['category']): CategoryMeta {
       ? '顧客好評'
       : slug === 'blog-post'
         ? '好文分享'
-        : typeof category === 'string'
-          ? category
-          : '好文分享';
+        : slug === 'simmons-knowledge'
+          ? '席夢思小知識'
+          : typeof category === 'string'
+            ? category
+            : '好文分享';
 
   return {
     id: slug,
@@ -154,7 +162,8 @@ export async function getStaticPaths() {
   ];
 }
 
-export const prerender = true;
+// In dev, allow SSR so new posts render without restart; keep static in prod
+export const prerender = import.meta.env.PROD;
 
 const { post_category: routeCategorySlug, post_slug: routeSlug } = Astro.params;
 const normalizedRouteCategory = normalizeCategorySlug(routeCategorySlug);
@@ -208,8 +217,7 @@ if (!apiPost) {
       title: '客戶分享：使用 Simmons 床墊三個月心得',
       slug: 'customer-review-simmons-3-months',
       description: '真實客戶分享使用 Simmons Black Label 床墊三個月的使用心得',
-      excerpt:
-        '購買 Simmons Black Label Natasha 已經三個月了，想跟大家分享一下使用心得...',
+      excerpt: '購買 Simmons Black Label Natasha 已經三個月了，想跟大家分享一下使用心得...',
       content:
         '# 客戶分享：使用 Simmons 床墊三個月心得\n\n購買 Simmons Black Label Natasha 已經三個月了...',
       authorName: '張小姐',
