@@ -20,30 +20,26 @@ export interface BlogPostCardProps {
 }
 
 export function BlogPostCard({ post, variant = 'vertical', className, href }: BlogPostCardProps) {
-  const baseClasses =
-    'bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300';
+  const baseClasses = 'bg-white transition-shadow duration-300';
 
   if (variant === 'horizontal') {
     return (
-      <article className={cn(baseClasses, 'flex flex-col sm:flex-row', className)}>
+      <article
+        className={cn(baseClasses, 'flex flex-col sm:flex-row max-w-3xl mx-auto', className)}
+      >
         {post.featuredImage && (
-          <div className="sm:w-80 flex-shrink-0">
+          <div className="rounded-xl sm:w-80 flex-shrink-0 overflow-hidden">
+            <div className="bg-gradient-to-t from-gray-900 via-80% to-gray-800/0 z-10"></div>
             <img
               src={post.featuredImage}
               alt={post.title}
-              className="w-full h-48 aspect-[4/3] sm:h-full object-cover transition-transform duration-300 hover:scale-105"
+              className="w-full aspect-video md:aspect-[4/3] sm:h-full object-cover transition-transform duration-300 hover:scale-105"
               loading="lazy"
             />
           </div>
         )}
-        <div className="p-6 flex-1">
-          <div className="flex items-center mb-3">
-            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary text-primary-foreground opacity-80">
-              {post.category}
-            </span>
-            <span className="ml-2 text-sm text-gray-500">{post.readingTime} 分鐘閱讀</span>
-          </div>
-          <h2 className="text-xl font-semibold text-gray-900 mb-3">
+        <div className="p-2 pl-8 flex-1">
+          <h2 className="text-xl md:text-3xl font-semibold text-gray-900 mb-3">
             <a
               href={href}
               className="hover:text-primary line-clamp-1 transition-colors duration-200 focus:outline-none rounded"
@@ -52,12 +48,20 @@ export function BlogPostCard({ post, variant = 'vertical', className, href }: Bl
               {post.title}
             </a>
           </h2>
-          <p className="text-gray-600 mb-4 line-clamp-3">{post.excerpt || post.description}</p>
-          <div className="flex items-center justify-between text-sm text-gray-500">
-            <span>作者：{post.authorName}</span>
-            <time dateTime={post.publishedAt}>
+          <p className="text-lg md:text-xl text-gray-800 mb-4 line-clamp-3">
+            {post.excerpt || post.description}
+          </p>
+          <div className="flex w-full flex-row-reverse items-center justify-between text-sm md:text-lg text-gray-700">
+            {/*<time dateTime={post.publishedAt}>
               {new Date(post.publishedAt).toLocaleDateString('zh-TW')}
-            </time>
+            </time>*/}
+            <a
+              href={href}
+              className="hover:text-primary transition-colors duration-200 focus:outline-none rounded"
+              aria-label={`閱讀文章：${post.title}`}
+            >
+              繼續閱讀 →
+            </a>
           </div>
         </div>
       </article>
@@ -95,7 +99,6 @@ export function BlogPostCard({ post, variant = 'vertical', className, href }: Bl
         </h2>
         <p className="text-gray-600 mb-4 line-clamp-3">{post.excerpt || post.description}</p>
         <div className="flex items-center justify-between text-sm text-gray-500">
-          <span>作者：{post.authorName}</span>
           <time dateTime={post.publishedAt}>
             {new Date(post.publishedAt).toLocaleDateString('zh-TW')}
           </time>
