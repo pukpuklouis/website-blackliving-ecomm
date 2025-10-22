@@ -10,7 +10,9 @@ type NormalizedCategory = { slug: string; name: string; color?: string; icon?: s
 function normalizeCategory(input: any): NormalizedCategory {
   if (!input) return null;
   if (typeof input === 'object') {
-    const slug = input.slug || (typeof input.name === 'string' ? input.name.toLowerCase().replace(/\s+/g, '-') : undefined);
+    const slug =
+      input.slug ||
+      (typeof input.name === 'string' ? input.name.toLowerCase().replace(/\s+/g, '-') : undefined);
     const name = input.name || input.slug || '';
     if (!slug || !name) return null;
     return { slug, name, color: input.color, icon: input.icon };
@@ -36,21 +38,20 @@ const basePath = normalized?.slug === 'customer-reviews' ? '/customer-reviews' :
     <li>
       <a href="/" class="hover:text-gray-700">首頁</a>
     </li>
-    {normalized && (
-      <>
-        <li>/</li>
-        <li>
-          <a 
-            href={`${basePath}`} 
-            class="hover:text-gray-700"
-          >
-            {normalized.name}
-          </a>
-        </li>
-      </>
-    )}
+    {
+      normalized && (
+        <>
+          <li>/</li>
+          <li>
+            <a href={`${basePath}`} class="hover:text-gray-700">
+              {normalized.name}
+            </a>
+          </li>
+        </>
+      )
+    }
     <li>/</li>
-    <li class="text-gray-900" aria-current="page">
+    <li class="text-gray-900 font-semibold" aria-current="page">
       {post.title}
     </li>
   </ol>

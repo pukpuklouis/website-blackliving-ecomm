@@ -11,24 +11,29 @@
       "order": 2
     },
     {
+      "label": "席夢思小知識",
+      "href": "/simmons-knowledge",
+      "order": 3
+    },
+    {
       "label": "HEY BRO智能床墊",
       "href": "/us-imports",
-      "order": 3
+      "order": 4
     },
     {
       "label": "精選周邊",
       "href": "/accessories",
-      "order": 4
+      "order": 5
     },
     {
       "label": "好好生活誌",
       "href": "/posts",
-      "order": 5
+      "order": 6
     },
     {
       "label": "預約試躺",
       "href": "/appointment",
-      "order": 6
+      "order": 7
     }
   ]
 }

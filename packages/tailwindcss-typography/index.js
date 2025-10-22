@@ -1,5 +1,2 @@
-import plugin from 'tailwindcss/plugin';
-
-const typography = plugin(() => {});
-
-export default typography;
+export { default } from '@tailwindcss/typography';
+export * from '@tailwindcss/typography';

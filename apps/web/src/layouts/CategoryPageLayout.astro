@@ -243,20 +243,9 @@ const structuredData = {
             <>
               <div class='flex justify-between items-center mb-6'>
                 <p class='text-gray-600'>找到 {transformedProducts.length} 項產品</p>
-                <button class='text-sm text-gray-500 hover:text-black transition-colors flex items-center gap-1'>
-                  <svg class='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                    <path
-                      stroke-linecap='round'
-                      stroke-linejoin='round'
-                      stroke-width='2'
-                      d='M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z'
-                    />
-                  </svg>
-                  篩選與排序
-                </button>
               </div>
 
-              <div class='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8' role='list'>
+              <div class='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8' role='list'>
                 {transformedProducts.map((product: any) => (
                   <div role='listitem'>
                     <ProductCard product={product} />

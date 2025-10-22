@@ -15,7 +15,7 @@ export default defineConfig({
     alias: {
       // Lucide tree-shaking alias for individual icon imports
       '@lucide/react': 'lucide-react/dist/esm/icons',
-      '@tailwindcss/typography': resolve(
+      '@blackliving/tailwindcss-typography': resolve(
         projectDir,
         '../../packages/tailwindcss-typography/index.js'
       ),

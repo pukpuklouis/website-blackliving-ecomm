@@ -129,7 +129,7 @@ const ProductDetail: FC<ProductDetailProps> = ({ product, categoryConfig, classN
         />
 
         {/* Product Description */}
-        <p className="text-gray-600 text-sm">{product.description}</p>
+        <p className="text-gray-600 text-lg whitespace-break-spaces">{product.description}</p>
       </div>
 
       {/* Variant Selector with integrated quantity and add to cart */}

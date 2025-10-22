@@ -58,7 +58,7 @@
     "@blackliving/tailwind-config": "workspace:*",
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19.1.6",
-    "wrangler": "^4.26.0",
+    "wrangler": "latest",
     "vitest": "^3.2.4"
   }
 }

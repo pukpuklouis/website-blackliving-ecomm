@@ -1,11 +1,14 @@
 {
-  "name": "@tailwindcss/typography",
-  "version": "0.5.16",
+  "name": "@blackliving/tailwindcss-typography",
+  "version": "0.0.0",
   "private": true,
   "type": "module",
   "exports": {
     ".": {
       "default": "./index.js"
     }
+  },
+  "dependencies": {
+    "@tailwindcss/typography": "^0.5.19"
   }
 }
