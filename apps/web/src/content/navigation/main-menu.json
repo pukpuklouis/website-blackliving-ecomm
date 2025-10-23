@@ -41,7 +41,21 @@
     {
       "label": "精選周邊",
       "href": "/accessories",
-      "order": 5
+      "order": 5,
+      "subItems": [
+        {
+          "label": "枕頭",
+          "href": "/accessories/mattress-accessories"
+        },
+        {
+          "label": "電動床架／下墊",
+          "href": "/accessories/mattress-suites"
+        },
+        {
+          "label": "寢具",
+          "href": "/accessories/mattress-pillows"
+        }
+      ]
     },
     {
       "label": "好好生活誌",
