@@ -1,7 +1,7 @@
 ---
-import BaseLayout from '../../layouts/BaseLayout.astro';
-import CTA from '../../components/CTA.astro';
-import BlogPostCard from '../../components/BlogPostCard.astro';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import CTA from '../../../components/CTA.astro';
+import BlogPostCard from '../../../components/BlogPostCard.astro';
 import type { BlogPost, BlogPostSummary, PostCategory } from '@blackliving/types';
 
 interface StaticCategory extends PostCategory {
@@ -23,7 +23,7 @@ const fallbackCategories: StaticCategory[] = [
   {
     id: 'cat_002',
     slug: 'customer-reviews',
-    name: '顧客好評',
+    name: '部落格推薦',
     description: '來自真實客戶的睡眠體驗分享，了解 Simmons 黑牌床墊的實際使用心得與評價',
     color: '#10B981',
     icon: '⭐',
@@ -34,7 +34,7 @@ const fallbackCategories: StaticCategory[] = [
 function normalizeCategorySlug(value?: string | null): string {
   if (!value) return 'blog-post';
   const input = value.trim().toLowerCase();
-  if (['customer-reviews', '顧客好評', '客戶評價'].includes(input)) {
+  if (['customer-reviews', '部落格推薦', '客戶評價'].includes(input)) {
     return 'customer-reviews';
   }
   if (['blog-post', '好文分享', '部落格文章', 'blog'].includes(input)) {
@@ -49,7 +49,7 @@ function normalizeCategorySlug(value?: string | null): string {
 }
 
 function resolveCategoryName(slug: string, fallback?: string): string {
-  if (slug === 'customer-reviews') return '顧客好評';
+  if (slug === 'customer-reviews') return '部落格推薦';
   if (slug === 'blog-post') return '好文分享';
   return fallback || slug;
 }
@@ -63,6 +63,16 @@ function resolveCategoryDescription(slug: string, fallback?: string): string {
     return '睡眠知識與健康生活分享，專業床墊選購指南與使用心得';
   }
   return '';
+}
+
+function isPostCategory(data: any): data is PostCategory {
+  return (
+    data &&
+    typeof data === 'object' &&
+    typeof data.id === 'string' &&
+    typeof data.slug === 'string' &&
+    typeof data.name === 'string'
+  );
 }
 
 export async function getStaticPaths() {
@@ -137,9 +147,8 @@ export async function getStaticPaths() {
         category: {
           id: 'cat_002',
           slug: 'customer-reviews',
-          name: '顧客好評',
-          description:
-            '來自真實客戶的睡眠體驗分享，了解 Simmons 黑牌床墊的實際使用心得與評價',
+          name: '部落格推薦',
+          description: '來自真實客戶的睡眠體驗分享，了解 Simmons 黑牌床墊的實際使用心得與評價',
           color: '#10B981',
           icon: '⭐',
           postsCount: 0,
@@ -149,14 +158,20 @@ export async function getStaticPaths() {
   ];
 }
 
-export const prerender = true;
+// Conditional prerender: disabled in dev for easier preview, enabled in staging/production for static generation
+export const prerender = import.meta.env.MODE !== 'development';
 
 interface Props {
   category?: StaticCategory;
 }
 
+interface Params extends Record<string, string> {
+  post_category: string;
+}
+
+const params = Astro.params as Params;
 const { category: staticCategory } = Astro.props as Props;
-const routeCategorySlug = normalizeCategorySlug(Astro.params.post_category);
+const routeCategorySlug = normalizeCategorySlug(params.post_category);
 
 let category = staticCategory ?? null;
 
@@ -207,10 +222,7 @@ try {
 
     rawPosts = Array.isArray(postsPayload?.data) ? postsPayload.data : [];
   } else {
-    console.warn(
-      `Failed to fetch posts for category "${categorySlug}":`,
-      postsResponse.status
-    );
+    console.warn(`Failed to fetch posts for category "${categorySlug}":`, postsResponse.status);
   }
 } catch (error) {
   console.error('Error fetching posts for category:', error);
@@ -218,20 +230,19 @@ try {
 
 const posts: BlogPostSummary[] = rawPosts.map((post) => {
   const categoryData = post.category;
-  const slugSource =
-    typeof categoryData === 'object'
-      ? categoryData.slug || categoryData.id
-      : typeof categoryData === 'string'
-        ? categoryData
-        : undefined;
-  const normalizedSlug = normalizeCategorySlug(slugSource);
-  const categoryLabel =
-    typeof categoryData === 'object'
-      ? categoryData.name || resolveCategoryName(normalizedSlug)
-      : resolveCategoryName(
-          normalizedSlug,
-          typeof categoryData === 'string' ? categoryData : undefined
-        );
+  let slugSource: string | undefined;
+  let categoryLabel: string;
+
+  if (isPostCategory(categoryData)) {
+    slugSource = categoryData.slug || categoryData.id;
+    categoryLabel = categoryData.name || resolveCategoryName(normalizeCategorySlug(slugSource));
+  } else if (typeof categoryData === 'string') {
+    slugSource = categoryData;
+    categoryLabel = resolveCategoryName(normalizeCategorySlug(slugSource), categoryData);
+  } else {
+    slugSource = undefined;
+    categoryLabel = resolveCategoryName('');
+  }
 
   return {
     slug: post.slug,
@@ -251,23 +262,33 @@ const pageDescription = categoryDescription || '最新文章與品牌故事分�
 ---
 
 <BaseLayout title={pageTitle} description={pageDescription}>
-  <main class='container mx-auto px-4 py-8 mb-12'>
-    <div class='text-center mb-12'>
-      <h1 class='text-4xl font-bold text-gray-900 mb-4'>{categoryName}</h1>
-      {categoryDescription && <p class='text-xl text-gray-600'>{categoryDescription}</p>}
+  <main class="container mx-auto px-4 py-8 mb-12">
+    <div class="text-center mb-12">
+      <h1 class="text-4xl font-bold text-gray-900 mb-4">{categoryName}</h1>
+      {categoryDescription && <p class="text-xl text-gray-600">{categoryDescription}</p>}
     </div>
 
-    <div class='max-w-4xl mx-auto'>
-      <div class={`grid grid-cols-1 ${cardVariant === 'vertical' ? 'md:grid-cols-2 gap-8' : 'md:flex flex-col gap-8'}`}>
-        {posts.map((post) => (
-          <BlogPostCard post={post} variant={cardVariant} href={`/${categorySlug}/${post.slug}`} />
-        ))}
+    <div class="max-w-4xl mx-auto">
+      <div
+        class={`grid grid-cols-1 ${cardVariant === 'vertical' ? 'md:grid-cols-2 gap-8' : 'md:flex flex-col gap-8'}`}
+      >
+        {
+          posts.map((post) => (
+            <BlogPostCard
+              post={post}
+              variant={cardVariant}
+              href={`/blog/${categorySlug}/${post.slug}`}
+            />
+          ))
+        }
       </div>
-      {posts.length === 0 && (
-        <div class='text-center py-12'>
-          <p class='text-gray-500'>目前尚無文章...</p>
-        </div>
-      )}
+      {
+        posts.length === 0 && (
+          <div class="text-center py-12">
+            <p class="text-gray-500">目前尚無文章...</p>
+          </div>
+        )
+      }
     </div>
   </main>
   <CTA />

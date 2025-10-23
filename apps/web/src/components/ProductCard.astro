@@ -19,45 +19,49 @@ const { product, class: className = '' } = Astro.props;
 ---
 
 <a
-  href={product.href}
+  href={`/shop${product.href}`}
   class={`block rounded-lg overflow-hidden hover:shadow-lg transition-shadow ${className}`}
 >
   <!-- Product Image -->
-  <div class='relative aspect-[4/3] overflow-hidden'>
+  <div class="relative aspect-[4/3] overflow-hidden">
     <Image
       src={product.image}
       alt={product.name}
       width={400}
       height={300}
-      class='w-full h-full object-cover hover:scale-105 transition-transform duration-300'
-      loading='lazy'
+      class="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+      loading="lazy"
     />
 
     <!-- Series Badge -->
-    {product.series && (
-      <div class='absolute top-3 left-3 bg-primary text-white px-3 py-1 text-sm font-semibold rounded'>
-        {product.series}
-      </div>
-    )}
+    {
+      product.series && (
+        <div class="absolute top-3 left-3 bg-primary text-white px-3 py-1 text-sm font-semibold rounded">
+          {product.series}
+        </div>
+      )
+    }
   </div>
-  <div class='flex flex-col justify-between items-center p-6 gap-3'>
+  <div class="flex flex-col justify-between items-center p-6 gap-3">
     <!-- Product Name -->
-    <p class='text-xl font-semibold text-center hover:text-gray-600 transition-colors'>
-        {product.name}
+    <p class="text-xl font-semibold text-center hover:text-gray-600 transition-colors">
+      {product.name}
     </p>
 
     <!-- Price -->
-    <div class='flex items-center'>
-        {product.priceFrom ? (
-            <div class='text-lg font-bold'>
-            <span class='text-gray-600'>NT$ {product.priceFrom.toLocaleString()}</span>
-            <span class='text-sm font-base text-gray-600'>起</span>
-            </div>
+    <div class="flex items-center">
+      {
+        product.priceFrom ? (
+          <div class="text-lg font-bold">
+            <span class="text-gray-600">NT$ {product.priceFrom.toLocaleString()}</span>
+            <span class="text-sm font-base text-gray-600">起</span>
+          </div>
         ) : (
-            <div class='border border-gray-800  text-gray-800 px-4 py-1 text-md font-semibold rounded hover:bg-gray-50 transition-colors'>
+          <div class="border border-gray-800  text-gray-800 px-4 py-1 text-md font-semibold rounded hover:bg-gray-50 transition-colors">
             聯絡我們
-            </div>
-        )}
+          </div>
+        )
+      }
     </div>
   </div>
 </a>
@@ -67,7 +71,7 @@ const { product, class: className = '' } = Astro.props;
   document.addEventListener('DOMContentLoaded', () => {
     const productCards = document.querySelectorAll('a[href*="/"]');
 
-    productCards.forEach(card => {
+    productCards.forEach((card) => {
       card.addEventListener('click', (e) => {
         // Allow normal link behavior - no additional handling needed
         // The entire card is already wrapped in an anchor tag

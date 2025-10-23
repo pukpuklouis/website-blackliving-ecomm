@@ -60,10 +60,10 @@ const STATIC_PAGES = [
 const normalizeCategorySlug = (input?: string | null): string => {
   if (!input) return 'blog-post';
   const value = input.trim().toLowerCase();
-  if (['customer-reviews', '顧客好評', '客戶評價'].includes(value)) {
+  if (['customer-reviews', '部落格推薦'].includes(value)) {
     return 'customer-reviews';
   }
-  if (['blog-post', '好文分享', '部落格文章', 'blog'].includes(value)) {
+  if (['blog-post', '好文分享', 'blog'].includes(value)) {
     return 'blog-post';
   }
   if (value.startsWith('cat_')) {
@@ -228,7 +228,7 @@ searchRouter.get('/', zValidator('query', searchQuerySchema), async (c) => {
       const categoryLabel =
         post.category ||
         (categorySlug === 'customer-reviews'
-          ? '顧客好評'
+          ? '部落格推薦'
           : categorySlug === 'blog-post'
             ? '好文分享'
             : categorySlug);

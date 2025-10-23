@@ -1,5 +1,5 @@
 ---
-import PostLayout from '../../layouts/PostLayout.astro';
+import PostLayout from '../../../layouts/PostLayout.astro';
 import type { BlogPost, PostCategory } from '@blackliving/types';
 
 type ApiPost = BlogPost & {
@@ -27,7 +27,7 @@ const apiUrl = import.meta.env.PUBLIC_API_BASE_URL || 'http://localhost:8787';
 function normalizeCategorySlug(raw?: string | null): string {
   if (!raw) return 'blog-post';
   const input = raw.trim().toLowerCase();
-  if (['customer-reviews', '顧客好評', '客戶評價'].includes(input)) {
+  if (['customer-reviews', '顧客好評', '部落格推薦'].includes(input)) {
     return 'customer-reviews';
   }
   if (['blog-post', '好文分享', '部落格文章', 'blog'].includes(input)) {
@@ -63,7 +63,7 @@ function resolveCategoryMeta(category: ApiPost['category']): CategoryMeta {
   const slug = normalizeCategorySlug(typeof category === 'string' ? category : undefined);
   const name =
     slug === 'customer-reviews'
-      ? '顧客好評'
+      ? '部落格推薦'
       : slug === 'blog-post'
         ? '好文分享'
         : slug === 'simmons-knowledge'
@@ -162,8 +162,8 @@ export async function getStaticPaths() {
   ];
 }
 
-// In dev, allow SSR so new posts render without restart; keep static in prod
-export const prerender = import.meta.env.PROD;
+// Conditional prerender: disabled in dev for easier preview, enabled in staging/production for static generation
+export const prerender = import.meta.env.MODE !== 'development';
 
 const { post_category: routeCategorySlug, post_slug: routeSlug } = Astro.params;
 const normalizedRouteCategory = normalizeCategorySlug(routeCategorySlug);
@@ -242,7 +242,7 @@ if (!apiPost) {
   if (fallbackPost) {
     apiPost = fallbackPost;
   } else {
-    throw new Error(`Missing post data for slug: ${routeSlug}`);
+    throw new Response(null, { status: 404 });
   }
 }
 

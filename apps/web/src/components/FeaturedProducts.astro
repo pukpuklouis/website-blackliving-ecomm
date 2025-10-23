@@ -62,7 +62,7 @@ try {
       image: product.images?.[0] || '/products/placeholder.jpg',
       features: product.features || [],
       priceFrom: product.variants?.[0]?.price || null,
-      href: `/${product.category}/${product.slug}`,
+      href: `/shop/${product.category}/${product.slug}`,
     }));
   }
 } catch (err) {

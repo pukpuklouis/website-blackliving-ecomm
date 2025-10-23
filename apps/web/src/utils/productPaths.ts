@@ -40,7 +40,10 @@ function normalizeFeatures(rawFeatures: unknown): string[] {
       }
       return [rawFeatures];
     } catch {
-      return rawFeatures.split(',').map((feature) => feature.trim()).filter(Boolean);
+      return rawFeatures
+        .split(',')
+        .map((feature) => feature.trim())
+        .filter(Boolean);
     }
   }
 
@@ -70,28 +73,28 @@ function mapCategoryPayload(payload: Record<string, unknown> | undefined): Categ
     return null;
   }
 
-  const slugCandidate = typeof payload.slug === 'string'
-    ? payload.slug
-    : typeof payload.category === 'string'
-    ? payload.category
-    : null;
+  const slugCandidate =
+    typeof payload.slug === 'string'
+      ? payload.slug
+      : typeof payload.category === 'string'
+        ? payload.category
+        : null;
 
   if (!slugCandidate) {
     return null;
   }
 
   const features = normalizeFeatures(payload.features);
-  const urlPath = typeof payload.urlPath === 'string' && payload.urlPath.length > 0
-    ? payload.urlPath
-    : `/${slugCandidate}`;
+  const urlPath =
+    typeof payload.urlPath === 'string' && payload.urlPath.length > 0
+      ? payload.urlPath
+      : `/shop/${slugCandidate}`;
 
-  const title = typeof payload.title === 'string' && payload.title.length > 0
-    ? payload.title
-    : slugCandidate;
+  const title =
+    typeof payload.title === 'string' && payload.title.length > 0 ? payload.title : slugCandidate;
 
-  const series = typeof payload.series === 'string' && payload.series.length > 0
-    ? payload.series
-    : title;
+  const series =
+    typeof payload.series === 'string' && payload.series.length > 0 ? payload.series : title;
 
   return {
     slug: slugCandidate,
@@ -108,8 +111,8 @@ function mapCategoryPayload(payload: Record<string, unknown> | undefined): Categ
       typeof payload.sortOrder === 'number'
         ? payload.sortOrder
         : typeof payload.sortOrder === 'string'
-        ? Number.parseInt(payload.sortOrder, 10)
-        : undefined,
+          ? Number.parseInt(payload.sortOrder, 10)
+          : undefined,
   };
 }
 
@@ -163,7 +166,7 @@ export async function generateCategoryStaticPaths() {
             brand: 'Black Living',
             features: ['示範特色一', '示範特色二', '示範特色三'],
             seoKeywords: 'sample,category',
-            urlPath: '/catalog-sample',
+            urlPath: '/shop/catalog-sample',
           } satisfies CategoryConfig,
         },
       },

@@ -1,0 +1,102 @@
+---
+import ProductLayout from '../../../layouts/ProductLayout.astro';
+import ProductTabs from '../../../components/ProductTabs.tsx';
+import ProductImageCarousel from '../../../components/ProductImageCarousel.tsx';
+import ProductDetail from '../../../components/ProductDetail.tsx';
+import type { CategoryConfig } from '../../../types/category.ts';
+import {
+  fetchProduct,
+  fetchCategoryConfig,
+  generateProductStaticPaths,
+} from '../../../utils/productPaths.ts';
+
+interface StaticProps {
+  categoryConfig?: CategoryConfig;
+}
+
+export async function getStaticPaths() {
+  return await generateProductStaticPaths();
+}
+
+const { category, productSlug } = Astro.params;
+const { categoryConfig: prefetchedCategory } = (Astro.props as StaticProps) ?? {};
+
+const {
+  categoryConfig,
+  error: categoryError,
+  notFound: categoryNotFound,
+} = await fetchCategoryConfig(category, prefetchedCategory);
+
+if (categoryNotFound || !categoryConfig) {
+  throw new Response(null, { status: 404 });
+}
+
+const { product, error: productError, notFound: productNotFound } = await fetchProduct(productSlug);
+
+if (productNotFound || !product || productError) {
+  console.log(
+    `DEBUG: Throwing 404 for productSlug "${productSlug}". productNotFound: ${productNotFound}, product: ${!!product}, productError: ${productError}`
+  );
+  throw new Response(null, { status: 404 });
+}
+
+if (product.category !== categoryConfig.slug) {
+  console.warn(
+    `Product slug "${productSlug}" does not match category "${categoryConfig.slug}"; returning 404.`
+  );
+  throw new Response(null, { status: 404 });
+}
+
+if (categoryError) {
+  console.warn(`Category fallback used for slug "${category}":`, categoryError);
+}
+
+// Conditional prerender: disabled in dev for easier preview, enabled in staging/production for static generation
+export const prerender = import.meta.env.MODE !== 'development';
+---
+
+{
+  product && (
+    <ProductLayout
+      title={product.name}
+      description={product.description}
+      image={product.images?.[0]}
+    >
+      <ProductImageCarousel
+        images={product.images || []}
+        productName={product.name}
+        client:load
+        slot="product-images"
+      />
+
+      <div slot="product-details">
+        <ProductDetail
+          product={product}
+          categoryConfig={categoryConfig}
+          className="mt-6"
+          client:load
+        />
+
+        <div class="mt-8 lg:hidden">
+          <ProductTabs
+            features={product.features || []}
+            specifications={product.specifications}
+            categoryFeatures={categoryConfig.features}
+            categoryName={categoryConfig.series}
+            client:load
+          />
+        </div>
+      </div>
+
+      <div class="hidden lg:block" slot="product-tabs">
+        <ProductTabs
+          features={product.features || []}
+          specifications={product.specifications}
+          categoryFeatures={categoryConfig.features}
+          categoryName={categoryConfig.series}
+          client:load
+        />
+      </div>
+    </ProductLayout>
+  )
+}

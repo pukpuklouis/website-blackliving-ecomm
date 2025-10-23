@@ -7,68 +7,68 @@
     },
     {
       "label": "席夢思黑標床墊",
-      "href": "/simmons-black",
+      "href": "/shop/simmons-black",
       "order": 2
     },
     {
       "label": "席夢思小知識",
-      "href": "/simmons-knowledge",
+      "href": "/blog/simmons-knowledge",
       "order": 3,
       "subItems": [
         {
           "label": "席夢思黑標床墊保固",
-          "href": "/simmons-knowledge/beautyrest-black-label-mattress-warranty"
+          "href": "/blog/simmons-knowledge/beautyrest-black-label-mattress-warranty"
         },
         {
           "label": "席夢思產地差異",
-          "href": "/simmons-knowledge/simmons-beautyrest-origin-differences"
+          "href": "/blog/simmons-knowledge/simmons-beautyrest-origin-differences"
         },
         {
           "label": "專櫃貨＆平行輸入商差異",
-          "href": "/simmons-knowledge/difference-between-authorized-goods-and-parallel-imports"
+          "href": "/blog/simmons-knowledge/difference-between-authorized-goods-and-parallel-imports"
         },
         {
           "label": "席夢思床墊介紹",
-          "href": "/simmons-knowledge/beautyrest-black-mattress-introduction"
+          "href": "/blog/simmons-knowledge/beautyrest-black-mattress-introduction"
         }
       ]
     },
     {
       "label": "HEY BRO智能床墊",
-      "href": "/us-imports",
+      "href": "/shop/us-imports",
       "order": 4
     },
     {
       "label": "精選周邊",
-      "href": "/accessories",
+      "href": "/shop/accessories",
       "order": 5,
       "subItems": [
         {
           "label": "枕頭",
-          "href": "/accessories/mattress-accessories"
+          "href": "/shop/accessories/mattress-accessories"
         },
         {
           "label": "電動床架／下墊",
-          "href": "/accessories/mattress-suites"
+          "href": "/shop/accessories/mattress-suites"
         },
         {
           "label": "寢具",
-          "href": "/accessories/mattress-pillows"
+          "href": "/shop/accessories/mattress-pillows"
         }
       ]
     },
     {
       "label": "好好生活誌",
-      "href": "/blog-post",
+      "href": "/blog/blog-post",
       "order": 6,
       "subItems": [
         {
-          "label": "部落格文章",
-          "href": "/blog-post"
+          "label": "好文分享",
+          "href": "/blog/blog-post"
         },
         {
-          "label": "顧客評價",
-          "href": "/customer-reviews"
+          "label": "部落格推薦",
+          "href": "/blog/customer-reviews"
         }
       ]
     },

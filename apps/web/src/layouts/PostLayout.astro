@@ -6,9 +6,6 @@ import BlogHeroImage from '../components/blog/BlogHeroImage.astro';
 import BlogContent from '../components/blog/BlogContent.astro';
 import BlogSidebar from '../components/blog/BlogSidebar.astro';
 import BlogTags from '../components/blog/BlogTags.astro';
-import RelatedPosts from '../components/blog/RelatedPosts.astro';
-import PromoImage from '../components/blog/PromoImage.astro';
-import AdSpace from '../components/blog/AdSpace.astro';
 
 interface BlogPost {
   id: string;
@@ -79,9 +76,6 @@ const { post, category, relatedPosts = [], seoTitle, seoDescription, ogImage } =
 
           <!-- Page-specific content slot -->
           <slot />
-
-          <!-- Related Posts (within main content) -->
-          <RelatedPosts posts={relatedPosts} layout="inline" />
         </article>
       </div>
     </div>

@@ -1,42 +1,5 @@
 import { defineCollection, z } from 'astro:content';
 
-const posts = defineCollection({
-  type: 'content',
-  schema: z.object({
-    title: z.string(),
-    description: z.string(),
-    publishDate: z.date(),
-    author: z.string().default('Black Living 專業團隊'),
-    image: z.string().optional(),
-    tags: z.array(z.string()).default([]),
-    featured: z.boolean().default(false),
-    seoTitle: z.string().optional(),
-    seoDescription: z.string().optional(),
-  }),
-});
-
-const products = defineCollection({
-  type: 'data',
-  schema: z.object({
-    name: z.string(),
-    description: z.string(),
-    category: z.string().regex(/^[a-z0-9-]+$/, 'Category must be a lowercase slug'),
-    images: z.array(z.string()),
-    variants: z.array(
-      z.object({
-        size: z.string(),
-        firmness: z.string().optional(),
-        price: z.number(),
-        originalPrice: z.number().optional(),
-      })
-    ),
-    features: z.array(z.string()),
-    specifications: z.record(z.string()),
-    inStock: z.boolean().default(true),
-    featured: z.boolean().default(false),
-  }),
-});
-
 const heroSlider = defineCollection({
   type: 'data',
   schema: z.object({
@@ -165,8 +128,6 @@ const footer = defineCollection({
 });
 
 export const collections = {
-  posts,
-  products,
   'hero-slider': heroSlider,
   navigation,
   pages,

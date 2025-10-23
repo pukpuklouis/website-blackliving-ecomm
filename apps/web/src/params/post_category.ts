@@ -1,6 +1,6 @@
 const KNOWN_BLOG_CATEGORY_SLUGS = new Set(['blog-post', 'customer-reviews', 'simmons-knowledge']);
 
-export function match(param: string): boolean {
+export function isPostCategorySlug(param: string): boolean {
   if (!param) return false;
   const normalized = param.trim().toLowerCase();
   if (!normalized) return false;
@@ -14,3 +14,7 @@ export function match(param: string): boolean {
 
   return KNOWN_BLOG_CATEGORY_SLUGS.has(normalized);
 }
+
+export const match = (param: string): boolean => {
+  return isPostCategorySlug(param);
+};

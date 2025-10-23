@@ -147,7 +147,7 @@ const menuItems = navigationData?.data.items.sort((a, b) => a.order - b.order) |
   <div class="hidden md:block bg-primary relative" id="nav-section">
     <div class="container mx-auto px-4 lg:px-6">
       <nav class="flex justify-center py-3" role="navigation" aria-label="主導航">
-        <ul class="flex items-center gap-4 lg:gap-6 flex-wrap justify-center relative">
+        <ul class="flex items-center gap-4 md:gap-2 lg:gap-6 justify-center relative">
           {
             menuItems.map((item) => (
               <li key={item.href} class={`relative group ${item.subItems ? 'has-submenu' : ''}`}>
@@ -176,12 +176,12 @@ const menuItems = navigationData?.data.items.sort((a, b) => a.order - b.order) |
                   )}
                 </a>
                 {item.subItems && (
-                  <ul class="absolute left-0 top-full mt-3 bg-primary shadow-lg rounded-b-lg py-2 pr-4 w-fit opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 overflow-hidden">
+                  <ul class="absolute left-0 top-full mt-3 bg-primary shadow-lg rounded-b-lg py-2 w-fit opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 overflow-hidden">
                     {item.subItems.map((subItem) => (
                       <li key={subItem.href}>
                         <a
                           href={subItem.href}
-                          class="block px-4 py-2  text-md text-gray-50 hover:bg-gray-100/20 transition-colors whitespace-nowrap"
+                          class="block pl-4 pr-8 py-2  text-md text-gray-50 hover:bg-gray-100/20 transition-colors whitespace-nowrap"
                         >
                           {subItem.label}
                         </a>
