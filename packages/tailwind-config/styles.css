@@ -1,9 +1,9 @@
 /* packages/tailwind-config/styles.css */
+@config "./tailwind.config.js";
 @import 'tailwindcss';
 @import './theme.css';
 @import 'tw-animate-css';
 @plugin "@blackliving/tailwindcss-typography";
-/* @config "./tailwind.config.js"; */
 
 @custom-variant dark (&:is(.dark *));
 

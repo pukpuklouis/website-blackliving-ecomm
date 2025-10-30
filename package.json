@@ -27,7 +27,10 @@
     "preview:local:built": "pnpm build:local:simple && concurrently \"cd apps/api && wrangler dev --env development --local --port 8787\" \"cd apps/web && pnpm preview\"",
     "preview:web:only": "cd apps/web && pnpm build && pnpm preview",
     "dev:local": "concurrently \"cd apps/api && wrangler dev --env development --local --port 8787\" \"cd apps/web && pnpm dev\"",
-    "dev:staging": "concurrently \"cd apps/api && wrangler dev --env staging\" \"cd apps/web && pnpm dev\""
+    "dev:staging": "concurrently \"cd apps/api && wrangler dev --env staging\" \"cd apps/web && pnpm dev\"",
+    "bmad:refresh": "bmad-method install -f -i codex",
+    "bmad:list": "bmad-method list:agents",
+    "bmad:validate": "bmad-method validate"
   },
   "devDependencies": {
     "@turbo/gen": "^1.13.4",

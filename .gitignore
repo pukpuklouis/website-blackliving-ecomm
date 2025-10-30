@@ -98,3 +98,6 @@ research/** */
 
 # gemini
 .gemini/*/*
+# BMAD (local only)
+.bmad-core/
+.bmad-*/

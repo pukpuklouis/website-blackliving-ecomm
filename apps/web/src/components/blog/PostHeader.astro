@@ -14,18 +14,9 @@ const { post, category } = Astro.props;
           class="blog-category-tag inline-flex items-center px-3 py-1 rounded-full text-sm font-medium"
           style={`background-color: ${category.color}20; color: ${category.color}`}
         >
-          <span class="mr-1">{category.icon}</span>
           {category.name}
         </span>
       </div>
     )
   }
-
-  <h1 class="text-4xl font-bold text-gray-900 mb-6">{post.title}</h1>
-
-  <div class="flex items-center justify-between text-sm text-gray-500 mb-6">
-    <div class="flex items-center space-x-4">
-      <span>發布日期：{new Date(post.publishedAt).toLocaleDateString('zh-TW')}</span>
-    </div>
-  </div>
 </header>

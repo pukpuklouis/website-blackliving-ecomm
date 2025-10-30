@@ -12,8 +12,9 @@ marked.use({ gfm: true, breaks: true, async: true });
 const html = await marked.parse(content ?? '');
 const proseClasses = [
   'prose',
-  'md:prose-lg',
-  'prose-base',
+  // 'md:prose-lg',
+  // 'prose-base',
+  'prose-fluidScale',
   'max-w-none',
   'prose-headings:font-semibold',
   'prose-headings:text-foreground',

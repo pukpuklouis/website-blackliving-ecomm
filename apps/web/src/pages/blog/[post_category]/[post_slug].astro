@@ -27,7 +27,10 @@ const apiUrl = import.meta.env.PUBLIC_API_BASE_URL || 'http://localhost:8787';
 function normalizeCategorySlug(raw?: string | null): string {
   if (!raw) return 'blog-post';
   const input = raw.trim().toLowerCase();
-  if (['customer-reviews', '顧客好評', '部落格推薦'].includes(input)) {
+  if (['blogger-testimonial', 'blogger testimonial', '部落格推薦'].includes(input)) {
+    return 'blogger-testimonial';
+  }
+  if (['customer-reviews', '顧客好評', '顧客真實回饋', '客戶評價'].includes(input)) {
     return 'customer-reviews';
   }
   if (['blog-post', '好文分享', '部落格文章', 'blog'].includes(input)) {
@@ -38,9 +41,10 @@ function normalizeCategorySlug(raw?: string | null): string {
     return 'simmons-knowledge';
   }
   if (input.startsWith('cat_')) {
-    if (input === 'cat_002') return 'customer-reviews';
     if (input === 'cat_001') return 'blog-post';
+    if (input === 'cat_002') return 'blogger-testimonial';
     if (input === 'cat_003') return 'simmons-knowledge';
+    if (input === 'cat_004') return 'customer-reviews';
 
     return input.slice(4);
   }
@@ -63,14 +67,16 @@ function resolveCategoryMeta(category: ApiPost['category']): CategoryMeta {
   const slug = normalizeCategorySlug(typeof category === 'string' ? category : undefined);
   const name =
     slug === 'customer-reviews'
-      ? '部落格推薦'
-      : slug === 'blog-post'
-        ? '好文分享'
-        : slug === 'simmons-knowledge'
-          ? '席夢思小知識'
-          : typeof category === 'string'
-            ? category
-            : '好文分享';
+      ? '顧客真實回饋'
+      : slug === 'blogger-testimonial'
+        ? '部落格推薦'
+        : slug === 'blog-post'
+          ? '好文分享'
+          : slug === 'simmons-knowledge'
+            ? '席夢思小知識'
+            : typeof category === 'string'
+              ? category
+              : '好文分享';
 
   return {
     id: slug,
@@ -155,6 +161,12 @@ export async function getStaticPaths() {
     },
     {
       params: {
+        post_category: 'blogger-testimonial',
+        post_slug: 'simmons-black-label-media-review',
+      },
+    },
+    {
+      params: {
         post_category: 'customer-reviews',
         post_slug: 'customer-review-simmons-3-months',
       },
@@ -214,6 +226,31 @@ if (!apiPost) {
     } as unknown as ApiPost,
     {
       id: 'fallback-post-2',
+      title: '媒體報導：Simmons Black Label 評測亮點',
+      slug: 'simmons-black-label-media-review',
+      description: '彙整媒體與部落客對 Simmons Black Label 的評測重點與推薦亮點',
+      excerpt: '多家媒體與資深部落客一致推薦 Simmons Black Label，帶您快速掌握核心亮點...',
+      content:
+        '# 媒體報導：Simmons Black Label 評測亮點\n\n整理各大媒體與專業部落客的評測觀點，協助您快速了解產品特色...',
+      authorName: '黑哥家居團隊',
+      category: 'blogger-testimonial',
+      categoryId: 'blogger-testimonial',
+      categorySlug: 'blogger-testimonial',
+      tags: ['媒體報導', '部落客推薦', 'Simmons'],
+      featuredImage: '/images/blog/simmons-media-review.jpg',
+      publishedAt: '2024-01-12T08:00:00Z',
+      viewCount: 0,
+      readingTime: 6,
+      status: 'published',
+      featured: false,
+      seoTitle: '媒體報導：Simmons Black Label 評測亮點 | 黑哥家居',
+      seoDescription: '精選媒體與部落客對 Simmons Black Label 的評測與推薦亮點，快速掌握產品優勢',
+      createdAt: undefined,
+      updatedAt: undefined,
+      featuredImage: '/images/blog/simmons-media-review.jpg',
+    } as unknown as ApiPost,
+    {
+      id: 'fallback-post-3',
       title: '客戶分享：使用 Simmons 床墊三個月心得',
       slug: 'customer-review-simmons-3-months',
       description: '真實客戶分享使用 Simmons Black Label 床墊三個月的使用心得',
@@ -279,6 +316,7 @@ try {
 if (relatedEntries.length === 0) {
   const inlineFallbackPosts = [
     { slug: 'simmons-black-label-buying-guide', categorySlug: 'blog-post' },
+    { slug: 'simmons-black-label-media-review', categorySlug: 'blogger-testimonial' },
     { slug: 'customer-review-simmons-3-months', categorySlug: 'customer-reviews' },
   ];
   relatedEntries = inlineFallbackPosts.filter(

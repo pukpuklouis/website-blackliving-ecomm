@@ -1,4 +1,9 @@
-const KNOWN_BLOG_CATEGORY_SLUGS = new Set(['blog-post', 'customer-reviews', 'simmons-knowledge']);
+const KNOWN_BLOG_CATEGORY_SLUGS = new Set([
+  'blog-post',
+  'blogger-testimonial',
+  'customer-reviews',
+  'simmons-knowledge',
+]);
 
 export function isPostCategorySlug(param: string): boolean {
   if (!param) return false;
@@ -9,6 +14,7 @@ export function isPostCategorySlug(param: string): boolean {
     if (normalized === 'cat_001') return true;
     if (normalized === 'cat_002') return true;
     if (normalized === 'cat_003') return true;
+    if (normalized === 'cat_004') return true;
     return false;
   }
 
