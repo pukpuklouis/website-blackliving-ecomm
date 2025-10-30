@@ -1,0 +1,1 @@
+Icon component in src/components/Icon/Icon.tsx should render public/favicon.svg, default to lazy loading, keep interface simple with optional className, and export both named and default Icon component.
