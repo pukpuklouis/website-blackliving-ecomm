@@ -52,7 +52,7 @@ export const BlogPostCard = memo(function BlogPostCard({
       >
         {post.featuredImage && (
           <div
-            className="relative w-[50%] md:w-[24rem] aspect-video flex-shrink-0 self-start overflow-hidden"
+            className="relative w-[50%] md:w-[24rem] aspect-[15/9] flex-shrink-0 self-start overflow-hidden"
             role="img"
             aria-label={`${post.title} 的特色圖片`}
           >
@@ -76,8 +76,7 @@ export const BlogPostCard = memo(function BlogPostCard({
               <a
                 href={href}
                 className={cn(
-                  'hover:text-primary transition-colors duration-200 rounded',
-                  FOCUS_RING_CLASSES
+                  'hover:text-primary transition-colors duration-200 rounded'
                 )}
                 aria-label={`閱讀文章：${post.title}`}
               >
