@@ -43,6 +43,13 @@
       "when": 1761145548293,
       "tag": "0005_product_categories",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1761893277283,
+      "tag": "0006_hot_slayback",
+      "breakpoints": true
     }
   ]
 }

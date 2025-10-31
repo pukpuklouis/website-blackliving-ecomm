@@ -8,7 +8,7 @@ import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
 import { eq, desc, like, and, or, count, sql } from 'drizzle-orm';
 import { posts, postCategories } from '@blackliving/db/schema';
-import { requireAuth, requireAdmin, createAuthMiddleware } from '@blackliving/auth';
+import { requireAuth, requireAdmin, createBetterAuthMiddleware } from '@blackliving/auth';
 import { createId } from '@paralleldrive/cuid2';
 
 interface Env {
@@ -69,6 +69,13 @@ const createPostSchema = z.object({
   // Publishing
   scheduledAt: z.string().optional(),
   readingTime: z.number().min(1).max(60).default(5),
+  // Overlay Settings - Single JSON object as per design.md
+  overlaySettings: z.object({
+    enabled: z.boolean().default(false),
+    title: z.string().max(50, '疊加標題不能超過50個字元').optional(),
+    placement: z.enum(['bottom-left', 'bottom-right', 'bottom-center', 'top-left', 'center']).default('bottom-left'),
+    gradientDirection: z.enum(['t', 'tr', 'r', 'br', 'b', 'bl', 'l', 'tl']).default('b'),
+  }).optional(),
 });
 
 const updatePostSchema = createPostSchema.partial();
@@ -101,6 +108,19 @@ const calculateReadingTime = (content: string): number => {
   const wordsPerMinute = 200;
   const wordCount = content.length / 5; // Rough estimate for Chinese characters
   return Math.max(1, Math.ceil(wordCount / wordsPerMinute));
+};
+
+// Helper function to deserialize overlaySettings from JSON string to object
+const deserializePost = (post: any) => {
+  if (post.overlaySettings && typeof post.overlaySettings === 'string') {
+    try {
+      post.overlaySettings = JSON.parse(post.overlaySettings);
+    } catch (error) {
+      console.warn('Failed to parse overlaySettings JSON:', error);
+      post.overlaySettings = null; // Fallback to null if parsing fails
+    }
+  }
+  return post;
 };
 
 // POST CATEGORIES ENDPOINTS
@@ -303,6 +323,7 @@ postsRouter.get(
           publishedAt: posts.publishedAt,
           viewCount: posts.viewCount,
           readingTime: posts.readingTime,
+          overlaySettings: posts.overlaySettings,
           createdAt: posts.createdAt,
         })
         .from(posts)
@@ -416,9 +437,12 @@ postsRouter.get('/', requireAdmin(), zValidator('query', querySchema), async (c)
 
     const postsData = await postsQuery.all();
 
+    // Deserialize overlaySettings for all posts
+    const deserializedPosts = postsData.map(deserializePost);
+
     return c.json({
       success: true,
-      data: postsData,
+      data: deserializedPosts,
       pagination: {
         page: pageNum,
         limit: limitNum,
@@ -559,6 +583,7 @@ postsRouter.get('/public', zValidator('query', querySchema.omit({ status: true }
         publishedAt: posts.publishedAt,
         viewCount: posts.viewCount,
         readingTime: posts.readingTime,
+        overlaySettings: posts.overlaySettings,
         createdAt: posts.createdAt,
       })
       .from(posts)
@@ -569,9 +594,12 @@ postsRouter.get('/public', zValidator('query', querySchema.omit({ status: true }
 
     const postsData = await postsQuery.all();
 
+    // Deserialize overlaySettings for all posts
+    const deserializedPosts = postsData.map(deserializePost);
+
     return c.json({
       success: true,
-      data: postsData,
+      data: deserializedPosts,
       pagination: {
         page: pageNum,
         limit: limitNum,
@@ -633,7 +661,7 @@ postsRouter.get('/:id', async (c) => {
     }
 
     // Prepare response data
-    const postData = post[0];
+    const postData = deserializePost(post[0]);
     const responseData: any = { ...postData };
 
     // Include category data if requested
@@ -711,10 +739,13 @@ postsRouter.post('/', requireAdmin(), zValidator('json', createPostSchema), asyn
 
     await db.insert(posts).values(newPost);
 
+    // Deserialize overlaySettings for the response
+    const deserializedNewPost = deserializePost(newPost);
+
     return c.json(
       {
         success: true,
-        data: newPost,
+        data: deserializedNewPost,
       },
       201
     );
@@ -784,19 +815,28 @@ postsRouter.put('/:id', requireAdmin(), zValidator('json', updatePostSchema), as
       updates.publishedAt = new Date();
     }
 
+    // Serialize overlaySettings to JSON string for D1 compatibility
     const updatedPost = {
       ...updates,
       updatedAt: new Date(),
     };
+
+    // Convert overlaySettings object to JSON string if present
+    if (updatedPost.overlaySettings) {
+      updatedPost.overlaySettings = JSON.stringify(updatedPost.overlaySettings);
+    }
 
     await db.update(posts).set(updatedPost).where(eq(posts.id, postId));
 
     // Fetch and return updated post
     const result = await db.select().from(posts).where(eq(posts.id, postId)).limit(1);
 
+    // Deserialize overlaySettings for the updated post
+    const deserializedResult = deserializePost(result[0]);
+
     return c.json({
       success: true,
-      data: result[0],
+      data: deserializedResult,
     });
   } catch (error) {
     console.error('Error updating post:', error);
@@ -1153,10 +1193,13 @@ postsRouter.post('/:id/duplicate', requireAdmin(), async (c) => {
 
     await db.insert(posts).values(duplicatePost);
 
+    // Deserialize overlaySettings for the response
+    const deserializedDuplicatePost = deserializePost(duplicatePost);
+
     return c.json(
       {
         success: true,
-        data: duplicatePost,
+        data: deserializedDuplicatePost,
       },
       201
     );

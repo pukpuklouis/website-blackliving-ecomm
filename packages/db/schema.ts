@@ -247,6 +247,7 @@ export const posts = sqliteTable('posts', {
   // Settings
   allowComments: integer('allow_comments', { mode: 'boolean' }).default(true),
   sortOrder: integer('sort_order').default(0), // For manual ordering
+  overlaySettings: text('overlay_settings').default('{}'), // JSON object containing all overlay settings
   // Metadata
   createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),

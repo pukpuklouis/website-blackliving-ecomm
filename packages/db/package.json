@@ -10,7 +10,8 @@
     "./customer-profile-service": "./customer-profile-service.ts"
   },
   "scripts": {
-    "db:generate": "drizzle-kit generate",
+    "db:generate": "drizzle-kit generate && node validate-migrations.js",
+    "db:validate": "node validate-migrations.js",
     "db:studio": "drizzle-kit studio",
     "db:studio:local": "drizzle-kit studio --config=drizzle.config.local.ts --port=4984",
     "db:studio:remote": "drizzle-kit studio --config=drizzle.config.ts --port=4983",

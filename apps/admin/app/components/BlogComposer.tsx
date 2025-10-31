@@ -37,6 +37,8 @@ import { estimateReadingTimeMinutes } from './blogComposerUtils';
 import { ImageUpload } from './ImageUpload';
 import { useApiUrl, useEnvironment } from '../contexts/EnvironmentContext';
 
+// Overlay settings imports - EyeIcon already imported above
+
 // Blog post validation schema
 const blogPostSchema = z.object({
   title: z.string().min(1, '文章標題為必填').max(100, '標題不能超過100個字元'),
@@ -80,6 +82,13 @@ const blogPostSchema = z.object({
   // Publishing - allow any string or empty
   scheduledAt: z.preprocess((val) => (val === null || val === undefined ? '' : val), z.string()),
   readingTime: z.number().min(1).max(60).default(5),
+  // Overlay Settings - Single JSON object as per design.md
+  overlaySettings: z.object({
+    enabled: z.boolean().default(false),
+    title: z.string().max(50, '疊加標題不能超過50個字元').optional(),
+    placement: z.enum(['bottom-left', 'bottom-right', 'bottom-center', 'top-left', 'center']).default('bottom-center'),
+    gradientDirection: z.enum(['t', 'tr', 'r', 'br', 'b', 'bl', 'l', 'tl']).default('t'),
+  }).optional(),
 });
 
 // Use the Zod input type for React Hook Form generics to match resolver expectations
@@ -370,6 +379,7 @@ export default function BlogComposer() {
           ogImage: post.ogImage,
           scheduledAt: post.scheduledAt,
           readingTime: post.readingTime,
+          overlaySettings: post.overlaySettings,
         });
 
         // Ensure categoryId is set - try multiple matching strategies
@@ -478,7 +488,7 @@ export default function BlogComposer() {
 
       // Test API server connectivity
       try {
-        const healthCheck = await fetch(`${base}/api/posts/categories`, {
+        const healthCheck = await fetch(`${apiUrl}/api/posts/categories`, {
           credentials: 'include',
         });
       } catch (e) {
@@ -502,7 +512,7 @@ export default function BlogComposer() {
       if (response.status === 401 || response.status === 403) {
         try {
           // Try dev-only auto-login
-          const force = await fetch(`${base}/api/auth/debug/force-admin-login`, {
+          const force = await fetch(`${apiUrl}/api/auth/debug/force-admin-login`, {
             method: 'POST',
             credentials: 'include',
             headers: { 'Content-Type': 'application/json' },
@@ -510,7 +520,7 @@ export default function BlogComposer() {
           });
           if (!force.ok) {
             // Fallback: attempt role assignment
-            await fetch(`${base}/api/auth/assign-admin-role`, {
+            await fetch(`${apiUrl}/api/auth/assign-admin-role`, {
               method: 'POST',
               credentials: 'include',
               headers: { 'Content-Type': 'application/json' },
@@ -1149,30 +1159,110 @@ export default function BlogComposer() {
               </CardContent>
             </Card>
 
-            {/* Reading Time */}
-            {/*<Card>
+            {/* Overlay Settings */}
+            <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Clock className="h-5 w-5" />
-                  閱讀時間
+                  <EyeIcon className="h-5 w-5" />
+                  疊加文字設定
                 </CardTitle>
+                <CardDescription>在圖片上添加文字疊加效果，提升視覺吸引力</CardDescription>
               </CardHeader>
-              <CardContent>
-                <div className="flex items-center gap-2">
-                  <Input
-                    type="number"
-                    min="1"
-                    max="60"
-                    {...register('readingTime', { valueAsNumber: true })}
-                    className="w-20"
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="overlayEnabled">啟用疊加文字</Label>
+                  <Controller
+                    name="overlaySettings.enabled"
+                    control={control}
+                    render={({ field }) => (
+                      <Switch
+                        id="overlayEnabled"
+                        checked={field.value || false}
+                        onCheckedChange={field.onChange}
+                      />
+                    )}
                   />
-                  <span className="text-sm text-gray-600">分鐘</span>
                 </div>
-                <p className="text-xs text-gray-500 mt-1">
-                  系統會根據內容長度自動計算，也可以手動調整
-                </p>
+
+                {watch('overlaySettings.enabled') && (
+                  <div className="space-y-4 border-t pt-4">
+                    <div className="flex flex-col gap-2">
+                      <Label htmlFor="overlayTitle">疊加標題</Label>
+                      <Controller
+                        name="overlaySettings.title"
+                        control={control}
+                        render={({ field }) => (
+                          <Input
+                            id="overlayTitle"
+                            {...field}
+                            placeholder="輸入疊加文字"
+                            className={errors.overlaySettings?.title ? 'border-red-500' : ''}
+                          />
+                        )}
+                      />
+                      <div className="flex justify-between items-center">
+                        <p className="text-xs text-gray-500">
+                          {watch('overlaySettings.title')?.length || 0}/50 字元
+                        </p>
+                        {(watch('overlaySettings.title')?.length || 0) > 50 && (
+                          <p className="text-xs text-red-600">超過字元限制</p>
+                        )}
+                      </div>
+                      {errors.overlaySettings?.title && (
+                        <p className="text-sm text-red-600 mt-1">{errors.overlaySettings.title.message}</p>
+                      )}
+                    </div>
+
+                    <div className="flex flex-col gap-2">
+                      <Label htmlFor="overlayPlacement">位置設定</Label>
+                      <Controller
+                        name="overlaySettings.placement"
+                        control={control}
+                        render={({ field }) => (
+                          <Select value={field.value || 'bottom-center'} onValueChange={field.onChange}>
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="bottom-left">左下角</SelectItem>
+                             <SelectItem value="bottom-right">右下角</SelectItem>
+                             <SelectItem value="bottom-center">中下</SelectItem>
+                             <SelectItem value="top-left">左上角</SelectItem>
+                             <SelectItem value="center">中央</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        )}
+                      />
+                    </div>
+
+                    <div className="flex flex-col gap-2">
+                      <Label htmlFor="overlayGradientDirection">漸層方向</Label>
+                      <Controller
+                        name="overlaySettings.gradientDirection"
+                        control={control}
+                        render={({ field }) => (
+                          <Select value={field.value || 't'} onValueChange={field.onChange}>
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="t">上方</SelectItem>
+                              <SelectItem value="tr">右上</SelectItem>
+                              <SelectItem value="r">右方</SelectItem>
+                              <SelectItem value="br">右下</SelectItem>
+                              <SelectItem value="b">下方</SelectItem>
+                              <SelectItem value="bl">左下</SelectItem>
+                              <SelectItem value="l">左方</SelectItem>
+                              <SelectItem value="tl">左中</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        )}
+                      />
+                    </div>
+                  </div>
+                )}
               </CardContent>
-            </Card>*/}
+            </Card>
           </div>
         </div>
       </form>

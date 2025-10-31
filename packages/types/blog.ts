@@ -43,6 +43,13 @@ export interface BlogPostSummary {
   readingTime?: string;
   authorName: string;
   publishedAt: string;
+  // Overlay settings - Single JSON object as per design.md
+  overlaySettings?: {
+    enabled?: boolean;
+    title?: string;
+    placement?: 'bottom-left' | 'bottom-right' | 'bottom-center' | 'top-left' | 'center';
+    gradientDirection?: string;
+  };
 }
 
 /**
