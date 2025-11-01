@@ -1,4 +1,26 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, createContext, useContext } from 'react';
+import {
+  DndContext,
+  PointerSensor,
+  KeyboardSensor,
+  closestCenter,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+  type DragStartEvent,
+  type DragCancelEvent,
+  type DraggableAttributes,
+  type SyntheticListenerMap,
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  useSortable,
+  verticalListSortingStrategy,
+  sortableKeyboardCoordinates,
+  arrayMove,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
 import {
   createColumnHelper,
   flexRender,
@@ -9,6 +31,7 @@ import {
   type SortingState,
   type ColumnFiltersState,
   type ColumnSizingState,
+  type Row,
 } from '@tanstack/react-table';
 import { format } from 'date-fns';
 import { zhTW } from 'date-fns/locale';
@@ -56,6 +79,7 @@ import {
 import { toast } from 'sonner';
 
 import { useApiUrl } from '../contexts/EnvironmentContext';
+import { DragHandle } from './DragHandle';
 
 interface Post {
   id: string;
@@ -81,6 +105,7 @@ interface Post {
   readingTime: number;
   createdAt: string;
   updatedAt: string;
+  sortOrder: number;
 }
 
 interface PostsResponse {
@@ -88,6 +113,182 @@ interface PostsResponse {
   data: Post[];
   total: number;
 }
+
+interface DragContextValue {
+  attributes?: DraggableAttributes;
+  listeners?: SyntheticListenerMap;
+  isDragging: boolean;
+  disabled: boolean;
+}
+
+const RowDragContext = createContext<DragContextValue>({
+  attributes: undefined,
+  listeners: undefined,
+  isDragging: false,
+  disabled: true,
+});
+
+const useRowDragContext = () => useContext(RowDragContext);
+
+const ensureSortOrder = (value: unknown): number => {
+  const numeric = typeof value === 'number' ? value : Number(value);
+  if (!Number.isFinite(numeric) || numeric < 0) {
+    return 0;
+  }
+  return Math.floor(numeric);
+};
+
+const sortPostsForDisplay = (items: Post[]): Post[] => {
+  return [...items].sort((a, b) => {
+    const aOrder = ensureSortOrder(a.sortOrder);
+    const bOrder = ensureSortOrder(b.sortOrder);
+    const aAuto = aOrder === 0;
+    const bAuto = bOrder === 0;
+
+    if (aAuto !== bAuto) {
+      return aAuto ? 1 : -1;
+    }
+
+    if (!aAuto && !bAuto && aOrder !== bOrder) {
+      return aOrder - bOrder;
+    }
+
+    const aUpdated = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
+    const bUpdated = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
+
+    return bUpdated - aUpdated;
+  });
+};
+
+const mergePostUpdates = (current: Post[], updates: Post[]): Post[] => {
+  if (!Array.isArray(updates) || updates.length === 0) {
+    return current;
+  }
+
+  const normalized = updates.map((post) => ({
+    ...post,
+    sortOrder: ensureSortOrder(post.sortOrder),
+  }));
+
+  const updateMap = new Map(normalized.map((post) => [post.id, post]));
+
+  return current.map((post) => updateMap.get(post.id) ?? post);
+};
+
+interface ReorderResult {
+  nextPosts: Post[];
+  updates: { postId: string; sortOrder: number }[];
+}
+
+const computeReorderResult = (
+  posts: Post[],
+  activeId: string,
+  overId: string
+): ReorderResult | null => {
+  const ordered = sortPostsForDisplay(posts);
+  const activePost = ordered.find((post) => post.id === activeId);
+  const overPost = ordered.find((post) => post.id === overId);
+
+  if (!activePost || !overPost) {
+    return null;
+  }
+
+  const manualPosts = ordered.filter((post) => ensureSortOrder(post.sortOrder) > 0);
+  const autoPosts = ordered.filter((post) => ensureSortOrder(post.sortOrder) === 0);
+
+  const activeManualIndex = manualPosts.findIndex((post) => post.id === activeId);
+  const activeIsManual = activeManualIndex !== -1;
+
+  if (!activeIsManual) {
+    const manualWithoutActive = manualPosts;
+    const autoWithoutActive = autoPosts.filter((post) => post.id !== activeId);
+
+    const targetManualIndex = manualPosts.findIndex((post) => post.id === overId);
+    let insertionIndex = targetManualIndex;
+
+    if (insertionIndex === -1) {
+      insertionIndex = manualWithoutActive.length === 0 ? 0 : manualWithoutActive.length;
+    }
+
+    const manualWithActive = [...manualWithoutActive];
+    manualWithActive.splice(insertionIndex, 0, { ...activePost });
+
+    const normalizedManual = manualWithActive.map((post, index) => ({
+      ...post,
+      sortOrder: index + 1,
+    }));
+
+    const manualMap = new Map(normalizedManual.map((post) => [post.id, post]));
+    const autoSet = new Set(autoWithoutActive.map((post) => post.id));
+
+    const nextPosts = sortPostsForDisplay(
+      ordered.map((post) => {
+        if (manualMap.has(post.id)) {
+          return manualMap.get(post.id)!;
+        }
+
+        if (autoSet.has(post.id)) {
+          return { ...post, sortOrder: 0 };
+        }
+
+        return post;
+      })
+    );
+
+    const updates = normalizedManual.map((post) => ({
+      postId: post.id,
+      sortOrder: post.sortOrder,
+    }));
+
+    return { nextPosts, updates };
+  }
+
+  const overIsAuto = ensureSortOrder(overPost.sortOrder) === 0;
+
+  if (overIsAuto) {
+    const manualWithoutActive = manualPosts
+      .filter((post) => post.id !== activeId)
+      .map((post, index) => ({ ...post, sortOrder: index + 1 }));
+
+    const autoWithoutActive = autoPosts.filter((post) => post.id !== activeId);
+
+    const insertionIndex = autoWithoutActive.findIndex((post) => post.id === overId);
+    const boundedIndex = insertionIndex === -1 ? autoWithoutActive.length : insertionIndex;
+
+    const updatedAuto = [...autoWithoutActive];
+    updatedAuto.splice(boundedIndex, 0, { ...activePost, sortOrder: 0 });
+
+    const nextPosts = sortPostsForDisplay([...manualWithoutActive, ...updatedAuto]);
+
+    const updates = [
+      ...manualWithoutActive.map((post) => ({ postId: post.id, sortOrder: post.sortOrder })),
+      { postId: activePost.id, sortOrder: 0 },
+    ];
+
+    return { nextPosts, updates };
+  }
+
+  const targetManualIndex = manualPosts.findIndex((post) => post.id === overId);
+
+  if (targetManualIndex === -1) {
+    return null;
+  }
+
+  const reorderedManual = arrayMove(manualPosts, activeManualIndex, targetManualIndex).map(
+    (post, index) => ({
+      ...post,
+      sortOrder: index + 1,
+    })
+  );
+
+  const manualMap = new Map(reorderedManual.map((post) => [post.id, post]));
+
+  const nextPosts = sortPostsForDisplay(ordered.map((post) => manualMap.get(post.id) ?? post));
+
+  const updates = reorderedManual.map((post) => ({ postId: post.id, sortOrder: post.sortOrder }));
+
+  return { nextPosts, updates };
+};
 
 const statusConfig = {
   draft: { label: '草稿', color: 'bg-gray-100 text-gray-800' },
@@ -114,12 +315,33 @@ export default function PostManagement() {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [globalFilter, setGlobalFilter] = useState('');
-  const [columnSizing, setColumnSizing] = useState<ColumnSizingState>({ title: 320 });
+  const [columnSizing, setColumnSizing] = useState<ColumnSizingState>({
+    sortOrder: 90,
+    title: 320,
+  });
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [categories, setCategories] = useState<Category[]>([]);
+  const [activeDragId, setActiveDragId] = useState<string | null>(null);
+  const [isSubmittingOrder, setIsSubmittingOrder] = useState(false);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 6,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const sortedPosts = useMemo(() => sortPostsForDisplay(posts), [posts]);
+  const sortableIds = useMemo(() => sortedPosts.map((post) => post.id), [sortedPosts]);
+  const isDefaultSorting = sorting.length === 0;
+  const dragDisabled = !isDefaultSorting || isSubmittingOrder || loading;
 
   // Fetch posts from API
   const fetchPosts = async () => {
@@ -158,7 +380,11 @@ export default function PostManagement() {
             if (retry.ok) {
               const data: PostsResponse = await retry.json();
               if (data.success) {
-                setPosts(data.data);
+                const normalizedPosts = (data.data ?? []).map((post) => ({
+                  ...post,
+                  sortOrder: ensureSortOrder(post.sortOrder),
+                }));
+                setPosts(sortPostsForDisplay(normalizedPosts));
                 return; // success path, exit
               }
             }
@@ -171,7 +397,11 @@ export default function PostManagement() {
 
       const data: PostsResponse = await response.json();
       if (data.success) {
-        setPosts(data.data);
+        const normalizedPosts = (data.data ?? []).map((post) => ({
+          ...post,
+          sortOrder: ensureSortOrder(post.sortOrder),
+        }));
+        setPosts(sortPostsForDisplay(normalizedPosts));
       }
     } catch (error) {
       console.error('Error fetching posts:', error);
@@ -234,7 +464,118 @@ export default function PostManagement() {
     fetchCategories();
   }, []);
 
+  const handleDragStart = useCallback(
+    (event: DragStartEvent) => {
+      if (dragDisabled) {
+        return;
+      }
+
+      const activeId = String(event.active.id);
+      const activePost = posts.find((post) => post.id === activeId);
+
+      if (!activePost) {
+        setActiveDragId(null);
+        return;
+      }
+
+      setActiveDragId(activeId);
+    },
+    [dragDisabled, posts]
+  );
+
+  const handleDragEnd = useCallback(
+    (event: DragEndEvent) => {
+      const activeId = String(event.active.id);
+      const overId = event.over ? String(event.over.id) : null;
+
+      setActiveDragId(null);
+
+      if (!overId || activeId === overId || dragDisabled) {
+        return;
+      }
+
+      const result = computeReorderResult(posts, activeId, overId);
+      if (!result || result.updates.length === 0) {
+        return;
+      }
+
+      const previousPosts = posts;
+      setPosts(result.nextPosts);
+      setIsSubmittingOrder(true);
+
+      void (async () => {
+        try {
+          const response = await fetch(`${apiUrl}/api/posts/batch-sort-order`, {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ updates: result.updates }),
+          });
+
+          if (!response.ok) {
+            throw new Error('Failed to update sort order');
+          }
+
+          const json = await response.json();
+          if (!json.success) {
+            throw new Error(json.error ?? 'Failed to update sort order');
+          }
+
+          if (Array.isArray(json.data)) {
+            setPosts((current) =>
+              sortPostsForDisplay(mergePostUpdates(current, json.data as Post[]))
+            );
+          }
+
+          toast.success('排序已更新');
+        } catch (error) {
+          console.error('Error updating sort order:', error);
+          toast.error('更新排序失敗，已還原');
+          setPosts(previousPosts);
+        } finally {
+          setIsSubmittingOrder(false);
+        }
+      })();
+    },
+    [apiUrl, dragDisabled, posts]
+  );
+
+  const handleDragCancel = useCallback(() => {
+    setActiveDragId(null);
+  }, []);
+
   const columns = [
+    columnHelper.display({
+      id: 'sortOrder',
+      header: '排序',
+      enableSorting: false,
+      size: columnSizing.sortOrder ?? 80,
+      cell: (info) => {
+        const drag = useRowDragContext();
+        const sortOrder = ensureSortOrder(info.row.original.sortOrder);
+        const isManual = sortOrder > 0;
+        const dragLabel = isManual ? '拖曳以調整排序' : '拖曳以設定排序';
+
+        return (
+          <div className="flex items-center gap-2">
+            <DragHandle
+              listeners={drag.listeners}
+              attributes={drag.attributes}
+              disabled={drag.disabled}
+              isDragging={drag.isDragging}
+              label={dragLabel}
+            />
+            {isManual ? (
+              <span className="text-sm text-muted-foreground">{sortOrder}</span>
+            ) : (
+              <span className="rounded border border-dashed border-muted-foreground/40 px-2 py-1 text-xs text-muted-foreground">
+                自動排序
+              </span>
+            )}
+          </div>
+        );
+      },
+    }),
     columnHelper.accessor('title', {
       header: '文章標題',
       size: columnSizing.title ?? 320,
@@ -304,13 +645,14 @@ export default function PostManagement() {
       ),
       size: 100,
     }),
-    columnHelper.accessor('readingTime', {
-      header: '閱讀時間',
-      cell: (info) => (
-        <span className="text-sm text-gray-600">{Number(info.getValue()) || 0} 分鐘</span>
-      ),
-      size: 100,
-    }),
+    // TODO: Temporarily hidden - uncomment to show reading time column
+    // columnHelper.accessor('readingTime', {
+    //   header: '閱讀時間',
+    //   cell: (info) => (
+    //     <span className="text-sm text-gray-600">{Number(info.getValue()) || 0} 分鐘</span>
+    //   ),
+    //   size: 100,
+    // }),
     columnHelper.accessor('publishedAt', {
       header: '發布時間',
       cell: (info) => {
@@ -358,7 +700,7 @@ export default function PostManagement() {
   ];
 
   const table = useReactTable({
-    data: posts,
+    data: sortedPosts,
     columns,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
@@ -484,89 +826,98 @@ export default function PostManagement() {
 
       {/* Posts Table */}
       <div className="bg-background rounded-lg border border-border-foreground overflow-hidden">
-        <Table className="table-fixed">
-          <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => (
-                  <TableHead
-                    key={header.id}
-                    style={{
-                      width: header.getSize(),
-                      minWidth: header.column.columnDef.minSize,
-                      maxWidth: header.column.columnDef.maxSize,
-                    }}
-                    className={`relative select-none ${header.column.getCanSort() ? 'cursor-pointer' : ''}`}
-                    onClick={
-                      header.column.getCanSort()
-                        ? header.column.getToggleSortingHandler()
-                        : undefined
-                    }
-                  >
-                    {header.isPlaceholder ? null : (
-                      <div className="flex items-center justify-between gap-2">
-                        <div
-                          className="truncate"
-                          title={
-                            typeof header.column.columnDef.header === 'string'
-                              ? header.column.columnDef.header
-                              : undefined
-                          }
-                        >
-                          {flexRender(header.column.columnDef.header, header.getContext())}
-                        </div>
-                        {header.column.getIsSorted() ? (
-                          <span className="text-xs text-foreground/60">
-                            {header.column.getIsSorted() === 'asc' ? '↑' : '↓'}
-                          </span>
-                        ) : null}
-                      </div>
-                    )}
-                    {header.column.getCanResize() ? (
-                      <div
-                        onMouseDown={header.getResizeHandler()}
-                        onTouchStart={header.getResizeHandler()}
-                        onClick={(event) => event.stopPropagation()}
-                        className="absolute right-0 top-0 h-full w-1 cursor-col-resize select-none"
-                      >
-                        <div
-                          className={`h-full w-[3px] translate-x-1/2 rounded-full bg-transparent transition-colors hover:bg-border${header.column.getIsResizing() ? ' bg-primary/50' : ''}`}
-                        />
-                      </div>
-                    ) : null}
-                  </TableHead>
-                ))}
-              </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            {table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id}>
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell
-                      key={cell.id}
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          modifiers={[restrictToVerticalAxis]}
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}
+          onDragCancel={handleDragCancel}
+        >
+          <Table className="table-fixed">
+            <TableHeader>
+              {table.getHeaderGroups().map((headerGroup) => (
+                <TableRow key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => (
+                    <TableHead
+                      key={header.id}
                       style={{
-                        width: cell.column.getSize(),
-                        minWidth: cell.column.columnDef.minSize,
-                        maxWidth: cell.column.columnDef.maxSize,
+                        width: header.getSize(),
+                        minWidth: header.column.columnDef.minSize,
+                        maxWidth: header.column.columnDef.maxSize,
                       }}
-                      className={cell.column.id === 'title' ? 'align-top' : undefined}
+                      className={`relative select-none ${header.column.getCanSort() ? 'cursor-pointer' : ''}`}
+                      onClick={
+                        header.column.getCanSort()
+                          ? header.column.getToggleSortingHandler()
+                          : undefined
+                      }
                     >
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                    </TableCell>
+                      {header.isPlaceholder ? null : (
+                        <div className="flex items-center justify-between gap-2">
+                          <div
+                            className="truncate"
+                            title={
+                              typeof header.column.columnDef.header === 'string'
+                                ? header.column.columnDef.header
+                                : undefined
+                            }
+                          >
+                            {flexRender(header.column.columnDef.header, header.getContext())}
+                          </div>
+                          {header.column.getIsSorted() ? (
+                            <span className="text-xs text-foreground/60">
+                              {header.column.getIsSorted() === 'asc' ? '↑' : '↓'}
+                            </span>
+                          ) : null}
+                        </div>
+                      )}
+                      {header.column.getCanResize() ? (
+                        <div
+                          onMouseDown={header.getResizeHandler()}
+                          onTouchStart={header.getResizeHandler()}
+                          onClick={(event) => event.stopPropagation()}
+                          className="absolute right-0 top-0 h-full w-1 cursor-col-resize select-none"
+                        >
+                          <div
+                            className={`h-full w-[3px] translate-x-1/2 rounded-full bg-transparent transition-colors hover:bg-border${header.column.getIsResizing() ? ' bg-primary/50' : ''}`}
+                          />
+                        </div>
+                      ) : null}
+                    </TableHead>
                   ))}
                 </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={columns.length} className="h-24 text-center">
-                  沒有找到相關文章
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
+              ))}
+            </TableHeader>
+            <SortableContext items={sortableIds} strategy={verticalListSortingStrategy}>
+              <TableBody>
+                {table.getRowModel().rows.length ? (
+                  table
+                    .getRowModel()
+                    .rows.map((row) => (
+                      <SortableRow
+                        key={row.id}
+                        row={row}
+                        dragDisabled={dragDisabled}
+                        isActive={activeDragId === row.original.id}
+                      />
+                    ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={columns.length} className="h-24 text-center">
+                      沒有找到相關文章
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </SortableContext>
+          </Table>
+        </DndContext>
+        {dragDisabled ? (
+          <div className="border-t border-border/50 bg-muted/40 px-4 py-2 text-xs text-muted-foreground">
+            只有在預設排序時才能使用拖曳排序。
+          </div>
+        ) : null}
       </div>
 
       {/* Delete Confirmation Dialog */}
@@ -596,5 +947,61 @@ export default function PostManagement() {
         </AlertDialogContent>
       </AlertDialog>
     </div>
+  );
+}
+
+interface SortableRowProps {
+  row: Row<Post>;
+  dragDisabled: boolean;
+  isActive: boolean;
+}
+
+function SortableRow({ row, dragDisabled, isActive }: SortableRowProps) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: row.original.id,
+    disabled: dragDisabled,
+  });
+
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  const contextValue = useMemo(
+    () => ({
+      attributes,
+      listeners,
+      isDragging,
+      disabled: dragDisabled,
+    }),
+    [attributes, listeners, isDragging, dragDisabled]
+  );
+
+  return (
+    <RowDragContext.Provider value={contextValue}>
+      <TableRow
+        ref={setNodeRef}
+        data-dragging={isDragging}
+        data-active={isActive}
+        className={`transition-colors ${
+          dragDisabled ? '' : 'cursor-grab data-[dragging=true]:cursor-grabbing'
+        } ${isActive ? 'bg-muted/60' : ''}`}
+        style={style}
+      >
+        {row.getVisibleCells().map((cell) => (
+          <TableCell
+            key={cell.id}
+            style={{
+              width: cell.column.getSize(),
+              minWidth: cell.column.columnDef.minSize,
+              maxWidth: cell.column.columnDef.maxSize,
+            }}
+            className={cell.column.id === 'title' ? 'align-top' : undefined}
+          >
+            {flexRender(cell.column.columnDef.cell, cell.getContext())}
+          </TableCell>
+        ))}
+      </TableRow>
+    </RowDragContext.Provider>
   );
 }

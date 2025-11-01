@@ -35,6 +35,7 @@ import { toast } from 'sonner';
 import { BlockNoteEditor } from './editor';
 import { estimateReadingTimeMinutes } from './blogComposerUtils';
 import { ImageUpload } from './ImageUpload';
+import { SortOrderField } from './SortOrderField';
 import { useApiUrl, useEnvironment } from '../contexts/EnvironmentContext';
 
 // Overlay settings imports - EyeIcon already imported above
@@ -82,6 +83,18 @@ const blogPostSchema = z.object({
   // Publishing - allow any string or empty
   scheduledAt: z.preprocess((val) => (val === null || val === undefined ? '' : val), z.string()),
   readingTime: z.number().min(1).max(60).default(5),
+  sortOrder: z
+    .preprocess((val) => {
+      if (val === null || val === undefined || val === '') {
+        return 0;
+      }
+      if (typeof val === 'string') {
+        const parsed = Number.parseInt(val, 10);
+        return Number.isNaN(parsed) ? val : parsed;
+      }
+      return val;
+    }, z.number().int().min(0, '排序順序必須是 0 或正整數'))
+    .default(0),
   // Overlay Settings - Single JSON object as per design.md
   overlaySettings: z.object({
     enabled: z.boolean().default(false),
@@ -155,6 +168,7 @@ export default function BlogComposer() {
       readingTime: 5,
       category: '',
       categoryId: '',
+      sortOrder: 0,
     },
   });
 
@@ -380,6 +394,7 @@ export default function BlogComposer() {
           scheduledAt: post.scheduledAt,
           readingTime: post.readingTime,
           overlaySettings: post.overlaySettings,
+          sortOrder: post.sortOrder ?? 0,
         });
 
         // Ensure categoryId is set - try multiple matching strategies
@@ -465,6 +480,8 @@ export default function BlogComposer() {
         ogDescription: sanitizeString(data.ogDescription),
         ogImage: sanitizeString(data.ogImage),
       };
+
+      payload.sortOrder = Math.max(0, Math.floor(Number(data.sortOrder ?? 0)));
 
       // Handle scheduledAt as Date object or remove if empty
       if (data.scheduledAt && data.scheduledAt.trim() !== '') {
@@ -799,6 +816,20 @@ export default function BlogComposer() {
                     className={`placeholder:opacity-55 placeholder:text-sm`}
                   />
                 </div>
+
+                <Controller
+                  name="sortOrder"
+                  control={control}
+                  render={({ field }) => (
+                    <SortOrderField
+                      value={typeof field.value === 'number' ? field.value : Number(field.value) || 0}
+                      onChange={(val) => field.onChange(val)}
+                      onBlur={field.onBlur}
+                      disabled={saving}
+                      error={errors.sortOrder?.message}
+                    />
+                  )}
+                />
               </CardContent>
             </Card>
 

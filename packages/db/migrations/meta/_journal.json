@@ -50,6 +50,13 @@
       "when": 1761893277283,
       "tag": "0006_hot_slayback",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1761929397668,
+      "tag": "0007_blog_post_sort_order_indexes",
+      "breakpoints": true
     }
   ]
 }

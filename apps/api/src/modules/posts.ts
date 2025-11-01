@@ -6,7 +6,8 @@ import type { createStorageManager } from '../lib/storage';
 import type { createAuth } from '@blackliving/auth';
 import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
-import { eq, desc, like, and, or, count, sql } from 'drizzle-orm';
+import { eq, desc, asc, like, and, or, count, sql, inArray } from 'drizzle-orm';
+import type { SQL } from 'drizzle-orm';
 import { posts, postCategories } from '@blackliving/db/schema';
 import { requireAuth, requireAdmin, createBetterAuthMiddleware } from '@blackliving/auth';
 import { createId } from '@paralleldrive/cuid2';
@@ -56,6 +57,18 @@ const createPostSchema = z.object({
   status: z.enum(['draft', 'published', 'scheduled', 'archived']).default('draft'),
   featured: z.boolean().default(false),
   allowComments: z.boolean().default(true),
+  sortOrder: z
+    .preprocess((value) => {
+      if (value === '' || value === null || value === undefined) {
+        return 0;
+      }
+      if (typeof value === 'string') {
+        const numeric = Number.parseInt(value, 10);
+        return Number.isNaN(numeric) ? value : numeric;
+      }
+      return value;
+    }, z.number().int().min(0, '排序順序必須大於或等於 0'))
+    .default(0),
   featuredImage: z.string().optional(),
   // SEO Fields
   seoTitle: z.string().optional(),
@@ -80,6 +93,17 @@ const createPostSchema = z.object({
 
 const updatePostSchema = createPostSchema.partial();
 
+const batchSortOrderSchema = z.object({
+  updates: z
+    .array(
+      z.object({
+        postId: z.string().min(1, 'Post ID is required'),
+        sortOrder: createPostSchema.shape.sortOrder,
+      })
+    )
+    .min(1, '至少需要一筆排序更新'),
+});
+
 const querySchema = z.object({
   page: z.string().optional().default('1'),
   limit: z.string().optional().default('20'),
@@ -89,9 +113,9 @@ const querySchema = z.object({
   featured: z.enum(['true', 'false', 'all']).optional().default('all'),
   author: z.string().optional(),
   sortBy: z
-    .enum(['createdAt', 'publishedAt', 'title', 'viewCount'])
+    .enum(['sortOrder', 'createdAt', 'publishedAt', 'title', 'viewCount'])
     .optional()
-    .default('createdAt'),
+    .default('sortOrder'),
   sortOrder: z.enum(['asc', 'desc']).optional().default('desc'),
 });
 
@@ -122,6 +146,12 @@ const deserializePost = (post: any) => {
   }
   return post;
 };
+
+const getThreeLayerSorting = (): SQL[] => [
+  sql`(${posts.sortOrder} = 0)`,
+  asc(posts.sortOrder),
+  desc(posts.updatedAt),
+];
 
 // POST CATEGORIES ENDPOINTS
 
@@ -282,22 +312,28 @@ postsRouter.get(
 
       const whereClause = and(...conditions);
 
-      // Build sort order
-      let orderBy;
-      const direction = sortOrder === 'desc' ? desc : undefined;
+      // Build sort order with three-layer sorting as the primary ordering
+      const orderByClauses: SQL[] = [...getThreeLayerSorting()];
 
-      switch (sortBy) {
-        case 'publishedAt':
-          orderBy = direction ? desc(posts.publishedAt) : posts.publishedAt;
-          break;
-        case 'title':
-          orderBy = direction ? desc(posts.title) : posts.title;
-          break;
-        case 'viewCount':
-          orderBy = direction ? desc(posts.viewCount) : posts.viewCount;
-          break;
-        default:
-          orderBy = direction ? desc(posts.publishedAt) : posts.publishedAt;
+      if (sortBy && sortBy !== 'sortOrder') {
+        const isAscending = sortOrder === 'asc';
+
+        switch (sortBy) {
+          case 'publishedAt':
+            orderByClauses.push(isAscending ? asc(posts.publishedAt) : desc(posts.publishedAt));
+            break;
+          case 'title':
+            orderByClauses.push(isAscending ? asc(posts.title) : desc(posts.title));
+            break;
+          case 'viewCount':
+            orderByClauses.push(isAscending ? asc(posts.viewCount) : desc(posts.viewCount));
+            break;
+          case 'createdAt':
+            orderByClauses.push(isAscending ? asc(posts.createdAt) : desc(posts.createdAt));
+            break;
+          default:
+            break;
+        }
       }
 
       // Get total count
@@ -325,10 +361,11 @@ postsRouter.get(
           readingTime: posts.readingTime,
           overlaySettings: posts.overlaySettings,
           createdAt: posts.createdAt,
+          sortOrder: posts.sortOrder,
         })
         .from(posts)
         .where(whereClause)
-        .orderBy(orderBy)
+        .orderBy(...orderByClauses)
         .limit(limitNum)
         .offset(offset);
 
@@ -403,22 +440,28 @@ postsRouter.get('/', requireAdmin(), zValidator('query', querySchema), async (c)
 
     const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
-    // Build sort order
-    let orderBy;
-    const direction = sortOrder === 'desc' ? desc : undefined;
+    // Build sort order with three-layer sorting as the primary ordering
+    const orderByClauses: SQL[] = [...getThreeLayerSorting()];
 
-    switch (sortBy) {
-      case 'publishedAt':
-        orderBy = direction ? desc(posts.publishedAt) : posts.publishedAt;
-        break;
-      case 'title':
-        orderBy = direction ? desc(posts.title) : posts.title;
-        break;
-      case 'viewCount':
-        orderBy = direction ? desc(posts.viewCount) : posts.viewCount;
-        break;
-      default:
-        orderBy = direction ? desc(posts.createdAt) : posts.createdAt;
+    if (sortBy && sortBy !== 'sortOrder') {
+      const isAscending = sortOrder === 'asc';
+
+      switch (sortBy) {
+        case 'publishedAt':
+          orderByClauses.push(isAscending ? asc(posts.publishedAt) : desc(posts.publishedAt));
+          break;
+        case 'title':
+          orderByClauses.push(isAscending ? asc(posts.title) : desc(posts.title));
+          break;
+        case 'viewCount':
+          orderByClauses.push(isAscending ? asc(posts.viewCount) : desc(posts.viewCount));
+          break;
+        case 'createdAt':
+          orderByClauses.push(isAscending ? asc(posts.createdAt) : desc(posts.createdAt));
+          break;
+        default:
+          break;
+      }
     }
 
     // Get total count
@@ -431,7 +474,7 @@ postsRouter.get('/', requireAdmin(), zValidator('query', querySchema), async (c)
       .select()
       .from(posts)
       .where(whereClause)
-      .orderBy(orderBy)
+      .orderBy(...orderByClauses)
       .limit(limitNum)
       .offset(offset);
 
@@ -543,22 +586,28 @@ postsRouter.get('/public', zValidator('query', querySchema.omit({ status: true }
 
     const whereClause = and(...conditions);
 
-    // Build sort order
-    let orderBy;
-    const direction = sortOrder === 'desc' ? desc : undefined;
+    // Build sort order with three-layer sorting as the primary ordering
+    const orderByClauses: SQL[] = [...getThreeLayerSorting()];
 
-    switch (sortBy) {
-      case 'publishedAt':
-        orderBy = direction ? desc(posts.publishedAt) : posts.publishedAt;
-        break;
-      case 'title':
-        orderBy = direction ? desc(posts.title) : posts.title;
-        break;
-      case 'viewCount':
-        orderBy = direction ? desc(posts.viewCount) : posts.viewCount;
-        break;
-      default:
-        orderBy = direction ? desc(posts.publishedAt) : posts.publishedAt;
+    if (sortBy && sortBy !== 'sortOrder') {
+      const isAscending = sortOrder === 'asc';
+
+      switch (sortBy) {
+        case 'publishedAt':
+          orderByClauses.push(isAscending ? asc(posts.publishedAt) : desc(posts.publishedAt));
+          break;
+        case 'title':
+          orderByClauses.push(isAscending ? asc(posts.title) : desc(posts.title));
+          break;
+        case 'viewCount':
+          orderByClauses.push(isAscending ? asc(posts.viewCount) : desc(posts.viewCount));
+          break;
+        case 'createdAt':
+          orderByClauses.push(isAscending ? asc(posts.createdAt) : desc(posts.createdAt));
+          break;
+        default:
+          break;
+      }
     }
 
     // Get total count
@@ -578,6 +627,7 @@ postsRouter.get('/public', zValidator('query', querySchema.omit({ status: true }
         status: posts.status,
         featured: posts.featured,
         category: posts.category,
+        categoryId: posts.categoryId,
         tags: posts.tags,
         featuredImage: posts.featuredImage,
         publishedAt: posts.publishedAt,
@@ -585,10 +635,11 @@ postsRouter.get('/public', zValidator('query', querySchema.omit({ status: true }
         readingTime: posts.readingTime,
         overlaySettings: posts.overlaySettings,
         createdAt: posts.createdAt,
+        sortOrder: posts.sortOrder,
       })
       .from(posts)
       .where(whereClause)
-      .orderBy(orderBy)
+      .orderBy(...orderByClauses)
       .limit(limitNum)
       .offset(offset);
 
@@ -725,9 +776,12 @@ postsRouter.post('/', requireAdmin(), zValidator('json', createPostSchema), asyn
     // Calculate reading time if not provided
     const readingTime = postData.readingTime || calculateReadingTime(postData.content);
 
+    const sanitizedSortOrder = Math.max(0, Math.floor(postData.sortOrder ?? 0));
+
     const newPost = {
       id: createId(),
       ...postData,
+      sortOrder: sanitizedSortOrder,
       authorId: user.id,
       authorName: user.name || user.email,
       readingTime,
@@ -760,6 +814,103 @@ postsRouter.post('/', requireAdmin(), zValidator('json', createPostSchema), asyn
     );
   }
 });
+
+// POST /api/posts/batch-sort-order - Update sort order in batch (atomic)
+postsRouter.post(
+  '/batch-sort-order',
+  requireAdmin(),
+  zValidator('json', batchSortOrderSchema),
+  async (c) => {
+    try {
+      const db = c.get('db');
+      const { updates } = c.req.valid('json');
+
+      const normalized = updates.map((update) => ({
+        postId: update.postId,
+        sortOrder: Math.max(0, Math.floor(update.sortOrder ?? 0)),
+      }));
+
+      const uniqueIds = new Set(normalized.map((item) => item.postId));
+      if (uniqueIds.size !== normalized.length) {
+        return c.json(
+          {
+            success: false,
+            error: 'Duplicate post IDs detected in updates payload',
+          },
+          400
+        );
+      }
+
+      const idList = Array.from(uniqueIds);
+      if (idList.length === 0) {
+        return c.json(
+          {
+            success: false,
+            error: 'No valid updates provided',
+          },
+          400
+        );
+      }
+
+      const existingPosts = await db
+        .select({ id: posts.id })
+        .from(posts)
+        .where(inArray(posts.id, idList));
+
+      if (existingPosts.length !== idList.length) {
+        const missingIds = idList.filter(
+          (id) => !existingPosts.some((post) => post.id === id)
+        );
+
+        return c.json(
+          {
+            success: false,
+            error: `Posts not found: ${missingIds.join(', ')}`,
+          },
+          404
+        );
+      }
+
+      const now = new Date();
+
+      const updateQueries = normalized.map(({ postId, sortOrder }) =>
+        db
+          .update(posts)
+          .set({ sortOrder, updatedAt: now })
+          .where(eq(posts.id, postId))
+      );
+
+      await db.batch(updateQueries);
+
+      const updated = await db
+        .select()
+        .from(posts)
+        .where(inArray(posts.id, idList));
+
+      const postsById = new Map(
+        updated.map((post) => [post.id, deserializePost(post)])
+      );
+
+      const orderedResults = normalized
+        .map((update) => postsById.get(update.postId))
+        .filter((post): post is Record<string, unknown> => Boolean(post));
+
+      return c.json({
+        success: true,
+        data: orderedResults,
+      });
+    } catch (error) {
+      console.error('Error updating post sort order batch:', error);
+      return c.json(
+        {
+          success: false,
+          error: 'Failed to update post sort order',
+        },
+        500
+      );
+    }
+  }
+);
 
 // PUT /api/posts/:id - Update post
 postsRouter.put('/:id', requireAdmin(), zValidator('json', updatePostSchema), async (c) => {
@@ -813,6 +964,11 @@ postsRouter.put('/:id', requireAdmin(), zValidator('json', updatePostSchema), as
     // Set published date if status is changing to published
     if (updates.status === 'published' && existingPost[0].status !== 'published') {
       updates.publishedAt = new Date();
+    }
+
+    if (updates.sortOrder !== undefined) {
+      const numericSortOrder = Math.max(0, Math.floor(updates.sortOrder));
+      updates.sortOrder = numericSortOrder;
     }
 
     // Serialize overlaySettings to JSON string for D1 compatibility

@@ -160,6 +160,18 @@ pnpm test
 
 The E2E tests include both API and UI testing with automatic test server startup.
 
+### Manual Sort Order Verification (Chrome DevTools)
+
+Use Chrome DevTools when validating the blog post sort-order workflow end-to-end:
+
+1. Start the API (`pnpm dev` in `apps/api`) and admin (`pnpm dev` in `apps/admin`) servers, then sign in as an admin user.
+2. Open the Blog Composer (`/dashboard/blog-composer`), set **排序順序** to a non-zero value, and submit the form. In DevTools → Network, confirm the `POST /api/posts` request body includes `sortOrder` with the expected integer.
+3. Navigate to **文章管理** (`/dashboard/posts`) and confirm the manual post appears ahead of “自動排序” rows. Filtering or searching must retain the manual order (requirement 3.4).
+4. With DevTools open, drag the row using the grip icon to reorder posts. Verify Chrome logs a `POST /api/posts/batch-sort-order` call where each payload entry has the recalculated `sortOrder` (requirement 6.5).
+5. Inspect the batch endpoint response to ensure the API returns the updated posts array, then confirm the UI reflects the new ordering. If the network call fails, the UI should revert and surface the toast error.
+
+Repeat the workflow for posts where `sortOrder = 0` to ensure auto-sorted items remain at the end of filtered results.
+
 ## Deployment
 
 ### Cloudflare Workers Deployment

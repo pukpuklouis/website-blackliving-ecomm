@@ -122,15 +122,22 @@ export const PostSchema = z.object({
   description: z.string(),
   content: z.string(),
   authorId: z.string().optional(),
+  authorName: z.string().optional(),
   status: z.enum(['draft', 'published', 'archived']),
   featured: z.boolean().default(false),
+  category: z.string().optional(),
+  categoryId: z.string().optional(),
   tags: z.array(z.string()),
   featuredImage: z.string().optional(),
   seoTitle: z.string().optional(),
   seoDescription: z.string().optional(),
+  seoKeywords: z.array(z.string()).optional(),
   publishedAt: z.date().optional(),
+  scheduledAt: z.date().optional(),
   createdAt: z.date(),
   updatedAt: z.date(),
+  sortOrder: z.number().int().min(0).default(0),
+  overlaySettings: z.record(z.any()).optional(),
 });
 
 export type Post = z.infer<typeof PostSchema>;

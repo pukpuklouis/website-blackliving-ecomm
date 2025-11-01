@@ -105,6 +105,7 @@ export interface CreatePostRequest {
   seoTitle?: string;
   seoDescription?: string;
   publishedAt?: string;
+  sortOrder?: number;
 }
 
 export interface UpdatePostRequest extends Partial<CreatePostRequest> {
