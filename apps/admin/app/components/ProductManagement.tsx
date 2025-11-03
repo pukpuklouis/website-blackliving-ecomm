@@ -75,6 +75,7 @@ export interface Product {
     price: number;
     sku?: string;
     size?: string;
+    firmness?: string;
   }>;
   features: string[];
   specifications: Record<string, string>;
@@ -106,6 +107,7 @@ export const productSchema = z.object({
         price: z.number().min(0),
         sku: z.string().optional(),
         size: z.string().optional(),
+        firmness: z.string().optional(),
       })
     )
     .min(1, '至少需要一個產品變體'),
@@ -781,7 +783,7 @@ export default function ProductManagement({ initialProducts }: { initialProducts
   const handleAddVariant = () => {
     setFormData((prev) => ({
       ...prev,
-      variants: [...(prev.variants || []), { name: '', price: 0, sku: '', size: '' }],
+      variants: [...(prev.variants || []), { name: '', price: 0, sku: '', size: '', firmness: '' }],
     }));
     setFormErrors((prev) => {
       if (!prev.variants) return prev;
@@ -1502,7 +1504,7 @@ export default function ProductManagement({ initialProducts }: { initialProducts
                         onChange={(e) => handleUpdateVariant(i, 'name', e.target.value)}
                       />
                     </div>
-                    <div className="col-span-3 flex flex-col gap-2">
+                    <div className="col-span-2 flex flex-col gap-2">
                       <Label>價格</Label>
                       <Input
                         type="number"
@@ -1511,7 +1513,7 @@ export default function ProductManagement({ initialProducts }: { initialProducts
                         onChange={(e) => handleUpdateVariant(i, 'price', e.target.value)}
                       />
                     </div>
-                    <div className="col-span-3 flex flex-col gap-2">
+                    <div className="col-span-2 flex flex-col gap-2">
                       <Label>SKU</Label>
                       <Input
                         value={v?.sku || ''}
@@ -1523,6 +1525,13 @@ export default function ProductManagement({ initialProducts }: { initialProducts
                       <Input
                         value={v?.size || ''}
                         onChange={(e) => handleUpdateVariant(i, 'size', e.target.value)}
+                      />
+                    </div>
+                    <div className="col-span-2 flex flex-col gap-2">
+                      <Label>硬度</Label>
+                      <Input
+                        value={v?.firmness || ''}
+                        onChange={(e) => handleUpdateVariant(i, 'firmness', e.target.value)}
                       />
                     </div>
                     <div className="col-span-1">
@@ -1729,6 +1738,7 @@ export function normalizeFormData(
             : Number((variant?.price as unknown as string) ?? 0) || 0,
         sku: variant?.sku ? variant.sku.toString().trim() : undefined,
         size: variant?.size ? variant.size.toString().trim() : undefined,
+        firmness: variant?.firmness ? variant.firmness.toString().trim() : undefined,
       }))
     : [];
 

@@ -1,0 +1,59 @@
+---
+import ImageBanner from './ImageBanner.astro';
+import type { CategoryConfig } from '../types/category.ts';
+
+interface Props {
+  categoryConfig: CategoryConfig;
+  className?: string;
+  aspectRatio?: string;
+  overlayClassName?: string;
+}
+
+const {
+  categoryConfig,
+  className = '',
+  aspectRatio = '16/9',
+  overlayClassName = 'absolute inset-0 flex flex-col items-center justify-center text-center text-white bg-black/20'
+} = Astro.props;
+
+// Determine image source based on category
+const getCategoryImage = (category: string) => {
+  // Map category slugs to banner images
+  const imageMap: Record<string, string> = {
+    'simmons-black': '/images/banners/blackliving-categories-beautyrest-banner.webp',
+    'accessories': '/images/banners/blackliving-categories-accesories-banner.webp',
+    'us-imports': '/images/banners/us-imports-banner.webp',
+    // Add more category mappings as needed
+  };
+
+  return imageMap[category] || '/images/banners/default-category-banner.webp';
+};
+
+const bannerImage = getCategoryImage(categoryConfig.slug);
+const altText = `${categoryConfig.series} - ${categoryConfig.description.split('。')[0]}`;
+---
+
+<div class={`relative ${className}`}>
+  <ImageBanner
+    src={bannerImage}
+    alt={altText}
+    aspectRatio={aspectRatio}
+    className="w-full"
+  />
+
+  <!-- Overlay Content -->
+  <div class={overlayClassName} role="banner" aria-labelledby="category-title">
+    <h1
+      id="category-title"
+      class="text-3xl md:text-5xl font-bold mb-4 drop-shadow-lg leading-tight"
+    >
+      {categoryConfig.title}
+    </h1>
+    <p
+      class="text-lg md:text-xl mb-6 drop-shadow-md max-w-2xl mx-auto px-4 leading-relaxed"
+      aria-describedby="category-description"
+    >
+      {categoryConfig.description.split('。')[0]}。
+    </p>
+  </div>
+</div>

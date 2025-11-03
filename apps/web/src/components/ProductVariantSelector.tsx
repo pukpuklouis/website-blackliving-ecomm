@@ -167,27 +167,6 @@ export default function ProductVariantSelector({
 
   return (
     <div className={`space-y-6 ${className}`}>
-      {/* Size Selection - always show dropdown, even for single option */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-3">選擇尺寸 *</label>
-        <Select
-          value={selectedVariant.size || ''}
-          onValueChange={(value: string) => handleVariantChange('size', value)}
-        >
-          <SelectTrigger className="w-full">
-            <SelectValue placeholder="請選擇尺寸" />
-          </SelectTrigger>
-          <SelectContent>
-            {sizeOptions.map((option) => (
-              <SelectItem key={option.value} value={option.value}>
-                <span className="font-medium">{option.label}</span>
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        {errors.size && <p className="text-red-500 text-sm mt-1">{errors.size}</p>}
-      </div>
-
       {/* Firmness Selection - always show dropdown, even for single option */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-3">選擇軟硬度 *</label>
@@ -207,6 +186,26 @@ export default function ProductVariantSelector({
           </SelectContent>
         </Select>
         {errors.firmness && <p className="text-red-500 text-sm mt-1">{errors.firmness}</p>}
+      </div>
+      {/* Size Selection - always show dropdown, even for single option */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-3">選擇尺寸 *</label>
+        <Select
+          value={selectedVariant.size || ''}
+          onValueChange={(value: string) => handleVariantChange('size', value)}
+        >
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder="請選擇尺寸" />
+          </SelectTrigger>
+          <SelectContent>
+            {sizeOptions.map((option) => (
+              <SelectItem key={option.value} value={option.value}>
+                <span className="font-medium">{option.label}</span>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        {errors.size && <p className="text-red-500 text-sm mt-1">{errors.size}</p>}
       </div>
 
       {/* Price Display */}

@@ -3,7 +3,9 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Breadcrumbs from '../components/blog/Breadcrumbs.astro';
 import ProductCard from '../components/ProductCard.astro';
+import CategoryImageBanner from '../components/CategoryImageBanner.astro';
 import type { CategoryConfig } from '../types/category.ts';
+import CTA from '../components/CTA.astro';
 
 export interface Props {
   categoryConfig: CategoryConfig;
@@ -165,21 +167,16 @@ const structuredData = {
   <meta slot="head" name="robots" content="index,follow" />
   <link slot="head" rel="canonical" href={canonicalUrl.toString()} />
 
-  <Breadcrumbs category={{ name: categoryConfig.series, slug: categoryConfig.slug }} />
-
+  
   <main class="container mx-auto px-4 py-8">
+    <!-- Breadcrumbs -->
+    <Breadcrumbs category={{ name: categoryConfig.series, slug: categoryConfig.slug }} />
     <!-- Hero Section -->
-    <header class="text-center mb-12">
-      <h1 class="text-4xl md:text-5xl font-bold text-gray-900 mb-4">{categoryConfig.series}</h1>
-      <p class="text-xl text-gray-600 mb-6">{categoryConfig.description.split('。')[0]}。</p>
-      <div class="flex flex-wrap justify-center gap-4 text-sm">
-        {
-          features.map((feature) => (
-            <span class="bg-black text-white px-3 py-1 rounded-full">{feature}</span>
-          ))
-        }
-      </div>
-    </header>
+    <CategoryImageBanner
+      categoryConfig={categoryConfig}
+      className="mb-12 rounded-xl overflow-hidden"
+      aspectRatio="11/3"
+    />
 
     <!-- Error State -->
     {
@@ -274,67 +271,15 @@ const structuredData = {
         </section>
       )
     }
-
-    <!-- Value Propositions -->
-    <section class="mt-16 py-12 bg-gray-50 rounded-xl" aria-labelledby="benefits-heading">
-      <div class="text-center">
-        <h2 id="benefits-heading" class="text-2xl font-bold text-gray-900 mb-8">
-          為什麼選擇黑哥家居？
-        </h2>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div class="text-center">
-            <div
-              class="w-12 h-12 bg-black rounded-full flex items-center justify-center mx-auto mb-4"
-            >
-              <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                >
-                </path>
-              </svg>
-            </div>
-            <h3 class="font-semibold text-lg mb-2">品質保證</h3>
-            <p class="text-gray-600">美國原廠授權經銷商，{primaryFeature}</p>
-          </div>
-          <div class="text-center">
-            <div
-              class="w-12 h-12 bg-black rounded-full flex items-center justify-center mx-auto mb-4"
-            >
-              <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"
-                >
-                </path>
-              </svg>
-            </div>
-            <h3 class="font-semibold text-lg mb-2">最優價格</h3>
-            <p class="text-gray-600">{secondaryFeature || '優質價格，物超所值'}</p>
-          </div>
-          <div class="text-center">
-            <div
-              class="w-12 h-12 bg-black rounded-full flex items-center justify-center mx-auto mb-4"
-            >
-              <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 3H5a2 2 0 00-2 2v1m2 0h10M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17M17 13v4a2 2 0 01-2 2H9a2 2 0 01-2-2v-4m8 0V9a2 2 0 00-2-2H9a2 2 0 00-2 2v4.01"
-                >
-                </path>
-              </svg>
-            </div>
-            <h3 class="font-semibold text-lg mb-2">貼心服務</h3>
-            <p class="text-gray-600">{tertiaryFeature || '專業服務，用心守護'}</p>
-          </div>
-        </div>
-      </div>
-    </section>
+<!-- CTA Section -->
   </main>
+  <CTA
+    title="準備好體驗頂級睡眠了嗎？"
+    description="歡迎蒞臨我們的實體展間，親自體驗席夢思黑標床墊的舒適感受。"
+    primaryButtonText="立即預約試躺"
+    primaryButtonHref="/appointment"
+    secondaryButtonText="Line 線上諮詢"
+    secondaryButtonHref="https://line.me/R/ti/p/@blackking"
+    secondaryButtonTarget="_blank"
+  />
 </BaseLayout>

@@ -15,6 +15,7 @@ const routeNames: Record<string, string> = {
   '/dashboard/orders': '訂單管理',
   '/dashboard/posts': '文章管理',
   '/dashboard/blog': '部落格編輯',
+  '/dashboard/blog-composer': '編輯文章',
   '/dashboard/appointments': '預約管理',
   '/dashboard/customers': '客戶管理',
   '/dashboard/analytics': '分析報表',
