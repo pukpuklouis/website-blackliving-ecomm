@@ -44,6 +44,26 @@ export const BlogPostCard = memo(function BlogPostCard({
   className,
   href,
 }: BlogPostCardProps) {
+  const formatPublishedAt = (val?: string) => {
+    if (!val) return '';
+    try {
+      // Accept ISO string or epoch seconds (as string)
+      let d: Date | null = null;
+      if (/^\d+(\.\d+)?$/.test(val)) {
+        const num = Number(val);
+        const ms = num < 1e12 ? num * 1000 : num; // seconds vs ms
+        d = new Date(ms);
+      } else {
+        const parsed = new Date(val);
+        d = isNaN(parsed.getTime()) ? null : parsed;
+      }
+      if (!d) return '';
+      return d.toLocaleDateString('zh-TW', { year: 'numeric', month: '2-digit', day: '2-digit' });
+    } catch {
+      return '';
+    }
+  };
+
   if (variant === 'horizontal') {
     return (
       <article
@@ -136,6 +156,11 @@ export const BlogPostCard = memo(function BlogPostCard({
             {post.title}
           </a>
         </h2>
+        {post.publishedAt ? (
+          <p className="text-md md:text-lg text-gray-500 -mt-3">
+           {formatPublishedAt(post.publishedAt)}
+          </p>
+        ) : null}
         <p className="text-sm md:text-md text-gray-600 line-clamp-3">
           {post.excerpt || post.description}
         </p>

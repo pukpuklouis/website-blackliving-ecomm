@@ -92,6 +92,11 @@ export const products = sqliteTable('products', {
   images: text('images', { mode: 'json' }).notNull().default('[]'),
   variants: text('variants', { mode: 'json' }).notNull().default('[]'),
   features: text('features', { mode: 'json' }).notNull().default('[]'),
+  // Markdown-based feature description (preferred). Keep features[] for backward compatibility.
+  featuresMarkdown: text('features_markdown').notNull().default(''),
+  // Accessory support (minimal): accessory type + parent product reference
+  accessoryType: text('accessory_type').notNull().default('standalone'), // 'standalone' | 'accessory' | 'bundle'
+  parentProductId: text('parent_product_id'),
   specifications: text('specifications', { mode: 'json' }).notNull().default('{}'),
   inStock: integer('in_stock', { mode: 'boolean' }).default(true),
   featured: integer('featured', { mode: 'boolean' }).default(false),

@@ -81,6 +81,7 @@ const createPostSchema = z.object({
   ogImage: z.string().optional(),
   // Publishing
   scheduledAt: z.string().optional(),
+  publishedAt: z.union([z.number(), z.string()]).optional(),
   readingTime: z.number().min(1).max(60).default(5),
   // Overlay Settings - Single JSON object as per design.md
   overlaySettings: z.object({
@@ -756,6 +757,23 @@ postsRouter.post('/', requireAdmin(), zValidator('json', createPostSchema), asyn
     const user = c.get('user');
     const postData = c.req.valid('json');
 
+    const parseIncomingDate = (val: unknown): Date | null => {
+      if (val === null || val === undefined || val === '') return null;
+      try {
+        if (typeof val === 'number') {
+          // Treat numbers < 1e12 as seconds, otherwise milliseconds
+          const ms = val < 1e12 ? val * 1000 : val;
+          return new Date(ms);
+        }
+        if (typeof val === 'string') {
+          const d = new Date(val);
+          return isNaN(d.getTime()) ? null : d;
+        }
+        if (val instanceof Date) return val;
+      } catch {}
+      return null;
+    };
+
     // Check if slug already exists
     const existingPost = await db
       .select({ id: posts.id })
@@ -778,6 +796,11 @@ postsRouter.post('/', requireAdmin(), zValidator('json', createPostSchema), asyn
 
     const sanitizedSortOrder = Math.max(0, Math.floor(postData.sortOrder ?? 0));
 
+    // Resolve publishedAt: prefer client-provided value when present; otherwise default to now when publishing
+    const resolvedPublishedAt =
+      parseIncomingDate((postData as any).publishedAt) ??
+      (postData.status === 'published' ? new Date() : null);
+
     const newPost = {
       id: createId(),
       ...postData,
@@ -785,7 +808,7 @@ postsRouter.post('/', requireAdmin(), zValidator('json', createPostSchema), asyn
       authorId: user.id,
       authorName: user.name || user.email,
       readingTime,
-      publishedAt: postData.status === 'published' ? new Date() : null,
+      publishedAt: resolvedPublishedAt,
       viewCount: 0,
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -961,9 +984,32 @@ postsRouter.put('/:id', requireAdmin(), zValidator('json', updatePostSchema), as
       updates.readingTime = calculateReadingTime(updates.content);
     }
 
-    // Set published date if status is changing to published
+    // Normalize incoming publishedAt if provided
+    const parseIncomingDate = (val: unknown): Date | null => {
+      if (val === null || val === undefined || val === '') return null;
+      try {
+        if (typeof val === 'number') {
+          const ms = val < 1e12 ? val * 1000 : val;
+          return new Date(ms);
+        }
+        if (typeof val === 'string') {
+          const d = new Date(val);
+          return isNaN(d.getTime()) ? null : d;
+        }
+        if (val instanceof Date) return val;
+      } catch {}
+      return null;
+    };
+
+    if (updates.publishedAt !== undefined) {
+      updates.publishedAt = parseIncomingDate(updates.publishedAt);
+    }
+
+    // Set published date if status is changing to published and no explicit date provided
     if (updates.status === 'published' && existingPost[0].status !== 'published') {
-      updates.publishedAt = new Date();
+      if (updates.publishedAt == null) {
+        updates.publishedAt = new Date();
+      }
     }
 
     if (updates.sortOrder !== undefined) {

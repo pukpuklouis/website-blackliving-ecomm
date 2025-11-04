@@ -82,6 +82,8 @@ const blogPostSchema = z.object({
   ogImage: z.preprocess((val) => (val === null || val === undefined ? '' : val), z.string()),
   // Publishing - allow any string or empty
   scheduledAt: z.preprocess((val) => (val === null || val === undefined ? '' : val), z.string()),
+  // Published date - allow any string or empty
+  publishedAt: z.preprocess((val) => (val === null || val === undefined ? '' : val), z.string()).optional(),
   readingTime: z.number().min(1).max(60).default(5),
   sortOrder: z
     .preprocess((val) => {
@@ -169,6 +171,7 @@ export default function BlogComposer() {
       category: '',
       categoryId: '',
       sortOrder: 0,
+      publishedAt: '',
     },
   });
 
@@ -371,6 +374,34 @@ export default function BlogComposer() {
 
         const derivedCategory = deriveCategoryFields();
 
+        const normalizeToDatetimeLocal = (val: unknown): string => {
+          if (!val) return '';
+          try {
+            let date: Date | null = null;
+            if (typeof val === 'number') {
+              // Treat numbers < 1e12 as seconds
+              const ms = val < 1e12 ? val * 1000 : val;
+              date = new Date(ms);
+            } else if (typeof val === 'string') {
+              const d = new Date(val);
+              date = isNaN(d.getTime()) ? null : d;
+            } else if (val instanceof Date) {
+              date = val;
+            }
+            if (!date) return '';
+            // Format for input[type=datetime-local]
+            const pad = (n: number) => String(n).padStart(2, '0');
+            const yyyy = date.getFullYear();
+            const mm = pad(date.getMonth() + 1);
+            const dd = pad(date.getDate());
+            const hh = pad(date.getHours());
+            const mi = pad(date.getMinutes());
+            return `${yyyy}-${mm}-${dd}T${hh}:${mi}`;
+          } catch {
+            return '';
+          }
+        };
+
         reset({
           title: post.title,
           slug: post.slug,
@@ -391,7 +422,8 @@ export default function BlogComposer() {
           ogTitle: post.ogTitle,
           ogDescription: post.ogDescription,
           ogImage: post.ogImage,
-          scheduledAt: post.scheduledAt,
+          scheduledAt: normalizeToDatetimeLocal((post as any).scheduledAt),
+          publishedAt: normalizeToDatetimeLocal(post.publishedAt),
           readingTime: post.readingTime,
           overlaySettings: post.overlaySettings,
           sortOrder: post.sortOrder ?? 0,
@@ -486,6 +518,11 @@ export default function BlogComposer() {
       // Handle scheduledAt as Date object or remove if empty
       if (data.scheduledAt && data.scheduledAt.trim() !== '') {
         payload.scheduledAt = processDateField(data.scheduledAt);
+      }
+
+      // Handle publishedAt as Date object or remove if empty
+      if (data.publishedAt && data.publishedAt.trim() !== '') {
+        payload.publishedAt = processDateField(data.publishedAt);
       }
 
       // Remove undefined fields to avoid sending null values
@@ -1031,6 +1068,13 @@ export default function BlogComposer() {
                   <div>
                     <Label htmlFor="scheduledAt">排程時間</Label>
                     <Input id="scheduledAt" type="datetime-local" {...register('scheduledAt')} />
+                  </div>
+                )}
+
+                {watch('status') === 'published' && (
+                  <div>
+                    <Label htmlFor="publishedAt">發布日期</Label>
+                    <Input id="publishedAt" type="datetime-local" {...register('publishedAt')} />
                   </div>
                 )}
 

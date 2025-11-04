@@ -1,18 +1,15 @@
 import React from 'react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@blackliving/ui';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@blackliving/ui';
 import { Check, Star, Award, Truck, Shield } from 'lucide-react';
 
 interface ProductTabsProps {
   features: string[];
-  specifications?: Record<string, any> | null;
   categoryFeatures: string[];
   categoryName: string;
 }
 
 export default function ProductTabs({
   features,
-  specifications,
   categoryFeatures,
   categoryName,
 }: ProductTabsProps) {
@@ -25,9 +22,6 @@ export default function ProductTabs({
           // Add special feature for simmons-black category
           ...(categoryName === 'simmons-black' ? ['美國原裝進口'] : []),
         ];
-
-  // Check if specifications exist and have content
-  const hasSpecifications = specifications && Object.keys(specifications).length > 0;
 
   // Icon mapping for features
   const getFeatureIcon = (feature: string) => {
@@ -50,16 +44,9 @@ export default function ProductTabs({
   return (
     <div className="mt-8">
       <Tabs defaultValue="features" className="max-w-5xl mx-auto">
-        <TabsList className="grid w-full grid-cols-2 h-14 md:h-16">
+        <TabsList className="grid w-full grid-cols-1 h-14 md:h-16">
           <TabsTrigger value="features" className="text-lg md:text-2xl font-medium">
             商品詳情
-          </TabsTrigger>
-          <TabsTrigger
-            value="specifications"
-            disabled={!hasSpecifications}
-            className="text-lg md:text-2xl font-medium"
-          >
-            產品規格
           </TabsTrigger>
         </TabsList>
 
@@ -78,42 +65,6 @@ export default function ProductTabs({
               ))}
             </div>
           </div>
-        </TabsContent>
-
-        <TabsContent value="specifications" className="mt-6">
-          {hasSpecifications ? (
-            <div className="bg-white rounded-lg border overflow-hidden">
-              <div className="p-6 pb-0">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">技術規格</h3>
-              </div>
-              <div className="px-6 pb-6">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="font-semibold text-gray-900">規格項目</TableHead>
-                      <TableHead className="font-semibold text-gray-900">詳細資訊</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {Object.entries(specifications!).map(([key, value], index) => (
-                      <TableRow key={index} className="hover:bg-gray-50">
-                        <TableCell className="font-medium text-gray-600">{key}</TableCell>
-                        <TableCell className="text-gray-900">{value}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            </div>
-          ) : (
-            <div className="bg-white rounded-lg border p-12 text-center">
-              <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
-                <Table className="h-8 w-8 text-gray-400" />
-              </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">暫無規格資料</h3>
-              <p className="text-gray-500">此產品的詳細技術規格資料正在整理中</p>
-            </div>
-          )}
         </TabsContent>
       </Tabs>
     </div>

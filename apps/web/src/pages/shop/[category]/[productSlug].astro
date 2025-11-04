@@ -80,7 +80,6 @@ export const prerender = import.meta.env.MODE !== 'development';
         <div class="mt-8 lg:hidden">
           <ProductTabs
             features={product.features || []}
-            specifications={product.specifications}
             categoryFeatures={categoryConfig.features}
             categoryName={categoryConfig.series}
             client:load
@@ -91,7 +90,6 @@ export const prerender = import.meta.env.MODE !== 'development';
       <div class="hidden lg:block" slot="product-tabs">
         <ProductTabs
           features={product.features || []}
-          specifications={product.specifications}
           categoryFeatures={categoryConfig.features}
           categoryName={categoryConfig.series}
           client:load

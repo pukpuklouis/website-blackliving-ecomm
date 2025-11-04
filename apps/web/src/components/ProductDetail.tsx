@@ -25,6 +25,9 @@ interface Product {
   category?: string;
   averageRating?: number;
   reviewCount?: number;
+  features?: string[];
+  featuresMarkdown?: string;
+  specifications?: Record<string, string>;
 }
 
 interface CategoryConfig {
@@ -109,6 +112,50 @@ const ProductDetail: FC<ProductDetailProps> = ({ product, categoryConfig, classN
         {/* Product Description */}
         <p className="text-gray-600 text-lg whitespace-break-spaces">{product.description}</p>
       </div>
+
+      {/* Features Section */}
+      {(product.featuresMarkdown || (product.features && product.features.length > 0)) && (
+        <div className="mb-6">
+          <h2 className="text-xl font-semibold text-gray-900 mb-3">產品特色</h2>
+          {product.featuresMarkdown ? (
+            <div
+              className="prose prose-gray max-w-none text-gray-700"
+              dangerouslySetInnerHTML={{
+                __html: product.featuresMarkdown
+                  .replace(/\n/g, '<br>')
+                  .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                  .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                  .replace(/^- (.+)$/gm, '<li>$1</li>')
+                  .replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>')
+              }}
+            />
+          ) : (
+            <ul className="space-y-2">
+              {product.features?.map((feature, index) => (
+                <li key={index} className="flex items-start gap-2 text-gray-700">
+                  <span className="text-green-600 mt-1">✓</span>
+                  <span>{feature}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+
+      {/* Specifications Section */}
+      {product.specifications && Object.keys(product.specifications).length > 0 && (
+        <div className="mb-6">
+          <h2 className="text-xl font-semibold text-gray-900 mb-3">產品規格</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {Object.entries(product.specifications).map(([key, value]) => (
+              <div key={key} className="flex justify-between py-2 border-b border-gray-100">
+                <span className="font-medium text-gray-700">{key}</span>
+                <span className="text-gray-600">{value}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Variant Selector with integrated quantity and add to cart */}
       <ProductVariantSelector
