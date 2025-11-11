@@ -57,6 +57,34 @@
       "when": 1761929397668,
       "tag": "0007_blog_post_sort_order_indexes",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1762174073973,
+      "tag": "0008_loose_thundra",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "6",
+      "when": 1762174503393,
+      "tag": "0009_cynical_khan",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "6",
+      "when": 1762764944540,
+      "tag": "0010_steep_payback",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "6",
+      "when": 1762784015434,
+      "tag": "0011_spooky_zeigeist",
+      "breakpoints": true
     }
   ]
 }

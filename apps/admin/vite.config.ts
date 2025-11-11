@@ -19,6 +19,7 @@ export default defineConfig({
         projectDir,
         '../../packages/tailwindcss-typography/index.js'
       ),
+      '@blackliving/types': resolve(projectDir, '../../packages/types/index.ts'),
     },
     // Prevent multiple React copies across workspace
     dedupe: ['react', 'react-dom'],

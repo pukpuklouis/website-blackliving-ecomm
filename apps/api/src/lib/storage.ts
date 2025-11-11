@@ -1,5 +1,12 @@
 import type { R2Bucket } from '@cloudflare/workers-types';
 
+type UploadedFileResult = {
+  key: string;
+  url: string;
+  size: number;
+  contentType: string;
+};
+
 type UploadOptions = {
   contentType?: string;
   metadata?: Record<string, string>;
@@ -35,7 +42,7 @@ export class StorageManager {
     key: string,
     file: File | ArrayBuffer | Uint8Array | string,
     options: UploadOptions = {}
-  ): Promise<{ key: string; url: string; size: number }> {
+  ): Promise<UploadedFileResult> {
     try {
       let body: ArrayBuffer | Uint8Array | string;
       let contentType = options.contentType;
@@ -56,9 +63,11 @@ export class StorageManager {
         size = new TextEncoder().encode(file).length;
       }
 
+      const resolvedContentType = contentType || 'application/octet-stream';
+
       await this.r2.put(key, body, {
         httpMetadata: {
-          contentType: contentType || 'application/octet-stream',
+          contentType: resolvedContentType,
           cacheControl: options.cacheControl || StorageManager.DEFAULT_CACHE_CONTROL,
         },
         customMetadata: options.metadata,
@@ -66,7 +75,7 @@ export class StorageManager {
 
       const url = this.getFileUrl(key);
 
-      return { key, url, size };
+      return { key, url, size, contentType: resolvedContentType };
     } catch (error) {
       console.error('Storage upload error:', error);
       throw new Error('Failed to upload file');
@@ -82,7 +91,7 @@ export class StorageManager {
       file: File | ArrayBuffer | Uint8Array | string;
       options?: UploadOptions;
     }>
-  ): Promise<Array<{ key: string; url: string; size: number }>> {
+  ): Promise<Array<UploadedFileResult>> {
     const uploadPromises = files.map(({ key, file, options = {} }) =>
       this.uploadFile(key, file, options)
     );

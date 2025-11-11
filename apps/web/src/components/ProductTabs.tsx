@@ -1,17 +1,20 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@blackliving/ui';
 import { Check, Star, Award, Truck, Shield } from 'lucide-react';
+import { renderMarkdownToHtml } from '../utils/markdown';
 
 interface ProductTabsProps {
   features: string[];
   categoryFeatures: string[];
   categoryName: string;
+  featuresMarkdown?: string;
 }
 
 export default function ProductTabs({
   features,
   categoryFeatures,
   categoryName,
+  featuresMarkdown,
 }: ProductTabsProps) {
   // Determine which features to display
   const displayFeatures =
@@ -41,6 +44,9 @@ export default function ProductTabs({
     return <Check className="h-4 w-4 text-green-600" />;
   };
 
+  const sanitizedMarkdown = useMemo(() => renderMarkdownToHtml(featuresMarkdown ?? ''), [featuresMarkdown]);
+  const hasMarkdownContent = Boolean(sanitizedMarkdown);
+
   return (
     <div className="mt-8">
       <Tabs defaultValue="features" className="max-w-5xl mx-auto">
@@ -50,20 +56,26 @@ export default function ProductTabs({
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="features" className="mt-6">
-          <div className="bg-white rounded-lg border p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">產品特色</h3>
-            <div className="grid gap-3">
-              {displayFeatures.map((feature, index) => (
-                <div
-                  key={index}
-                  className="flex items-start space-x-3 p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors"
-                >
-                  <div className="flex-shrink-0 mt-0.5">{getFeatureIcon(feature)}</div>
-                  <span className="text-gray-700 leading-relaxed">{feature}</span>
-                </div>
-              ))}
-            </div>
+        <TabsContent value="features" className="mt-6 mx-auto">
+          <div className="bg-white rounded-lg p-6 lg:px-24">
+            {hasMarkdownContent ? (
+              <div
+                className="prose prose-gray max-w-none text-gray-700 prose-img:my-0"
+                dangerouslySetInnerHTML={{ __html: sanitizedMarkdown }}
+              />
+            ) : (
+              <div className="grid gap-3">
+                {displayFeatures.map((feature, index) => (
+                  <div
+                    key={index}
+                    className="flex items-start space-x-3 p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors"
+                  >
+                    <div className="flex-shrink-0 mt-0.5">{getFeatureIcon(feature)}</div>
+                    <span className="text-gray-700 leading-relaxed">{feature}</span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </TabsContent>
       </Tabs>

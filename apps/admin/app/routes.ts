@@ -8,6 +8,8 @@ export default [
   route('dashboard', 'routes/dashboard.tsx', [
     index('routes/dashboard/index.tsx'),
     route('products', 'routes/dashboard/products.tsx'),
+    route('products/new', 'routes/dashboard/products.new.tsx'),
+    route('products/:productId/edit', 'routes/dashboard/products.[productId].edit.tsx'),
     route('orders', 'routes/dashboard/orders.tsx'),
     route('posts', 'routes/dashboard/posts.tsx'),
     route('blog-composer', 'routes/dashboard/blog-composer.tsx'),

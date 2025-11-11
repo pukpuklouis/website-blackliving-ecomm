@@ -1,4 +1,5 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router';
 import {
   Card,
   CardContent,
@@ -38,9 +39,7 @@ import Plus from '@lucide/react/plus';
 import Search from '@lucide/react/search';
 import Edit from '@lucide/react/edit';
 import Trash2 from '@lucide/react/trash-2';
-import Eye from '@lucide/react/eye';
 import Filter from '@lucide/react/filter';
-import GripVertical from '@lucide/react/grip-vertical';
 import {
   useReactTable,
   createColumnHelper,
@@ -54,12 +53,12 @@ import {
 } from '@tanstack/react-table';
 import { z, type ZodIssue } from 'zod';
 import { toast } from 'sonner';
-import { resolveAssetUrl, extractAssetKey } from '../lib/assets';
-import { reorderList } from '../lib/array';
 import { safeParseJSON } from '../lib/http';
-import { ImageUpload } from './ImageUpload';
 import { useEnvironment } from '../contexts/EnvironmentContext';
+import { resolveAssetUrl, extractAssetKey } from '../lib/assets';
 import type { ProductCategory as ProductCategoryDTO } from '@blackliving/types';
+import BatchOperationsToolbar from './BatchOperationsToolbar';
+import ProductEditPage from './ProductEditPage';
 
 // Product types based on database schema
 export interface Product {
@@ -112,7 +111,7 @@ export const productSchema = z.object({
     )
     .min(1, '至少需要一個產品變體'),
   features: z.array(z.string()).default([]),
-  specifications: z.record(z.string()).default({}),
+  specifications: z.record(z.string(), z.string()).default({}),
   inStock: z.boolean().default(true),
   featured: z.boolean().default(false),
   sortOrder: z.number().default(0),
@@ -154,6 +153,7 @@ export default function ProductManagement({ initialProducts }: { initialProducts
   const { PUBLIC_API_URL, PUBLIC_IMAGE_CDN_URL } = useEnvironment();
   const API_BASE = PUBLIC_API_URL;
   const cdnBase = PUBLIC_IMAGE_CDN_URL?.trim();
+  const navigate = useNavigate();
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<ProductCategoryRecord[]>([]);
   const [categoriesLoading, setCategoriesLoading] = useState(true);
@@ -161,14 +161,7 @@ export default function ProductManagement({ initialProducts }: { initialProducts
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [globalFilter, setGlobalFilter] = useState('');
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [formData, setFormData] = useState<Partial<ProductFormData>>({});
-  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [deletingProductIds, setDeletingProductIds] = useState<Record<string, boolean>>({});
-  const [specOrder, setSpecOrder] = useState<string[]>([]);
+  const [selectedProducts, setSelectedProducts] = useState<Set<string>>(new Set());
   const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
   const [categoryDialogMode, setCategoryDialogMode] = useState<'create' | 'edit'>('create');
   const [categoryEditingSlug, setCategoryEditingSlug] = useState<string | null>(null);
@@ -177,29 +170,17 @@ export default function ProductManagement({ initialProducts }: { initialProducts
   const [isCategorySubmitting, setIsCategorySubmitting] = useState(false);
   const [deletingCategorySlug, setDeletingCategorySlug] = useState<string | null>(null);
 
+  // Form state removed - now using dedicated pages
+  const [formData, setFormData] = useState<Partial<ProductFormData>>({});
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [specOrder, setSpecOrder] = useState<string[]>([]);
+
   const fallbackAssetBase = useMemo(
     () => (typeof window !== 'undefined' ? window.location.origin : undefined),
     []
   );
-  const featureDragIndexRef = useRef<number | null>(null);
-  const specDragIndexRef = useRef<number | null>(null);
 
-  const hasAtLeastOneImage = useMemo(() => (formData.images?.length ?? 0) > 0, [formData.images]);
-  const hasAtLeastOneVariant = useMemo(
-    () => (formData.variants?.length ?? 0) > 0,
-    [formData.variants]
-  );
-  const isSubmitDisabled =
-    isSubmitting || !hasAtLeastOneImage || !hasAtLeastOneVariant || categories.length === 0;
-  const specificationEntries = useMemo(() => {
-    const specs = formData.specifications || {};
-    if (specOrder.length > 0) {
-      return specOrder
-        .filter((key) => key in specs)
-        .map((key) => [key, specs[key] as string] as [string, string]);
-    }
-    return Object.entries(specs) as Array<[string, string]>;
-  }, [formData.specifications, specOrder]);
   const categoryLabelMap = useMemo(() => {
     const map: Record<string, string> = {};
     categories.forEach((category) => {
@@ -207,7 +188,6 @@ export default function ProductManagement({ initialProducts }: { initialProducts
     });
     return map;
   }, [categories]);
-
   const sortedCategories = useMemo(() => {
     return [...categories].sort(compareCategories);
   }, [categories]);
@@ -215,6 +195,25 @@ export default function ProductManagement({ initialProducts }: { initialProducts
   const columnHelper = createColumnHelper<Product>();
 
   const columns = [
+    columnHelper.display({
+      id: 'select',
+      header: ({ table }) => (
+        <input
+          type="checkbox"
+          checked={table.getIsAllRowsSelected()}
+          onChange={table.getToggleAllRowsSelectedHandler()}
+          className="rounded border-gray-300"
+        />
+      ),
+      cell: ({ row }) => (
+        <input
+          type="checkbox"
+          checked={row.getIsSelected()}
+          onChange={row.getToggleSelectedHandler()}
+          className="rounded border-gray-300"
+        />
+      ),
+    }),
     columnHelper.accessor('name', {
       header: '產品名稱',
       cell: (info) => (
@@ -275,7 +274,7 @@ export default function ProductManagement({ initialProducts }: { initialProducts
           </Button>
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button variant="ghost" size="sm" disabled={!!deletingProductIds[row.original.id]}>
+              <Button variant="ghost" size="sm">
                 <Trash2 className="h-4 w-4" />
               </Button>
             </AlertDialogTrigger>
@@ -288,10 +287,7 @@ export default function ProductManagement({ initialProducts }: { initialProducts
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel>取消</AlertDialogCancel>
-                <AlertDialogAction
-                  onClick={() => handleDelete(row.original.id)}
-                  disabled={!!deletingProductIds[row.original.id]}
-                >
+                <AlertDialogAction onClick={() => handleDelete(row.original.id)}>
                   刪除
                 </AlertDialogAction>
               </AlertDialogFooter>
@@ -309,10 +305,20 @@ export default function ProductManagement({ initialProducts }: { initialProducts
       sorting,
       columnFilters,
       globalFilter,
+      rowSelection: Object.fromEntries(
+        Array.from(selectedProducts).map(id => [products.findIndex(p => p.id === id), true])
+      ),
     },
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onGlobalFilterChange: setGlobalFilter,
+    onRowSelectionChange: (updater) => {
+      const newSelection = typeof updater === 'function' ? updater(table.getState().rowSelection) : updater;
+      const selectedIds = new Set(
+        Object.keys(newSelection).filter(key => newSelection[key]).map(key => products[parseInt(key)].id)
+      );
+      setSelectedProducts(selectedIds);
+    },
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
@@ -335,7 +341,7 @@ export default function ProductManagement({ initialProducts }: { initialProducts
         setCategories(normalized);
       } else {
         const err = await safeParseJSON(response);
-        throw new Error(err?.error || err?.message || 'Failed to load categories');
+        throw new Error((err as any)?.error || (err as any)?.message || 'Failed to load categories');
       }
     } catch (error) {
       console.error('Failed to load categories:', error);
@@ -404,63 +410,31 @@ export default function ProductManagement({ initialProducts }: { initialProducts
       toast.error('請先建立至少一個產品分類');
       return;
     }
-    const defaultCategory = categories[0]?.slug ?? '';
-    setSelectedProduct(null);
-    setFormData({
-      category: defaultCategory,
-      images: [],
-      variants: [],
-      features: [],
-      specifications: {},
-      inStock: true,
-      featured: false,
-      sortOrder: 0,
-    });
-    setFormErrors({});
-    setSpecOrder([]);
-    setFeatureInput('');
-    setSpecKey('');
-    setSpecVal('');
-    setIsCreateDialogOpen(true);
+    // Navigate to new product page instead of opening dialog
+    navigate('/dashboard/products/new');
   };
 
   const handleEdit = (product: Product) => {
-    const sanitized = sanitizeProduct(product, cdnBase, fallbackAssetBase);
-    setSelectedProduct(sanitized);
-    setFormData(sanitized);
-    setSpecOrder(Object.keys(sanitized.specifications || {}));
-    setFormErrors({});
-    setFeatureInput('');
-    setSpecKey('');
-    setSpecVal('');
-    setIsEditDialogOpen(true);
+    // Navigate to edit product page instead of opening dialog
+    navigate(`/dashboard/products/${product.id}/edit`);
   };
 
   const handleDelete = async (id: string) => {
     try {
-      setDeletingProductIds((prev) => ({ ...prev, [id]: true }));
       const response = await fetch(`${API_BASE}/api/admin/products/${id}`, {
         method: 'DELETE',
         credentials: 'include',
       });
       if (response.ok) {
         setProducts((prev) => prev.filter((p) => p.id !== id));
-        // Ensure local state matches server truth when caches were stale
-        await loadProducts();
         toast.success('產品刪除成功');
       } else {
         const err = await safeParseJSON(response);
-        throw new Error(err?.error || err?.message || 'Failed to delete product');
+        throw new Error((err as any)?.error || (err as any)?.message || 'Failed to delete product');
       }
     } catch (error) {
       console.error('Delete failed:', error);
       toast.error(error instanceof Error ? error.message : '刪除產品失敗');
-    } finally {
-      setDeletingProductIds((prev) => {
-        const next = { ...prev };
-        delete next[id];
-        return next;
-      });
     }
   };
 
@@ -632,7 +606,7 @@ export default function ProductManagement({ initialProducts }: { initialProducts
           closeCategoryDialog();
         } else {
           const err = await safeParseJSON(response);
-          throw new Error(err?.error || err?.message || 'Failed to update category');
+          throw new Error((err as any)?.error || (err as any)?.message || 'Failed to update category');
         }
       } else {
         const response = await fetch(`${API_BASE}/api/admin/products/categories`, {
@@ -658,7 +632,7 @@ export default function ProductManagement({ initialProducts }: { initialProducts
           });
         } else {
           const err = await safeParseJSON(response);
-          throw new Error(err?.error || err?.message || 'Failed to create category');
+          throw new Error((err as any)?.error || (err as any)?.message || 'Failed to create category');
         }
       }
     } catch (error) {
@@ -691,7 +665,7 @@ export default function ProductManagement({ initialProducts }: { initialProducts
         });
       } else {
         const err = await safeParseJSON(response);
-        throw new Error(err?.error || err?.message || 'Failed to delete category');
+        throw new Error((err as any)?.error || (err as any)?.message || 'Failed to delete category');
       }
     } catch (error) {
       console.error('Delete category failed:', error);
@@ -701,228 +675,9 @@ export default function ProductManagement({ initialProducts }: { initialProducts
     }
   };
 
-  const handleSubmit = async (isEdit: boolean) => {
-    try {
-      setIsSubmitting(true);
-      setFormErrors({});
+  // Form submission removed - now using dedicated pages
 
-      // Normalize types (price fields to number) and respect spec ordering
-      const normalized = normalizeFormData(formData, specOrder);
-
-      const requiredErrors: Record<string, string> = {};
-      if (normalized.images.length === 0) {
-        requiredErrors.images = '至少需要一張產品圖片';
-      }
-      if (normalized.variants.length === 0) {
-        requiredErrors['variants'] = '至少需要一個產品變體';
-      }
-
-      if (Object.keys(requiredErrors).length > 0) {
-        setFormErrors(requiredErrors);
-        toast.error('請先新增至少一張圖片與一個產品變體');
-        return;
-      }
-
-      const validationResult = validateProductWithFallback(normalized);
-      if (!validationResult.success) {
-        if (validationResult.errors) {
-          setFormErrors((prev) => ({ ...prev, ...validationResult.errors }));
-        }
-        toast.error('請確認表單欄位填寫正確');
-        return;
-      }
-
-      const validatedData = validationResult.data;
-
-      if (!categories.some((category) => category.slug === validatedData.category)) {
-        setFormErrors((prev) => ({ ...prev, category: '請選擇有效的產品分類' }));
-        toast.error('請先建立或選擇有效的產品分類');
-        return;
-      }
-
-      const url = isEdit
-        ? `${API_BASE}/api/admin/products/${selectedProduct?.id}`
-        : `${API_BASE}/api/admin/products`;
-      const method = isEdit ? 'PUT' : 'POST';
-
-      const response = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify(validatedData),
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        const savedProduct = sanitizeProduct(result.data, cdnBase, fallbackAssetBase);
-
-        if (isEdit) {
-          setProducts((prev) => prev.map((p) => (p.id === selectedProduct?.id ? savedProduct : p)));
-          setIsEditDialogOpen(false);
-        } else {
-          setProducts((prev) => [...prev, savedProduct]);
-          setIsCreateDialogOpen(false);
-        }
-
-        toast.success(isEdit ? '產品更新成功' : '產品建立成功');
-        setFormData({});
-        setFormErrors({});
-        setSpecOrder([]);
-      } else {
-        const err = await safeParseJSON(response);
-        throw new Error(err?.error || err?.message || 'Failed to save product');
-      }
-    } catch (error) {
-      console.error('Save failed:', error);
-      toast.error(error instanceof Error ? error.message : '儲存產品失敗');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleAddVariant = () => {
-    setFormData((prev) => ({
-      ...prev,
-      variants: [...(prev.variants || []), { name: '', price: 0, sku: '', size: '', firmness: '' }],
-    }));
-    setFormErrors((prev) => {
-      if (!prev.variants) return prev;
-      const { variants, ...rest } = prev;
-      return rest;
-    });
-  };
-
-  const handleUpdateVariant = (
-    index: number,
-    field: keyof ProductFormData['variants'][number],
-    value: string
-  ) => {
-    setFormData((prev) => {
-      const variants = [...(prev.variants || [])];
-      const current = { ...(variants[index] || { name: '', price: 0 }) } as any;
-      if (field === 'price') {
-        current.price = Number(value) || 0;
-      } else {
-        current[field] = value;
-      }
-      variants[index] = current;
-      return { ...prev, variants };
-    });
-  };
-
-  const handleRemoveVariant = (index: number) => {
-    const nextVariants = (formData.variants || []).filter((_, i) => i !== index);
-    setFormData((prev) => ({
-      ...prev,
-      variants: nextVariants,
-    }));
-    setFormErrors((prev) => {
-      if (nextVariants.length === 0) {
-        return { ...prev, variants: '至少需要一個產品變體' };
-      }
-      if (!prev.variants) return prev;
-      const { variants, ...rest } = prev;
-      return rest;
-    });
-  };
-
-  const [featureInput, setFeatureInput] = useState('');
-  const handleAddFeature = () => {
-    const val = featureInput.trim();
-    if (!val) return;
-    setFormData((prev) => ({ ...prev, features: [...(prev.features || []), val] }));
-    setFeatureInput('');
-  };
-  const handleRemoveFeature = (i: number) => {
-    setFormData((prev) => ({
-      ...prev,
-      features: (prev.features || []).filter((_, idx) => idx !== i),
-    }));
-  };
-
-  const [specKey, setSpecKey] = useState('');
-  const [specVal, setSpecVal] = useState('');
-  const handleAddSpec = () => {
-    const k = specKey.trim();
-    const v = specVal.trim();
-    if (!k || !v) return;
-    setFormData((prev) => ({
-      ...prev,
-      specifications: { ...(prev.specifications || {}), [k]: v },
-    }));
-    setSpecOrder((prev) => (prev.includes(k) ? prev : [...prev, k]));
-    setSpecKey('');
-    setSpecVal('');
-  };
-  const handleRemoveSpec = (k: string) => {
-    setFormData((prev) => {
-      const next = { ...(prev.specifications || {}) } as Record<string, string>;
-      delete next[k];
-      return { ...prev, specifications: next };
-    });
-    setSpecOrder((prev) => prev.filter((key) => key !== k));
-  };
-
-  const handleProductImagesChange = (images: string[]) => {
-    setFormData((prev) => ({ ...prev, images }));
-    setFormErrors((prev) => {
-      if (images.length === 0) {
-        return { ...prev, images: '至少需要一張產品圖片' };
-      }
-      if (!prev.images) return prev;
-      const { images: _removed, ...rest } = prev;
-      return rest;
-    });
-  };
-
-  const handleFeatureDragStart = (index: number) => {
-    featureDragIndexRef.current = index;
-  };
-
-  const handleFeatureDragEnter = (index: number) => {
-    if (featureDragIndexRef.current === null || featureDragIndexRef.current === index) return;
-    setFormData((prev) => {
-      const features = prev.features || [];
-      const from = featureDragIndexRef.current;
-      if (
-        from === null ||
-        from < 0 ||
-        from >= features.length ||
-        index < 0 ||
-        index >= features.length
-      ) {
-        return prev;
-      }
-      const reordered = reorderList(features, from, index);
-      featureDragIndexRef.current = index;
-      return { ...prev, features: reordered };
-    });
-  };
-
-  const handleFeatureDragEnd = () => {
-    featureDragIndexRef.current = null;
-  };
-
-  const handleSpecDragStart = (index: number) => {
-    specDragIndexRef.current = index;
-  };
-
-  const handleSpecDragEnter = (index: number) => {
-    if (specDragIndexRef.current === null || specDragIndexRef.current === index) return;
-    setSpecOrder((prev) => {
-      const from = specDragIndexRef.current;
-      if (from === null || from < 0 || from >= prev.length || index < 0 || index >= prev.length) {
-        return prev;
-      }
-      const reordered = reorderList(prev, from, index);
-      specDragIndexRef.current = index;
-      return reordered;
-    });
-  };
-
-  const handleSpecDragEnd = () => {
-    specDragIndexRef.current = null;
-  };
+  // Form handlers removed - now using dedicated pages
 
   if (loading) {
     return (
@@ -1278,6 +1033,19 @@ export default function ProductManagement({ initialProducts }: { initialProducts
         </CardContent>
       </Card>
 
+      {/* Batch Operations Toolbar */}
+      <BatchOperationsToolbar
+        selectedProducts={Array.from(selectedProducts).map(id => products.find(p => p.id === id)!).filter(Boolean)}
+        onSelectionChange={(newSelection) => {
+          setSelectedProducts(new Set(newSelection.map((p: any) => p.id)));
+        }}
+        onProductsUpdate={() => {
+          // Refresh products list
+          loadProducts();
+        }}
+        totalProducts={products.length}
+      />
+
       {/* Products Table */}
       <Card>
         <CardHeader>
@@ -1347,383 +1115,12 @@ export default function ProductManagement({ initialProducts }: { initialProducts
         </CardContent>
       </Card>
 
-      {/* Create/Edit Product Dialog */}
-      <Dialog
-        open={isCreateDialogOpen || isEditDialogOpen}
-        onOpenChange={(open) => {
-          if (!open) {
-            setIsCreateDialogOpen(false);
-            setIsEditDialogOpen(false);
-            setFormData({});
-            setFormErrors({});
-          }
-        }}
-      >
-        <DialogContent className="lg:min-w-4xl w-full max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>{isEditDialogOpen ? '編輯產品' : '新增產品'}</DialogTitle>
-            <DialogDescription>
-              填寫產品資訊以{isEditDialogOpen ? '更新' : '建立'}產品。
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-6 py-4">
-            {/* Basic Information */}
-            <div className="space-y-4">
-              <h4 className="font-medium">基本資訊</h4>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="flex flex-col gap-2">
-                  <Label htmlFor="name">產品名稱 *</Label>
-                  <Input
-                    id="name"
-                    value={formData.name || ''}
-                    onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
-                    className={formErrors.name ? 'border-red-500' : ''}
-                  />
-                  {formErrors.name && (
-                    <p className="text-sm text-red-500 mt-1">{formErrors.name}</p>
-                  )}
-                </div>
-                <div className="flex flex-col gap-2">
-                  <Label htmlFor="slug">URL Slug *</Label>
-                  <Input
-                    id="slug"
-                    value={formData.slug || ''}
-                    onChange={(e) => setFormData((prev) => ({ ...prev, slug: e.target.value }))}
-                    className={formErrors.slug ? 'border-red-500' : ''}
-                  />
-                  {formErrors.slug && (
-                    <p className="text-sm text-red-500 mt-1">{formErrors.slug}</p>
-                  )}
-                </div>
-              </div>
-
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="description">產品描述 *</Label>
-                <Textarea
-                  id="description"
-                  value={formData.description || ''}
-                  onChange={(e) =>
-                    setFormData((prev) => ({ ...prev, description: e.target.value }))
-                  }
-                  className={formErrors.description ? 'border-red-500' : ''}
-                  rows={4}
-                />
-                {formErrors.description && (
-                  <p className="text-sm text-red-500 mt-1">{formErrors.description}</p>
-                )}
-              </div>
-
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="category">產品分類 *</Label>
-                <Select
-                  value={formData.category || ''}
-                  onValueChange={(value) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      category: value as ProductFormData['category'],
-                    }))
-                  }
-                >
-                  <SelectTrigger
-                    className={formErrors.category ? 'border-red-500' : ''}
-                    disabled={sortedCategories.length === 0}
-                  >
-                    <SelectValue
-                      placeholder={sortedCategories.length === 0 ? '請先建立分類' : '選擇分類'}
-                    />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {sortedCategories.map((category) => (
-                      <SelectItem key={category.slug} value={category.slug}>
-                        {categoryLabelMap[category.slug] || category.slug}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {formErrors.category && (
-                  <p className="text-sm text-red-500 mt-1">{formErrors.category}</p>
-                )}
-                {!formErrors.category && sortedCategories.length === 0 && (
-                  <p className="text-sm text-amber-600 mt-1">請先建立產品分類後再新增產品。</p>
-                )}
-              </div>
-            </div>
-
-            <Separator />
-
-            {/* Status & Settings */}
-            <div className="space-y-4">
-              <h4 className="font-medium">狀態設定</h4>
-              <div className="flex items-center space-x-4">
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    checked={formData.inStock ?? true}
-                    onCheckedChange={(checked) =>
-                      setFormData((prev) => ({ ...prev, inStock: checked }))
-                    }
-                  />
-                  <Label>有庫存</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    checked={formData.featured ?? false}
-                    onCheckedChange={(checked) =>
-                      setFormData((prev) => ({ ...prev, featured: checked }))
-                    }
-                  />
-                  <Label>精選產品</Label>
-                </div>
-              </div>
-            </div>
-
-            <Separator />
-
-            {/* Image Upload */}
-            <ImageUpload
-              title="產品圖片"
-              value={formData.images || []}
-              onChange={handleProductImagesChange}
-              folder="products"
-              emptyHint={!hasAtLeastOneImage ? '儲存前請至少上傳一張產品圖片。' : undefined}
-              error={formErrors.images}
-            />
-
-            <Separator />
-
-            {/* Variants */}
-            <div className="space-y-4">
-              <h4 className="font-medium">產品選項</h4>
-              <div className="space-y-6">
-                {(formData.variants || []).map((v, i) => (
-                  <div key={i} className="grid grid-cols-12 gap-2 items-end">
-                    <div className="col-span-3 flex flex-col gap-2">
-                      <Label>名稱</Label>
-                      <Input
-                        value={v?.name || ''}
-                        onChange={(e) => handleUpdateVariant(i, 'name', e.target.value)}
-                      />
-                    </div>
-                    <div className="col-span-2 flex flex-col gap-2">
-                      <Label>價格</Label>
-                      <Input
-                        type="number"
-                        inputMode="decimal"
-                        value={v?.price?.toString() ?? '0'}
-                        onChange={(e) => handleUpdateVariant(i, 'price', e.target.value)}
-                      />
-                    </div>
-                    <div className="col-span-2 flex flex-col gap-2">
-                      <Label>SKU</Label>
-                      <Input
-                        value={v?.sku || ''}
-                        onChange={(e) => handleUpdateVariant(i, 'sku', e.target.value)}
-                      />
-                    </div>
-                    <div className="col-span-2 flex flex-col gap-2">
-                      <Label>尺寸</Label>
-                      <Input
-                        value={v?.size || ''}
-                        onChange={(e) => handleUpdateVariant(i, 'size', e.target.value)}
-                      />
-                    </div>
-                    <div className="col-span-2 flex flex-col gap-2">
-                      <Label>硬度</Label>
-                      <Input
-                        value={v?.firmness || ''}
-                        onChange={(e) => handleUpdateVariant(i, 'firmness', e.target.value)}
-                      />
-                    </div>
-                    <div className="col-span-1">
-                      <Button variant="outline" onClick={() => handleRemoveVariant(i)}>
-                        移除
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <Button variant="secondary" onClick={handleAddVariant}>
-                新增選項
-              </Button>
-              {!hasAtLeastOneVariant && (
-                <p className="text-sm text-amber-600">儲存前請至少新增一個產品選項。</p>
-              )}
-              {formErrors['variants'] && (
-                <p className="text-sm text-red-500">{formErrors['variants']}</p>
-              )}
-            </div>
-
-            <Separator />
-
-            {/* Features */}
-            <div className="space-y-3">
-              <h4 className="font-medium">產品特色</h4>
-              <div className="flex gap-2">
-                <Input
-                  placeholder="新增特色..."
-                  value={featureInput}
-                  onChange={(e) => setFeatureInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      handleAddFeature();
-                    }
-                  }}
-                />
-                <Button type="button" onClick={handleAddFeature}>
-                  新增
-                </Button>
-              </div>
-              {(formData.features || []).length > 0 && (
-                <ul className="space-y-2">
-                  {(formData.features || []).map((feature, i) => (
-                    <li
-                      key={`${feature}-${i}`}
-                      className="flex items-center justify-between gap-2 rounded border bg-muted/20 p-2 cursor-move"
-                      draggable
-                      onDragStart={() => handleFeatureDragStart(i)}
-                      onDragEnter={() => handleFeatureDragEnter(i)}
-                      onDragOver={(e) => e.preventDefault()}
-                      onDragEnd={handleFeatureDragEnd}
-                      onDrop={handleFeatureDragEnd}
-                      aria-label={`重新排序特色 ${i + 1}`}
-                    >
-                      <span className="flex items-center gap-2 text-sm">
-                        <GripVertical className="h-4 w-4 text-muted-foreground" aria-hidden />
-                        {feature}
-                      </span>
-                      <Button variant="outline" size="sm" onClick={() => handleRemoveFeature(i)}>
-                        移除
-                      </Button>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-
-            <Separator />
-
-            {/* Specifications */}
-            <div className="space-y-3">
-              <h4 className="font-medium">產品規格</h4>
-              <div className="grid grid-cols-12 gap-2 items-end">
-                <div className="col-span-3 flex flex-col gap-2">
-                  <Label>規格名稱</Label>
-                  <Input value={specKey} onChange={(e) => setSpecKey(e.target.value)} />
-                </div>
-                <div className="col-span-6 flex flex-col gap-2">
-                  <Label>規格數據</Label>
-                  <Input value={specVal} onChange={(e) => setSpecVal(e.target.value)} />
-                </div>
-                <div className="col-span-2">
-                  <Button type="button" onClick={handleAddSpec}>
-                    新增
-                  </Button>
-                </div>
-              </div>
-              <div className="space-y-2">
-                {specificationEntries.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">尚未新增規格。</p>
-                ) : (
-                  <ul className="space-y-2">
-                    {specificationEntries.map(([k, v], i) => (
-                      <li
-                        key={k}
-                        className="flex items-start justify-between gap-2 rounded border bg-muted/20 p-3 cursor-move"
-                        draggable
-                        onDragStart={() => handleSpecDragStart(i)}
-                        onDragEnter={() => handleSpecDragEnter(i)}
-                        onDragOver={(e) => e.preventDefault()}
-                        onDragEnd={handleSpecDragEnd}
-                        onDrop={handleSpecDragEnd}
-                        aria-label={`重新排序規格 ${k}`}
-                      >
-                        <div className="flex flex-1 items-start gap-2">
-                          <GripVertical
-                            className="mt-1 h-4 w-4 text-muted-foreground"
-                            aria-hidden
-                          />
-                          <div>
-                            <div className="text-sm font-medium">{k}</div>
-                            <div className="text-sm text-muted-foreground">{v}</div>
-                          </div>
-                        </div>
-                        <Button variant="ghost" size="sm" onClick={() => handleRemoveSpec(k)}>
-                          移除
-                        </Button>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            </div>
-
-            <Separator />
-
-            {/* SEO & Sorting */}
-            <div className="space-y-4">
-              <h4 className="font-medium">SEO 與排序</h4>
-              <div className="grid grid-cols-3 gap-4 items-start">
-                <div className="flex flex-col gap-2">
-                  <Label>排序順序</Label>
-                  <Input
-                    type="number"
-                    inputMode="numeric"
-                    value={(formData.sortOrder ?? 0).toString()}
-                    onChange={(e) =>
-                      setFormData((prev) => ({ ...prev, sortOrder: Number(e.target.value) || 0 }))
-                    }
-                  />
-                </div>
-                <div className="col-span-3 flex flex-col gap-2">
-                  <Label>SEO 標題</Label>
-                  <Input
-                    value={formData.seoTitle || ''}
-                    onChange={(e) => setFormData((prev) => ({ ...prev, seoTitle: e.target.value }))}
-                  />
-                </div>
-                <div className="col-span-3 flex flex-col gap-2">
-                  <Label>SEO 描述</Label>
-                  <Textarea
-                    rows={3}
-                    value={formData.seoDescription || ''}
-                    onChange={(e) =>
-                      setFormData((prev) => ({ ...prev, seoDescription: e.target.value }))
-                    }
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex justify-end space-x-2">
-            <Button
-              variant="outline"
-              onClick={() => {
-                setIsCreateDialogOpen(false);
-                setIsEditDialogOpen(false);
-              }}
-            >
-              取消
-            </Button>
-            <Button disabled={isSubmitDisabled} onClick={() => handleSubmit(isEditDialogOpen)}>
-              {isSubmitting ? (
-                <span className="inline-flex items-center gap-2">
-                  <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
-                  處理中...
-                </span>
-              ) : isEditDialogOpen ? (
-                '更新'
-              ) : (
-                '建立'
-              )}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      {/* Dialog removed - now using dedicated pages */}
     </div>
   );
 }
+
+
 
 export function normalizeFormData(
   fd: Partial<ProductFormData>,

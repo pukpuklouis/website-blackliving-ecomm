@@ -18,9 +18,13 @@ export const ProductSchema = z.object({
   slug: z.string(),
   description: z.string(),
   category: categorySlugSchema,
+  productType: z.string().optional(),
   images: z.array(z.string()),
   variants: z.array(ProductVariantSchema),
   features: z.array(z.string()),
+  featuresMarkdown: z.string().optional(), // Accessory-specific field
+  accessoryType: z.enum(['standalone', 'accessory', 'bundle']).optional(), // Accessory-specific field
+  parentProductId: z.string().optional(), // Accessory-specific field
   specifications: z.record(z.string()),
   inStock: z.boolean().default(true),
   featured: z.boolean().default(false),

@@ -20,6 +20,7 @@ const routeNames: Record<string, string> = {
   '/dashboard/customers': '客戶管理',
   '/dashboard/analytics': '分析報表',
   '/dashboard/settings': '系統設定',
+  '/dashboard/products/new': '新增產品',
 };
 
 export function BreadcrumbComponent() {

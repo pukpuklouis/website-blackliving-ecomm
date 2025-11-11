@@ -2,15 +2,16 @@
 export interface Props {
   image?: string;
   alt: string;
+  category?: string;
   class?: string;
 }
 
-const { image, alt, class: className = '' } = Astro.props;
+const { image, alt, category = '', class: className = '' } = Astro.props;
 ---
 
 {image ? (
   <section class={`w-full ${className}`}>
-    <div class='relative w-full h-64 md:h-96 lg:h-[32rem] overflow-hidden'>
+    <div class={`relative overflow-hidden ${category === 'blogger-testimonial' ? 'w-4xl aspect-[20/11] rounded-xl mx-auto mt-4 shadow-lg' : 'w-full h-64 md:h-96 lg:h-[32rem]'}`}>
       <img
         src={image}
         alt={alt}

@@ -12,9 +12,9 @@ const aboutPage = {
   title: '關於黑哥',
   description: '了解Black Living黑哥家居的品牌故事，從黑標王到專業居家生活品牌的發展歷程',
   seoTitle: '關於黑哥 - Black Living 黑哥家居品牌故事',
-  seoDescription:
-    '了解Black Living黑哥家居的品牌故事，從黑標王到專業居家生活品牌的發展歷程，以及我們對品質與服務的承諾。',
+  seoDescription: 'short',$
 };
+
 // Timeline data - updated years: 2018, 2023, 2024, 2025, 至今, 未來
 const timelineItems = [
   {
@@ -181,6 +181,6 @@ const logisticsPhotos = [
   </section>
   <!-- breakline whitespace -->
   <section>
-    <div class="absolute bg-primary w-6xl shadow-xl h-[2px] left-1/2 -translate-x-1/2"></div>
+    <div class="bg-white/60 w-6xl h-[1px]"></div>
   </section>
 </BaseLayout>

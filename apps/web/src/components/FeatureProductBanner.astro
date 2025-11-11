@@ -61,8 +61,8 @@ const {
 
 // Aspect ratio classes
 const aspectRatioClasses = {
-  wide: 'aspect-[32/9]',
-  standard: 'aspect-[2/1]',
+  wide: 'aspect-[32/14]',
+  standard: 'aspect-[9/3]',
 };
 
 // Visibility classes based on device
@@ -144,7 +144,7 @@ const Component = href ? 'a' : 'div';
           width={1920}
           height={1080}
           loading="lazy"
-          class={`w-full ${aspectRatioClasses[aspectRatio]} object-contain ${hoverEffect ? 'group-hover:scale-105 transition-transform duration-300' : ''}`}
+          class={`w-full ${aspectRatioClasses[aspectRatio]} object-cover ${hoverEffect ? 'group-hover:scale-105 transition-transform duration-300' : ''}`}
         />
 
         <!-- Gradient Overlay -->
@@ -190,7 +190,7 @@ const Component = href ? 'a' : 'div';
                 width={200}
                 height={200}
                 loading="lazy"
-                class={`${overlayImageSizes[overlayImageSize]} object-contain drop-shadow-lg ${hoverEffect ? 'group-hover:scale-110 transition-transform duration-300' : ''}`}
+                class={`${overlayImageSizes[overlayImageSize]} object-cover drop-shadow-lg ${hoverEffect ? 'group-hover:scale-110 transition-transform duration-300' : ''}`}
               />
             </div>
           )

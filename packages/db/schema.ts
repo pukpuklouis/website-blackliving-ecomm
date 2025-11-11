@@ -89,6 +89,7 @@ export const products = sqliteTable('products', {
   slug: text('slug').notNull().unique(),
   description: text('description').notNull(),
   category: text('category').notNull(), // simmons-black, accessories, us-imports
+  productType: text('product_type'),
   images: text('images', { mode: 'json' }).notNull().default('[]'),
   variants: text('variants', { mode: 'json' }).notNull().default('[]'),
   features: text('features', { mode: 'json' }).notNull().default('[]'),
@@ -192,6 +193,24 @@ export const reservations = sqliteTable('reservations', {
   status: text('status').default('pending'),
   verificationPending: integer('verification_pending', { mode: 'boolean' }).default(true),
   appointmentId: text('appointment_id').references(() => appointments.id, { onDelete: 'set null' }),
+  createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
+});
+
+// Media assets table - metadata synced with R2 objects
+export const mediaAssets = sqliteTable('media_assets', {
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => createId()),
+  key: text('key').notNull().unique(),
+  name: text('name').notNull(),
+  url: text('url').notNull(),
+  contentType: text('content_type'),
+  mediaType: text('media_type').notNull(), // image | file
+  size: integer('size').notNull(),
+  folder: text('folder').notNull().default('uploads'),
+  metadata: text('metadata', { mode: 'json' }).default('{}'),
+  uploadedBy: text('uploaded_by'),
   createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
 });

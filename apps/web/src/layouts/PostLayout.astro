@@ -57,7 +57,7 @@ const { post, category, relatedPosts = [], seoTitle, seoDescription, ogImage } =
   class="blog"
 >
   <!-- Hero Image Section -->
-  <BlogHeroImage image={post.featuredImage} alt={post.title} />
+  <BlogHeroImage image={post.featuredImage} alt={post.title} category={category?.slug} />
 
   <main class="container max-w-4xl mx-auto px-4 py-8">
     <!-- Breadcrumbs -->

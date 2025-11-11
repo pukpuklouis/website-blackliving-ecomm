@@ -43,9 +43,13 @@ export interface CreateProductRequest {
   slug: string;
   description: string;
   category: string;
+  productType?: string;
   images: UploadedFile[];
   variants: ProductVariant[];
   features: string[];
+  featuresMarkdown?: string;
+  accessoryType?: 'standalone' | 'accessory' | 'bundle';
+  parentProductId?: string;
   specifications: Record<string, any>;
   inStock: boolean;
   featured: boolean;

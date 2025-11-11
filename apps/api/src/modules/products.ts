@@ -35,24 +35,29 @@ const createProductSchema = z.object({
     .string()
     .min(1, 'Category is required')
     .regex(/^[a-z0-9-]+$/, 'Category must be a lowercase slug'),
+  productType: z.string().optional(),
   images: z.array(z.string().url()).default([]),
   variants: z
     .array(
       z.object({
         id: z.string(),
         name: z.string(),
-        sku: z.string(),
+        sku: z.string().max(32, 'SKU must be 32 characters or less'),
         price: z.number().positive(),
         originalPrice: z.number().positive().optional(),
         size: z.string(),
-        firmness: z.string(),
+        firmness: z.string().optional(),
         stock: z.number().int().min(0),
         inStock: z.boolean().default(true),
         sortOrder: z.number().default(0),
+        optionValues: z.record(z.string()).optional(), // Enhanced variant fields
       })
     )
     .min(1, 'At least one variant is required'),
   features: z.array(z.string()).default([]),
+  featuresMarkdown: z.string().default(''), // Accessory-specific field
+  accessoryType: z.enum(['standalone', 'accessory', 'bundle']).default('standalone'), // Accessory-specific field
+  parentProductId: z.string().optional(), // Accessory-specific field
   specifications: z.record(z.string()).default({}),
   inStock: z.boolean().default(true),
   featured: z.boolean().default(false),
@@ -555,6 +560,10 @@ app.post('/', requireAdmin, zValidator('json', createProductSchema), async (c) =
         images: productData.images,
         variants: productData.variants,
         features: productData.features,
+        productType: productData.productType ?? null,
+        featuresMarkdown: productData.featuresMarkdown,
+        accessoryType: productData.accessoryType,
+        parentProductId: productData.parentProductId,
         specifications: productData.specifications,
         inStock: productData.inStock,
         featured: productData.featured,

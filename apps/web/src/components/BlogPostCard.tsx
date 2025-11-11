@@ -139,29 +139,29 @@ export const BlogPostCard = memo(function BlogPostCard({
           <img
             src={post.featuredImage}
             alt={`${post.title} 特色圖片`}
-            className="w-32 h-full md:w-full md:h-48 aspect-[4/5] md:aspect-video object-cover transition-transform duration-300 hover:scale-105"
+            className="w-48 h-full md:w-full md:h-48 aspect-[4/3] md:aspect-video object-cover transition-transform duration-300 hover:scale-105"
             loading="lazy"
             decoding="async"
           />
           {/* Overlay Text - REMOVED: Only horizontal variant supports overlay per design.md */}
         </div>
       )}
-      <div className="px-6 pb-0 md:pb-3 flex flex-1 flex-col items-start gap-0 md:gap-3">
+      <div className="px-3 md:px-6 pb-0 md:pb-3 flex flex-1 flex-col items-start gap-0 md:gap-3">
         <h2 className="text-md md:text-xl font-semibold text-gray-900 mt-3">
           <a
             href={href}
-            className={cn('transition-colors duration-200 rounded px-1', FOCUS_RING_CLASSES)}
+            className={cn('transition-colors duration-200 rounded px-1 line-clamp-1 md:line-clamp-2', FOCUS_RING_CLASSES)}
             aria-label={`閱讀文章：${post.title}`}
           >
             {post.title}
           </a>
         </h2>
         {post.publishedAt ? (
-          <p className="text-md md:text-lg text-gray-500 -mt-3">
+          <p className="text-sm md:text-lg text-gray-500 -mt-1 md:-mt-3">
            {formatPublishedAt(post.publishedAt)}
           </p>
         ) : null}
-        <p className="text-sm md:text-md text-gray-600 line-clamp-3">
+        <p className="text-sm md:text-md text-gray-600 line-clamp-2 md:line-clamp-3">
           {post.excerpt || post.description}
         </p>
         <div className="mt-auto mb-2 md:mb-0 flex w-full items-center justify-end md:justify-center font-bold text-xs md:text-lg text-gray-50 whitespace-nowrap">

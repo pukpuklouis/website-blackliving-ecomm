@@ -13,6 +13,8 @@
       "~/*": ["./app/*"],
       "@blackliving/ui": ["../../packages/ui/index.ts"],
       "@blackliving/ui/*": ["../../packages/ui/*"],
+      "@blackliving/types": ["../../packages/types/index.ts"],
+      "@blackliving/types/*": ["../../packages/types/*"],
       "@/components/*": ["../../packages/ui/components/*"],
       "@/lib/*": ["../../packages/ui/lib/*"],
       "@/hooks/*": ["../../packages/ui/hooks/*"],

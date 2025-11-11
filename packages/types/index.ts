@@ -7,3 +7,4 @@ export * from './profile';
 export * from './blog';
 export * from './storeinfo';
 export * from './search';
+export * from './product-templates';

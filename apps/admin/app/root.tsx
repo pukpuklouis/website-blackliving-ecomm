@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import {
   isRouteErrorResponse,
   Links,
@@ -6,6 +7,7 @@ import {
   Scripts,
   ScrollRestoration,
 } from 'react-router';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 import type { Route } from './+types/root';
 import { AuthProvider } from './contexts/AuthContext';
@@ -61,13 +63,27 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export default function App({ loaderData }: Route.ComponentProps) {
+  const [queryClient] = useState(
+    () =>
+      new QueryClient({
+        defaultOptions: {
+          queries: {
+            staleTime: 30_000,
+            refetchOnWindowFocus: false,
+          },
+        },
+      })
+  );
+
   return (
     <EnvironmentProvider env={loaderData?.env}>
-      <AuthProvider>
-        <ImageUploadProvider>
-          <Outlet />
-        </ImageUploadProvider>
-      </AuthProvider>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <ImageUploadProvider>
+            <Outlet />
+          </ImageUploadProvider>
+        </AuthProvider>
+      </QueryClientProvider>
     </EnvironmentProvider>
   );
 }

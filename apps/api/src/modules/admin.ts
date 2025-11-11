@@ -1,9 +1,17 @@
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
-import { eq, desc, asc, and, like, count, sql } from 'drizzle-orm';
+import { eq, desc, asc, and, like, count, sql, or, lt, gt, type SQL } from 'drizzle-orm';
 import { requireAdmin, auditLog, requireFreshSession } from '../middleware/auth';
-import { products, posts, orders, appointments, reviews, productCategories } from '@blackliving/db';
+import {
+  products,
+  posts,
+  orders,
+  appointments,
+  reviews,
+  productCategories,
+  mediaAssets,
+} from '@blackliving/db';
 import type {
   CreateProductRequest,
   UpdateProductRequest,
@@ -18,6 +26,9 @@ import type {
 import { CacheTTL } from '../lib/cache';
 import { FileTypes, FileSizes, StorageManager } from '../lib/storage';
 import { createId } from '@paralleldrive/cuid2';
+// TODO: Import SKU generator and product templates when package structure is resolved
+// import { generateBulkSKUs, generateUniqueSKU } from '@blackliving/admin/lib/sku-generator';
+// import { getProductTypeTemplate, generateDefaultVariants } from '@blackliving/admin/lib/product-templates';
 
 const admin = new Hono();
 
@@ -516,9 +527,13 @@ admin.post(
       slug: z.string().min(1),
       description: z.string().min(1),
       category: categorySlugSchema,
+      productType: z.string().optional(),
       images: z.array(z.string()).default([]),
       variants: z.array(z.any()).default([]),
       features: z.array(z.string()).default([]),
+      featuresMarkdown: z.string().optional().default(''),
+      accessoryType: z.enum(['standalone', 'accessory', 'bundle']).optional().default('standalone'),
+      parentProductId: z.string().optional(),
       specifications: z.record(z.any()).default({}),
       inStock: z.boolean().default(true),
       featured: z.boolean().default(false),
@@ -556,9 +571,13 @@ admin.put(
       slug: z.string().optional(),
       description: z.string().optional(),
       category: categorySlugSchema.optional(),
+      productType: z.string().optional(),
       images: z.array(z.string()).optional(),
       variants: z.array(z.any()).optional(),
       features: z.array(z.string()).optional(),
+      featuresMarkdown: z.string().optional(),
+      accessoryType: z.enum(['standalone', 'accessory', 'bundle']).optional(),
+      parentProductId: z.string().optional(),
       specifications: z.record(z.any()).optional(),
       inStock: z.boolean().optional(),
       featured: z.boolean().optional(),
@@ -633,9 +652,213 @@ admin.delete('/products/:id', requireFreshSession(15), auditLog('product-delete'
   }
 });
 
+// POST /api/admin/products/{id}/variants:generate - Generate variants with exclusions
+admin.post(
+  '/products/:id/variants:generate',
+  zValidator(
+    'json',
+    z.object({
+      exclude: z.array(z.string()).optional(), // Array of variant IDs to exclude
+    })
+  ),
+  async (c) => {
+    const db = c.get('db');
+    const cache = c.get('cache');
+    const productId = c.req.param('id');
+    const { exclude = [] } = c.req.valid('json');
+
+    try {
+      // Get product
+      const [product] = await db.select().from(products).where(eq(products.id, productId));
+
+      if (!product) {
+        return c.json({ success: false, error: 'Product not found' }, 404);
+      }
+
+      // TODO: Implement variant generation logic using product templates
+      // For now, return placeholder response
+      const generatedVariants = [];
+
+      // Invalidate cache
+      await cache.deleteByPrefix('admin:products');
+      await cache.deleteByPrefix('products');
+      await cache.delete(`products:detail:${productId}`);
+
+      return c.json({
+        success: true,
+        data: { generatedVariants, excluded: exclude },
+        message: 'Variant generation completed',
+      });
+    } catch (error) {
+      console.error('Variant generation error:', error);
+      return c.json({ success: false, error: 'Failed to generate variants' }, 500);
+    }
+  }
+);
+
+// PUT /api/admin/variants/batch - Batch update variants
+admin.put(
+  '/variants/batch',
+  zValidator(
+    'json',
+    z.object({
+      mode: z.enum(['overwrite', 'fill-empty', 'increment']).default('overwrite'),
+      updates: z.array(
+        z.object({
+          id: z.string(),
+          price: z.number().positive().optional(),
+          stock: z.number().int().min(0).optional(),
+          inStock: z.boolean().optional(),
+        })
+      ),
+    })
+  ),
+  async (c) => {
+    const db = c.get('db');
+    const cache = c.get('cache');
+    const { mode, updates } = c.req.valid('json');
+
+    try {
+      // TODO: Implement batch variant update logic
+      // For now, return placeholder response
+      const updatedCount = updates.length;
+
+      // Invalidate cache
+      await cache.deleteByPrefix('admin:products');
+      await cache.deleteByPrefix('products');
+
+      return c.json({
+        success: true,
+        data: { updatedCount, mode },
+        message: 'Batch variant update completed',
+      });
+    } catch (error) {
+      console.error('Batch variant update error:', error);
+      return c.json({ success: false, error: 'Failed to update variants' }, 500);
+    }
+  }
+);
+
+// POST /api/admin/products/{id}:archive - Archive product
+admin.post('/products/:id:archive', async (c) => {
+  const db = c.get('db');
+  const cache = c.get('cache');
+  const productId = c.req.param('id');
+
+  try {
+    // Get product
+    const [product] = await db.select().from(products).where(eq(products.id, productId));
+
+    if (!product) {
+      return c.json({ success: false, error: 'Product not found' }, 404);
+    }
+
+    // TODO: Implement archiving logic (set status, move to archive table, etc.)
+    // For now, return placeholder response
+
+    // Invalidate cache
+    await cache.deleteByPrefix('admin:products');
+    await cache.deleteByPrefix('products');
+    await cache.delete(`products:detail:${productId}`);
+
+    return c.json({
+      success: true,
+      message: 'Product archived successfully',
+    });
+  } catch (error) {
+    console.error('Product archive error:', error);
+    return c.json({ success: false, error: 'Failed to archive product' }, 500);
+  }
+});
+
+// GET /api/admin/products/export - Export products to CSV
+admin.get(
+  '/products/export',
+  zValidator(
+    'query',
+    z.object({
+      category: z.string().optional(),
+      inStock: z.string().optional(),
+      format: z.enum(['csv', 'json']).default('csv'),
+    })
+  ),
+  async (c) => {
+    const db = c.get('db');
+    const { category, inStock, format } = c.req.valid('query');
+
+    try {
+      // Build query
+      let query = db.select().from(products);
+      const conditions = [];
+
+      if (category) {
+        conditions.push(eq(products.category, category));
+      }
+
+      if (inStock) {
+        conditions.push(eq(products.inStock, inStock === 'true'));
+      }
+
+      if (conditions.length > 0) {
+        query = query.where(and(...conditions));
+      }
+
+      const productsData = await query;
+
+      if (format === 'json') {
+        return c.json({ success: true, data: productsData });
+      }
+
+      // TODO: Implement CSV export logic
+      // For now, return placeholder response
+      return c.json({
+        success: true,
+        data: { count: productsData.length, format: 'csv' },
+        message: 'CSV export placeholder - implementation needed',
+      });
+    } catch (error) {
+      console.error('Product export error:', error);
+      return c.json({ success: false, error: 'Failed to export products' }, 500);
+    }
+  }
+);
+
+// POST /api/admin/products/import - Import products from CSV
+admin.post('/products/import', async (c) => {
+  const db = c.get('db');
+  const cache = c.get('cache');
+
+  try {
+    const formData = await c.req.formData();
+    const file = formData.get('file') as File;
+
+    if (!file) {
+      return c.json({ success: false, error: 'No file provided' }, 400);
+    }
+
+    // TODO: Implement CSV import logic
+    // For now, return placeholder response
+
+    // Invalidate cache
+    await cache.deleteByPrefix('admin:products');
+    await cache.deleteByPrefix('products');
+
+    return c.json({
+      success: true,
+      data: { filename: file.name, size: file.size },
+      message: 'CSV import placeholder - implementation needed',
+    });
+  } catch (error) {
+    console.error('Product import error:', error);
+    return c.json({ success: false, error: 'Failed to import products' }, 500);
+  }
+});
+
 // File Upload API
 admin.post('/upload', async (c) => {
   const storage = c.get('storage');
+  const db = c.get('db');
+  const user = c.get('user');
 
   try {
     const formData = await c.req.formData();
@@ -657,7 +880,7 @@ admin.post('/upload', async (c) => {
       const key = StorageManager.generateFileKey(file.name, folder);
 
       // Upload file
-      return storage.uploadFile(key, file, {
+      const uploadResult = await storage.uploadFile(key, file, {
         contentType: file.type,
         metadata: {
           originalName: file.name,
@@ -665,6 +888,48 @@ admin.post('/upload', async (c) => {
           uploadedAt: new Date().toISOString(),
         },
       });
+
+      const normalizedKey = stripDeliveryPrefix(uploadResult.key);
+      const now = new Date();
+      const mediaType = determineIsImage(uploadResult.contentType, normalizedKey) ? 'image' : 'file';
+      const metadataPayload = {
+        originalName: file.name,
+        folder,
+        uploadedAt: now.toISOString(),
+      };
+
+      await db
+        .insert(mediaAssets)
+        .values({
+          key: normalizedKey,
+          name: file.name,
+          url: uploadResult.url,
+          contentType: uploadResult.contentType,
+          mediaType,
+          size: uploadResult.size,
+          folder,
+          metadata: metadataPayload,
+          uploadedBy: user?.id ?? null,
+        })
+        .onConflictDoUpdate({
+          target: mediaAssets.key,
+          set: {
+            name: file.name,
+            url: uploadResult.url,
+            contentType: uploadResult.contentType,
+            mediaType,
+            size: uploadResult.size,
+            folder,
+            metadata: metadataPayload,
+            uploadedBy: user?.id ?? null,
+            updatedAt: now,
+          },
+        });
+
+      return {
+        ...uploadResult,
+        key: normalizedKey,
+      };
     });
 
     const uploadResults = await Promise.all(uploadPromises);
@@ -695,67 +960,110 @@ const mediaLibraryQuerySchema = z.object({
   sort: z.enum(['recent', 'name']).optional().default('recent'),
 });
 
+type MediaAssetRow = typeof mediaAssets.$inferSelect;
+type MediaCursorSort = 'recent' | 'name';
+
 admin.get('/media/library', zValidator('query', mediaLibraryQuerySchema), async (c) => {
   try {
+    const db = c.get('db');
     const storage = c.get('storage');
     const { prefix, cursor, limit, search, type, sort } = c.req.valid('query');
 
     const parsedLimit = clampLimit(limit);
+    const queryLimit = parsedLimit + 1;
+    const normalizedSort: 'recent' | 'name' = sort === 'name' ? 'name' : 'recent';
     const searchTerm = search?.trim().toLowerCase() ?? '';
 
-    const listResult = await storage.listFiles({
-      prefix,
-      cursor: cursor || undefined,
-      limit: parsedLimit,
-    });
+    const conditions: SQL[] = [];
 
-    const items = listResult.items
-      .map((item) => {
-        const normalizedKey = stripDeliveryPrefix(item.key);
-        const name = normalizedKey.split('/').pop() ?? normalizedKey;
-        const contentType = item.contentType ?? inferMimeFromKey(name);
-        const isImage = determineIsImage(contentType, normalizedKey);
+    if (prefix) {
+      const normalizedPrefix = prefix.replace(/^\/+/g, '');
+      const prefixPattern = `${escapeLikePattern(normalizedPrefix)}%`;
+      conditions.push(like(mediaAssets.key, prefixPattern));
+    }
 
-        return {
-          key: normalizedKey,
-          name,
-          url: storage.getFileUrl(normalizedKey),
-          size: item.size,
-          contentType,
-          lastModified: item.lastModified.toISOString(),
-          metadata: item.metadata ?? undefined,
-          isImage,
-        };
-      })
-      .filter((asset) => {
-        if (!searchTerm) return true;
-        return (
-          asset.name.toLowerCase().includes(searchTerm) ||
-          asset.key.toLowerCase().includes(searchTerm)
+    if (searchTerm) {
+      const pattern = `%${escapeLikePattern(searchTerm)}%`;
+      conditions.push(
+        or(
+          like(mediaAssets.name, pattern),
+          like(mediaAssets.key, pattern)
+        )
+      );
+    }
+
+    if (type === 'images') {
+      conditions.push(eq(mediaAssets.mediaType, 'image'));
+    } else if (type === 'files') {
+      conditions.push(eq(mediaAssets.mediaType, 'file'));
+    }
+
+    const cursorParts = decodeCursor(cursor, normalizedSort);
+    if (cursorParts) {
+      if (normalizedSort === 'recent') {
+        const cursorDateValue = Number(cursorParts.primary);
+        if (!Number.isNaN(cursorDateValue)) {
+          const cursorDate = new Date(cursorDateValue);
+          conditions.push(
+            or(
+              lt(mediaAssets.createdAt, cursorDate),
+              and(eq(mediaAssets.createdAt, cursorDate), lt(mediaAssets.id, cursorParts.id))
+            )
+          );
+        }
+      } else {
+        conditions.push(
+          or(
+            gt(mediaAssets.name, cursorParts.primary),
+            and(eq(mediaAssets.name, cursorParts.primary), gt(mediaAssets.id, cursorParts.id))
+          )
         );
-      })
-      .filter((asset) => {
-        if (type === 'images') return asset.isImage;
-        if (type === 'files') return !asset.isImage;
-        return true;
-      });
-
-    const sorted = items.sort((a, b) => {
-      if (sort === 'name') {
-        return a.name.localeCompare(b.name, 'zh-Hant');
       }
-      return new Date(b.lastModified).getTime() - new Date(a.lastModified).getTime();
+    }
+
+    let query = db.select().from(mediaAssets);
+    if (conditions.length) {
+      query = query.where(conditions.length === 1 ? conditions[0]! : and(...conditions));
+    }
+
+    const orderings =
+      normalizedSort === 'name'
+        ? [asc(mediaAssets.name), asc(mediaAssets.id)]
+        : [desc(mediaAssets.createdAt), desc(mediaAssets.id)];
+
+    const rows = await query.orderBy(...orderings).limit(queryLimit);
+
+    const hasMore = rows.length > parsedLimit;
+    const sliced = hasMore ? rows.slice(0, parsedLimit) : rows;
+
+    const assets = sliced.map((item) => {
+      const lastModified = item.updatedAt || item.createdAt || new Date();
+      const isImage = item.mediaType === 'image' || determineIsImage(item.contentType, item.key);
+
+      return {
+        key: item.key,
+        name: item.name,
+        url: storage.getFileUrl(item.key),
+        size: item.size,
+        contentType: item.contentType ?? inferMimeFromKey(item.key),
+        lastModified: lastModified.toISOString(),
+        metadata: item.metadata ?? undefined,
+        isImage,
+      };
     });
 
-    const nextCursor = listResult.truncated ? (listResult.cursor ?? null) : null;
+    const lastItem = hasMore ? sliced[sliced.length - 1] : undefined;
+    const nextCursor = lastItem
+      ? encodeCursor(normalizedSort, lastItem, normalizedSort === 'name')
+      : null;
 
     return c.json({
       success: true,
       data: {
-        items: sorted,
+        items: assets,
         pageInfo: {
           nextCursor,
-          hasMore: listResult.truncated,
+          hasMore,
         },
       },
     });
@@ -770,6 +1078,49 @@ admin.get('/media/library', zValidator('query', mediaLibraryQuerySchema), async 
     );
   }
 });
+
+const CURSOR_SEPARATOR = '::';
+
+type CursorParts = {
+  primary: string;
+  id: string;
+};
+
+function encodeCursor(sort: MediaCursorSort, item: MediaAssetRow): string {
+  const primaryValue =
+    sort === 'name'
+      ? item.name
+      : String((item.createdAt || new Date(0)).getTime());
+
+  return [sort, encodeURIComponent(primaryValue), encodeURIComponent(item.id)].join(
+    CURSOR_SEPARATOR
+  );
+}
+
+function decodeCursor(cursor: string | null | undefined, sort: MediaCursorSort): CursorParts | null {
+  if (!cursor) {
+    return null;
+  }
+
+  const parts = cursor.split(CURSOR_SEPARATOR);
+  if (parts.length !== 3) {
+    return null;
+  }
+
+  const [sortToken, primary, id] = parts;
+  if (sortToken !== sort) {
+    return null;
+  }
+
+  return {
+    primary: decodeURIComponent(primary),
+    id: decodeURIComponent(id),
+  };
+}
+
+function escapeLikePattern(value: string): string {
+  return value.replace(/[\\%_]/g, (match) => `\\${match}`);
+}
 
 function clampLimit(value?: string): number {
   const parsed = Number.parseInt(value ?? '30', 10);

@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
+import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
+import { useVirtualizer } from '@tanstack/react-virtual';
 import {
   Dialog,
   DialogContent,
@@ -21,6 +23,7 @@ import {
   fetchMediaLibrary,
   type MediaLibraryItem,
   type MediaLibraryCategory,
+  type MediaLibraryResponse,
 } from '../../services/mediaLibrary';
 import { formatBytes } from '../../lib/format';
 import { useApiUrl } from '../../contexts/EnvironmentContext';
@@ -44,31 +47,23 @@ export function MediaLibraryDialog({
   onClose,
 }: MediaLibraryDialogProps) {
   const [category, setCategory] = useState<PickerCategory>(initialCategory);
-  const [assets, setAssets] = useState<MediaLibraryItem[]>([]);
-  const [cursor, setCursor] = useState<string | null>(null);
-  const [hasMore, setHasMore] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [loadingMore, setLoadingMore] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
-  const [uploading, setUploading] = useState(false); // NEW: Track upload state
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
 
-  // NEW: File input ref for hidden file picker
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // NEW: Get API URL from context (falls back to localhost:8787)
   const apiUrl = useApiUrl();
-  const { uploadImages } = useImageUpload(); // NEW: Get upload function from context
+  const { uploadImages } = useImageUpload();
+  const queryClient = useQueryClient();
 
-  // Keep local category aligned with external state when the dialog re-opens
   useEffect(() => {
     if (open) {
       setCategory(initialCategory);
     }
   }, [open, initialCategory]);
 
-  // Debounce search input for smoother UX
   useEffect(() => {
     if (!open) {
       return;
@@ -81,79 +76,75 @@ export function MediaLibraryDialog({
     return () => window.clearTimeout(timer);
   }, [open, search]);
 
-  const loadAssets = useCallback(
-    async (nextCursor: string | null, append: boolean) => {
-      const result = await fetchMediaLibrary(
+  useEffect(() => {
+    setUploadError(null);
+  }, [category, debouncedSearch]);
+
+  const {
+    data,
+    error: queryError,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isFetching,
+    isLoading,
+  } = useInfiniteQuery({
+    queryKey: ['media-library', category, debouncedSearch || '', apiUrl],
+    enabled: open,
+    initialPageParam: null as string | null,
+    refetchOnWindowFocus: false,
+    staleTime: 30_000,
+    getNextPageParam: (lastPage: MediaLibraryResponse) => lastPage.pageInfo.nextCursor ?? undefined,
+    queryFn: async ({ pageParam }) =>
+      fetchMediaLibrary(
         {
-          cursor: nextCursor,
+          cursor: pageParam ?? null,
           limit: PAGE_SIZE,
           type: category,
           search: debouncedSearch || undefined,
           sort: 'recent',
         },
         apiUrl
-      );
+      ),
+  });
 
-      setAssets((prev) => (append ? [...prev, ...result.items] : result.items));
-      setCursor(result.pageInfo.nextCursor);
-      setHasMore(result.pageInfo.hasMore);
-    },
-    [category, debouncedSearch, apiUrl]
-  );
+  const assets = useMemo(() => data?.pages.flatMap((page) => page.items) ?? [], [data]);
+  const isInitialLoading = isLoading && assets.length === 0;
+  const fetchErrorMessage =
+    queryError && queryError instanceof Error
+      ? queryError.message
+      : queryError
+        ? '無法載入媒體庫'
+        : null;
 
-  // NEW: Handle image upload and refresh library
+  const stateMessage = useMemo(() => {
+    if (isInitialLoading) return '媒體庫載入中...';
+    if (uploadError) return uploadError;
+    if (fetchErrorMessage) return fetchErrorMessage;
+    if (!assets.length) return '目前沒有媒體檔案';
+    return null;
+  }, [assets.length, fetchErrorMessage, isInitialLoading, uploadError]);
+
   const handleImageUpload = useCallback(
     async (files: FileList | null) => {
-      if (!files || files.length === 0 || category !== 'images') return; // Only for images tab
+      if (!files || files.length === 0 || category !== 'images') return;
       setUploading(true);
-      setError(null);
+      setUploadError(null);
       try {
-        await uploadImages(files, { folder: 'uploads' }); // Use default folder; adjust if needed
-        // Refresh the library to include new uploads
-        setSearch(''); // Clear search to show recent
+        await uploadImages(files, { folder: 'uploads' });
+        setSearch('');
         setDebouncedSearch('');
-        await loadAssets(null, false); // Reload from start
+        await queryClient.invalidateQueries({ queryKey: ['media-library'] });
       } catch (err) {
         const message = err instanceof Error ? err.message : '上傳失敗';
-        setError(message);
+        setUploadError(message);
       } finally {
         setUploading(false);
-        if (fileInputRef.current) fileInputRef.current.value = ''; // Reset input
+        if (fileInputRef.current) fileInputRef.current.value = '';
       }
     },
-    [category, uploadImages, loadAssets]
+    [category, uploadImages, queryClient]
   );
-
-  useEffect(() => {
-    if (!open) {
-      return;
-    }
-
-    let cancelled = false;
-
-    const fetchInitial = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        await loadAssets(null, false);
-      } catch (err) {
-        if (!cancelled) {
-          const message = err instanceof Error ? err.message : '無法載入媒體庫';
-          setError(message);
-        }
-      } finally {
-        if (!cancelled) {
-          setLoading(false);
-        }
-      }
-    };
-
-    void fetchInitial();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [open, category, debouncedSearch, loadAssets]);
 
   const handleOpenChange = useCallback(
     (nextOpen: boolean) => {
@@ -164,28 +155,6 @@ export function MediaLibraryDialog({
     [onClose]
   );
 
-  const handleLoadMore = useCallback(async () => {
-    if (!cursor) return;
-    setLoadingMore(true);
-    setError(null);
-    try {
-      await loadAssets(cursor, true);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : '無法載入更多媒體';
-      setError(message);
-    } finally {
-      setLoadingMore(false);
-    }
-  }, [cursor, loadAssets, apiUrl]);
-
-  const stateMessage = useMemo(() => {
-    if (loading) return '媒體庫載入中...';
-    if (error) return error;
-    if (!assets.length) return '目前沒有媒體檔案';
-    return null;
-  }, [assets.length, loading, error]);
-
-  // NEW: Render upload dropzone only for images tab
   const renderUploadZone = () => (
     <div
       className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center mb-4"
@@ -245,99 +214,32 @@ export function MediaLibraryDialog({
               </div>
             </div>
 
-            {/* NEW: Use TabsContent for better structure */}
             <TabsContent value="images" className="min-h-[18rem] flex-1 overflow-hidden">
               <div className="h-full flex flex-col overflow-hidden">
-                {/* Upload zone only for images */}
                 {category === 'images' && renderUploadZone()}
-                <div className="flex-1 overflow-y-auto pr-1">
-                  {stateMessage ? (
-                    <div className="flex h-full flex-col items-center justify-center gap-3 text-sm text-muted-foreground">
-                      {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : null}
-                      <p>{stateMessage}</p>
-                    </div>
-                  ) : (
-                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                      {assets.map((asset) => (
-                        <button
-                          type="button"
-                          key={`${asset.key}-${asset.lastModified}`}
-                          onClick={() => onSelect(asset)}
-                          className="group flex flex-col gap-2 rounded-md border border-border bg-muted/40 p-3 text-left transition hover:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                        >
-                          <div className="relative flex h-40 items-center justify-center overflow-hidden rounded-md border border-dashed border-border bg-background text-muted-foreground">
-                            {asset.isImage ? (
-                              <img
-                                src={asset.url}
-                                alt={asset.name}
-                                className="h-full w-full object-cover"
-                                loading="lazy"
-                              />
-                            ) : (
-                              <PaperclipIcon className="h-10 w-10" />
-                            )}
-                          </div>
-                          <div className="space-y-1">
-                            <p className="truncate text-sm font-medium text-foreground">
-                              {asset.name}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              {formatBytes(asset.size)} ·{' '}
-                              {new Date(asset.lastModified).toLocaleString('zh-TW')}
-                            </p>
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                <VirtualizedAssetGrid
+                  assets={assets}
+                  onSelect={onSelect}
+                  stateMessage={stateMessage}
+                  showSpinner={isInitialLoading}
+                  fetchNextPage={fetchNextPage}
+                  hasNextPage={Boolean(hasNextPage)}
+                  isFetchingNextPage={isFetchingNextPage}
+                />
               </div>
             </TabsContent>
 
             <TabsContent value="files" className="min-h-[18rem] flex-1 overflow-hidden">
-              {/* Files tab: Same as before, no upload */}
               <div className="h-full flex flex-col overflow-hidden">
-                <div className="flex-1 overflow-y-auto pr-1">
-                  {stateMessage ? (
-                    <div className="flex h-full flex-col items-center justify-center gap-3 text-sm text-muted-foreground">
-                      {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : null}
-                      <p>{stateMessage}</p>
-                    </div>
-                  ) : (
-                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                      {assets.map((asset) => (
-                        <button
-                          type="button"
-                          key={`${asset.key}-${asset.lastModified}`}
-                          onClick={() => onSelect(asset)}
-                          className="group flex flex-col gap-2 rounded-md border border-border bg-muted/40 p-3 text-left transition hover:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                        >
-                          <div className="relative flex h-40 items-center justify-center overflow-hidden rounded-md border border-dashed border-border bg-background text-muted-foreground">
-                            {asset.isImage ? (
-                              <img
-                                src={asset.url}
-                                alt={asset.name}
-                                className="h-full w-full object-cover"
-                                loading="lazy"
-                              />
-                            ) : (
-                              <PaperclipIcon className="h-10 w-10" />
-                            )}
-                          </div>
-                          <div className="space-y-1">
-                            <p className="truncate text-sm font-medium text-foreground">
-                              {asset.name}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              {formatBytes(asset.size)} ·{' '}
-                              {new Date(asset.lastModified).toLocaleString('zh-TW')}
-                            </p>
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                <VirtualizedAssetGrid
+                  assets={assets}
+                  onSelect={onSelect}
+                  stateMessage={stateMessage}
+                  showSpinner={isInitialLoading}
+                  fetchNextPage={fetchNextPage}
+                  hasNextPage={Boolean(hasNextPage)}
+                  isFetchingNextPage={isFetchingNextPage}
+                />
               </div>
             </TabsContent>
           </Tabs>
@@ -346,17 +248,135 @@ export function MediaLibraryDialog({
             <Button variant="secondary" onClick={onClose}>
               取消
             </Button>
-            <Button
-              onClick={handleLoadMore}
-              disabled={!hasMore || loadingMore || loading || uploading} // UPDATED: Disable during upload
-              variant="outline"
-            >
-              {loadingMore ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-              {hasMore ? '載入更多' : '沒有更多檔案'}
-            </Button>
+            {isFetching && assets.length ? (
+              <span className="text-xs text-muted-foreground">更新中…</span>
+            ) : null}
           </div>
         </div>
       </DialogContent>
     </Dialog>
+  );
+}
+
+type VirtualizedAssetGridProps = {
+  assets: MediaLibraryItem[];
+  onSelect: (asset: MediaLibraryItem) => void;
+  stateMessage: string | null;
+  showSpinner: boolean;
+  fetchNextPage: () => Promise<unknown>;
+  hasNextPage: boolean;
+  isFetchingNextPage: boolean;
+};
+
+function VirtualizedAssetGrid({
+  assets,
+  onSelect,
+  stateMessage,
+  showSpinner,
+  fetchNextPage,
+  hasNextPage,
+  isFetchingNextPage,
+}: VirtualizedAssetGridProps) {
+  const scrollParentRef = useRef<HTMLDivElement | null>(null);
+  const virtualizer = useVirtualizer({
+    count: assets.length,
+    getScrollElement: () => scrollParentRef.current,
+    estimateSize: () => 220,
+    overscan: 8,
+  });
+
+  useEffect(() => {
+    const element = scrollParentRef.current;
+    if (!element || !hasNextPage) {
+      return;
+    }
+
+    const handleScroll = () => {
+      if (isFetchingNextPage) return;
+      const distanceFromBottom = element.scrollHeight - (element.scrollTop + element.clientHeight);
+      if (distanceFromBottom < 320) {
+        void fetchNextPage();
+      }
+    };
+
+    element.addEventListener('scroll', handleScroll);
+    return () => {
+      element.removeEventListener('scroll', handleScroll);
+    };
+  }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
+
+  useEffect(() => {
+    if (!hasNextPage || isFetchingNextPage) return;
+    const element = scrollParentRef.current;
+    if (!element) return;
+    if (element.scrollHeight <= element.clientHeight * 1.5) {
+      void fetchNextPage();
+    }
+  }, [assets.length, fetchNextPage, hasNextPage, isFetchingNextPage]);
+
+  if (stateMessage) {
+    return (
+      <div className="flex-1 overflow-y-auto pr-1" ref={scrollParentRef}>
+        <div className="flex h-full flex-col items-center justify-center gap-3 text-sm text-muted-foreground">
+          {showSpinner ? <Loader2 className="h-5 w-5 animate-spin" /> : null}
+          <p>{stateMessage}</p>
+        </div>
+      </div>
+    );
+  }
+
+  const virtualItems = virtualizer.getVirtualItems();
+  const paddingTop = virtualItems.length > 0 ? virtualItems[0]?.start ?? 0 : 0;
+  const paddingBottom = virtualItems.length > 0
+    ? Math.max(0, virtualizer.getTotalSize() - (virtualItems[virtualItems.length - 1]?.end ?? 0))
+    : 0;
+
+  return (
+    <div className="flex-1 overflow-y-auto pr-1" ref={scrollParentRef}>
+      <div style={{ paddingTop, paddingBottom }}>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {virtualItems.map((virtualRow) => {
+            const asset = assets[virtualRow.index];
+            if (!asset) return null;
+            return <AssetCard key={`${asset.key}-${asset.lastModified}`} asset={asset} onSelect={onSelect} />;
+          })}
+        </div>
+      </div>
+      {isFetchingNextPage ? (
+        <div className="flex items-center justify-center py-4 text-sm text-muted-foreground">
+          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          載入更多媒體...
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+type AssetCardProps = {
+  asset: MediaLibraryItem;
+  onSelect: (asset: MediaLibraryItem) => void;
+};
+
+function AssetCard({ asset, onSelect }: AssetCardProps) {
+  return (
+    <button
+      type="button"
+      onClick={() => onSelect(asset)}
+      className="group flex flex-col gap-2 rounded-md border border-border bg-muted/40 p-3 text-left transition hover:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+    >
+      <div className="relative flex h-40 items-center justify-center overflow-hidden rounded-md border border-dashed border-border bg-background text-muted-foreground">
+        {asset.isImage ? (
+          <img src={asset.url} alt={asset.name} className="h-full w-full object-cover" loading="lazy" />
+        ) : (
+          <PaperclipIcon className="h-10 w-10" />
+        )}
+      </div>
+      <div className="space-y-1">
+        <p className="truncate text-sm font-medium text-foreground">{asset.name}</p>
+        <p className="text-xs text-muted-foreground">
+          {formatBytes(asset.size)} · {new Date(asset.lastModified).toLocaleString('zh-TW')}
+        </p>
+      </div>
+    </button>
   );
 }

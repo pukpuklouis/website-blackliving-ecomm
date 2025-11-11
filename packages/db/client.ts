@@ -45,3 +45,5 @@ export type Newsletters = typeof schema.newsletters.$inferSelect;
 export type NewNewsletter = typeof schema.newsletters.$inferInsert;
 export type Contacts = typeof schema.contacts.$inferSelect;
 export type NewContact = typeof schema.contacts.$inferInsert;
+export type MediaAsset = typeof schema.mediaAssets.$inferSelect;
+export type NewMediaAsset = typeof schema.mediaAssets.$inferInsert;

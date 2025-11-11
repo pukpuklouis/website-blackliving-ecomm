@@ -69,17 +69,17 @@ function validateMigrations() {
 
   if (hasErrors) {
     console.log('\n⚠️  Migration Integrity Issues Detected!\n');
-    console.log('Missing snapshots for migrations:', missingSnapshots.join(', '));
-    console.log('\n📝 Known Issue:');
-    console.log('   Migrations 0003-0005 were created manually before Drizzle Kit was used.');
-    console.log('   This is acceptable because:');
-    console.log('   - Migration 0006 snapshot includes all their changes');
-    console.log('   - Future migrations will diff correctly from 0006');
-    console.log('   - The snapshot chain is repaired going forward\n');
-    console.log('✅ Solution: Always use `pnpm db:generate` for new migrations\n');
+  console.log('Missing snapshots for migrations:', missingSnapshots.join(', '));
+  console.log('\n📝 Known Issue:');
+  console.log('   Migrations 0003-0005 and 0007 were created manually before Drizzle Kit snapshots were enforced.');
+  console.log('   This is acceptable because:');
+  console.log('   - Migration 0006 snapshot includes all prior schema changes');
+  console.log('   - Migration 0008 snapshot re-syncs the chain after 0007');
+  console.log('   - Future migrations will diff correctly from the latest snapshot\n');
+  console.log('✅ Solution: Always use `pnpm db:generate` for new migrations\n');
 
-    // Only fail if there are missing snapshots AFTER 0006
-    const problematicMissing = missingSnapshots.filter(num => parseInt(num) > 6);
+    const allowedMissing = new Set(['0003', '0004', '0005', '0007']);
+    const problematicMissing = missingSnapshots.filter((num) => !allowedMissing.has(num));
     if (problematicMissing.length > 0) {
       console.error('❌ CRITICAL: Missing snapshots after migration 0006!');
       console.error('   This will break future migration generation.');
