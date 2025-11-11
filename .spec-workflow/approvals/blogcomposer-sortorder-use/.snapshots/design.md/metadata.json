@@ -1,0 +1,14 @@
+{
+  "filePath": ".spec-workflow/specs/blogcomposer-sortorder-use/design.md",
+  "currentVersion": 1,
+  "snapshots": [
+    {
+      "version": 1,
+      "filename": "snapshot-001.json",
+      "timestamp": "2025-10-31T16:03:45.635Z",
+      "trigger": "initial",
+      "approvalId": "approval_1761926625609_5dzrl9l5r",
+      "approvalTitle": "Blog Composer Sort Order Use - Design Document"
+    }
+  ]
+}

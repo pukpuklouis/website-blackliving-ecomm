@@ -1,0 +1,14 @@
+{
+  "filePath": ".spec-workflow/specs/card-component-overlay/tasks.md",
+  "currentVersion": 1,
+  "snapshots": [
+    {
+      "version": 1,
+      "filename": "snapshot-001.json",
+      "timestamp": "2025-10-31T06:23:40.365Z",
+      "trigger": "initial",
+      "approvalId": "approval_1761891820361_5lrvmtdg9",
+      "approvalTitle": "Card Component Overlay Implementation Tasks"
+    }
+  ]
+}

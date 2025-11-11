@@ -1,0 +1,14 @@
+{
+  "filePath": ".spec-workflow/steering/tech.md",
+  "currentVersion": 1,
+  "snapshots": [
+    {
+      "version": 1,
+      "filename": "snapshot-001.json",
+      "timestamp": "2025-10-30T07:58:46.944Z",
+      "trigger": "initial",
+      "approvalId": "approval_1761811126923_dhu4u5j6f",
+      "approvalTitle": "Tech.md - Black Living Technology Stack Documentation"
+    }
+  ]
+}

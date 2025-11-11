@@ -1,0 +1,14 @@
+{
+  "filePath": ".spec-workflow/specs/blogcomposer-sortorder-use/requirements.md",
+  "currentVersion": 1,
+  "snapshots": [
+    {
+      "version": 1,
+      "filename": "snapshot-001.json",
+      "timestamp": "2025-10-31T15:17:45.272Z",
+      "trigger": "initial",
+      "approvalId": "approval_1761923865268_5l6rd3upg",
+      "approvalTitle": "Blog Composer Sort Order Use - Requirements Document"
+    }
+  ]
+}

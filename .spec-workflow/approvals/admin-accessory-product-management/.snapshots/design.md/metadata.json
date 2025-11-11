@@ -1,0 +1,14 @@
+{
+  "filePath": ".spec-workflow/specs/admin-accessory-product-management/design.md",
+  "currentVersion": 1,
+  "snapshots": [
+    {
+      "version": 1,
+      "filename": "snapshot-001.json",
+      "timestamp": "2025-11-03T14:13:42.113Z",
+      "trigger": "initial",
+      "approvalId": "approval_1762179222101_x9o5xtrxh",
+      "approvalTitle": "Admin Accessory Product Management Design"
+    }
+  ]
+}

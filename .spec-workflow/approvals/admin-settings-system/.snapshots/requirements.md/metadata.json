@@ -1,0 +1,14 @@
+{
+  "filePath": ".spec-workflow/specs/admin-settings-system/requirements.md",
+  "currentVersion": 1,
+  "snapshots": [
+    {
+      "version": 1,
+      "filename": "snapshot-001.json",
+      "timestamp": "2025-11-03T17:28:34.342Z",
+      "trigger": "initial",
+      "approvalId": "approval_1762190914331_xqpi2flsc",
+      "approvalTitle": "Admin Settings System Requirements"
+    }
+  ]
+}

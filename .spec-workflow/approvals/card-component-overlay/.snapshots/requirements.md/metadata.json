@@ -1,0 +1,14 @@
+{
+  "filePath": ".spec-workflow/specs/card-component-overlay/requirements.md",
+  "currentVersion": 1,
+  "snapshots": [
+    {
+      "version": 1,
+      "filename": "snapshot-001.json",
+      "timestamp": "2025-10-31T06:18:55.738Z",
+      "trigger": "initial",
+      "approvalId": "approval_1761891535731_qcoff1d7o",
+      "approvalTitle": "Card Component Overlay Requirements"
+    }
+  ]
+}

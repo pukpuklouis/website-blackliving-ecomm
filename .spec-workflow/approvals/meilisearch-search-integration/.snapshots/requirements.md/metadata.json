@@ -1,0 +1,14 @@
+{
+  "filePath": ".spec-workflow/specs/meilisearch-search-integration/requirements.md",
+  "currentVersion": 1,
+  "snapshots": [
+    {
+      "version": 1,
+      "filename": "snapshot-001.json",
+      "timestamp": "2025-11-04T08:15:17.006Z",
+      "trigger": "initial",
+      "approvalId": "approval_1762244116974_ko60ans6d",
+      "approvalTitle": "MeiliSearch Search Integration Requirements"
+    }
+  ]
+}

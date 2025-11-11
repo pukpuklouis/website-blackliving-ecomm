@@ -1,0 +1,14 @@
+{
+  "filePath": ".spec-workflow/specs/admin-accessory-product-management/tasks.md",
+  "currentVersion": 1,
+  "snapshots": [
+    {
+      "version": 1,
+      "filename": "snapshot-001.json",
+      "timestamp": "2025-11-03T14:44:27.730Z",
+      "trigger": "initial",
+      "approvalId": "approval_1762181067716_vth07o0s5",
+      "approvalTitle": "Admin Accessory Product Management Tasks"
+    }
+  ]
+}

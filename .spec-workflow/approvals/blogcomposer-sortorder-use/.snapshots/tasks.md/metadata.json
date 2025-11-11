@@ -1,0 +1,14 @@
+{
+  "filePath": ".spec-workflow/specs/blogcomposer-sortorder-use/tasks.md",
+  "currentVersion": 1,
+  "snapshots": [
+    {
+      "version": 1,
+      "filename": "snapshot-001.json",
+      "timestamp": "2025-10-31T16:13:16.102Z",
+      "trigger": "initial",
+      "approvalId": "approval_1761927196053_naxp1hrxb",
+      "approvalTitle": "Blog Composer Sort Order Use - Tasks Document"
+    }
+  ]
+}
