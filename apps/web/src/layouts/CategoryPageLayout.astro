@@ -71,10 +71,12 @@ try {
   }
 } catch (err) {
   console.error(`獲取${categoryConfig.series}產品時發生錯誤:`, err);
-  if (err.name === 'AbortError') {
+  if (err instanceof Error && err.name === 'AbortError') {
     error = '請求逾時，請稍後再試';
+  } else if (err instanceof Error) {
+    error = err.message;
   } else {
-    error = err instanceof Error ? err.message : '發生未知錯誤';
+    error = '發生未知錯誤';
   }
 } finally {
   isLoading = false;

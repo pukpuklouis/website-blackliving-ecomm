@@ -1,8 +1,11 @@
 ---
-import type { BlogBreadcrumbProps } from '@blackliving/types';
+import type { BlogPost, PostCategory } from '@blackliving/types';
 
-export interface Props extends Partial<BlogBreadcrumbProps> {
+export interface Props {
   // Make post optional for category-only breadcrumbs
+  post?: Pick<BlogPost, 'title'>;
+  // Allow flexible category input - can be full PostCategory or simple object
+  category?: PostCategory | { name: string; slug: string; color?: string; icon?: string } | string | null;
 }
 
 const { post, category } = Astro.props as Props;
