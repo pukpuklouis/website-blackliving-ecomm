@@ -6,6 +6,7 @@ import ProductCard from '../components/ProductCard.astro';
 import CategoryImageBanner from '../components/CategoryImageBanner.astro';
 import type { CategoryConfig } from '../types/category.ts';
 import CTA from '../components/CTA.astro';
+import { PRODUCT_TYPE_TEMPLATES } from '@blackliving/types';
 
 export interface Props {
   categoryConfig: CategoryConfig;
@@ -21,6 +22,47 @@ const [
   secondaryFeature = '優質價格，物超所值',
   tertiaryFeature = '貼心服務',
 ] = features;
+const ACCESSORY_SUBTYPE_LABELS: Record<string, string> = {
+  pillow: '枕頭',
+  'sheet-set': '寢具組',
+  protector: '保潔墊',
+  duvet: '羽絨被',
+  topper: '記憶床墊／Topper',
+  'adjustable-base': '電動床架',
+  foundation: '下墊',
+};
+
+const accessorySubtypeSet = new Set(
+  Object.values(PRODUCT_TYPE_TEMPLATES)
+    .filter((template) => template.category === 'accessories')
+    .map((template) => template.id)
+);
+
+const subtypeSlugPattern = /^[a-z0-9,-]+$/;
+const isAccessoriesCategory = categorySlug === 'accessories';
+const rawSubtypeParam = Astro.url?.searchParams?.get('type') ?? null;
+const normalizedSubtype =
+  rawSubtypeParam && subtypeSlugPattern.test(rawSubtypeParam)
+    ? rawSubtypeParam.toLowerCase()
+    : null;
+// Validate that all comma-separated types are valid
+const hasValidSubtype = Boolean(
+  isAccessoriesCategory &&
+    normalizedSubtype &&
+    normalizedSubtype.split(',').every((type) => accessorySubtypeSet.has(type.trim()))
+);
+const appliedSubtype = hasValidSubtype ? normalizedSubtype : null;
+// Generate label for multiple types
+const activeSubtypeLabel = isAccessoriesCategory
+  ? appliedSubtype
+    ? appliedSubtype
+        .split(',')
+        .map((type) => ACCESSORY_SUBTYPE_LABELS[type.trim()] || type)
+        .join('、')
+    : '全部精選周邊'
+  : null;
+const invalidSubtypeQuery =
+  isAccessoriesCategory && rawSubtypeParam && !appliedSubtype ? rawSubtypeParam : null;
 
 // API configuration
 const API_BASE = import.meta.env.PUBLIC_API_BASE_URL || 'http://localhost:8787';
@@ -40,7 +82,13 @@ try {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
 
-  const response = await fetch(`${API_BASE}/api/products?category=${categorySlug}`, {
+  const productApiUrl = new URL('/api/products', API_BASE);
+  productApiUrl.searchParams.set('category', categorySlug);
+  if (appliedSubtype) {
+    productApiUrl.searchParams.set('subCategory', appliedSubtype);
+  }
+
+  const response = await fetch(productApiUrl.toString(), {
     signal: controller.signal,
     headers: {
       Accept: 'application/json',
@@ -169,17 +217,20 @@ const structuredData = {
   <meta slot="head" name="robots" content="index,follow" />
   <link slot="head" rel="canonical" href={canonicalUrl.toString()} />
 
-  
   <main class="container mx-auto px-4 py-8">
     <!-- Breadcrumbs -->
     <Breadcrumbs category={{ name: categoryConfig.series, slug: categoryConfig.slug }} />
     <!-- Hero Section -->
     <CategoryImageBanner
       categoryConfig={categoryConfig}
-      className="mb-12 rounded-xl overflow-hidden"
+      className="hidden md:block mb-12 rounded-xl overflow-hidden"
       aspectRatio="11/3"
     />
-
+    <CategoryImageBanner
+      categoryConfig={categoryConfig}
+      className="block md:hidden mb-12 rounded-xl overflow-hidden"
+      aspectRatio="11/6"
+    />
     <!-- Error State -->
     {
       error && (
@@ -232,7 +283,12 @@ const structuredData = {
           {transformedProducts.length > 0 ? (
             <>
               <div class="flex justify-between items-center mb-6">
-                <p class="text-gray-600">找到 {transformedProducts.length} 項產品</p>
+                <p class="text-gray-600">
+                  找到 {transformedProducts.length} 項產品
+                  {isAccessoriesCategory && activeSubtypeLabel && (
+                    <span class="ml-3 text-sm text-gray-500">已篩選：{activeSubtypeLabel}</span>
+                  )}
+                </p>
               </div>
 
               <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8" role="list">
@@ -273,7 +329,7 @@ const structuredData = {
         </section>
       )
     }
-<!-- CTA Section -->
+    <!-- CTA Section -->
   </main>
   <CTA
     title="準備好體驗頂級睡眠了嗎？"
@@ -284,4 +340,14 @@ const structuredData = {
     secondaryButtonHref="https://line.me/R/ti/p/@blackking"
     secondaryButtonTarget="_blank"
   />
+  {
+    invalidSubtypeQuery && (
+      <script
+        type="module"
+        set:html={`(function(){const invalidValue=${JSON.stringify(
+          invalidSubtypeQuery
+        )};console.warn('Unknown accessories subtype filter:',invalidValue);if(typeof window!=='undefined' && typeof gtag!=='undefined'){gtag('event','invalid_accessory_filter',{event_category:'accessories',event_label:invalidValue});}})();`}
+      />
+    )
+  }
 </BaseLayout>

@@ -30,24 +30,24 @@ const {
   publishedTime,
   modifiedTime,
   schema,
-  class: className = '',
+  class: className = 'overflow-x-hidden',
 } = Astro.props;
 ---
 
 <!doctype html>
-<html lang='zh-TW' class='theme-web-blackliving'>
+<html lang="zh-TW" class="theme-web-blackliving">
   <head>
-    <meta charset='UTF-8' />
-    <meta name='viewport' content='width=device-width, initial-scale=1.0' />
-    <link rel='icon' type='image/svg+xml' href='/favicon.svg' />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 
     <!-- SEO -->
     <SEO {title} {description} {canonical} {image} {type} {publishedTime} {modifiedTime} {schema} />
 
     <!-- Fonts -->
-    <Font cssVariable='--font-agatho' preload />
-    <Font cssVariable='--font-noto-tc' preload />
-    <Font cssVariable='--font-crimson-text' preload />
+    <Font cssVariable="--font-agatho" preload />
+    <Font cssVariable="--font-noto-tc" preload />
+    <Font cssVariable="--font-crimson-text" preload />
 
     <!-- Google Tag Manager (placeholder) -->
     <!-- Add GTM script here when ready -->
@@ -58,7 +58,7 @@ const {
     <!-- Add GTM noscript here when ready -->
 
     <AnnouncementBar />
-    
+
     <Header />
 
     <main>

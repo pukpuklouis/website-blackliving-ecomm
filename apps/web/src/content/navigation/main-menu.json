@@ -45,15 +45,15 @@
       "subItems": [
         {
           "label": "枕頭",
-          "href": "/shop/accessories/mattress-accessories"
-        },
-        {
-          "label": "電動床架／下墊",
-          "href": "/shop/accessories/mattress-suites"
+          "href": "/shop/accessories?type=pillow"
         },
         {
           "label": "寢具",
-          "href": "/shop/accessories/mattress-pillows"
+          "href": "/shop/accessories?type=sheet-set"
+        },
+        {
+          "label": "電動床架/下墊",
+          "href": "/shop/accessories?type=adjustable-base,foundation"
         }
       ]
     },

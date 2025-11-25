@@ -249,7 +249,7 @@ export default function ProductEditPage({ productId, initialData }: ProductEditP
     }
 
     // If initialData is provided from loader, use it instead of making API call
-    if (initialData) {
+    if (initialData && initialData.id) {
       const sanitizedProduct = sanitizeProduct(initialData, cdnBase, fallbackAssetBase);
       setProduct(sanitizedProduct);
       setFormData(sanitizedProduct);
@@ -298,14 +298,41 @@ export default function ProductEditPage({ productId, initialData }: ProductEditP
       const hasVariants = (prev.variants?.length ?? 0) > 0;
 
       if (!templateId) {
+        // Clear template errors when removing template
+        setFormErrors(errors => {
+          const newErrors = { ...errors };
+          Object.keys(newErrors).forEach(key => {
+            if (key.startsWith('variants.') || key === 'productType') {
+              delete newErrors[key];
+            }
+          });
+          return newErrors;
+        });
         return { ...prev, productType: undefined };
       }
 
+      // Validate existing variants against new template
       if (hasVariants) {
+        const templateValidation = validateProductAgainstTemplate(templateId, {
+          ...prev,
+          productType: templateId,
+        });
+
+        if (!templateValidation.isValid) {
+          // Show validation errors
+          setFormErrors(templateValidation.errors);
+          toast.error('現有款式與新模板不相容，請修正必填欄位');
+        } else {
+          // Clear errors if validation passes
+          setFormErrors({});
+        }
+
         return { ...prev, productType: templateId };
       }
 
+      // No variants yet, generate default ones
       const defaultVariants = generateDefaultVariants(templateId);
+      setFormErrors({});
       return { ...prev, productType: templateId, variants: defaultVariants };
     });
   };
@@ -361,8 +388,9 @@ export default function ProductEditPage({ productId, initialData }: ProductEditP
       if (selectedTemplate) {
         const templateValidation = validateProductAgainstTemplate(selectedTemplate, normalized);
         if (!templateValidation.isValid) {
-          setFormErrors(prev => ({ ...prev, ...(templateValidation.errors as any) }));
-          toast.error('產品不符合模板要求');
+          setFormErrors(prev => ({ ...prev, ...templateValidation.errors }));
+          toast.error('產品不符合模板要求，請檢查必填欄位');
+          console.error('Template validation errors:', templateValidation.errors);
           return;
         }
       }
@@ -742,7 +770,11 @@ export default function ProductEditPage({ productId, initialData }: ProductEditP
                         <Input
                           value={variant.name || ''}
                           onChange={(e) => handleUpdateVariant(index, 'name', e.target.value)}
+                          className={formErrors[`variants.${index}.name`] ? 'border-red-500' : ''}
                         />
+                        {formErrors[`variants.${index}.name`] && (
+                          <p className="text-sm text-red-500">{formErrors[`variants.${index}.name`]}</p>
+                        )}
                       </div>
                       <div className="space-y-2">
                         <Label>價格</Label>
@@ -750,7 +782,11 @@ export default function ProductEditPage({ productId, initialData }: ProductEditP
                           type="number"
                           value={variant.price || 0}
                           onChange={(e) => handleUpdateVariant(index, 'price', e.target.value)}
+                          className={formErrors[`variants.${index}.price`] ? 'border-red-500' : ''}
                         />
+                        {formErrors[`variants.${index}.price`] && (
+                          <p className="text-sm text-red-500">{formErrors[`variants.${index}.price`]}</p>
+                        )}
                       </div>
                       <div className="space-y-2">
                         <Label>SKU</Label>
@@ -773,13 +809,16 @@ export default function ProductEditPage({ productId, initialData }: ProductEditP
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                         {selectedTemplateData.variantAxes.map((axis) => (
                           <div key={axis.id} className="space-y-2">
-                            <Label>{axis.name}</Label>
+                            <Label>
+                              {axis.name}
+                              {axis.required && <span className="text-red-500 ml-1">*</span>}
+                            </Label>
                             <Select
                               value={String(variant[axis.type as keyof typeof variant] || '')}
                               onValueChange={(value) => handleUpdateVariant(index, axis.type as any, value)}
                             >
-                              <SelectTrigger>
-                                <SelectValue />
+                              <SelectTrigger className={formErrors[`variants.${index}.${axis.type}`] ? 'border-red-500' : ''}>
+                                <SelectValue placeholder={`選擇${axis.name}`} />
                               </SelectTrigger>
                               <SelectContent>
                                 {axis.values.map((value) => (
@@ -789,6 +828,9 @@ export default function ProductEditPage({ productId, initialData }: ProductEditP
                                 ))}
                               </SelectContent>
                             </Select>
+                            {formErrors[`variants.${index}.${axis.type}`] && (
+                              <p className="text-sm text-red-500">{formErrors[`variants.${index}.${axis.type}`]}</p>
+                            )}
                           </div>
                         ))}
                       </div>
@@ -820,7 +862,7 @@ export default function ProductEditPage({ productId, initialData }: ProductEditP
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-            <div className="space-y-2">
+              <div className="space-y-2">
                 <Label htmlFor="featuresMarkdown-editor">產品特色編輯</Label>
                 <div id="featuresMarkdown-editor">
                   <BlockNoteEditor
@@ -968,22 +1010,22 @@ export function normalizeFormData(
 ): ProductFormData {
   const variants = Array.isArray(fd.variants)
     ? fd.variants.map((variant) => ({
-        id: variant.id || `variant-${Date.now()}-${Math.random()}`,
-        name: (variant?.name ?? '').toString().trim(),
-        price:
-          typeof variant?.price === 'number'
-            ? variant.price
-            : Number((variant?.price as unknown as string) ?? 0) || 0,
-        sku: variant?.sku ? variant.sku.toString().trim() : undefined,
-        size: variant?.size ? variant.size.toString().trim() : undefined,
-        firmness: variant?.firmness ? variant.firmness.toString().trim() : undefined,
-        color: variant?.color ? variant.color.toString().trim() : undefined,
-        material: variant?.material ? variant.material.toString().trim() : undefined,
-        thickness: variant?.thickness ? variant.thickness.toString().trim() : undefined,
-        loft: variant?.loft ? variant.loft.toString().trim() : undefined,
-        weight: variant?.weight ? variant.weight.toString().trim() : undefined,
-        style: variant?.style ? variant.style.toString().trim() : undefined,
-      }))
+      id: variant.id || `variant-${Date.now()}-${Math.random()}`,
+      name: (variant?.name ?? '').toString().trim(),
+      price:
+        typeof variant?.price === 'number'
+          ? variant.price
+          : Number((variant?.price as unknown as string) ?? 0) || 0,
+      sku: variant?.sku ? variant.sku.toString().trim() : undefined,
+      size: variant?.size ? variant.size.toString().trim() : undefined,
+      firmness: variant?.firmness ? variant.firmness.toString().trim() : undefined,
+      color: variant?.color ? variant.color.toString().trim() : undefined,
+      material: variant?.material ? variant.material.toString().trim() : undefined,
+      thickness: variant?.thickness ? variant.thickness.toString().trim() : undefined,
+      loft: variant?.loft ? variant.loft.toString().trim() : undefined,
+      weight: variant?.weight ? variant.weight.toString().trim() : undefined,
+      style: variant?.style ? variant.style.toString().trim() : undefined,
+    }))
     : [];
 
   const images = Array.isArray(fd.images)
@@ -992,8 +1034,8 @@ export function normalizeFormData(
 
   const features = Array.isArray(fd.features)
     ? fd.features
-        .map((feature) => (typeof feature === 'string' ? feature.trim() : ''))
-        .filter(Boolean)
+      .map((feature) => (typeof feature === 'string' ? feature.trim() : ''))
+      .filter(Boolean)
     : [];
 
   const rawSpecifications =
@@ -1143,26 +1185,39 @@ function isZodInternalError(error: unknown): boolean {
 }
 
 export function sanitizeProduct(
-  product: Product | null | undefined,
+  product: Partial<Product> | Product | null | undefined,
   cdnUrl?: string,
   fallbackBase?: string
 ): Product {
-  const safeProduct = (product ?? {}) as Product;
+  const safeProduct = (product ?? {}) as Partial<Product>;
 
   const images = Array.isArray(safeProduct.images)
     ? safeProduct.images.filter(Boolean).map((image) => {
-        const imgString = String(image);
-        const key = extractAssetKey(imgString);
-        return resolveAssetUrl({ key, url: imgString }, cdnUrl, fallbackBase);
-      })
+      const imgString = String(image);
+      const key = extractAssetKey(imgString);
+      return resolveAssetUrl({ key, url: imgString }, cdnUrl, fallbackBase);
+    })
     : [];
 
   return {
-    ...safeProduct,
+    id: safeProduct.id || '',
+    name: safeProduct.name || '',
+    slug: safeProduct.slug || '',
+    description: safeProduct.description || '',
+    category: safeProduct.category || '',
+    productType: safeProduct.productType,
     images,
     variants: Array.isArray(safeProduct.variants) ? safeProduct.variants : [],
     features: Array.isArray(safeProduct.features) ? safeProduct.features : [],
+    featuresMarkdown: safeProduct.featuresMarkdown,
     specifications: safeProduct.specifications || {},
+    inStock: safeProduct.inStock ?? true,
+    featured: safeProduct.featured ?? false,
+    sortOrder: safeProduct.sortOrder ?? 0,
+    seoTitle: safeProduct.seoTitle,
+    seoDescription: safeProduct.seoDescription,
+    createdAt: safeProduct.createdAt || new Date(),
+    updatedAt: safeProduct.updatedAt || new Date(),
   };
 }
 
@@ -1174,9 +1229,9 @@ export function normalizeCategory(category: ProductCategoryDTO): ProductCategory
       : undefined;
   const stats = category.stats
     ? {
-        productCount: Number(category.stats.productCount ?? 0),
-        inStockCount: Number(category.stats.inStockCount ?? 0),
-      }
+      productCount: Number(category.stats.productCount ?? 0),
+      inStockCount: Number(category.stats.inStockCount ?? 0),
+    }
     : undefined;
 
   const urlPathRaw =

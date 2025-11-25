@@ -1,28 +1,31 @@
 import React, { useState, useEffect } from 'react';
 import { z } from 'zod';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@blackliving/ui';
+import { OPTION_DISPLAY_NAMES } from '@blackliving/types/product-templates';
 
 // Dynamic validation schema that adapts to available variants
-const createVariantSchema = (variants: ProductVariant[]) => {
-  const availableSizes = [...new Set(variants.map((v) => v.size))];
-  const availableFirmness = [...new Set(variants.map((v) => v.firmness))];
+const createVariantSchema = (optionNames: string[], variants: ProductVariant[]) => {
+  const schemaShape: Record<string, z.ZodTypeAny> = {};
 
-  return z.object({
-    size: z.enum(availableSizes as [string, ...string[]], { message: '請選擇尺寸' }),
-    firmness: z.enum(availableFirmness as [string, ...string[]], { message: '請選擇類型' }),
-    quantity: z.number().min(1, '數量至少為1').max(10, '數量不能超過10'),
+  optionNames.forEach(optionName => {
+    const availableValues = [...new Set(variants.map((v) => v.options[optionName]))];
+    schemaShape[optionName] = z.enum(availableValues as [string, ...string[]], {
+      message: `請選擇${optionName}`
+    });
   });
+
+  schemaShape.quantity = z.number().min(1, '數量至少為1').max(10, '數量不能超過10');
+
+  return z.object(schemaShape);
 };
 
 type VariantData = {
-  size: string;
-  firmness: string;
+  options: Record<string, string>;
   quantity: number;
 };
 
 interface ProductVariant {
-  size: string;
-  firmness: string;
+  options: Record<string, string>;
   price: number;
   stock: number;
   sku: string;
@@ -43,45 +46,41 @@ export default function ProductVariantSelector({
   onAddToCart,
   className = '',
 }: ProductVariantSelectorProps) {
-  const [selectedVariant, setSelectedVariant] = useState<Partial<VariantData>>({
-    quantity: 1,
-  });
-  const [errors, setErrors] = useState<Partial<Record<keyof VariantData, string>>>({});
+  const optionNames = (variants && variants.length > 0 && variants[0] && variants[0].options && typeof variants[0].options === 'object')
+    ? Object.keys(variants[0].options)
+    : [];
+
+  const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
+  const [quantity, setQuantity] = useState<number>(1);
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [currentPrice, setCurrentPrice] = useState<number | null>(null);
   const [currentSku, setCurrentSku] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
 
   // Auto-select variant if only one option exists
   useEffect(() => {
-    if (variants.length === 1) {
-      const singleVariant = variants[0];
-      setSelectedVariant((prev) => ({
-        ...prev,
-        size: singleVariant.size,
-        firmness: singleVariant.firmness,
-      }));
+    if (variants.length === 1 && variants[0]?.options) {
+      setSelectedOptions(variants[0].options);
+      setQuantity(1);
     }
   }, [variants]);
 
   // Generate dynamic options from variant data
-  const availableSizes = [...new Set(variants.map((v) => v.size))];
-  const availableFirmness = [...new Set(variants.map((v) => v.firmness))];
-
-  const sizeOptions = availableSizes.map((size) => ({
-    value: size,
-    label: size,
-  }));
-
-  const firmnessOptions = availableFirmness.map((firmness) => ({
-    value: firmness,
-    label: firmness,
+  const optionConfigs = optionNames.map(optionName => ({
+    name: optionName,
+    displayName: OPTION_DISPLAY_NAMES[optionName] || optionName,
+    values: [...new Set(variants.map((v) => v.options?.[optionName]).filter(Boolean))],
+    isColor: optionName.toLowerCase().includes('color'),
   }));
 
   // Update price and SKU when variant selection changes
   useEffect(() => {
-    if (selectedVariant.size && selectedVariant.firmness) {
-      const variant = variants.find(
-        (v) => v.size === selectedVariant.size && v.firmness === selectedVariant.firmness
+    if (variants.length === 0 || optionNames.length === 0) return;
+
+    const allOptionsSelected = optionNames.every(name => selectedOptions[name]);
+    if (allOptionsSelected) {
+      const variant = variants.find(v =>
+        v.options && optionNames.every(name => v.options[name] === selectedOptions[name])
       );
 
       if (variant) {
@@ -89,10 +88,11 @@ export default function ProductVariantSelector({
         setCurrentSku(variant.sku);
 
         try {
-          const variantSchema = createVariantSchema(variants);
-          const validatedVariant = variantSchema.parse(selectedVariant);
+          const variantSchema = createVariantSchema(optionNames, variants);
+          const validatedData = variantSchema.parse({ ...selectedOptions, quantity });
           onVariantChange({
-            ...validatedVariant,
+            options: selectedOptions,
+            quantity,
             price: variant.price,
             sku: variant.sku,
           });
@@ -101,49 +101,58 @@ export default function ProductVariantSelector({
         }
       }
     }
-  }, [selectedVariant, variants, onVariantChange]);
+  }, [selectedOptions, quantity, variants, onVariantChange, optionNames]);
 
-  const handleVariantChange = (field: keyof VariantData, value: string | number) => {
-    setSelectedVariant((prev) => ({ ...prev, [field]: value }));
+  const handleVariantChange = (field: string, value: string | number) => {
+    if (field === 'quantity') {
+      setQuantity(value as number);
+    } else {
+      setSelectedOptions((prev) => ({ ...prev, [field]: value as string }));
+    }
 
     // Clear error when user makes a selection
     if (errors[field]) {
-      setErrors((prev) => ({ ...prev, [field]: undefined }));
+      setErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors[field];
+        return newErrors;
+      });
     }
   };
 
   const validateAndAddToCart = async () => {
-    if (!onAddToCart) return;
+    if (!onAddToCart || variants.length === 0 || optionNames.length === 0) return;
 
     setIsLoading(true);
     setErrors({});
 
     try {
-      const variantSchema = createVariantSchema(variants);
-      const validatedVariant = variantSchema.parse(selectedVariant);
-      const variant = variants.find(
-        (v) => v.size === validatedVariant.size && v.firmness === validatedVariant.firmness
+      const variantSchema = createVariantSchema(optionNames, variants);
+      const validatedData = variantSchema.parse({ ...selectedOptions, quantity });
+      const variant = variants.find(v =>
+        v.options && optionNames.every(name => v.options[name] === selectedOptions[name])
       );
 
       if (!variant) {
         throw new Error('找不到對應的產品規格');
       }
 
-      if (variant.stock < validatedVariant.quantity) {
+      if (variant.stock < quantity) {
         throw new Error('庫存不足');
       }
 
       await onAddToCart({
-        ...validatedVariant,
+        options: selectedOptions,
+        quantity,
         price: variant.price,
         sku: variant.sku,
       });
     } catch (error) {
       if (error instanceof z.ZodError) {
-        const fieldErrors: Partial<Record<keyof VariantData, string>> = {};
-        error.errors.forEach((err) => {
+        const fieldErrors: Record<string, string> = {};
+        error.issues.forEach((err) => {
           if (err.path[0]) {
-            fieldErrors[err.path[0] as keyof VariantData] = err.message;
+            fieldErrors[err.path[0] as string] = err.message;
           }
         });
         setErrors(fieldErrors);
@@ -156,9 +165,11 @@ export default function ProductVariantSelector({
   };
 
   const getCurrentStock = () => {
-    if (!selectedVariant.size || !selectedVariant.firmness) return null;
-    const variant = variants.find(
-      (v) => v.size === selectedVariant.size && v.firmness === selectedVariant.firmness
+    if (variants.length === 0 || optionNames.length === 0) return null;
+    const allOptionsSelected = optionNames.every(name => selectedOptions[name]);
+    if (!allOptionsSelected) return null;
+    const variant = variants.find(v =>
+      v.options && optionNames.every(name => v.options[name] === selectedOptions[name])
     );
     return variant?.stock || 0;
   };
@@ -167,53 +178,37 @@ export default function ProductVariantSelector({
 
   return (
     <div className={`space-y-6 ${className}`}>
-      {/* Firmness Selection - always show dropdown, even for single option */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-3">選擇軟硬度 *</label>
-        <Select
-          value={selectedVariant.firmness || ''}
-          onValueChange={(value: string) => handleVariantChange('firmness', value)}
-        >
-          <SelectTrigger className="w-full">
-            <SelectValue placeholder="請選擇軟硬度" />
-          </SelectTrigger>
-          <SelectContent>
-            {firmnessOptions.map((option) => (
-              <SelectItem key={option.value} value={option.value}>
-                <span className="font-medium">{option.label}</span>
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        {errors.firmness && <p className="text-red-500 text-sm mt-1">{errors.firmness}</p>}
-      </div>
-      {/* Size Selection - always show dropdown, even for single option */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-3">選擇尺寸 *</label>
-        <Select
-          value={selectedVariant.size || ''}
-          onValueChange={(value: string) => handleVariantChange('size', value)}
-        >
-          <SelectTrigger className="w-full">
-            <SelectValue placeholder="請選擇尺寸" />
-          </SelectTrigger>
-          <SelectContent>
-            {sizeOptions.map((option) => (
-              <SelectItem key={option.value} value={option.value}>
-                <span className="font-medium">{option.label}</span>
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        {errors.size && <p className="text-red-500 text-sm mt-1">{errors.size}</p>}
-      </div>
+      {/* Dynamic Option Selections */}
+      {optionConfigs.map((config) => (
+        <div key={config.name}>
+          <label className="block text-sm md:text-md font-medium text-gray-700 mb-3">
+            選擇{config.displayName} *
+          </label>
+          <Select
+            value={selectedOptions[config.name] || ''}
+            onValueChange={(value: string) => handleVariantChange(config.name, value)}
+          >
+            <SelectTrigger className="w-full md:w-[50%]">
+              <SelectValue placeholder={`請選擇${config.displayName}`} />
+            </SelectTrigger>
+            <SelectContent>
+              {config.values.map((value) => (
+                <SelectItem key={value} value={value}>
+                  <span className="font-medium">{value}</span>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {errors[config.name] && <p className="text-destructive text-sm mt-1">{errors[config.name]}</p>}
+        </div>
+      ))}
 
       {/* Price Display */}
       {currentPrice && (
         <div className="p-4 bg-gray-50 rounded-lg">
           <div className="flex justify-between items-center">
             <span className="text-lg font-semibold">售價</span>
-            <span className="text-2xl font-bold text-red-600">
+            <span className="text-2xl md:text-3xl font-bold text-destructive">
               NT$ {currentPrice.toLocaleString()}
             </span>
           </div>
@@ -229,11 +224,9 @@ export default function ProductVariantSelector({
         <div className="flex items-center space-x-3">
           <button
             type="button"
-            onClick={() =>
-              handleVariantChange('quantity', Math.max(1, (selectedVariant.quantity || 1) - 1))
-            }
+            onClick={() => handleVariantChange('quantity', Math.max(1, quantity - 1))}
             className="w-10 h-10 border border-gray-300 rounded-lg flex items-center justify-center hover:bg-gray-50"
-            disabled={(selectedVariant.quantity || 1) <= 1}
+            disabled={quantity <= 1}
           >
             -
           </button>
@@ -241,20 +234,15 @@ export default function ProductVariantSelector({
             type="number"
             min="1"
             max={Math.min(10, currentStock || 10)}
-            value={selectedVariant.quantity || 1}
+            value={quantity}
             onChange={(e) => handleVariantChange('quantity', parseInt(e.target.value) || 1)}
             className="w-20 text-center border border-gray-300 rounded-lg py-2"
           />
           <button
             type="button"
-            onClick={() =>
-              handleVariantChange(
-                'quantity',
-                Math.min(10, currentStock || 10, (selectedVariant.quantity || 1) + 1)
-              )
-            }
+            onClick={() => handleVariantChange('quantity', Math.min(10, currentStock || 10, quantity + 1))}
             className="w-10 h-10 border border-gray-300 rounded-lg flex items-center justify-center hover:bg-gray-50"
-            disabled={(selectedVariant.quantity || 1) >= Math.min(10, currentStock || 10)}
+            disabled={quantity >= Math.min(10, currentStock || 10)}
           >
             +
           </button>

@@ -1,8 +1,9 @@
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
-import { eq, desc, asc, and, or, like, count, sql } from 'drizzle-orm';
+import { eq, desc, asc, and, or, like, count, sql, inArray } from 'drizzle-orm';
 import { products, productCategories } from '@blackliving/db';
+import { PRODUCT_TYPE_TEMPLATES } from '@blackliving/types';
 import { createId } from '@paralleldrive/cuid2';
 
 type Env = {
@@ -22,6 +23,24 @@ type Env = {
 };
 
 const app = new Hono<Env>();
+
+const ACCESSORY_SUBCATEGORY_SLUGS = Object.values(PRODUCT_TYPE_TEMPLATES)
+  .filter((template) => template.category === 'accessories')
+  .map((template) => template.id);
+
+const accessorySubtypeSet = new Set(ACCESSORY_SUBCATEGORY_SLUGS);
+
+export function resolveAccessorySubcategory(category?: string, subCategory?: string | null): string[] | null {
+  if (category !== 'accessories' || !subCategory) {
+    return null;
+  }
+
+  // Split by comma and validate each type
+  const types = subCategory.split(',').map(s => s.trim().toLowerCase());
+  const validTypes = types.filter(t => accessorySubtypeSet.has(t));
+
+  return validTypes.length > 0 ? validTypes : null;
+}
 
 // Validation schemas
 const createProductSchema = z.object({
@@ -72,6 +91,10 @@ const productQuerySchema = z.object({
   category: z
     .string()
     .regex(/^[a-z0-9-]+$/, 'Category must be a lowercase slug')
+    .optional(),
+  subCategory: z
+    .string()
+    .regex(/^[a-z0-9,-]+$/, 'Subcategory must be a lowercase slug or comma-separated slugs')
     .optional(),
   featured: z.string().optional(),
   inStock: z.string().optional(),
@@ -131,6 +154,15 @@ app.get('/', zValidator('query', productQuerySchema), async (c) => {
 
     if (query.inStock) {
       conditions.push(eq(products.inStock, query.inStock === 'true'));
+    }
+
+    const resolvedSubCategories = resolveAccessorySubcategory(query.category, query.subCategory);
+    if (resolvedSubCategories && resolvedSubCategories.length > 0) {
+      conditions.push(
+        resolvedSubCategories.length === 1
+          ? eq(products.productType, resolvedSubCategories[0])
+          : inArray(products.productType, resolvedSubCategories)
+      );
     }
 
     // Handle search

@@ -3,23 +3,48 @@
     {
       "title": "關於我們",
       "links": [
-        { "text": "關於黑哥", "url": "/about" },
-        { "text": "門市資訊", "url": "/contact" }
+        {
+          "text": "關於黑哥",
+          "url": "/about"
+        },
+        {
+          "text": "門市資訊",
+          "url": "/contact"
+        }
       ]
     },
     {
       "title": "購物須知",
       "links": [
-        { "text": "保固說明", "url": "/warranty" },
-        { "text": "購物說明", "url": "/shipping" }
+        {
+          "text": "保固說明",
+          "url": "/warranty"
+        },
+        {
+          "text": "購物說明",
+          "url": "/shipping"
+        },
+        {
+          "text": "退換貨說明",
+          "url": "/return-policy"
+        }
       ]
     },
     {
       "title": "聯絡我們",
       "links": [
-        { "text": "客戶服務", "url": "/contact" },
-        { "text": "預約參觀", "url": "/appointment" },
-        { "text": "異業合作", "url": "/business-cooperation" }
+        {
+          "text": "客戶服務",
+          "url": "/contact"
+        },
+        {
+          "text": "預約參觀",
+          "url": "/appointment"
+        },
+        {
+          "text": "異業合作",
+          "url": "/business-cooperation"
+        }
       ]
     }
   ]

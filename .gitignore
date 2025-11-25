@@ -71,6 +71,8 @@ coverage/
 __tests__
 !apps/api/src/routes/__tests__/
 !apps/api/src/routes/__tests__/*.test.ts
+!apps/api/src/modules/__tests__/
+!apps/api/src/modules/__tests__/*.test.ts
 test-results/
 tests-results/*/*
 tests/

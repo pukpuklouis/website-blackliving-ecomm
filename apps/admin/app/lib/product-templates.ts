@@ -24,8 +24,8 @@ export type { ProductTypeTemplate, VariantAxis, ProductOptions };
 
 // Admin-specific utility functions
 export function getProductTypeOptions() {
-  return Object.entries(PRODUCT_TYPE_TEMPLATES).map(([id, template]) => ({
-    value: id,
+  return Object.entries(PRODUCT_TYPE_TEMPLATES).map(([_key, template]) => ({
+    value: template.id,  // Use template.id (e.g., 'sheet-set') instead of object key ('sheetSet')
     label: template.name,
     category: template.category,
   }));
@@ -41,37 +41,38 @@ export function getCategoryProductTypes(category: string) {
 export function validateProductAgainstTemplate(
   productType: string,
   productData: any
-): { isValid: boolean; errors: string[] } {
+): { isValid: boolean; errors: Record<string, string> } {
   const template = getProductTypeTemplate(productType);
   if (!template) {
-    return { isValid: false, errors: [`Unknown product type: ${productType}`] };
+    return { isValid: false, errors: { productType: `Unknown product type: ${productType}` } };
   }
 
-  const errors: string[] = [];
+  const errors: Record<string, string> = {};
 
   // Check required fields
   for (const field of template.requiredFields) {
     if (!productData[field]) {
-      errors.push(`Missing required field: ${field}`);
+      errors[field] = `${field} is required for ${template.name}`;
     }
   }
 
   // Validate variant axes if variants exist
   if (productData.variants && productData.variants.length > 0) {
     const requiredAxes = getRequiredVariantAxes(template);
-    for (const variant of productData.variants) {
+    for (let i = 0; i < productData.variants.length; i++) {
+      const variant = productData.variants[i];
       for (const axis of requiredAxes) {
         const axisValue = variant[axis.type] || variant.optionValues?.[axis.id];
         if (!axisValue) {
-          errors.push(`Variant missing required ${axis.name} (${axis.type})`);
+          errors[`variants.${i}.${axis.type}`] = `${axis.name} is required`;
         } else if (!axis.values.includes(axisValue)) {
-          errors.push(`Invalid ${axis.name} value: ${axisValue}. Must be one of: ${axis.values.join(', ')}`);
+          errors[`variants.${i}.${axis.type}`] = `Invalid ${axis.name}: "${axisValue}". Must be one of: ${axis.values.join(', ')}`;
         }
       }
     }
   }
 
-  return { isValid: errors.length === 0, errors };
+  return { isValid: Object.keys(errors).length === 0, errors };
 }
 
 export function generateDefaultVariants(productType: string): any[] {

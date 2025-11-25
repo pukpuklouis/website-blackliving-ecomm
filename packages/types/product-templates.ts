@@ -14,7 +14,7 @@ export interface ProductTypeTemplate {
 export interface VariantAxis {
   id: string;
   name: string;
-  type: 'size' | 'color' | 'weight' | 'thickness' | 'loft' | 'material' | 'style' | 'firmness';
+  type: 'size' | 'color' | 'weight' | 'thickness' | 'loft' | 'material' | 'style' | 'firmness' | 'height' | 'legs';
   values: string[];
   required: boolean;
   displayOrder: number;
@@ -29,13 +29,15 @@ export interface ProductOptions {
   materials?: string[];
   styles?: string[];
   firmnesses?: string[];
+  heights?: string[];
+  legs?: string[];
 }
 
 // Zod schemas for validation
 export const VariantAxisSchema = z.object({
   id: z.string(),
   name: z.string(),
-  type: z.enum(['size', 'color', 'weight', 'thickness', 'loft', 'material', 'style', 'firmness']),
+  type: z.enum(['size', 'color', 'weight', 'thickness', 'loft', 'material', 'style', 'firmness', 'height', 'legs']),
   values: z.array(z.string()),
   required: z.boolean(),
   displayOrder: z.number(),
@@ -50,6 +52,8 @@ export const ProductOptionsSchema = z.object({
   materials: z.array(z.string()).optional(),
   styles: z.array(z.string()).optional(),
   firmnesses: z.array(z.string()).optional(),
+  heights: z.array(z.string()).optional(),
+  legs: z.array(z.string()).optional(),
 });
 
 export const ProductTypeTemplateSchema = z.object({
@@ -73,7 +77,7 @@ export const PRODUCT_TYPE_TEMPLATES: Record<string, ProductTypeTemplate> = {
         id: 'size',
         name: 'Size',
         type: 'size',
-        values: ['Twin XL(96x200)', 'Full(135x190)', 'Queen(150x200)', 'King(195x200)', 'Cal King(180x210)'],
+        values: ['Twin XL(96x200)', 'Full(135x190)', 'Queen(150x200)', 'King(190x200)', 'Cal King(180x210)'],
         required: true,
         displayOrder: 1,
       },
@@ -87,12 +91,55 @@ export const PRODUCT_TYPE_TEMPLATES: Record<string, ProductTypeTemplate> = {
       },
     ],
     defaultOptions: {
-      sizes: ['Twin XL(96x200)', 'Full(135x190)', 'Queen(150x200)', 'King(195x200)', 'Cal King(180x210)'],
-      styles: ['Plush(偏軟)', 'Medium(中等)', 'Firm(偏硬)', 'Extra Firm(最硬)'],
+      sizes: ['Twin XL(96x200)', 'Full(135x190)', 'Queen(150x200)', 'King(190x200)', 'Cal King(180x210)'],
       firmnesses: ['Plush(偏軟)', 'Medium(中等)', 'Firm(偏硬)', 'Extra Firm(最硬)'],
     },
     requiredFields: ['name', 'description', 'category', 'variants'],
     optionalFields: ['featuresMarkdown', 'specifications', 'seoTitle', 'seoDescription'],
+  },
+
+  foundation: {
+    id: 'foundation',
+    name: '下墊',
+    category: 'accessories',
+    variantAxes: [
+      {
+        id: 'size',
+        name: 'Size',
+        type: 'size',
+        values: ['Queen(150x200)', 'King(190x200)', 'Cal King(180x210)'],
+        required: true,
+        displayOrder: 1,
+      },
+      {
+        id: 'color',
+        name: 'Color',
+        type: 'color',
+        values: [
+          '細色(Y8301)', '靛藍色(Y8302)', '碧色(Y8303)', '琥珀色(Y8304)', '藏青色(Y8305)',
+          '魚白色(Y8306)', '稻殼色(Y8307)', '蒸栗色(Y8308)', '海老茶(Y8309)', '銀鼠色(Y8310)',
+          '芽灰色(Y8311)', '流沙色(Y8312)', '岩井色(Y8313)', '黑珍珠(Y8314)', '紺青色(Y8315)',
+          '胡珀綠(Y8316)', '芒果黃(Y8317)', '蟹殼橙(Y8318)', '胭粉色(Y8319)', '薰衣紫(Y8320)'
+        ],
+        required: false,
+        displayOrder: 2,
+      },
+      {
+        id: 'legs',
+        name: '床腳',
+        type: 'legs',
+        values: ['胡桃(6cm)', '胡桃(12cm)', '白橡(6cm)', '白橡(12cm)', '塑鋼黑(10cm)'],
+        required: false,
+        displayOrder: 3,
+      }
+    ],
+    defaultOptions: {
+      sizes: ['Queen(150x200)', 'King(190x200)', 'Cal King(180x210)'],
+      colors: ['細色(Y8301)', '黑珍珠(Y8314)'],
+      legs: ['胡桃(12cm)', '塑鋼黑(10cm)'],
+    },
+    requiredFields: ['name', 'description', 'category', 'variants'],
+    optionalFields: ['featuresMarkdown', 'specifications'],
   },
 
   protector: {
@@ -104,37 +151,31 @@ export const PRODUCT_TYPE_TEMPLATES: Record<string, ProductTypeTemplate> = {
         id: 'size',
         name: 'Size',
         type: 'size',
-        values: ['Twin XL(96x200)', 'Full(135x190)', 'Queen(150x200)', 'King(195x200)', 'Cal King(180x210)'],
+        values: ['Twin XL(96x200)', 'Full(135x190)', 'Queen(150x200)', 'King(190x200)', 'Cal King(180x210)'],
         required: true,
         displayOrder: 1,
-      },
-      {
-        id: 'material',
-        name: '材質',
-        type: 'material',
-        values: ['純棉', '聚酯纖維', '尼龍', '聚酯纖維'],
-        required: true,
-        displayOrder: 2,
-      },
+      }
     ],
     defaultOptions: {
-      sizes: ['Twin XL(96x200)', 'Full(135x190)', 'Queen(150x200)', 'King(195x200)', 'Cal King(180x210)'],
-      materials: ['純棉', '聚酯纖維', '尼龍', '聚酯纖維'],
+      sizes: ['Twin XL(96x200)', 'Full(135x190)', 'Queen(150x200)', 'King(190x200)', 'Cal King(180x210)'],
     },
-    requiredFields: ['name', 'description', 'category', 'variants', 'parentProductId'],
-    optionalFields: ['featuresMarkdown', 'specifications', 'seoTitle', 'seoDescription'],
+    requiredFields: ['name', 'description', 'category', 'variants'],
+    optionalFields: [],
   },
 
   sheetSet: {
     id: 'sheet-set',
-    name: '床包組',
+    name: '寢具組',
     category: 'accessories',
     variantAxes: [
       {
         id: 'size',
         name: 'Size',
         type: 'size',
-        values: ['Twin XL(96x200)', 'Full(135x190)', 'Queen(150x200)', 'King(195x200)', 'Cal King(180x210)'],
+        values: [
+          'Twin(96x190)', 'Twin XL(96x200)', 'Full(135x190)',
+          'Full XL(135x200)', 'Queen(150x200)', 'King(190x200)', 'Cal King(180x210)'
+        ],
         required: true,
         displayOrder: 1,
       },
@@ -142,26 +183,17 @@ export const PRODUCT_TYPE_TEMPLATES: Record<string, ProductTypeTemplate> = {
         id: 'color',
         name: 'Color',
         type: 'color',
-        values: ['極光白', '晨霧灰', '緞香金'],
+        values: ['晨霧灰', '極光白', '緞香金'],
         required: false,
         displayOrder: 2,
-      },
-      {
-        id: 'material',
-        name: 'Material',
-        type: 'material',
-        values: ['純棉', '埃及棉', '天絲', '法蘭絨'],
-        required: false,
-        displayOrder: 3,
-      },
+      }
     ],
     defaultOptions: {
-      sizes: ['Twin XL(96x200)', 'Full(135x190)', 'Queen(150x200)', 'King(195x200)', 'Cal King(180x210)'],
-      colors: ['極光白', '晨霧灰', '緞香金'],
-      materials: ['純棉', '埃及棉', '天絲', '法蘭絨'],
+      sizes: ['Twin(96x190)', 'Twin XL(96x200)', 'Full(135x190)', 'Full XL(135x200)', 'Queen(150x200)', 'King(190x200)', 'Cal King(180x210)'],
+      colors: ['晨霧灰'],
     },
-    requiredFields: ['name', 'description', 'category', 'variants', 'parentProductId'],
-    optionalFields: ['featuresMarkdown', 'specifications', 'seoTitle', 'seoDescription'],
+    requiredFields: ['name', 'description', 'category', 'variants'],
+    optionalFields: ['featuresMarkdown', 'specifications'],
   },
 
   pillow: {
@@ -170,37 +202,37 @@ export const PRODUCT_TYPE_TEMPLATES: Record<string, ProductTypeTemplate> = {
     category: 'accessories',
     variantAxes: [
       {
-        id: 'size',
-        name: 'Size',
-        type: 'size',
-        values: ['標準枕頭', '加大枕頭'],
+        id: 'loft',
+        name: '柔軟度',
+        type: 'loft',
+        values: ['柔軟Soft', '中等Medium', '偏硬Firm'],
         required: false,
         displayOrder: 1,
       },
       {
-        id: 'loft',
-        name: '柔軟度',
-        type: 'loft',
-        values: ['偏軟', '中等', '偏硬'],
-        required: true,
+        id: 'height',
+        name: '高度',
+        type: 'height',
+        values: ['8 cm', '11 cm'],
+        required: false,
         displayOrder: 2,
       },
       {
         id: 'material',
         name: '材質',
         type: 'material',
-        values: ['記憶棉', '羽絨', '羽毛', '乳膠', '蕎麥'],
-        required: true,
+        values: ['記憶棉', '羽絨', '乳膠'],
+        required: false,
         displayOrder: 3,
       },
     ],
     defaultOptions: {
-      sizes: ['標準枕頭', '加大枕頭'],
-      lofts: ['偏軟', '中等', '偏硬'],
-      materials: ['記憶棉', '羽絨', '羽毛', '乳膠', '蕎麥'],
+      lofts: ['Soft', 'Medium', 'Firm'],
+      heights: ['8 cm', '11 cm'],
+      materials: ['記憶棉', '羽絨', '乳膠'],
     },
-    requiredFields: ['name', 'description', 'category', 'variants', 'parentProductId'],
-    optionalFields: ['featuresMarkdown', 'specifications', 'seoTitle', 'seoDescription'],
+    requiredFields: ['name', 'description', 'category', 'variants'],
+    optionalFields: ['featuresMarkdown', 'specifications'],
   },
 
   duvet: {
@@ -208,77 +240,23 @@ export const PRODUCT_TYPE_TEMPLATES: Record<string, ProductTypeTemplate> = {
     name: '被子',
     category: 'accessories',
     variantAxes: [
-      {
-        id: 'size',
-        name: 'Size',
-        type: 'size',
-        values: ['Twin XL(96x200)', 'Full(135x190)', 'Queen(150x200)', 'King(195x200)', 'Cal King(180x210)'],
-        required: true,
-        displayOrder: 1,
-      },
-      {
-        id: 'loft',
-        name: '柔軟度',
-        type: 'loft',
-        values: ['偏軟', '中等', '偏硬'],
-        required: true,
-        displayOrder: 2,
-      },
-      {
-        id: 'material',
-        name: '材質',
-        type: 'material',
-        values: ['羽絨', '羽毛', '蠶絲', '羊毛', '合成纖維'],
-        required: true,
-        displayOrder: 3,
-      },
+      { id: 'size', name: 'Size', type: 'size', values: ['Queen', 'King'], required: true, displayOrder: 1 }
     ],
-    defaultOptions: {
-      sizes: ['Twin XL(96x200)', 'Full(135x190)', 'Queen(150x200)', 'King(195x200)', 'Cal King(180x210)'],
-      lofts: ['偏軟', '中等', '偏硬'],
-      materials: ['羽絨', '羽毛', '蠶絲', '羊毛', '合成纖維'],
-    },
-    requiredFields: ['name', 'description', 'category', 'variants', 'parentProductId'],
-    optionalFields: ['featuresMarkdown', 'specifications', 'seoTitle', 'seoDescription'],
+    defaultOptions: { sizes: ['Queen', 'King'] },
+    requiredFields: ['name', 'category'],
+    optionalFields: []
   },
 
   topper: {
     id: 'topper',
-    name: '墊層',
+    name: '舒適墊',
     category: 'accessories',
     variantAxes: [
-      {
-        id: 'size',
-        name: 'Size',
-        type: 'size',
-        values: ['Twin XL(96x200)', 'Full(135x190)', 'Queen(150x200)', 'King(195x200)', 'Cal King(180x210)'],
-        required: true,
-        displayOrder: 1,
-      },
-      {
-        id: 'thickness',
-        name: '厚度',
-        type: 'thickness',
-        values: ['1 inch', '2 inch', '3 inch', '4 inch'],
-        required: true,
-        displayOrder: 2,
-      },
-      {
-        id: 'material',
-        name: 'Material',
-        type: 'material',
-        values: ['記憶棉', '乳膠', '混合', '獨立筒'],
-        required: true,
-        displayOrder: 3,
-      },
+      { id: 'size', name: 'Size', type: 'size', values: ['Queen', 'King'], required: true, displayOrder: 1 }
     ],
-    defaultOptions: {
-      sizes: ['Twin XL(96x200)', 'Full(135x190)', 'Queen(150x200)', 'King(195x200)', 'Cal King(180x210)'],
-      thicknesses: ['1 inch', '2 inch', '3 inch', '4 inch'],
-      materials: ['記憶棉', '乳膠', '混合', '獨立筒'],
-    },
-    requiredFields: ['name', 'description', 'category', 'variants', 'parentProductId'],
-    optionalFields: ['featuresMarkdown', 'specifications', 'seoTitle', 'seoDescription'],
+    defaultOptions: { sizes: ['Queen', 'King'] },
+    requiredFields: ['name', 'category'],
+    optionalFields: []
   },
 
   adjustableBase: {
@@ -290,31 +268,28 @@ export const PRODUCT_TYPE_TEMPLATES: Record<string, ProductTypeTemplate> = {
         id: 'size',
         name: 'Size',
         type: 'size',
-        values: ['Twin XL(96x200)', 'Full(135x190)', 'Queen(150x200)', 'King(195x200)', 'Cal King(180x210)'],
+        values: ['Queen(150x200)', 'King(190x200)', 'Cal King(180x210)'],
         required: true,
         displayOrder: 1,
       },
-      {
-        id: 'style',
-        name: '款式',
-        type: 'style',
-        values: ['基本款', '豪華款', '頂級款'],
-        required: false,
-        displayOrder: 2,
-      },
     ],
     defaultOptions: {
-      sizes: ['Twin XL(96x200)', 'Full(135x190)', 'Queen(150x200)', 'King(195x200)', 'Cal King(180x210)'],
-      styles: ['基本款', '豪華款', '頂級款'],
+      sizes: ['Queen(150x200)', 'King(190x200)', 'Cal King(180x210)'],
     },
-    requiredFields: ['name', 'description', 'category', 'variants', 'parentProductId'],
-    optionalFields: ['featuresMarkdown', 'specifications', 'seoTitle', 'seoDescription'],
+    requiredFields: ['name', 'description', 'category', 'variants'],
+    optionalFields: ['featuresMarkdown', 'specifications'],
   },
 };
 
 // Utility functions
 export function getProductTypeTemplate(typeId: string): ProductTypeTemplate | undefined {
-  return PRODUCT_TYPE_TEMPLATES[typeId];
+  // First try direct object key lookup (for backward compatibility with camelCase keys like 'sheetSet')
+  if (PRODUCT_TYPE_TEMPLATES[typeId]) {
+    return PRODUCT_TYPE_TEMPLATES[typeId];
+  }
+
+  // If not found, search by template.id (for kebab-case IDs like 'sheet-set')
+  return Object.values(PRODUCT_TYPE_TEMPLATES).find(template => template.id === typeId);
 }
 
 export function getAllProductTypeTemplates(): ProductTypeTemplate[] {
@@ -362,4 +337,16 @@ export function generateVariantCombinations(template: ProductTypeTemplate): any[
   return combinations;
 }
 
-export type { ProductTypeTemplate, VariantAxis, ProductOptions };
+// Display Names Mapping
+export const OPTION_DISPLAY_NAMES: Record<string, string> = {
+  size: '尺寸',
+  firmness: '軟硬度',
+  color: '顏色',
+  loft: '柔軟度',
+  height: '高度',
+  material: '材質',
+  legs: '床腳',
+  style: '款式',
+  weight: '重量',
+  thickness: '厚度',
+};
