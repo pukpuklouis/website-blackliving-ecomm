@@ -84,6 +84,7 @@ export interface Product {
     loft?: string;
     weight?: string;
     style?: string;
+    legs?: string;
   }>;
   features: string[];
   featuresMarkdown?: string;
@@ -125,6 +126,7 @@ export const productSchema = z.object({
         loft: z.string().optional(),
         weight: z.string().optional(),
         style: z.string().optional(),
+        legs: z.string().optional(),
       })
     )
     .min(1, '至少需要一個商品款式'),
@@ -1025,6 +1027,7 @@ export function normalizeFormData(
       loft: variant?.loft ? variant.loft.toString().trim() : undefined,
       weight: variant?.weight ? variant.weight.toString().trim() : undefined,
       style: variant?.style ? variant.style.toString().trim() : undefined,
+      legs: variant?.legs ? variant.legs.toString().trim() : undefined,
     }))
     : [];
 
