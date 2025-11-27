@@ -157,7 +157,8 @@ export default defineConfig({
         ...(!isDev && {
           "react-dom/server": "react-dom/server.edge"
         })
-      }
+      },
+      dedupe: ['react', 'react-dom', 'lucide-react']
     },
     optimizeDeps: {
       include: ['marked', ...(isDev ? ['lucide-react'] : [])],
@@ -174,8 +175,6 @@ export default defineConfig({
             if (id.includes('node_modules')) {
               // Large packages get their own chunks
               if (id.includes('@blackliving/ui')) return 'ui';
-              // Icons get separate chunk (will be smaller in prod due to tree-shaking)
-              if (id.includes('lucide-react')) return 'icons';
               // Markdown parser gets its own chunk
               if (id.includes('marked')) return 'markdown';
               // Other vendor packages

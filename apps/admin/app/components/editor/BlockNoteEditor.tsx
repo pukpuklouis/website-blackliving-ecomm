@@ -1,5 +1,19 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { useCreateBlockNote, useEditorChange, SideMenuController } from '@blocknote/react';
+import { BlockNoteSchema, defaultBlockSpecs, filterSuggestionItems } from '@blocknote/core';
+import {
+  useCreateBlockNote,
+  useEditorChange,
+  SideMenuController,
+  SuggestionMenuController,
+  getDefaultReactSlashMenuItems,
+} from '@blocknote/react';
+import {
+  ColumnBlock,
+  ColumnListBlock,
+  multiColumnDropCursor,
+  getMultiColumnSlashMenuItems,
+  locales as multiColumnLocales,
+} from '@blocknote/xl-multi-column';
 import { BlockNoteView } from '@blocknote/shadcn';
 import '@blocknote/core/fonts/inter.css';
 import '@blackliving/tailwind-config/styles.css';
@@ -10,6 +24,7 @@ import { MediaSideMenu } from './MediaSideMenu';
 import type { MediaLibraryItem } from '../../services/mediaLibrary';
 
 export type BlockNoteEditorProps = {
+  initialContent?: any[]; // JSON blocks
   value?: string; // Markdown string
   onChange?: (markdown: string) => void;
   onChangeBlocks?: (blocks: any[]) => void;
@@ -19,6 +34,7 @@ export type BlockNoteEditorProps = {
 };
 
 export default function BlockNoteEditor({
+  initialContent,
   value = '',
   onChange,
   onChangeBlocks,
@@ -38,10 +54,27 @@ export default function BlockNoteEditor({
   const [mediaDialogOpen, setMediaDialogOpen] = useState(false);
   const [mediaCategory, setMediaCategory] = useState<'images' | 'files'>('images');
 
+  const schema = BlockNoteSchema.create({
+    blockSpecs: {
+      ...defaultBlockSpecs,
+      column: ColumnBlock,
+      columnList: ColumnListBlock,
+    },
+  });
+
   const editor = useCreateBlockNote({
+    schema,
+    initialContent: initialContent && initialContent.length > 0 ? initialContent : undefined,
     // Localize placeholders
     dictionary: {
       ...en,
+      slash_menu: {
+        ...en.slash_menu,
+        ...multiColumnLocales.en.slash_menu,
+      },
+      multi_column: {
+        slash_menu: multiColumnLocales.en.slash_menu,
+      } as any,
       placeholders: {
         ...en.placeholders,
         // Only show a placeholder when the entire document is empty.
@@ -51,6 +84,7 @@ export default function BlockNoteEditor({
         heading: '',
       },
     },
+    dropCursor: multiColumnDropCursor,
   });
 
   const runWithSideMenuFrozen = useCallback(
@@ -98,11 +132,9 @@ export default function BlockNoteEditor({
         name: asset.name ?? asset.key,
       } as Record<string, unknown>;
 
-      const targetBlock = blockId ? editor.getBlock(blockId) : undefined;
       const blocks = [{ type: blockType, props: blockProps } as any];
-      const inserted = targetBlock
-        ? editor.insertBlocks(blocks, targetBlock, 'after')[0]
-        : editor.insertBlocks(blocks)[0];
+      const referenceBlock = (blockId ? editor.getBlock(blockId) : undefined) || editor.getTextCursorPosition().block;
+      const inserted = editor.insertBlocks(blocks, referenceBlock, 'after')[0];
 
       if (inserted) {
         editor.setTextCursorPosition(inserted);
@@ -171,6 +203,10 @@ export default function BlockNoteEditor({
     (async () => {
       if (!editor) return;
 
+      // If we have initial content (JSON), we shouldn't hydrate from Markdown
+      // because Markdown is lossy and will destroy advanced blocks like columns.
+      if (initialContent && initialContent.length > 0) return;
+
       const currentMd = await editor.blocksToMarkdownLossy();
       if (currentMd === (value || '')) return; // already in sync
 
@@ -202,12 +238,37 @@ export default function BlockNoteEditor({
         editable={!disabled}
         formattingToolbar
         sideMenu={false}
+        slashMenu={false}
         linkToolbar
         theme="light"
         className="min-h-[24rem] w-full rounded-md border border-input bg-background px-4 py-3"
       >
         <SideMenuController
           sideMenu={(props) => <MediaSideMenu {...props} onLaunchPicker={openMediaPicker} />}
+        />
+        <SuggestionMenuController
+          triggerCharacter={'/'}
+          getItems={async (query) => {
+            const items = [];
+
+            try {
+              items.push(...getDefaultReactSlashMenuItems(editor));
+            } catch (e) {
+              console.error('Error getting default slash menu items:', e);
+            }
+
+            try {
+              items.push(...getMultiColumnSlashMenuItems(editor));
+            } catch (e) {
+            }
+
+            try {
+              const filtered = filterSuggestionItems(items, query);
+              return filtered;
+            } catch (e) {
+              return items;
+            }
+          }}
         />
       </BlockNoteView>
       <div className="mt-2 text-xs text-foreground/30">輸入 / 開啟指令選單</div>

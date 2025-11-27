@@ -238,6 +238,7 @@ export default function PageForm() {
                                 <Label>內容</Label>
                                 <div className="min-h-[400px] border rounded-md p-4">
                                     <BlockNoteEditor
+                                        initialContent={watch('content')}
                                         value={watch('contentMarkdown')}
                                         onChange={(markdown) => setValue('contentMarkdown', markdown, { shouldDirty: true })}
                                         onChangeBlocks={(blocks) => setValue('content', blocks, { shouldDirty: true })}

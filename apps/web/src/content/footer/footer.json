@@ -9,7 +9,7 @@
         },
         {
           "text": "門市資訊",
-          "url": "/contact"
+          "url": "/retail-locations"
         }
       ]
     },
@@ -22,7 +22,7 @@
         },
         {
           "text": "購物說明",
-          "url": "/shipping"
+          "url": "/shopping-information"
         },
         {
           "text": "退換貨說明",

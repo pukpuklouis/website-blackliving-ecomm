@@ -63,10 +63,10 @@ const { title, content, contentMarkdown, seoTitle, seoDescription, featuredImage
 
     <div class="mx-auto">
       {
-        contentMarkdown ? (
-          <MarkdownRenderer content={contentMarkdown} />
-        ) : (
+        content && content.length > 0 ? (
           <BlockNoteRenderer client:only="react" content={content} />
+        ) : (
+          <MarkdownRenderer content={contentMarkdown || ''} />
         )
       }
     </div>
