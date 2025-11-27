@@ -47,3 +47,6 @@ export type Contacts = typeof schema.contacts.$inferSelect;
 export type NewContact = typeof schema.contacts.$inferInsert;
 export type MediaAsset = typeof schema.mediaAssets.$inferSelect;
 export type NewMediaAsset = typeof schema.mediaAssets.$inferInsert;
+
+// Export Drizzle operators to ensure version compatibility across workspace
+export { eq, ne, gt, gte, lt, lte, and, or, not, like, ilike, inArray, notInArray, isNull, isNotNull, desc, asc, count, sql } from 'drizzle-orm';

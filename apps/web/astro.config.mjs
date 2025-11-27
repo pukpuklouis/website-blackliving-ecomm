@@ -16,7 +16,7 @@ function lucideIconResolver() {
       // Handle @lucide/react/* imports in both dev and production
       if (id.startsWith('@lucide/react/')) {
         const iconName = id.replace('@lucide/react/', '');
-        
+
         if (isDev) {
           // Development: create virtual module ID
           return `\0lucide-icon:${iconName}`;
@@ -36,10 +36,10 @@ function lucideIconResolver() {
       if (isDev && id.startsWith('\0lucide-icon:')) {
         const iconName = id.replace('\0lucide-icon:', '');
         // Convert kebab-case to PascalCase for the actual export name
-        const pascalIconName = iconName.split('-').map(word => 
+        const pascalIconName = iconName.split('-').map(word =>
           word.charAt(0).toUpperCase() + word.slice(1)
         ).join('');
-        
+
         return `export { ${pascalIconName} as default } from 'lucide-react';`;
       }
       return null;
@@ -48,12 +48,38 @@ function lucideIconResolver() {
 }
 
 
+// Function to fetch dynamic pages for sitemap
+async function getDynamicPages() {
+  try {
+    const apiUrl = process.env.PUBLIC_API_URL || 'http://localhost:8787';
+    // Fetch published pages
+    const response = await fetch(`${apiUrl}/api/pages?status=published&limit=1000`);
+    if (!response.ok) return [];
+    /** @type {{ success: boolean; data: { pages: { slug: string }[] } }} */
+    const json = await response.json();
+    if (!json.success) return [];
+
+    const siteUrl = process.env.PUBLIC_SITE_URL ||
+      (process.env.NODE_ENV === 'production' ? "https://blackliving-web.pages.dev" : "http://localhost:4321");
+
+    return json.data.pages.map(page => `${siteUrl}/${page.slug}`);
+  } catch (error) {
+    console.warn('Failed to fetch dynamic pages for sitemap:', error);
+    return [];
+  }
+}
+
 // https://astro.build/config
 // Note: Using Tailwind v4 - no @astrojs/tailwind integration needed
 export default defineConfig({
-  site: process.env.PUBLIC_SITE_URL || 
-        (process.env.NODE_ENV === 'production' ? "https://blackliving-web.pages.dev" : "http://localhost:4321"),
-  integrations: [react(), sitemap()],
+  site: process.env.PUBLIC_SITE_URL ||
+    (process.env.NODE_ENV === 'production' ? "https://blackliving-web.pages.dev" : "http://localhost:4321"),
+  integrations: [
+    react(),
+    sitemap({
+      customPages: await getDynamicPages(),
+    })
+  ],
 
   output: 'server',
   adapter: cloudflare(),
@@ -121,6 +147,9 @@ export default defineConfig({
       alias: {
         '~': new URL('./src', import.meta.url).pathname,
         '@': new URL('../../packages/ui', import.meta.url).pathname,
+        '@/lib': new URL('../../packages/ui/lib', import.meta.url).pathname,
+        '@/components': new URL('../../packages/ui/components', import.meta.url).pathname,
+        '@/hooks': new URL('../../packages/ui/hooks', import.meta.url).pathname,
         // Simple alias approach for Lucide icons
         ...(isDev ? {} : {
           '@lucide/react/': 'lucide-react/dist/esm/icons/'

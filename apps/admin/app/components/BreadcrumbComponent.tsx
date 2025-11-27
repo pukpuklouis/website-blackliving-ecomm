@@ -14,6 +14,8 @@ const routeNames: Record<string, string> = {
   '/dashboard/products': '產品管理',
   '/dashboard/orders': '訂單管理',
   '/dashboard/posts': '文章管理',
+  '/dashboard/pages': '頁面管理',
+  '/dashboard/pages/new': '新增頁面',
   '/dashboard/blog': '部落格編輯',
   '/dashboard/blog-composer': '編輯文章',
   '/dashboard/appointments': '預約管理',
@@ -23,6 +25,30 @@ const routeNames: Record<string, string> = {
   '/dashboard/products/new': '新增產品',
 };
 
+// Dynamic route patterns - matches routes with :id or other params
+const dynamicRoutes: Array<{ pattern: RegExp; name: string }> = [
+  { pattern: /^\/dashboard\/pages\/[^/]+\/edit$/, name: '編輯' },
+  { pattern: /^\/dashboard\/products\/[^/]+\/edit$/, name: '編輯產品' },
+  { pattern: /^\/dashboard\/posts\/[^/]+\/edit$/, name: '編輯文章' },
+];
+
+function getRouteName(path: string): string {
+  // First check exact matches
+  if (routeNames[path]) {
+    return routeNames[path];
+  }
+
+  // Then check dynamic patterns
+  for (const { pattern, name } of dynamicRoutes) {
+    if (pattern.test(path)) {
+      return name;
+    }
+  }
+
+  // Default to the last segment
+  return path.split('/').pop() || path;
+}
+
 export function BreadcrumbComponent() {
   const location = useLocation();
   const pathSegments = location.pathname.split('/').filter(Boolean);
@@ -31,7 +57,7 @@ export function BreadcrumbComponent() {
     const path = '/' + pathSegments.slice(0, index + 1).join('/');
     return {
       path,
-      name: routeNames[path] || segment,
+      name: getRouteName(path),
       isLast: index === pathSegments.length - 1,
     };
   });

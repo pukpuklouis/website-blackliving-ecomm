@@ -22,6 +22,7 @@ import newsletter from './modules/newsletter';
 import contact from './modules/contact';
 import user from './modules/user';
 import { postsRouter } from './modules/posts';
+import pages from './modules/pages';
 import authRouter from './modules/auth';
 import reservationsRouter from './modules/reservations';
 import media from './routes/media';
@@ -528,6 +529,7 @@ app.route('/api/newsletter', newsletter);
 app.route('/api/contact', contact);
 app.route('/api/user', user);
 app.route('/api/posts', postsRouter);
+app.route('/api/pages', pages);
 app.route('/api/search', searchRouter);
 
 // 404 handler

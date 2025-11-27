@@ -18,6 +18,7 @@ import Settings from '@lucide/react/settings';
 import Calendar from '@lucide/react/calendar';
 import BarChart3 from '@lucide/react/bar-chart-3';
 import Users from '@lucide/react/users';
+import LayoutTemplate from '@lucide/react/layout-template';
 
 const data = {
   user: {
@@ -45,6 +46,11 @@ const data = {
       title: '文章管理',
       url: '/dashboard/posts',
       icon: FileText,
+    },
+    {
+      title: '頁面管理',
+      url: '/dashboard/pages',
+      icon: LayoutTemplate,
     },
     {
       title: '預約管理',

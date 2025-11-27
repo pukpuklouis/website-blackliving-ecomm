@@ -18,5 +18,10 @@ export default [
     route('customers', 'routes/dashboard/customers.tsx'),
     route('analytics', 'routes/dashboard/analytics.tsx'),
     route('settings', 'routes/dashboard/settings.tsx'),
+    route('pages', 'routes/dashboard/pages.tsx', [
+      index('routes/dashboard/pages._index.tsx'),
+      route('new', 'routes/dashboard/pages.new.tsx'),
+      route(':pageId/edit', 'routes/dashboard/pages.[pageId].edit.tsx'),
+    ]),
   ]),
 ] satisfies RouteConfig;

@@ -20,7 +20,7 @@ type ImageUploadProps = {
 };
 
 export function ImageUpload({
-  value,
+  value = [],
   onChange,
   title,
   description,
@@ -119,7 +119,7 @@ export function ImageUpload({
         {isUploading && <p className="text-sm text-gray-600 mt-2">上傳中...</p>}
       </div>
 
-      {value.length > 0 && (
+      {value && value.length > 0 && (
         <div className="grid grid-cols-4 gap-4 mt-4">
           {value.map((url, index) => (
             <div

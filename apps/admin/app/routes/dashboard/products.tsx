@@ -1,14 +1,14 @@
-import type { Route } from './+types/dashboard.products';
+import type { Route } from './+types/products';
 import { useLoaderData } from 'react-router';
 import ProductManagement from '../../components/ProductManagement';
 
-export const loader: Route.Loader = async ({ request, context }) => {
+export const loader = async ({ request, context }: Route.LoaderArgs) => {
   try {
     // Use Service Binding if available (production/staging), otherwise use HTTP fetch (local dev)
-    const apiService = context?.env?.API || context?.cloudflare?.env?.API;
+    const apiService = (context as any)?.env?.API || (context as any)?.cloudflare?.env?.API;
     const apiUrl =
-      context?.cloudflare?.env?.PUBLIC_API_URL ||
-      context?.env?.PUBLIC_API_URL ||
+      (context as any)?.cloudflare?.env?.PUBLIC_API_URL ||
+      (context as any)?.env?.PUBLIC_API_URL ||
       'http://localhost:8787';
 
     let res;

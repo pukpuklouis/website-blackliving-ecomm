@@ -1,7 +1,7 @@
 import type { KVNamespace } from '@cloudflare/workers-types';
 
 export class CacheManager {
-  constructor(private kv: KVNamespace) {}
+  constructor(private kv: KVNamespace) { }
 
   /**
    * Get cached data with optional JSON parsing
@@ -98,6 +98,10 @@ export class CacheManager {
     analytics: {
       dashboard: () => 'analytics:dashboard',
       sales: () => 'analytics:sales',
+    },
+    pages: {
+      list: (status?: string) => `pages:list:${status || 'all'}`,
+      detail: (slug: string) => `pages:detail:${slug}`,
     },
   };
 

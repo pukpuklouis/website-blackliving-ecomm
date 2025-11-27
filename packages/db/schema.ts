@@ -277,6 +277,29 @@ export const posts = sqliteTable('posts', {
   updatedAt: integer('updated_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
 });
 
+// Pages table - Dynamic content pages
+export const pages = sqliteTable('pages', {
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => createId()),
+  title: text('title').notNull(),
+  slug: text('slug').notNull().unique(),
+  content: text('content', { mode: 'json' }).notNull(), // BlockNote JSON blocks
+  contentMarkdown: text('content_markdown'), // Serialized Markdown for SEO/rendering
+  status: text('status').default('draft'), // draft, published, archived
+  seoTitle: text('seo_title'),
+  seoDescription: text('seo_description'),
+  seoKeywords: text('seo_keywords', { mode: 'json' }).default('[]'),
+  featuredImage: text('featured_image'),
+  authorId: text('author_id').references(() => users.id),
+  publishedAt: integer('published_at', { mode: 'timestamp' }),
+  createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
+});
+
+export type Page = typeof pages.$inferSelect;
+export type NewPage = typeof pages.$inferInsert;
+
 // Reviews/Testimonials table
 export const reviews = sqliteTable('reviews', {
   id: text('id')

@@ -12,6 +12,7 @@ import type { MediaLibraryItem } from '../../services/mediaLibrary';
 export type BlockNoteEditorProps = {
   value?: string; // Markdown string
   onChange?: (markdown: string) => void;
+  onChangeBlocks?: (blocks: any[]) => void;
   placeholder?: string;
   className?: string;
   disabled?: boolean;
@@ -20,6 +21,7 @@ export type BlockNoteEditorProps = {
 export default function BlockNoteEditor({
   value = '',
   onChange,
+  onChangeBlocks,
   placeholder = '在這裡編寫文章內容...',
   className = 'bn-editor-style',
   disabled = false,
@@ -154,8 +156,9 @@ export default function BlockNoteEditor({
         lastMarkdownRef.current = md;
         onChange?.(md);
       }
+      onChangeBlocks?.(editor.document);
     });
-  }, [editor, onChange, runWithSideMenuFrozen]);
+  }, [editor, onChange, onChangeBlocks, runWithSideMenuFrozen]);
 
   // Subscribe to editor changes
   useEditorChange(() => {
