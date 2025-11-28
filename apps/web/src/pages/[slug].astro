@@ -2,7 +2,7 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import BlockNoteRenderer from '../components/BlockNoteRenderer';
 import MarkdownRenderer from '../components/MarkdownRenderer.astro';
-
+import { Image } from 'astro:assets';
 const { slug } = Astro.params;
 const apiUrl = import.meta.env.PUBLIC_API_URL || 'http://localhost:8787';
 
@@ -41,9 +41,23 @@ const { title, content, contentMarkdown, seoTitle, seoDescription, featuredImage
   type="article"
   publishedTime={publishedAt}
 >
-  <article class="max-w-4xl mx-auto px-4 py-12">
+  {
+    featuredImage && (
+      <div class="w-full aspect-[16/7] md:aspect-[1106/300] max-h-[600px] overflow-hidden mb-2">
+        <Image
+          src={featuredImage}
+          alt={title}
+          width={1920}
+          height={1080}
+          class="w-full h-full object-cover"
+        />
+      </div>
+    )
+  }
+
+  <article class={`md:max-w-4xl mx-auto px-4 ${featuredImage ? 'py-4' : 'py-12'}`}>
     <header class="mb-8 text-center">
-      <h1 class="text-4xl font-bold mb-4">{title}</h1>
+      <h1 class="text-2xl md:text-4xl font-bold mb-4">{title}</h1>
       {
         publishedAt && (
           <time datetime={publishedAt} class="hidden text-gray-500">
@@ -52,14 +66,6 @@ const { title, content, contentMarkdown, seoTitle, seoDescription, featuredImage
         )
       }
     </header>
-
-    {
-      featuredImage && (
-        <div class="mb-8 rounded-lg overflow-hidden">
-          <img src={featuredImage} alt={title} class="w-full h-auto object-cover" />
-        </div>
-      )
-    }
 
     <div class="mx-auto">
       {

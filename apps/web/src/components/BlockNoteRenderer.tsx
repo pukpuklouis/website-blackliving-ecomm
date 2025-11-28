@@ -29,8 +29,33 @@ export default function BlockNoteRenderer({ content, className }: BlockNoteRende
         }
     }, [editor, content]);
 
+    const proseClasses = [
+        'prose-2xl',
+        // 'md:prose-lg',
+        // // 'prose-base',
+        'prose-fluidScale',
+        // 'max-w-none',
+        'prose-headings:font-semibold',
+        'prose-headings:text-foreground',
+        // 'prose-headings:scroll-mt-0',
+        'md:prose-p:text-xl',
+        'prose-p:leading-relaxed',
+        // 'prose-a:text-primary',
+        // 'prose-a:no-underline',
+        // 'prose-a:transition-colors',
+        // 'prose-a:hover:text-primary/80',
+        'prose-strong:text-foreground',
+        // 'prose-li:marker:text-muted-foreground',
+        // 'prose-img:rounded-lg',
+        // 'prose-img:shadow-sm',
+        className,
+        'max-md:[&_.bn-editor]:px-0!',
+    ]
+        .filter(Boolean)
+        .join(' ');
+
     return (
-        <div className={className}>
+        <div className={proseClasses}>
             <BlockNoteView editor={editor} editable={false} theme="light" />
         </div>
     );

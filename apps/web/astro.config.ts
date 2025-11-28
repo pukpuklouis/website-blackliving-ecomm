@@ -1,18 +1,18 @@
-// @ts-check
 import { defineConfig, fontProviders } from 'astro/config';
 import react from '@astrojs/react';
 import sitemap from '@astrojs/sitemap';
 import cloudflare from '@astrojs/cloudflare';
 import tailwindcss from '@tailwindcss/vite';
+import type { Plugin } from 'vite';
 
 // Environment detection
 const isDev = process.env.NODE_ENV !== 'production';
 
 // Lucide icon import resolver for both dev and production
-function lucideIconResolver() {
+function lucideIconResolver(): Plugin {
   return {
     name: 'lucide-icon-resolver',
-    resolveId(id) {
+    resolveId(id: string) {
       // Handle @lucide/react/* imports in both dev and production
       if (id.startsWith('@lucide/react/')) {
         const iconName = id.replace('@lucide/react/', '');
@@ -31,12 +31,12 @@ function lucideIconResolver() {
       }
       return null;
     },
-    load(id) {
+    load(id: string) {
       // In development, create a virtual module that exports the icon from lucide-react
       if (isDev && id.startsWith('\0lucide-icon:')) {
         const iconName = id.replace('\0lucide-icon:', '');
         // Convert kebab-case to PascalCase for the actual export name
-        const pascalIconName = iconName.split('-').map(word =>
+        const pascalIconName = iconName.split('-').map((word: string) =>
           word.charAt(0).toUpperCase() + word.slice(1)
         ).join('');
 
@@ -49,14 +49,13 @@ function lucideIconResolver() {
 
 
 // Function to fetch dynamic pages for sitemap
-async function getDynamicPages() {
+async function getDynamicPages(): Promise<string[]> {
   try {
     const apiUrl = process.env.PUBLIC_API_URL || 'http://localhost:8787';
     // Fetch published pages
     const response = await fetch(`${apiUrl}/api/pages?status=published&limit=1000`);
     if (!response.ok) return [];
-    /** @type {{ success: boolean; data: { pages: { slug: string }[] } }} */
-    const json = await response.json();
+    const json = await response.json() as { success: boolean; data: { pages: { slug: string }[] } };
     if (!json.success) return [];
 
     const siteUrl = process.env.PUBLIC_SITE_URL ||
@@ -170,7 +169,7 @@ export default defineConfig({
     build: {
       rollupOptions: {
         output: {
-          manualChunks(id) {
+          manualChunks(id: string) {
             // Group node_modules into vendor chunk
             if (id.includes('node_modules')) {
               // Large packages get their own chunks
