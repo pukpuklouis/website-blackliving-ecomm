@@ -46,7 +46,7 @@ export default function BlockNoteRenderer({ content, className }: BlockNoteRende
         // 'prose-a:hover:text-primary/80',
         'prose-strong:text-foreground',
         // 'prose-li:marker:text-muted-foreground',
-        // 'prose-img:rounded-lg',
+        'prose-img:my-0!',
         // 'prose-img:shadow-sm',
         className,
         'max-md:[&_.bn-editor]:px-0!',
