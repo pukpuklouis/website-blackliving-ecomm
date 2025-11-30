@@ -21,6 +21,7 @@
 | **雲端儲存**    | Cloudflare R2                        | 圖片與靜態資源儲存                     |
 | **快取**        | Cloudflare KV                        | API 回應快取                           |
 | **UI 元件庫**   | Shadcn UI, Tailwind CSS              | `packages/ui` - 共享的 UI 元件與樣式   |
+| **搜尋引擎**    | MeiliSearch                          | 全文搜尋與內容索引                     |
 | **部署平台**    | Cloudflare Pages, Cloudflare Workers | Staging 與 Production 環境             |
 | **CI/CD**       | GitHub Actions                       | 自動化測試與部署流程                   |
 
@@ -43,6 +44,40 @@ website-blackliving-ecomm/
 ├── deploy.sh         # 自動化部署腳本
 └── .github/          # GitHub Actions CI/CD 設定
 ```
+
+## 🔍 搜尋功能 (Search Features)
+
+本專案整合了 MeiliSearch 作為全文搜尋引擎，提供快速且準確的內容搜尋體驗。
+
+### 搜尋功能特色
+
+- **多內容類型**: 支援產品、部落格文章、頁面內容的統一搜尋
+- **即時索引**: 內容變更時自動同步到搜尋索引
+- **智慧排序**: 基於相關性分數的搜尋結果排序
+- **篩選功能**: 支援按內容類型和分類進行篩選
+- **搜尋分析**: 追蹤搜尋行為和使用統計
+
+### 搜尋 API 端點
+
+| 端點                          | 方法 | 描述                           |
+| :---------------------------- | :--- | :----------------------------- |
+| `/api/search`                 | GET  | 執行統一搜尋查詢               |
+| `/api/search/config`          | GET  | 取得搜尋設定                   |
+| `/api/search/reindex`         | POST | 重新索引所有內容               |
+| `/api/search/keys`            | GET  | 取得 MeiliSearch 搜尋金鑰      |
+| `/api/analytics/search`       | POST | 記錄搜尋分析事件               |
+
+### MeiliSearch 設定
+
+**環境變數:**
+- `MEILISEARCH_HOST`: MeiliSearch 伺服器 URL
+- `MEILISEARCH_MASTER_KEY`: MeiliSearch 管理金鑰
+- `MEILISEARCH_SEARCH_KEY`: MeiliSearch 搜尋金鑰（由管理金鑰產生）
+
+**索引名稱:**
+- `products`: 產品內容索引
+- `posts`: 部落格文章索引
+- `pages`: 靜態頁面索引
 
 ## 🚀 環境設定與快速入門 (Setup & Quick Start)
 
@@ -182,6 +217,8 @@ wrangler secret put BETTER_AUTH_SECRET --env staging
 | `JWT_SECRET`           | 用於簽發與驗證 JWT 的密鑰。      | 使用 `openssl rand -base64 32` 產生。                                               |
 | `GOOGLE_CLIENT_ID`     | Google OAuth 2.0 用戶端 ID。     | 從 [Google Cloud Console](https://console.cloud.google.com/apis/credentials) 取得。 |
 | `GOOGLE_CLIENT_SECRET` | Google OAuth 2.0 用戶端密鑰。    | 從 [Google Cloud Console](https://console.cloud.google.com/apis/credentials) 取得。 |
+| `MEILISEARCH_HOST`     | MeiliSearch 伺服器 URL。         | MeiliSearch 實例的完整 URL。                                                     |
+| `MEILISEARCH_MASTER_KEY`| MeiliSearch 管理金鑰。           | 用於索引和管理操作的完整權限金鑰。                                               |
 
 **設定密鑰範例:**
 

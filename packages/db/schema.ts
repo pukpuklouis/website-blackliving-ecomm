@@ -682,3 +682,13 @@ export const customerNotificationPreferences = sqliteTable('customer_notificatio
   createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
 });
+
+// Settings table - Global application settings (KV store)
+export const settings = sqliteTable('settings', {
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => createId()),
+  key: text('key').notNull().unique(), // e.g., 'logistic_settings'
+  value: text('value', { mode: 'json' }).notNull(), // JSON object
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
+});

@@ -102,7 +102,7 @@ export function SearchCommand({
         showCloseButton
         data-testid="search-modal"
       >
-        <Command className="bg-popover">
+        <Command className="bg-popover" shouldFilter={false}>
           <CommandInput
             value={query}
             onValueChange={onQueryChange}

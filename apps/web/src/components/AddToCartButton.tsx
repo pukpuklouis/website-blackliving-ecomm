@@ -120,6 +120,10 @@ const AddToCartButton: FC<AddToCartButtonProps> = ({
         ...cartItem,
         quantity: quantity,
       });
+
+      // Open cart drawer
+      useCartStore.getState().openCart();
+
       setTimeout(() => setShowSuccess(false), 3000);
 
       // Reset quantity if selector is shown

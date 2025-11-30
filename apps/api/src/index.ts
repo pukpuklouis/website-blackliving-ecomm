@@ -10,6 +10,7 @@ import { createStorageManager } from './lib/storage';
 import type { D1Database, R2Bucket, KVNamespace } from '@cloudflare/workers-types';
 
 import { createEnhancedAuthMiddleware } from './middleware/auth';
+import { SearchModule } from './modules/search';
 
 // Import API modules
 import products from './modules/products';
@@ -23,10 +24,15 @@ import contact from './modules/contact';
 import user from './modules/user';
 import { postsRouter } from './modules/posts';
 import pages from './modules/pages';
+import settings from './modules/settings';
 import authRouter from './modules/auth';
 import reservationsRouter from './modules/reservations';
 import media from './routes/media';
 import searchRouter from './routes/search';
+import searchConfig from './routes/search-config';
+import searchReindex from './routes/search-reindex';
+import searchKeys from './routes/search-keys';
+import analytics from './routes/analytics';
 
 export interface Env {
   DB: D1Database;
@@ -54,6 +60,7 @@ const app = new Hono<{
     cache: ReturnType<typeof createCacheManager>;
     storage: ReturnType<typeof createStorageManager>;
     auth: ReturnType<typeof createAuth>;
+    search: SearchModule;
     user: any;
     session: any;
   };
@@ -132,6 +139,7 @@ app.use('*', async (c, next) => {
   c.set('cache', cache);
   c.set('storage', storage);
   c.set('auth', auth);
+  c.set('search', new SearchModule(c));
 
   await next();
 });
@@ -530,7 +538,12 @@ app.route('/api/contact', contact);
 app.route('/api/user', user);
 app.route('/api/posts', postsRouter);
 app.route('/api/pages', pages);
+app.route('/api/settings', settings);
 app.route('/api/search', searchRouter);
+app.route('/api/search', searchConfig);
+app.route('/api/search', searchReindex);
+app.route('/api/search/keys', searchKeys);
+app.route('/api/analytics', analytics);
 
 // 404 handler
 app.notFound((c) => {

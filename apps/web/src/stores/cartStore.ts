@@ -40,19 +40,19 @@ export interface CustomerInfo {
   phone: string;
 }
 
+export interface LogisticSettings {
+  baseFee: number;
+  freeShippingThreshold: number;
+  remoteZones: Array<{
+    id: string;
+    city: string;
+    district?: string;
+    surcharge: number;
+  }>;
+}
+
 // Validation schemas
-const cartItemSchema = z.object({
-  productId: z.string().min(1),
-  variantId: z.string().optional(),
-  name: z.string().min(1),
-  variant: z.string().optional(),
-  size: z.string().optional(),
-  price: z.number().positive(),
-  originalPrice: z.number().positive().optional(),
-  quantity: z.number().positive(),
-  image: z.string().url(),
-  inStock: z.boolean(),
-});
+
 
 const customerInfoSchema = z.object({
   name: z.string().min(1, '請輸入姓名'),
@@ -79,6 +79,7 @@ export interface CartStore {
   paymentMethod: 'bank_transfer' | 'credit_card' | 'cash_on_delivery';
   notes: string;
   isSubmittingOrder: boolean;
+  logisticSettings: LogisticSettings;
 
   // Computed values
   itemCount: number;
@@ -98,6 +99,12 @@ export interface CartStore {
   setPaymentMethod: (method: 'bank_transfer' | 'credit_card' | 'cash_on_delivery') => void;
   setNotes: (notes: string) => void;
 
+  // UI State
+  isCartOpen: boolean;
+  openCart: () => void;
+  closeCart: () => void;
+  toggleCart: () => void;
+
   // Order creation
   createOrder: () => Promise<{ success: boolean; orderNumber?: string; error?: string }>;
 
@@ -106,12 +113,39 @@ export interface CartStore {
   setLoading: (loading: boolean) => void;
   validateCart: () => { isValid: boolean; errors: string[] };
   getItemKey: (productId: string, variantId?: string) => string;
+  fetchLogisticSettings: () => Promise<void>;
 }
 
 // Helper functions
-const calculateShippingFee = (subtotal: number): number => {
-  // Free shipping for orders over NT$30,000
-  return subtotal >= 30000 ? 0 : 1500;
+// Helper functions
+export const calculateShippingFee = (subtotal: number, settings: LogisticSettings, address: ShippingAddress | null): number => {
+  let fee = 0;
+
+  // 1. Base Fee logic
+  if (subtotal < settings.freeShippingThreshold) {
+    fee += settings.baseFee;
+  }
+
+  // 2. Remote Zone Surcharge logic
+  if (address && settings.remoteZones.length > 0) {
+    const zone = settings.remoteZones.find(z => {
+      // Simple string matching, can be improved
+      const cityMatch = address.city.includes(z.city) || z.city.includes(address.city);
+      if (!cityMatch) return false;
+
+      // If zone has district, it must match
+      if (z.district) {
+        return address.district.includes(z.district) || z.district.includes(address.district);
+      }
+      return true;
+    });
+
+    if (zone) {
+      fee += zone.surcharge;
+    }
+  }
+
+  return fee;
 };
 
 const getItemKey = (productId: string, variantId?: string): string => {
@@ -186,6 +220,12 @@ export const useCartStore = create<CartStore>()(
       paymentMethod: 'bank_transfer',
       notes: '',
       isSubmittingOrder: false,
+      isCartOpen: false,
+      logisticSettings: {
+        baseFee: 1500,
+        freeShippingThreshold: 30000,
+        remoteZones: [],
+      },
 
       // Computed values (getters)
       get itemCount() {
@@ -197,7 +237,8 @@ export const useCartStore = create<CartStore>()(
       },
 
       get shippingFee() {
-        return calculateShippingFee(get().subtotal);
+        const state = get();
+        return calculateShippingFee(state.subtotal, state.logisticSettings, state.shippingAddress);
       },
 
       get total() {
@@ -371,15 +412,41 @@ export const useCartStore = create<CartStore>()(
       },
 
       getItemKey,
+
+      // UI Actions
+      openCart: () => set({ isCartOpen: true }),
+      closeCart: () => set({ isCartOpen: false }),
+      toggleCart: () => set((state) => ({ isCartOpen: !state.isCartOpen })),
+
+      fetchLogisticSettings: async () => {
+        try {
+          const response = await fetch('/api/settings/logistic_settings');
+          if (response.ok) {
+            const result = await response.json();
+            if (result.success && result.data) {
+              const currentSettings = get().logisticSettings;
+              // Only update if settings have changed to avoid unnecessary re-renders
+              if (JSON.stringify(currentSettings) !== JSON.stringify(result.data)) {
+                set({ logisticSettings: result.data });
+              }
+            }
+          }
+        } catch (error) {
+          console.error('Failed to fetch logistic settings:', error);
+        }
+      },
     }),
     {
       name: 'cart-store',
+      version: 1,
       partialize: (state) => ({
         items: state.items,
         customerInfo: state.customerInfo,
         shippingAddress: state.shippingAddress,
         paymentMethod: state.paymentMethod,
         notes: state.notes,
+        logisticSettings: state.logisticSettings,
+        // Don't persist UI state
       }),
     }
   )

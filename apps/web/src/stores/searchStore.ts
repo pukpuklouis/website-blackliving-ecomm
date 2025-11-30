@@ -5,7 +5,8 @@ import {
   type UnifiedSearchResult,
 } from '@blackliving/types/search';
 
-import { fetchUnifiedSearch } from '../services/searchService';
+import { meiliSearchService } from '../services/meiliSearchService';
+import { analyticsService } from '../services/analyticsService';
 
 const RECENT_STORAGE_KEY = 'blackliving:search:recent';
 const MAX_RECENT_ITEMS = 8;
@@ -16,7 +17,7 @@ const EMPTY_RESULTS = (): SearchResultSections => ({
   pages: [],
 });
 
-type SearchTypeFilter = 'products' | 'posts' | 'pages';
+type SearchTypeFilter = 'product' | 'post' | 'page';
 
 type SearchOptions = {
   query?: string;
@@ -43,7 +44,7 @@ interface SearchStoreState {
   hydrate: () => void;
   addRecent: (query: string) => void;
   removeRecent: (id: string) => void;
-  registerResultClick: (result: UnifiedSearchResult) => void;
+  registerResultClick: (result: UnifiedSearchResult, position?: number) => void;
   search: (options?: SearchOptions) => Promise<void>;
   setLoading: (loading: boolean) => void;
   setError: (message: string | null) => void;
@@ -156,9 +157,21 @@ export const useSearchStore = create<SearchStoreState>((set, get) => ({
     persistRecentEntries(nextEntries);
   },
 
-  registerResultClick: (result) => {
+  registerResultClick: (result, position) => {
     const state = get();
     state.addRecent(state.query || result.title);
+
+    // Track result click analytics
+    analyticsService.trackResultClick(
+      state.query || '',
+      result.id,
+      result.type,
+      position || 1, // Default to position 1 if not provided
+      {
+        resultTitle: result.title,
+        category: result.category,
+      }
+    );
   },
 
   search: async (options) => {
@@ -183,12 +196,23 @@ export const useSearchStore = create<SearchStoreState>((set, get) => ({
     set({ isLoading: true, error: null, abortController: controller });
 
     try {
-      const response = await fetchUnifiedSearch({
+      const response = await meiliSearchService.search({
         query,
         limit: 8,
         types: options?.types ?? undefined,
         includeContent: options?.includeContent,
         signal: controller.signal,
+      });
+
+      // Track successful search
+      analyticsService.trackSearchQuery(response.query, {
+        types: options?.types,
+        hasResults: response.results.products.length > 0 ||
+          response.results.posts.length > 0 ||
+          response.results.pages.length > 0,
+        totalResults: response.results.products.length +
+          response.results.posts.length +
+          response.results.pages.length,
       });
 
       set({
@@ -201,7 +225,15 @@ export const useSearchStore = create<SearchStoreState>((set, get) => ({
       if ((error as Error).name === 'AbortError') {
         return;
       }
-      set({ error: (error as Error).message || '搜尋失敗，請稍後再試', isLoading: false });
+
+      const errorMessage = (error as Error).message || '搜尋失敗，請稍後再試';
+
+      // Track search error analytics
+      analyticsService.trackSearchError(query, errorMessage, {
+        types: options?.types,
+      });
+
+      set({ error: errorMessage, isLoading: false });
     } finally {
       set({ abortController: null });
     }

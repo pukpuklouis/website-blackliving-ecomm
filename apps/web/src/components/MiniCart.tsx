@@ -15,7 +15,7 @@ interface MiniCartProps {
 }
 
 const MiniCart: FC<MiniCartProps> = ({ isOpen, onClose, onCheckout, className = '' }) => {
-  const { items, itemCount, subtotal, shippingFee, total, updateQuantity, removeItem } =
+  const { items, itemCount, subtotal, shippingFee, total, updateQuantity, removeItem, logisticSettings } =
     useCartStore();
 
   const [isAnimating, setIsAnimating] = useState(false);
@@ -252,9 +252,9 @@ const MiniCart: FC<MiniCartProps> = ({ isOpen, onClose, onCheckout, className = 
                       {shippingFee === 0 ? '免運' : `NT$ ${shippingFee.toLocaleString()}`}
                     </span>
                   </div>
-                  {subtotal < 30000 && shippingFee > 0 && (
+                  {subtotal < logisticSettings.freeShippingThreshold && shippingFee > 0 && (
                     <div className="text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded">
-                      💡 再購買 NT$ {(30000 - subtotal).toLocaleString()} 即可免運
+                      💡 再購買 NT$ {(logisticSettings.freeShippingThreshold - subtotal).toLocaleString()} 即可免運
                     </div>
                   )}
                   <Separator />

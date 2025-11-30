@@ -47,6 +47,8 @@ import Save from '@lucide/react/save';
 import RefreshCw from '@lucide/react/refresh-cw';
 import AlertTriangle from '@lucide/react/alert-triangle';
 import CheckCircle from '@lucide/react/check-circle';
+import Plus from '@lucide/react/plus';
+import Trash2 from '@lucide/react/trash-2';
 import { toast } from 'sonner';
 import { useEnvironment } from '../contexts/EnvironmentContext';
 
@@ -89,17 +91,17 @@ interface PaymentSettings {
   }>;
 }
 
+interface RemoteZone {
+  id: string;
+  city: string;
+  district?: string;
+  surcharge: number;
+}
+
 interface LogisticsSettings {
-  shippingMethods: Array<{
-    id: string;
-    name: string;
-    carrier: string;
-    price: number;
-    estimatedDays: number;
-    isActive: boolean;
-  }>;
-  warehouseAddress: string;
-  returnPolicy: string;
+  baseFee: number;
+  freeShippingThreshold: number;
+  remoteZones: RemoteZone[];
 }
 
 interface AuditLog {
@@ -145,9 +147,9 @@ export default function SettingsManagement() {
   });
 
   const [logisticsSettings, setLogisticsSettings] = useState<LogisticsSettings>({
-    shippingMethods: [],
-    warehouseAddress: '',
-    returnPolicy: '',
+    baseFee: 0,
+    freeShippingThreshold: 0,
+    remoteZones: [],
   });
 
   // Load all settings on mount
@@ -217,12 +219,23 @@ export default function SettingsManagement() {
 
   const loadLogisticsSettings = async () => {
     try {
-      const response = await fetch(`${API_BASE}/api/admin/settings/logistics`, {
+      const response = await fetch(`${API_BASE}/api/settings/logistic_settings`, {
         credentials: 'include',
       });
       if (response.ok) {
         const result = await response.json();
-        setLogisticsSettings(result.data || logisticsSettings);
+        setLogisticsSettings(result.data || {
+          baseFee: 0,
+          freeShippingThreshold: 0,
+          remoteZones: [],
+        });
+      } else if (response.status === 404) {
+        // Default settings if not found
+        setLogisticsSettings({
+          baseFee: 150,
+          freeShippingThreshold: 3000,
+          remoteZones: [],
+        });
       }
     } catch (error) {
       console.error('Failed to load logistics settings:', error);
@@ -295,7 +308,7 @@ export default function SettingsManagement() {
   const saveLogisticsSettings = async () => {
     try {
       setSaving(true);
-      const response = await fetch(`${API_BASE}/api/admin/settings/logistics`, {
+      const response = await fetch(`${API_BASE}/api/settings/logistic_settings`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -719,54 +732,131 @@ export default function SettingsManagement() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="space-y-4">
-                <h4 className="font-medium">運送方式</h4>
-                {logisticsSettings.shippingMethods.length === 0 ? (
-                  <p className="text-muted-foreground">尚未設定運送方式</p>
-                ) : (
-                  <div className="space-y-2">
-                    {logisticsSettings.shippingMethods.map((method) => (
-                      <div key={method.id} className="flex items-center justify-between p-3 border rounded">
-                        <div>
-                          <div className="font-medium">{method.name}</div>
-                          <div className="text-sm text-muted-foreground">
-                            {method.carrier} - NT${method.price} - {method.estimatedDays} 天
-                          </div>
-                        </div>
-                        <Badge variant={method.isActive ? 'secondary' : 'outline'}>
-                          {method.isActive ? '啟用' : '停用'}
-                        </Badge>
-                      </div>
-                    ))}
-                  </div>
-                )}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="baseFee">基本運費 (NT$)</Label>
+                  <Input
+                    id="baseFee"
+                    type="number"
+                    min="0"
+                    value={logisticsSettings.baseFee}
+                    onChange={(e) => setLogisticsSettings(prev => ({ ...prev, baseFee: parseInt(e.target.value) || 0 }))}
+                  />
+                  <p className="text-sm text-muted-foreground">未達免運門檻時的運費</p>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="freeShippingThreshold">免運門檻 (NT$)</Label>
+                  <Input
+                    id="freeShippingThreshold"
+                    type="number"
+                    min="0"
+                    value={logisticsSettings.freeShippingThreshold}
+                    onChange={(e) => setLogisticsSettings(prev => ({ ...prev, freeShippingThreshold: parseInt(e.target.value) || 0 }))}
+                  />
+                  <p className="text-sm text-muted-foreground">訂單金額達到此門檻即享免運</p>
+                </div>
               </div>
 
               <Separator />
 
               <div className="space-y-4">
-                <h4 className="font-medium">倉庫資訊</h4>
-                <div className="space-y-2">
-                  <Label htmlFor="warehouseAddress">倉庫地址</Label>
-                  <Textarea
-                    id="warehouseAddress"
-                    value={logisticsSettings.warehouseAddress}
-                    onChange={(e) => setLogisticsSettings(prev => ({ ...prev, warehouseAddress: e.target.value }))}
-                    rows={3}
-                    placeholder="倉庫地址..."
-                  />
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h4 className="font-medium">偏遠地區加價</h4>
+                    <p className="text-sm text-muted-foreground">設定特定區域的額外運費（即使達免運門檻仍需收取）</p>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const newZone: RemoteZone = {
+                        id: crypto.randomUUID(),
+                        city: '',
+                        district: '',
+                        surcharge: 0
+                      };
+                      setLogisticsSettings(prev => ({
+                        ...prev,
+                        remoteZones: [...prev.remoteZones, newZone]
+                      }));
+                    }}
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    新增區域
+                  </Button>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="returnPolicy">退貨政策</Label>
-                  <Textarea
-                    id="returnPolicy"
-                    value={logisticsSettings.returnPolicy}
-                    onChange={(e) => setLogisticsSettings(prev => ({ ...prev, returnPolicy: e.target.value }))}
-                    rows={4}
-                    placeholder="退貨政策說明..."
-                  />
-                </div>
+                {logisticsSettings.remoteZones.length === 0 ? (
+                  <div className="text-center py-8 border-2 border-dashed rounded-lg text-muted-foreground">
+                    尚未設定偏遠地區
+                  </div>
+                ) : (
+                  <div className="border rounded-lg overflow-hidden">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>縣市</TableHead>
+                          <TableHead>區域 (選填)</TableHead>
+                          <TableHead>加收運費 (NT$)</TableHead>
+                          <TableHead className="w-[100px]">操作</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {logisticsSettings.remoteZones.map((zone, index) => (
+                          <TableRow key={zone.id}>
+                            <TableCell>
+                              <Input
+                                value={zone.city}
+                                onChange={(e) => {
+                                  const newZones = [...logisticsSettings.remoteZones];
+                                  newZones[index].city = e.target.value;
+                                  setLogisticsSettings(prev => ({ ...prev, remoteZones: newZones }));
+                                }}
+                                placeholder="例如：花蓮縣"
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <Input
+                                value={zone.district || ''}
+                                onChange={(e) => {
+                                  const newZones = [...logisticsSettings.remoteZones];
+                                  newZones[index].district = e.target.value;
+                                  setLogisticsSettings(prev => ({ ...prev, remoteZones: newZones }));
+                                }}
+                                placeholder="例如：秀林鄉"
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <Input
+                                type="number"
+                                min="0"
+                                value={zone.surcharge}
+                                onChange={(e) => {
+                                  const newZones = [...logisticsSettings.remoteZones];
+                                  newZones[index].surcharge = parseInt(e.target.value) || 0;
+                                  setLogisticsSettings(prev => ({ ...prev, remoteZones: newZones }));
+                                }}
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                                onClick={() => {
+                                  const newZones = logisticsSettings.remoteZones.filter(z => z.id !== zone.id);
+                                  setLogisticsSettings(prev => ({ ...prev, remoteZones: newZones }));
+                                }}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
               </div>
 
               <div className="flex justify-end">

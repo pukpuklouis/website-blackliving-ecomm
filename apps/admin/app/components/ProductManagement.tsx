@@ -33,6 +33,16 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
 } from '@blackliving/ui';
 // Tree-shakable Lucide imports
 import Plus from '@lucide/react/plus';
@@ -710,123 +720,272 @@ export default function ProductManagement({ initialProducts }: { initialProducts
         </Button>
       </div>
 
-      {/* Category Management */}
-      <Card>
-        <CardHeader className="gap-4 md:flex md:flex-row md:items-center md:justify-between">
-          <div className="space-y-1">
-            <CardTitle>產品分類</CardTitle>
-            <CardDescription>建立或移除產品分類，供前台與商品維護使用。</CardDescription>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button onClick={openCreateCategoryDialog}>
-              <Plus className="h-4 w-4 mr-2" />
-              新增分類
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {categoriesLoading ? (
-            <div className="space-y-3">
-              <Skeleton className="h-20 w-full" />
-              <Skeleton className="h-20 w-full" />
-            </div>
-          ) : categories.length === 0 ? (
-            <div className="rounded-md border border-dashed p-6 text-center text-sm text-muted-foreground">
-              尚未建立任何產品分類，請先新增分類以供產品使用。
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {sortedCategories.map((category) => {
-                const productCount = category.stats?.productCount ?? 0;
-                const inUse = productCount > 0;
-                return (
-                  <div
-                    key={category.id}
-                    className="rounded-lg border p-4 flex flex-col gap-4 md:flex-row md:items-start md:justify-between"
+      <Tabs defaultValue="products" className="w-full">
+        <TabsList>
+          <TabsTrigger value="products">產品列表</TabsTrigger>
+          <TabsTrigger value="categories">分類管理</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="products" className="space-y-6 mt-6">
+          {/* Filters */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Filter className="h-5 w-5" />
+                篩選與搜尋
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex gap-4">
+                <div className="flex-1">
+                  <div className="relative">
+                    <Search className="h-4 w-4 absolute left-3 top-3 text-gray-400" />
+                    <Input
+                      placeholder="搜尋產品名稱、描述..."
+                      value={globalFilter}
+                      onChange={(e) => setGlobalFilter(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                </div>
+                <Select
+                  value={(table.getColumn('category')?.getFilterValue() as string) ?? ''}
+                  onValueChange={(value) =>
+                    table.getColumn('category')?.setFilterValue(value === 'all' ? '' : value)
+                  }
+                >
+                  <SelectTrigger
+                    className="w-48"
+                    disabled={categoriesLoading || sortedCategories.length === 0}
                   >
-                    <div className="space-y-3">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <h3 className="text-lg font-semibold text-foreground">{category.title}</h3>
-                        <Badge variant="secondary">{category.slug}</Badge>
-                        {!category.isActive && (
-                          <Badge variant="outline" className="text-amber-600 border-amber-300">
-                            已停用
-                          </Badge>
-                        )}
-                      </div>
-                      <p className="text-sm text-muted-foreground max-w-2xl">
-                        {category.description}
-                      </p>
-                      <div className="flex flex-wrap gap-2 text-sm">
-                        <Badge variant="outline">系列：{category.series}</Badge>
-                        <Badge variant="outline">品牌：{category.brand}</Badge>
-                        <Badge variant="outline">URL：{category.urlPath}</Badge>
-                      </div>
-                      {category.features.length > 0 && (
-                        <div className="flex flex-wrap gap-2">
-                          {category.features.map((feature) => (
-                            <Badge
-                              key={feature}
-                              variant="secondary"
-                              className="bg-gray-100 text-gray-700"
-                            >
-                              {feature}
-                            </Badge>
+                    <SelectValue placeholder="篩選分類" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">全部分類</SelectItem>
+                    {sortedCategories.map((category) => (
+                      <SelectItem key={category.slug} value={category.slug}>
+                        {categoryLabelMap[category.slug] || category.slug}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Products Table */}
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+              <div className="space-y-1">
+                <CardTitle>產品列表</CardTitle>
+                <CardDescription>共 {table.getFilteredRowModel().rows.length} 個產品</CardDescription>
+              </div>
+              <BatchOperationsToolbar
+                selectedProducts={Array.from(selectedProducts).map(id => products.find(p => p.id === id)!).filter(Boolean)}
+                onSelectionChange={(newSelection) => {
+                  setSelectedProducts(new Set(newSelection.map((p: any) => p.id)));
+                }}
+                onProductsUpdate={() => {
+                  // Refresh products list
+                  loadProducts();
+                }}
+                totalProducts={products.length}
+                variant="compact"
+                categories={categories}
+              />
+            </CardHeader>
+            <CardContent>
+              <div className="rounded-md border">
+                <Table>
+                  <TableHeader>
+                    {table.getHeaderGroups().map((headerGroup) => (
+                      <TableRow key={headerGroup.id} className="bg-gray-50/50">
+                        {headerGroup.headers.map((header) => (
+                          <TableHead key={header.id} className="font-medium text-gray-900">
+                            {header.isPlaceholder
+                              ? null
+                              : flexRender(header.column.columnDef.header, header.getContext())}
+                          </TableHead>
+                        ))}
+                      </TableRow>
+                    ))}
+                  </TableHeader>
+                  <TableBody>
+                    {table.getRowModel().rows.length > 0 ? (
+                      table.getRowModel().rows.map((row) => (
+                        <TableRow key={row.id} className="hover:bg-gray-50/50">
+                          {row.getVisibleCells().map((cell) => (
+                            <TableCell key={cell.id}>
+                              {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                            </TableCell>
                           ))}
-                        </div>
-                      )}
-                      <div className="text-xs text-muted-foreground">
-                        產品數：{productCount}（有庫存 {category.stats?.inStockCount ?? 0}）
-                      </div>
-                    </div>
-                    <div className="flex flex-col gap-2 md:items-end">
-                      <Button
-                        variant="ghost"
-                        className="self-start"
-                        onClick={() => openEditCategoryDialog(category)}
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={columns.length} className="h-24 text-center">
+                          沒有找到產品
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+
+              {/* Pagination */}
+              <div className="flex items-center justify-between px-2 py-4">
+                <div className="text-sm text-gray-700">
+                  顯示{' '}
+                  {table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1} 到{' '}
+                  {Math.min(
+                    (table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize,
+                    table.getFilteredRowModel().rows.length
+                  )}{' '}
+                  項，共 {table.getFilteredRowModel().rows.length} 項
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => table.previousPage()}
+                    disabled={!table.getCanPreviousPage()}
+                  >
+                    上一頁
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => table.nextPage()}
+                    disabled={!table.getCanNextPage()}
+                  >
+                    下一頁
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="categories" className="mt-6">
+          {/* Category Management */}
+          <Card>
+            <CardHeader className="gap-4 md:flex md:flex-row md:items-center md:justify-between">
+              <div className="space-y-1">
+                <CardTitle>產品分類</CardTitle>
+                <CardDescription>建立或移除產品分類，供前台與商品維護使用。</CardDescription>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button onClick={openCreateCategoryDialog}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  新增分類
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {categoriesLoading ? (
+                <div className="space-y-3">
+                  <Skeleton className="h-20 w-full" />
+                  <Skeleton className="h-20 w-full" />
+                </div>
+              ) : categories.length === 0 ? (
+                <div className="rounded-md border border-dashed p-6 text-center text-sm text-muted-foreground">
+                  尚未建立任何產品分類，請先新增分類以供產品使用。
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {sortedCategories.map((category) => {
+                    const productCount = category.stats?.productCount ?? 0;
+                    const inUse = productCount > 0;
+                    return (
+                      <div
+                        key={category.id}
+                        className="rounded-lg border p-4 flex flex-col gap-4 md:flex-row md:items-start md:justify-between"
                       >
-                        <Edit className="h-4 w-4 mr-2" />
-                        編輯
-                      </Button>
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
+                        <div className="space-y-3">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <h3 className="text-lg font-semibold text-foreground">{category.title}</h3>
+                            <Badge variant="secondary">{category.slug}</Badge>
+                            {!category.isActive && (
+                              <Badge variant="outline" className="text-amber-600 border-amber-300">
+                                已停用
+                              </Badge>
+                            )}
+                          </div>
+                          <p className="text-sm text-muted-foreground max-w-2xl">
+                            {category.description}
+                          </p>
+                          <div className="flex flex-wrap gap-2 text-sm">
+                            <Badge variant="outline">系列：{category.series}</Badge>
+                            <Badge variant="outline">品牌：{category.brand}</Badge>
+                            <Badge variant="outline">URL：{category.urlPath}</Badge>
+                          </div>
+                          {category.features.length > 0 && (
+                            <div className="flex flex-wrap gap-2">
+                              {category.features.map((feature) => (
+                                <Badge
+                                  key={feature}
+                                  variant="secondary"
+                                  className="bg-gray-100 text-gray-700"
+                                >
+                                  {feature}
+                                </Badge>
+                              ))}
+                            </div>
+                          )}
+                          <div className="text-xs text-muted-foreground">
+                            產品數：{productCount}（有庫存 {category.stats?.inStockCount ?? 0}）
+                          </div>
+                        </div>
+                        <div className="flex flex-col gap-2 md:items-end">
                           <Button
                             variant="ghost"
                             className="self-start"
-                            disabled={inUse || deletingCategorySlug === category.slug}
+                            onClick={() => openEditCategoryDialog(category)}
                           >
-                            <Trash2 className="h-4 w-4 mr-2" />
-                            刪除
+                            <Edit className="h-4 w-4 mr-2" />
+                            編輯
                           </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>確認刪除分類</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              {inUse
-                                ? '此分類仍有產品使用，請先調整產品後再刪除。'
-                                : `確定要刪除分類「${category.title}」嗎？此操作無法復原。`}
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>取消</AlertDialogCancel>
-                            <AlertDialogAction
-                              onClick={() => handleDeleteCategory(category.slug)}
-                              disabled={inUse || deletingCategorySlug === category.slug}
-                            >
-                              刪除
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                className="self-start"
+                                disabled={inUse || deletingCategorySlug === category.slug}
+                              >
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                刪除
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>確認刪除分類</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  {inUse
+                                    ? '此分類仍有產品使用，請先調整產品後再刪除。'
+                                    : `確定要刪除分類「${category.title}」嗎？此操作無法復原。`}
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>取消</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => handleDeleteCategory(category.slug)}
+                                  disabled={inUse || deletingCategorySlug === category.slug}
+                                >
+                                  刪除
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
 
       <Dialog
         open={categoryDialogOpen}
@@ -986,136 +1145,6 @@ export default function ProductManagement({ initialProducts }: { initialProducts
           </div>
         </DialogContent>
       </Dialog>
-
-      {/* Filters */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Filter className="h-5 w-5" />
-            篩選與搜尋
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex gap-4">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="h-4 w-4 absolute left-3 top-3 text-gray-400" />
-                <Input
-                  placeholder="搜尋產品名稱、描述..."
-                  value={globalFilter}
-                  onChange={(e) => setGlobalFilter(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-            </div>
-            <Select
-              value={(table.getColumn('category')?.getFilterValue() as string) ?? ''}
-              onValueChange={(value) =>
-                table.getColumn('category')?.setFilterValue(value === 'all' ? '' : value)
-              }
-            >
-              <SelectTrigger
-                className="w-48"
-                disabled={categoriesLoading || sortedCategories.length === 0}
-              >
-                <SelectValue placeholder="篩選分類" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">全部分類</SelectItem>
-                {sortedCategories.map((category) => (
-                  <SelectItem key={category.slug} value={category.slug}>
-                    {categoryLabelMap[category.slug] || category.slug}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Batch Operations Toolbar */}
-      <BatchOperationsToolbar
-        selectedProducts={Array.from(selectedProducts).map(id => products.find(p => p.id === id)!).filter(Boolean)}
-        onSelectionChange={(newSelection) => {
-          setSelectedProducts(new Set(newSelection.map((p: any) => p.id)));
-        }}
-        onProductsUpdate={() => {
-          // Refresh products list
-          loadProducts();
-        }}
-        totalProducts={products.length}
-      />
-
-      {/* Products Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>產品列表</CardTitle>
-          <CardDescription>共 {table.getFilteredRowModel().rows.length} 個產品</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="rounded-md border">
-            <table className="w-full">
-              <thead>
-                {table.getHeaderGroups().map((headerGroup) => (
-                  <tr key={headerGroup.id} className="border-b bg-gray-50/50">
-                    {headerGroup.headers.map((header) => (
-                      <th key={header.id} className="px-4 py-3 text-left font-medium text-gray-900">
-                        {header.isPlaceholder
-                          ? null
-                          : flexRender(header.column.columnDef.header, header.getContext())}
-                      </th>
-                    ))}
-                  </tr>
-                ))}
-              </thead>
-              <tbody>
-                {table.getRowModel().rows.map((row) => (
-                  <tr key={row.id} className="border-b hover:bg-gray-50/50">
-                    {row.getVisibleCells().map((cell) => (
-                      <td key={cell.id} className="px-4 py-3">
-                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Pagination */}
-          <div className="flex items-center justify-between px-2 py-4">
-            <div className="text-sm text-gray-700">
-              顯示{' '}
-              {table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1} 到{' '}
-              {Math.min(
-                (table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize,
-                table.getFilteredRowModel().rows.length
-              )}{' '}
-              項，共 {table.getFilteredRowModel().rows.length} 項
-            </div>
-            <div className="flex items-center space-x-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => table.previousPage()}
-                disabled={!table.getCanPreviousPage()}
-              >
-                上一頁
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => table.nextPage()}
-                disabled={!table.getCanNextPage()}
-              >
-                下一頁
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Dialog removed - now using dedicated pages */}
     </div>
   );
 }
@@ -1128,15 +1157,15 @@ export function normalizeFormData(
 ): ProductFormData {
   const variants = Array.isArray(fd.variants)
     ? fd.variants.map((variant) => ({
-        name: (variant?.name ?? '').toString().trim(),
-        price:
-          typeof variant?.price === 'number'
-            ? variant.price
-            : Number((variant?.price as unknown as string) ?? 0) || 0,
-        sku: variant?.sku ? variant.sku.toString().trim() : undefined,
-        size: variant?.size ? variant.size.toString().trim() : undefined,
-        firmness: variant?.firmness ? variant.firmness.toString().trim() : undefined,
-      }))
+      name: (variant?.name ?? '').toString().trim(),
+      price:
+        typeof variant?.price === 'number'
+          ? variant.price
+          : Number((variant?.price as unknown as string) ?? 0) || 0,
+      sku: variant?.sku ? variant.sku.toString().trim() : undefined,
+      size: variant?.size ? variant.size.toString().trim() : undefined,
+      firmness: variant?.firmness ? variant.firmness.toString().trim() : undefined,
+    }))
     : [];
 
   const images = Array.isArray(fd.images)
@@ -1145,8 +1174,8 @@ export function normalizeFormData(
 
   const features = Array.isArray(fd.features)
     ? fd.features
-        .map((feature) => (typeof feature === 'string' ? feature.trim() : ''))
-        .filter(Boolean)
+      .map((feature) => (typeof feature === 'string' ? feature.trim() : ''))
+      .filter(Boolean)
     : [];
 
   const rawSpecifications =
@@ -1302,10 +1331,10 @@ export function sanitizeProduct(
 
   const images = Array.isArray(safeProduct.images)
     ? safeProduct.images.filter(Boolean).map((image) => {
-        const imgString = String(image);
-        const key = extractAssetKey(imgString);
-        return resolveAssetUrl({ key, url: imgString }, cdnUrl, fallbackBase);
-      })
+      const imgString = String(image);
+      const key = extractAssetKey(imgString);
+      return resolveAssetUrl({ key, url: imgString }, cdnUrl, fallbackBase);
+    })
     : [];
 
   return {
@@ -1379,9 +1408,9 @@ export function normalizeCategory(category: ProductCategoryDTO): ProductCategory
       : undefined;
   const stats = category.stats
     ? {
-        productCount: Number(category.stats.productCount ?? 0),
-        inStockCount: Number(category.stats.inStockCount ?? 0),
-      }
+      productCount: Number(category.stats.productCount ?? 0),
+      inStockCount: Number(category.stats.inStockCount ?? 0),
+    }
     : undefined;
 
   const urlPathRaw =

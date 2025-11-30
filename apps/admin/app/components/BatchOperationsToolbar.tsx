@@ -57,6 +57,8 @@ interface BatchOperationsToolbarProps {
   onProductsUpdate: () => void;
   totalProducts: number;
   className?: string;
+  variant?: 'card' | 'compact';
+  categories?: { slug: string; title: string }[];
 }
 
 export default function BatchOperationsToolbar({
@@ -65,6 +67,8 @@ export default function BatchOperationsToolbar({
   onProductsUpdate,
   totalProducts,
   className,
+  variant = 'card',
+  categories = [],
 }: BatchOperationsToolbarProps) {
   const { PUBLIC_API_URL } = useEnvironment();
   const API_BASE = PUBLIC_API_URL;
@@ -82,36 +86,7 @@ export default function BatchOperationsToolbar({
   const hasSelection = selectedCount > 0;
 
   // Bulk operations
-  const handleBulkArchive = async (archive: boolean) => {
-    if (!hasSelection) return;
 
-    try {
-      setIsProcessing(true);
-      const response = await fetch(`${API_BASE}/api/admin/products/batch/archive`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          productIds: selectedProducts.map(p => p.id),
-          archive,
-        }),
-      });
-
-      if (response.ok) {
-        toast.success(`成功${archive ? '封存' : '取消封存'} ${selectedCount} 個產品`);
-        onSelectionChange([]);
-        onProductsUpdate();
-      } else {
-        const err = await response.json();
-        throw new Error(err?.error || err?.message || '批量操作失敗');
-      }
-    } catch (error) {
-      console.error('Bulk archive failed:', error);
-      toast.error(error instanceof Error ? error.message : '批量操作失敗');
-    } finally {
-      setIsProcessing(false);
-    }
-  };
 
   const handleBulkDelete = async () => {
     if (!hasSelection) return;
@@ -123,7 +98,7 @@ export default function BatchOperationsToolbar({
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({
-          productIds: selectedProducts.map(p => p.id),
+          ids: selectedProducts.map(p => p.id),
         }),
       });
 
@@ -150,7 +125,7 @@ export default function BatchOperationsToolbar({
       setIsProcessing(true);
       const updates: Record<string, any> = {};
 
-      if (bulkEditValues.category) updates.category = bulkEditValues.category;
+      if (bulkEditValues.category && bulkEditValues.category !== 'unchanged') updates.category = bulkEditValues.category;
       if (bulkEditValues.inStock !== null) updates.inStock = bulkEditValues.inStock;
       if (bulkEditValues.featured !== null) updates.featured = bulkEditValues.featured;
       if (bulkEditValues.sortOrder) updates.sortOrder = Number(bulkEditValues.sortOrder);
@@ -165,8 +140,8 @@ export default function BatchOperationsToolbar({
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({
-          productIds: selectedProducts.map(p => p.id),
-          updates,
+          ids: selectedProducts.map(p => p.id),
+          data: updates,
         }),
       });
 
@@ -274,6 +249,202 @@ export default function BatchOperationsToolbar({
     return null;
   }
 
+  if (variant === 'compact') {
+    return (
+      <div className={`flex items-center gap-2 ${className}`}>
+        {hasSelection && (
+          <>
+            <div className="flex items-center gap-2 mr-2">
+              <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">
+                已選取 {selectedCount} 項
+              </span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => onSelectionChange([])}
+                disabled={isProcessing}
+                className="h-8 px-2 text-muted-foreground hover:text-foreground"
+              >
+                取消
+              </Button>
+            </div>
+            <Separator orientation="vertical" className="h-6" />
+
+            {/* Bulk Edit */}
+            <AlertDialog open={bulkEditDialogOpen} onOpenChange={setBulkEditDialogOpen}>
+              <AlertDialogTrigger asChild>
+                <Button variant="outline" size="sm" disabled={isProcessing} className="h-8">
+                  <Edit className="h-3.5 w-3.5 mr-1.5" />
+                  編輯
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent className="max-w-md">
+                <AlertDialogHeader>
+                  <AlertDialogTitle>批量編輯產品</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    選擇要更新的欄位，所有選取的產品都會被更新。
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+
+                <div className="space-y-4 py-4">
+                  <div className="space-y-2">
+                    <Label>分類</Label>
+                    <Label>分類</Label>
+                    <Select
+                      value={bulkEditValues.category}
+                      onValueChange={(value) => setBulkEditValues(prev => ({ ...prev, category: value }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="選擇分類" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="unchanged">不變更</SelectItem>
+                        {categories.map((category) => (
+                          <SelectItem key={category.slug} value={category.slug}>
+                            {category.title}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>庫存狀態</Label>
+                    <Select
+                      value={bulkEditValues.inStock === null ? '' : bulkEditValues.inStock.toString()}
+                      onValueChange={(value) => setBulkEditValues(prev => ({
+                        ...prev,
+                        inStock: value === '' ? null : value === 'true'
+                      }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="不變更" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="unchanged">不變更</SelectItem>
+                        <SelectItem value="true">有庫存</SelectItem>
+                        <SelectItem value="false">缺貨</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>精選產品</Label>
+                    <Select
+                      value={bulkEditValues.featured === null ? '' : bulkEditValues.featured.toString()}
+                      onValueChange={(value) => setBulkEditValues(prev => ({
+                        ...prev,
+                        featured: value === '' ? null : value === 'true'
+                      }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="不變更" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="unchanged">不變更</SelectItem>
+                        <SelectItem value="true">是</SelectItem>
+                        <SelectItem value="false">否</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>排序順序</Label>
+                    <Input
+                      type="number"
+                      placeholder="輸入數字"
+                      value={bulkEditValues.sortOrder}
+                      onChange={(e) => setBulkEditValues(prev => ({ ...prev, sortOrder: e.target.value }))}
+                    />
+                  </div>
+                </div>
+
+                <AlertDialogFooter>
+                  <AlertDialogCancel>取消</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleBulkEdit} disabled={isProcessing}>
+                    {isProcessing ? '處理中...' : '更新'}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+
+
+
+            {/* Delete */}
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  disabled={isProcessing}
+                  className="h-8"
+                >
+                  <Trash2 className="h-3.5 w-3.5 mr-1.5" />
+                  刪除
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle className="flex items-center gap-2">
+                    <AlertTriangle className="h-5 w-5 text-red-500" />
+                    確認批量刪除
+                  </AlertDialogTitle>
+                  <AlertDialogDescription>
+                    確定要刪除選取的 {selectedCount} 個產品嗎？此操作無法復原。
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>取消</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={handleBulkDelete}
+                    disabled={isProcessing}
+                    className="bg-red-600 hover:bg-red-700"
+                  >
+                    {isProcessing ? '刪除中...' : '確認刪除'}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+
+            <Separator orientation="vertical" className="h-6" />
+          </>
+        )}
+
+        {/* Export */}
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleExportCSV}
+          disabled={isProcessing}
+          className="h-8"
+        >
+          <Download className="h-3.5 w-3.5 mr-1.5" />
+          {hasSelection ? '匯出選取' : '匯出'}
+        </Button>
+
+        {/* Import */}
+        <div className="relative">
+          <input
+            type="file"
+            accept=".csv"
+            onChange={handleFileUpload}
+            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+            disabled={isProcessing}
+          />
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={isProcessing}
+            className="pointer-events-none h-8"
+          >
+            <Upload className="h-3.5 w-3.5 mr-1.5" />
+            匯入
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <Card className={className}>
       <CardHeader className="pb-3">
@@ -352,11 +523,23 @@ export default function BatchOperationsToolbar({
               <div className="space-y-4 py-4">
                 <div className="space-y-2">
                   <Label>分類</Label>
-                  <Input
-                    placeholder="輸入分類 slug"
+                  <Label>分類</Label>
+                  <Select
                     value={bulkEditValues.category}
-                    onChange={(e) => setBulkEditValues(prev => ({ ...prev, category: e.target.value }))}
-                  />
+                    onValueChange={(value) => setBulkEditValues(prev => ({ ...prev, category: value }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="選擇分類" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="unchanged">不變更</SelectItem>
+                      {categories.map((category) => (
+                        <SelectItem key={category.slug} value={category.slug}>
+                          {category.title}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div className="space-y-2">
@@ -419,26 +602,7 @@ export default function BatchOperationsToolbar({
             </AlertDialogContent>
           </AlertDialog>
 
-          {/* Archive/Unarchive */}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => handleBulkArchive(true)}
-            disabled={!hasSelection || isProcessing}
-          >
-            <Archive className="h-4 w-4 mr-2" />
-            封存
-          </Button>
 
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => handleBulkArchive(false)}
-            disabled={!hasSelection || isProcessing}
-          >
-            <ArchiveRestore className="h-4 w-4 mr-2" />
-            取消封存
-          </Button>
 
           {/* Delete */}
           <AlertDialog>

@@ -11,6 +11,7 @@ import type { SQL } from 'drizzle-orm';
 import { posts, postCategories } from '@blackliving/db/schema';
 import { requireAuth, requireAdmin, createBetterAuthMiddleware } from '@blackliving/auth';
 import { createId } from '@paralleldrive/cuid2';
+import { transformPost } from '../utils/searchSync';
 
 interface Env {
   DB: D1Database;
@@ -34,6 +35,7 @@ const postsRouter = new Hono<{
     cache: ReturnType<typeof createCacheManager>;
     storage: ReturnType<typeof createStorageManager>;
     auth: ReturnType<typeof createAuth>;
+    search: any;
     user: any;
     session: any;
   };
@@ -770,7 +772,7 @@ postsRouter.post('/', requireAdmin(), zValidator('json', createPostSchema), asyn
           return isNaN(d.getTime()) ? null : d;
         }
         if (val instanceof Date) return val;
-      } catch {}
+      } catch { }
       return null;
     };
 
@@ -815,6 +817,19 @@ postsRouter.post('/', requireAdmin(), zValidator('json', createPostSchema), asyn
     };
 
     await db.insert(posts).values(newPost);
+
+    // Sync to search index if published
+    if (newPost.status === 'published') {
+      try {
+        const searchModule = c.get('search');
+        const searchDocument = transformPost(newPost);
+        await searchModule.indexDocument(searchDocument).catch((error) => {
+          console.warn('Failed to index new post in search:', error);
+        });
+      } catch (error) {
+        console.warn('Search sync failed for new post:', error);
+      }
+    }
 
     // Deserialize overlaySettings for the response
     const deserializedNewPost = deserializePost(newPost);
@@ -997,7 +1012,7 @@ postsRouter.put('/:id', requireAdmin(), zValidator('json', updatePostSchema), as
           return isNaN(d.getTime()) ? null : d;
         }
         if (val instanceof Date) return val;
-      } catch {}
+      } catch { }
       return null;
     };
 
@@ -1030,6 +1045,27 @@ postsRouter.put('/:id', requireAdmin(), zValidator('json', updatePostSchema), as
 
     await db.update(posts).set(updatedPost).where(eq(posts.id, postId));
 
+    // Sync to search index if status changed to/from published
+    if (existingPost[0].status !== updatedPost.status && (existingPost[0].status === 'published' || updatedPost.status === 'published')) {
+      try {
+        const searchModule = c.get('search');
+        if (updatedPost.status === 'published') {
+          // Index the updated post
+          const searchDocument = transformPost({ ...existingPost[0], ...updatedPost });
+          await searchModule.indexDocument(searchDocument).catch((error) => {
+            console.warn('Failed to index updated post in search:', error);
+          });
+        } else {
+          // Remove from search index
+          await searchModule.deleteDocument(existingPost[0].id).catch((error) => {
+            console.warn('Failed to remove post from search index:', error);
+          });
+        }
+      } catch (error) {
+        console.warn('Search sync failed for updated post:', error);
+      }
+    }
+
     // Fetch and return updated post
     const result = await db.select().from(posts).where(eq(posts.id, postId)).limit(1);
 
@@ -1060,13 +1096,13 @@ postsRouter.delete('/:id', requireAdmin(), async (c) => {
 
     // Check if post exists by ID or slug
     let existingPost = await db
-      .select({ id: posts.id })
+      .select({ id: posts.id, status: posts.status })
       .from(posts)
       .where(eq(posts.id, param))
       .limit(1);
     if (existingPost.length === 0) {
       existingPost = await db
-        .select({ id: posts.id })
+        .select({ id: posts.id, status: posts.status })
         .from(posts)
         .where(eq(posts.slug, param))
         .limit(1);
@@ -1083,6 +1119,18 @@ postsRouter.delete('/:id', requireAdmin(), async (c) => {
     }
 
     await db.delete(posts).where(eq(posts.id, existingPost[0].id));
+
+    // Remove from search index if it was published
+    if (existingPost[0].status === 'published') {
+      try {
+        const searchModule = c.get('search');
+        await searchModule.deleteDocument(existingPost[0].id).catch((error) => {
+          console.warn('Failed to remove post from search index:', error);
+        });
+      } catch (error) {
+        console.warn('Search sync failed for deleted post:', error);
+      }
+    }
 
     return c.json({
       success: true,

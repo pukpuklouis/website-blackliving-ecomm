@@ -5,6 +5,8 @@ import { eq, desc, asc, and, or, like, count, sql, inArray } from 'drizzle-orm';
 import { products, productCategories } from '@blackliving/db';
 import { PRODUCT_TYPE_TEMPLATES } from '@blackliving/types';
 import { createId } from '@paralleldrive/cuid2';
+import { transformProduct } from '../utils/searchSync';
+import type { SearchModule } from './search';
 
 type Env = {
   Bindings: {
@@ -17,6 +19,7 @@ type Env = {
     db: any;
     cache: any;
     storage: any;
+    search: SearchModule;
     user: any;
     session: any;
   };
@@ -613,6 +616,20 @@ app.post('/', requireAdmin, zValidator('json', createProductSchema), async (c) =
     await cache.deleteByPrefix('products:category:');
     await cache.deleteByPrefix('products:list:');
     await cache.deleteByPrefix('products:detail:');
+
+    // Sync to search index (non-blocking)
+    try {
+      const searchModule = c.get('search');
+      if (searchModule) {
+        const searchDocument = transformProduct(newProduct);
+        await searchModule.indexDocument(searchDocument).catch((error) => {
+          console.warn('Failed to index new product in search:', error);
+        });
+      }
+    } catch (error) {
+      console.warn('Search sync failed for new product:', error);
+      // Don't fail the main operation
+    }
 
     return c.json(
       {

@@ -6,6 +6,7 @@ import { RESERVED_ROUTES } from '@blackliving/types';
 import { createId } from '@paralleldrive/cuid2';
 import { requireAdmin } from '../middleware/auth';
 import { CacheManager, CacheTTL } from '../lib/cache';
+import { transformPage } from '../utils/searchSync';
 
 type Env = {
     Bindings: {
@@ -18,6 +19,7 @@ type Env = {
         db: any;
         cache: any;
         storage: any;
+        search: any;
         user: any;
         session: any;
     };
@@ -306,6 +308,19 @@ app.post('/', requireAdmin(), zValidator('json', createPageSchema), async (c) =>
             })
             .returning();
 
+        // Sync to search index if published
+        if (pageData.status === 'published') {
+            try {
+                const searchModule = c.get('search');
+                const searchDocument = transformPage(newPage);
+                await searchModule.indexDocument(searchDocument).catch((error) => {
+                    console.warn('Failed to index new page in search:', error);
+                });
+            } catch (error) {
+                console.warn('Search sync failed for new page:', error);
+            }
+        }
+
         return c.json(
             {
                 success: true,
@@ -381,6 +396,27 @@ app.put('/:id', requireAdmin(), zValidator('json', updatePageSchema), async (c) 
             .where(eq(pages.id, id))
             .returning();
 
+        // Sync to search index if status changed to/from published
+        if (updateData.status && existingPage.status !== updateData.status && (existingPage.status === 'published' || updateData.status === 'published')) {
+            try {
+                const searchModule = c.get('search');
+                if (updateData.status === 'published') {
+                    // Index the updated page
+                    const searchDocument = transformPage(updatedPage);
+                    await searchModule.indexDocument(searchDocument).catch((error) => {
+                        console.warn('Failed to index updated page in search:', error);
+                    });
+                } else {
+                    // Remove from search index
+                    await searchModule.deleteDocument(existingPage.id).catch((error) => {
+                        console.warn('Failed to remove page from search index:', error);
+                    });
+                }
+            } catch (error) {
+                console.warn('Search sync failed for updated page:', error);
+            }
+        }
+
         // Invalidate cache
         await cache.delete(CacheManager.keys.pages.detail(existingPage.slug));
         if (updateData.slug && updateData.slug !== existingPage.slug) {
@@ -429,6 +465,18 @@ app.delete('/:id', requireAdmin(), async (c) => {
         }
 
         await db.delete(pages).where(eq(pages.id, id));
+
+        // Remove from search index if it was published
+        if (existingPage.status === 'published') {
+            try {
+                const searchModule = c.get('search');
+                await searchModule.deleteDocument(existingPage.id).catch((error) => {
+                    console.warn('Failed to remove page from search index:', error);
+                });
+            } catch (error) {
+                console.warn('Search sync failed for deleted page:', error);
+            }
+        }
 
         // Invalidate cache
         await cache.delete(CacheManager.keys.pages.detail(existingPage.slug));

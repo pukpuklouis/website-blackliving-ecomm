@@ -11,6 +11,11 @@ This guide covers the deployment process for the Black Living e-commerce platfor
    - R2 buckets (`blackliving-images-dev`, `blackliving-images-staging`, `blackliving-images-prod`)
    - KV namespace (`CACHE`)
 
+2. **MeiliSearch Instance** (for search functionality):
+   - Self-hosted MeiliSearch instance or cloud service
+   - Master key for administration
+   - Search-only key for frontend queries
+
 2. **Wrangler CLI** installed and authenticated:
 
    ```bash
@@ -51,6 +56,69 @@ wrangler secret put BETTER_AUTH_SECRET --env staging
 wrangler secret put GOOGLE_CLIENT_ID --env staging
 wrangler secret put GOOGLE_CLIENT_SECRET --env staging
 ```
+
+## Stage 2.3: MeiliSearch Configuration
+
+### 1. MeiliSearch Instance Setup
+
+You can use either a self-hosted MeiliSearch instance or a cloud service:
+
+#### Option A: Self-hosted with Docker
+```bash
+# Run MeiliSearch with Docker
+docker run -p 7700:7700 -e MEILI_MASTER_KEY=masterKey123 getmeili/meilisearch:latest
+```
+
+#### Option B: Cloud Service
+- Use [MeiliSearch Cloud](https://cloud.meilisearch.com/) or similar service
+- Get your instance URL and API keys
+
+### 2. Create Search-Only Key
+
+After setting up MeiliSearch, create a search-only key:
+
+```bash
+# Using MeiliSearch HTTP API
+curl \
+  -X POST 'http://localhost:7700/keys' \
+  -H 'Authorization: Bearer masterKey123' \
+  -H 'Content-Type: application/json' \
+  --data-binary '{
+    "description": "Search-only key for frontend",
+    "actions": ["search"],
+    "indexes": ["*"],
+    "expiresAt": null
+  }'
+```
+
+### 3. Set Cloudflare Worker Secrets
+
+```bash
+# Production environment
+wrangler secret put MEILISEARCH_HOST --env production
+# Enter your MeiliSearch instance URL (e.g., https://meilisearch.anlstudio.cc)
+
+wrangler secret put MEILISEARCH_MASTER_KEY --env production
+# Enter your MeiliSearch master key
+
+# Staging environment (optional)
+wrangler secret put MEILISEARCH_HOST --env staging
+wrangler secret put MEILISEARCH_MASTER_KEY --env staging
+```
+
+### 4. Configure Search Indexes
+
+After deployment, configure the search indexes through the admin interface:
+
+1. Go to Admin Settings → Search Configuration
+2. Enter your MeiliSearch Host URL and Master Key
+3. Click "Save Configuration"
+4. Click "Re-index All Content" to populate the search indexes
+
+**Expected Indexes:**
+- `products`: Product catalog search
+- `posts`: Blog posts and articles
+- `pages`: Static pages and content
 
 ## Stage 3: Application Deployment
 
@@ -208,6 +276,8 @@ View deployment logs in the Cloudflare Dashboard under Pages → [Project] → D
 2. **Secret not found**: Ensure all required secrets are set using `wrangler secret put`
 3. **Domain not resolving**: Check DNS settings and custom domain configuration
 4. **Auth not working**: Verify Google OAuth redirect URIs match your domain
+5. **Search not working**: Check MeiliSearch configuration and ensure indexes are populated
+6. **MeiliSearch connection failed**: Verify MEILISEARCH_HOST and MEILISEARCH_MASTER_KEY secrets are set correctly
 
 ### Debug Commands
 
@@ -249,3 +319,6 @@ wrangler rollback [DEPLOYMENT_ID] --env production
 - [ ] Database access is restricted to Workers
 - [ ] R2 bucket permissions are properly configured
 - [ ] CORS is correctly set up for cross-domain requests
+- [ ] MeiliSearch master key is securely stored and not exposed to frontend
+- [ ] Search-only key is used for frontend queries with minimal permissions
+- [ ] MeiliSearch instance is properly secured with authentication

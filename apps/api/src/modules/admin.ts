@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
-import { eq, desc, asc, and, like, count, sql, or, lt, gt, type SQL } from 'drizzle-orm';
+import { eq, desc, asc, and, like, count, sql, or, lt, gt, inArray, type SQL } from 'drizzle-orm';
 import { requireAdmin, auditLog, requireFreshSession } from '../middleware/auth';
 import {
   products,
@@ -436,6 +436,112 @@ admin.delete(
     } catch (error) {
       console.error('Delete product category error:', error);
       return c.json({ success: false, error: 'Failed to delete product category' }, 500);
+    }
+  }
+);
+
+// Batch Operations
+admin.post(
+  '/products/batch/update',
+  zValidator(
+    'json',
+    z.object({
+      ids: z.array(z.string()),
+      data: z.object({
+        category: z.string().optional(),
+        inStock: z.boolean().optional(),
+        featured: z.boolean().optional(),
+        sortOrder: z.number().optional(),
+      }),
+    })
+  ),
+  async (c) => {
+    const db = c.get('db');
+    const cache = c.get('cache');
+    const { ids, data } = c.req.valid('json');
+
+    if (ids.length === 0) {
+      return c.json({ success: false, error: 'No products selected' }, 400);
+    }
+
+    try {
+      const updateData: any = { updatedAt: new Date() };
+      if (data.category) updateData.category = data.category;
+      if (data.inStock !== undefined) updateData.inStock = data.inStock;
+      if (data.featured !== undefined) updateData.featured = data.featured;
+      if (data.sortOrder !== undefined) updateData.sortOrder = data.sortOrder;
+
+      await db.update(products).set(updateData).where(inArray(products.id, ids));
+
+      // Invalidate cache
+      await cache.deleteByPrefix('admin:products');
+      await cache.deleteByPrefix('products');
+      // We should ideally delete specific product caches, but for batch, prefix is safer/easier
+
+      return c.json({
+        success: true,
+        message: `Successfully updated ${ids.length} products`,
+      });
+    } catch (error) {
+      console.error('Batch update error:', error);
+      return c.json({ success: false, error: 'Failed to update products' }, 500);
+    }
+  }
+);
+
+admin.post(
+  '/products/batch/delete',
+  zValidator(
+    'json',
+    z.object({
+      ids: z.array(z.string()),
+    })
+  ),
+  async (c) => {
+    const db = c.get('db');
+    const cache = c.get('cache');
+    const storage = c.get('storage');
+    const { ids } = c.req.valid('json');
+
+    if (ids.length === 0) {
+      return c.json({ success: false, error: 'No products selected' }, 400);
+    }
+
+    try {
+      // Get products to delete images
+      const productsToDelete = await db
+        .select({ images: products.images })
+        .from(products)
+        .where(inArray(products.id, ids));
+
+      // Delete images from R2
+      const allImageKeys: string[] = [];
+      productsToDelete.forEach((p) => {
+        if (p.images && Array.isArray(p.images)) {
+          p.images.forEach((url: string) => {
+            allImageKeys.push(storage.getKeyFromUrl(url));
+          });
+        }
+      });
+
+      if (allImageKeys.length > 0) {
+        await storage.deleteFiles(allImageKeys);
+      }
+
+      // Delete products
+      await db.delete(products).where(inArray(products.id, ids));
+
+      // Invalidate cache
+      await cache.deleteByPrefix('admin:products');
+      await cache.deleteByPrefix('products');
+
+      return c.json({
+        success: true,
+        message: `Successfully deleted ${ids.length} products`,
+      });
+    } catch (error) {
+      console.error('Batch delete error:', error);
+      return c.json({ success: false, error: 'Failed to delete products' }, 500);
     }
   }
 );

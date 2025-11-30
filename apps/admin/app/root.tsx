@@ -62,6 +62,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
   );
 }
 
+import { Toaster } from 'sonner';
+
 export default function App({ loaderData }: Route.ComponentProps) {
   const [queryClient] = useState(
     () =>
@@ -81,6 +83,7 @@ export default function App({ loaderData }: Route.ComponentProps) {
         <AuthProvider>
           <ImageUploadProvider>
             <Outlet />
+            <Toaster richColors position="top-right" />
           </ImageUploadProvider>
         </AuthProvider>
       </QueryClientProvider>

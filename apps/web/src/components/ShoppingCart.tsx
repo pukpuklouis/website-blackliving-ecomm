@@ -14,6 +14,7 @@ const ShoppingCart: FC = () => {
     removeItem,
     error,
     isSubmittingOrder,
+    logisticSettings,
   } = useCartStore();
 
   const [showCheckout, setShowCheckout] = useState(false);
@@ -157,8 +158,8 @@ const ShoppingCart: FC = () => {
                       )}
                     </span>
                   </div>
-                  {shippingFee === 0 && subtotal < 30000 && (
-                    <p className="text-sm text-gray-500">滿 NT$ 30,000 享免運費</p>
+                  {shippingFee === 0 && subtotal < logisticSettings.freeShippingThreshold && (
+                    <p className="text-sm text-gray-500">滿 NT$ {logisticSettings.freeShippingThreshold.toLocaleString()} 享免運費</p>
                   )}
                   <hr className="my-2" />
                   <div className="flex justify-between text-lg font-semibold">
