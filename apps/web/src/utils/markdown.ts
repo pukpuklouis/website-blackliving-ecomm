@@ -9,8 +9,8 @@ type AttributeValue = Array<string | Record<string, unknown>>;
 
 const extendedAttributes = {
   ...(defaultSchema.attributes ?? {}),
-  a: [...(((defaultSchema.attributes?.a as AttributeValue) ?? [])), 'target', 'rel'],
-  img: [...(((defaultSchema.attributes?.img as AttributeValue) ?? [])), 'loading', 'decoding'],
+  a: [...((defaultSchema.attributes?.a as AttributeValue) ?? []), 'target', 'rel'],
+  img: [...((defaultSchema.attributes?.img as AttributeValue) ?? []), 'loading', 'decoding'],
 };
 
 const allowList: Schema = {

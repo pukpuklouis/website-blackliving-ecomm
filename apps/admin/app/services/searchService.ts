@@ -23,9 +23,9 @@ type SearchApiResponse<T = any> = SearchApiSuccess<T> | SearchApiError;
 
 export async function saveSearchConfig(
     config: { host: string; masterKey: string; indexName?: string },
-    apiBase?: string
+    apiBase: string
 ): Promise<{ success: boolean; message: string }> {
-    const apiUrl = apiBase || (import.meta.env.PUBLIC_API_URL as string | undefined)?.trim();
+    const apiUrl = apiBase.trim();
 
     if (!apiUrl) {
         throw new Error('PUBLIC_API_URL is not configured.');
@@ -62,8 +62,8 @@ export async function saveSearchConfig(
     };
 }
 
-export async function getSearchConfig(apiBase?: string): Promise<SearchConfig | null> {
-    const apiUrl = apiBase || (import.meta.env.PUBLIC_API_URL as string | undefined)?.trim();
+export async function getSearchConfig(apiBase: string): Promise<SearchConfig | null> {
+    const apiUrl = apiBase.trim();
 
     if (!apiUrl) {
         throw new Error('PUBLIC_API_URL is not configured.');
@@ -92,8 +92,8 @@ export async function getSearchConfig(apiBase?: string): Promise<SearchConfig | 
     return payload.data || null;
 }
 
-export async function triggerReindex(apiBase?: string): Promise<{ indexed: number; errors: string[]; message: string }> {
-    const apiUrl = apiBase || (import.meta.env.PUBLIC_API_URL as string | undefined)?.trim();
+export async function triggerReindex(apiBase: string): Promise<{ indexed: number; errors: string[]; message: string }> {
+    const apiUrl = apiBase.trim();
 
     if (!apiUrl) {
         throw new Error('PUBLIC_API_URL is not configured.');

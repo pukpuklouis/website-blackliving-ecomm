@@ -207,10 +207,12 @@ export const useSearchStore = create<SearchStoreState>((set, get) => ({
       // Track successful search
       analyticsService.trackSearchQuery(response.query, {
         types: options?.types,
-        hasResults: response.results.products.length > 0 ||
+        hasResults:
+          response.results.products.length > 0 ||
           response.results.posts.length > 0 ||
           response.results.pages.length > 0,
-        totalResults: response.results.products.length +
+        totalResults:
+          response.results.products.length +
           response.results.posts.length +
           response.results.pages.length,
       });

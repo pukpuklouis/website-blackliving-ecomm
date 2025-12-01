@@ -44,7 +44,10 @@ export default function ProductTabs({
     return <Check className="h-4 w-4 text-green-600" />;
   };
 
-  const sanitizedMarkdown = useMemo(() => renderMarkdownToHtml(featuresMarkdown ?? ''), [featuresMarkdown]);
+  const sanitizedMarkdown = useMemo(
+    () => renderMarkdownToHtml(featuresMarkdown ?? ''),
+    [featuresMarkdown]
+  );
   const hasMarkdownContent = Boolean(sanitizedMarkdown);
 
   return (

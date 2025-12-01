@@ -95,9 +95,7 @@ export const BlogPostCard = memo(function BlogPostCard({
             <h2 className="text-md md:text-2xl line-clamp-2 font-semibold text-gray-900 mb-0 md:mb-1">
               <a
                 href={href}
-                className={cn(
-                  'hover:text-primary transition-colors duration-200 rounded'
-                )}
+                className={cn('hover:text-primary transition-colors duration-200 rounded')}
                 aria-label={`閱讀文章：${post.title}`}
               >
                 {post.title}
@@ -150,7 +148,10 @@ export const BlogPostCard = memo(function BlogPostCard({
         <h2 className="text-md md:text-xl font-semibold text-gray-900 mt-3">
           <a
             href={href}
-            className={cn('transition-colors duration-200 rounded px-1 line-clamp-1 md:line-clamp-2', FOCUS_RING_CLASSES)}
+            className={cn(
+              'transition-colors duration-200 rounded px-1 line-clamp-1 md:line-clamp-2',
+              FOCUS_RING_CLASSES
+            )}
             aria-label={`閱讀文章：${post.title}`}
           >
             {post.title}
@@ -158,7 +159,7 @@ export const BlogPostCard = memo(function BlogPostCard({
         </h2>
         {post.publishedAt ? (
           <p className="text-sm md:text-lg text-gray-500 -mt-1 md:-mt-3">
-           {formatPublishedAt(post.publishedAt)}
+            {formatPublishedAt(post.publishedAt)}
           </p>
         ) : null}
         <p className="text-sm md:text-md text-gray-600 line-clamp-2 md:line-clamp-3">

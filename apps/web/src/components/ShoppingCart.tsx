@@ -161,7 +161,9 @@ const ShoppingCart: FC = () => {
                     </span>
                   </div>
                   {shippingFee === 0 && subtotal < logisticSettings.freeShippingThreshold && (
-                    <p className="text-sm text-gray-500">滿 NT$ {logisticSettings.freeShippingThreshold.toLocaleString()} 享免運費</p>
+                    <p className="text-sm text-gray-500">
+                      滿 NT$ {logisticSettings.freeShippingThreshold.toLocaleString()} 享免運費
+                    </p>
                   )}
                   <hr className="my-2" />
                   <div className="flex justify-between text-lg font-semibold">

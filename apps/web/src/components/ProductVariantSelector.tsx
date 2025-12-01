@@ -7,10 +7,10 @@ import { OPTION_DISPLAY_NAMES } from '@blackliving/types/product-templates';
 const createVariantSchema = (optionNames: string[], variants: ProductVariant[]) => {
   const schemaShape: Record<string, z.ZodTypeAny> = {};
 
-  optionNames.forEach(optionName => {
+  optionNames.forEach((optionName) => {
     const availableValues = [...new Set(variants.map((v) => v.options[optionName]))];
     schemaShape[optionName] = z.enum(availableValues as [string, ...string[]], {
-      message: `請選擇${optionName}`
+      message: `請選擇${optionName}`,
     });
   });
 
@@ -46,9 +46,14 @@ export default function ProductVariantSelector({
   onAddToCart,
   className = '',
 }: ProductVariantSelectorProps) {
-  const optionNames = (variants && variants.length > 0 && variants[0] && variants[0].options && typeof variants[0].options === 'object')
-    ? Object.keys(variants[0].options)
-    : [];
+  const optionNames =
+    variants &&
+    variants.length > 0 &&
+    variants[0] &&
+    variants[0].options &&
+    typeof variants[0].options === 'object'
+      ? Object.keys(variants[0].options)
+      : [];
 
   const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
   const [quantity, setQuantity] = useState<number>(1);
@@ -66,7 +71,7 @@ export default function ProductVariantSelector({
   }, [variants]);
 
   // Generate dynamic options from variant data
-  const optionConfigs = optionNames.map(optionName => ({
+  const optionConfigs = optionNames.map((optionName) => ({
     name: optionName,
     displayName: OPTION_DISPLAY_NAMES[optionName] || optionName,
     values: [...new Set(variants.map((v) => v.options?.[optionName]).filter(Boolean))],
@@ -77,10 +82,10 @@ export default function ProductVariantSelector({
   useEffect(() => {
     if (variants.length === 0 || optionNames.length === 0) return;
 
-    const allOptionsSelected = optionNames.every(name => selectedOptions[name]);
+    const allOptionsSelected = optionNames.every((name) => selectedOptions[name]);
     if (allOptionsSelected) {
-      const variant = variants.find(v =>
-        v.options && optionNames.every(name => v.options[name] === selectedOptions[name])
+      const variant = variants.find(
+        (v) => v.options && optionNames.every((name) => v.options[name] === selectedOptions[name])
       );
 
       if (variant) {
@@ -129,8 +134,8 @@ export default function ProductVariantSelector({
     try {
       const variantSchema = createVariantSchema(optionNames, variants);
       const validatedData = variantSchema.parse({ ...selectedOptions, quantity });
-      const variant = variants.find(v =>
-        v.options && optionNames.every(name => v.options[name] === selectedOptions[name])
+      const variant = variants.find(
+        (v) => v.options && optionNames.every((name) => v.options[name] === selectedOptions[name])
       );
 
       if (!variant) {
@@ -166,10 +171,10 @@ export default function ProductVariantSelector({
 
   const getCurrentStock = () => {
     if (variants.length === 0 || optionNames.length === 0) return null;
-    const allOptionsSelected = optionNames.every(name => selectedOptions[name]);
+    const allOptionsSelected = optionNames.every((name) => selectedOptions[name]);
     if (!allOptionsSelected) return null;
-    const variant = variants.find(v =>
-      v.options && optionNames.every(name => v.options[name] === selectedOptions[name])
+    const variant = variants.find(
+      (v) => v.options && optionNames.every((name) => v.options[name] === selectedOptions[name])
     );
     return variant?.stock || 0;
   };
@@ -199,7 +204,9 @@ export default function ProductVariantSelector({
               ))}
             </SelectContent>
           </Select>
-          {errors[config.name] && <p className="text-destructive text-sm mt-1">{errors[config.name]}</p>}
+          {errors[config.name] && (
+            <p className="text-destructive text-sm mt-1">{errors[config.name]}</p>
+          )}
         </div>
       ))}
 
@@ -240,7 +247,9 @@ export default function ProductVariantSelector({
           />
           <button
             type="button"
-            onClick={() => handleVariantChange('quantity', Math.min(10, currentStock || 10, quantity + 1))}
+            onClick={() =>
+              handleVariantChange('quantity', Math.min(10, currentStock || 10, quantity + 1))
+            }
             className="w-10 h-10 border border-gray-300 rounded-lg flex items-center justify-center hover:bg-gray-50"
             disabled={quantity >= Math.min(10, currentStock || 10)}
           >

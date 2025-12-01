@@ -144,7 +144,7 @@ const menuItems = navigationData?.data.items.sort((a, b) => a.order - b.order) |
         <ul class="flex items-center gap-4 md:gap-2 lg:gap-6 justify-center relative">
           {
             menuItems.map((item) => (
-              <li key={item.href} class={`relative group ${item.subItems ? 'has-submenu' : ''}`}>
+              <li class={`relative group ${item.subItems ? 'has-submenu' : ''}`}>
                 <a
                   href={item.href}
                   class="text-white text-sm lg:text-base font-normal hover:text-gray-200 transition-colors whitespace-nowrap rounded px-2 py-1 flex items-center gap-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
@@ -172,7 +172,7 @@ const menuItems = navigationData?.data.items.sort((a, b) => a.order - b.order) |
                 {item.subItems && (
                   <ul class="absolute left-0 top-full mt-3 bg-primary shadow-lg rounded-b-lg py-2 w-fit opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 overflow-hidden">
                     {item.subItems.map((subItem) => (
-                      <li key={subItem.href}>
+                      <li>
                         <a
                           href={subItem.href}
                           class="block pl-4 pr-8 py-2  text-md text-gray-50 hover:bg-gray-100/20 transition-colors whitespace-nowrap"
@@ -268,10 +268,7 @@ const menuItems = navigationData?.data.items.sort((a, b) => a.order - b.order) |
         <!-- Mobile Navigation Links with Submenu Support -->
         {
           menuItems.map((item, index) => (
-            <div
-              key={item.href}
-              class={`space-y-1 ${index === menuItems.length - 1 ? ' mb-3' : ''}`}
-            >
+            <div class={`space-y-1 ${index === menuItems.length - 1 ? ' mb-3' : ''}`}>
               <button
                 class={`w-full block px-6 py-3 text-left text-primary-foreground text-base font-normal hover:bg-primary-foreground/10 hover:text-primary-foreground transition-colors rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-foreground/50 ${item.subItems ? 'flex items-center justify-between' : ''}`}
                 data-submenu-toggle={item.href}
@@ -302,7 +299,7 @@ const menuItems = navigationData?.data.items.sort((a, b) => a.order - b.order) |
                   class={`space-y-1 px-6 max-h-0 overflow-hidden transition-all duration-300 bg-primary-foreground/5 rounded-md ${item.subItems.length > 0 ? 'border-l-2 border-primary-foreground/20' : ''}`}
                 >
                   {item.subItems.map((subItem) => (
-                    <li key={subItem.href}>
+                    <li>
                       <a
                         href={subItem.href}
                         class="block px-4 py-2 text-primary-foreground/80 text-sm font-normal hover:bg-primary-foreground/10 hover:text-primary-foreground transition-colors rounded-md"
@@ -481,9 +478,10 @@ const menuItems = navigationData?.data.items.sort((a, b) => a.order - b.order) |
 
       // Allow Enter key to toggle submenus on desktop too (for accessibility)
       document.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' && e.target?.closest('.has-submenu a[aria-haspopup="true"]')) {
+        const target = e.target as HTMLElement;
+        if (e.key === 'Enter' && target?.closest('.has-submenu a[aria-haspopup="true"]')) {
           e.preventDefault();
-          const parentLi = e.target.closest('li');
+          const parentLi = target.closest('li');
           if (parentLi) {
             parentLi.querySelector('ul')?.classList.toggle('opacity-100');
             parentLi.querySelector('ul')?.classList.toggle('invisible');

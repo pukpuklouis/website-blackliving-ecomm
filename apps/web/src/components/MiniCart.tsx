@@ -259,7 +259,9 @@ const MiniCart: FC<MiniCartProps> = ({ isOpen, onClose, onCheckout, className = 
                   </div>
                   {subtotal < logisticSettings.freeShippingThreshold && shippingFee > 0 && (
                     <div className="text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded">
-                      💡 再購買 NT$ {(logisticSettings.freeShippingThreshold - subtotal).toLocaleString()} 即可免運
+                      💡 再購買 NT${' '}
+                      {(logisticSettings.freeShippingThreshold - subtotal).toLocaleString()}{' '}
+                      即可免運
                     </div>
                   )}
                   <Separator />

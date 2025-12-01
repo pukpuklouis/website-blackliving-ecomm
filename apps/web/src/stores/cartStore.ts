@@ -53,7 +53,6 @@ export interface LogisticSettings {
 
 // Validation schemas
 
-
 const customerInfoSchema = z.object({
   name: z.string().min(1, '請輸入姓名'),
   email: z.string().email('請輸入有效的電子郵件'),
@@ -117,8 +116,48 @@ export interface CartStore {
 }
 
 // Helper functions
+// Helper to get API URL from environment
+const getApiUrl = (): string => {
+  const candidates: unknown[] = [
+    import.meta.env.PUBLIC_API_BASE_URL,
+    import.meta.env.PUBLIC_API_URL,
+  ];
+
+  if (typeof globalThis !== 'undefined') {
+    const runtimeEnv =
+      (globalThis as Record<string, unknown>).ENV ??
+      (globalThis as Record<string, unknown>).__ENV__ ??
+      (globalThis as Record<string, unknown>).__ENV;
+
+    if (runtimeEnv && typeof runtimeEnv === 'object') {
+      const envRecord = runtimeEnv as Record<string, unknown>;
+      candidates.push(envRecord.PUBLIC_API_BASE_URL);
+      candidates.push(envRecord.PUBLIC_API_URL);
+    }
+  }
+
+  const apiUrl = candidates.reduce<string>((acc, candidate) => {
+    if (acc) return acc;
+    if (typeof candidate === 'string') {
+      const trimmed = candidate.trim();
+      if (trimmed) {
+        return trimmed.endsWith('/') ? trimmed.slice(0, -1) : trimmed;
+      }
+    }
+    return acc;
+  }, '');
+
+  // Return the found URL or empty string (will fallback to relative URL)
+  return apiUrl;
+};
+
 // Helper functions
-export const calculateShippingFee = (subtotal: number, settings: LogisticSettings, address: ShippingAddress | null): number => {
+// Helper functions
+export const calculateShippingFee = (
+  subtotal: number,
+  settings: LogisticSettings,
+  address: ShippingAddress | null
+): number => {
   let fee = 0;
 
   // 1. Base Fee logic
@@ -128,7 +167,7 @@ export const calculateShippingFee = (subtotal: number, settings: LogisticSetting
 
   // 2. Remote Zone Surcharge logic
   if (address && settings.remoteZones.length > 0) {
-    const zone = settings.remoteZones.find(z => {
+    const zone = settings.remoteZones.find((z) => {
       // Simple string matching, can be improved
       const cityMatch = address.city.includes(z.city) || z.city.includes(address.city);
       if (!cityMatch) return false;
@@ -181,7 +220,10 @@ const createOrder = async (
       shippingAddress,
     };
 
-    const response = await fetch('/api/orders', {
+    const apiUrl = getApiUrl();
+    const orderEndpoint = apiUrl ? `${apiUrl}/api/orders` : '/api/orders';
+
+    const response = await fetch(orderEndpoint, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -422,7 +464,12 @@ export const useCartStore = create<CartStore>()(
 
       fetchLogisticSettings: async () => {
         try {
-          const response = await fetch('/api/settings/logistic_settings');
+          const apiUrl = getApiUrl();
+          const logisticEndpoint = apiUrl
+            ? `${apiUrl}/api/settings/logistic_settings`
+            : '/api/settings/logistic_settings';
+
+          const response = await fetch(logisticEndpoint);
           if (response.ok) {
             const result = await response.json();
             if (result.success && result.data) {

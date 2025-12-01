@@ -55,10 +55,20 @@ const ProductDetail: FC<ProductDetailProps> = ({ product, categoryConfig, classN
   // Use product variants directly from API without conversion
   const convertedVariants = product.variants.map((variant) => {
     // Dynamically extract options by excluding known non-option fields
-    const reservedKeys = ['id', 'name', 'price', 'originalPrice', 'stock', 'sku', 'inStock', 'image', 'images'];
+    const reservedKeys = [
+      'id',
+      'name',
+      'price',
+      'originalPrice',
+      'stock',
+      'sku',
+      'inStock',
+      'image',
+      'images',
+    ];
     const options: Record<string, string> = {};
 
-    Object.keys(variant).forEach(key => {
+    Object.keys(variant).forEach((key) => {
       if (!reservedKeys.includes(key) && variant[key as keyof typeof variant]) {
         options[key] = String(variant[key as keyof typeof variant]);
       }
@@ -125,14 +135,16 @@ const ProductDetail: FC<ProductDetailProps> = ({ product, categoryConfig, classN
         />
 
         {/* Product Description */}
-        <p className="text-gray-600 text-md md:text-lg whitespace-break-spaces">{product.description}</p>
+        <p className="text-gray-600 text-md md:text-lg whitespace-break-spaces">
+          {product.description}
+        </p>
       </div>
 
       {/* Variant Selector with integrated quantity and add to cart */}
       <ProductVariantSelector
         productId={product.id}
         variants={convertedVariants}
-        onVariantChange={() => { }} // Optional callback for variant changes
+        onVariantChange={() => {}} // Optional callback for variant changes
         onAddToCart={handleAddToCart}
         className="mb-6"
       />

@@ -8,9 +8,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@blackliving/ui';
 import { Loader2, RefreshCw, Save, Search, Settings, BarChart3, Truck } from 'lucide-react';
 import { saveSearchConfig, getSearchConfig, triggerReindex, type SearchConfig } from '../../services/searchService';
 import LogisticSettings from '../../components/LogisticSettings';
+import { useEnvironment } from '../../contexts/EnvironmentContext';
 
 export default function SettingsPage() {
-  console.log('SettingsPage mounted');
+  const { PUBLIC_API_URL } = useEnvironment();
   const [searchConfig, setSearchConfig] = useState({
     host: '',
     masterKey: '',
@@ -26,7 +27,7 @@ export default function SettingsPage() {
   useEffect(() => {
     const loadConfig = async () => {
       try {
-        const config = await getSearchConfig();
+        const config = await getSearchConfig(PUBLIC_API_URL);
         if (config) {
           setSearchConfig({
             host: config.host,
@@ -53,7 +54,7 @@ export default function SettingsPage() {
     setMessage(null);
 
     try {
-      const result = await saveSearchConfig(searchConfig);
+      const result = await saveSearchConfig(searchConfig, PUBLIC_API_URL);
       setMessage({ type: 'success', text: result.message });
 
       // Clear master key from form for security and update hasMasterKey
@@ -74,7 +75,7 @@ export default function SettingsPage() {
     setReindexResult(null);
 
     try {
-      const result = await triggerReindex();
+      const result = await triggerReindex(PUBLIC_API_URL);
       setReindexResult(result);
       setMessage({ type: 'success', text: result.message });
     } catch (error) {
