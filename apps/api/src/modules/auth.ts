@@ -7,6 +7,7 @@ import { and, eq, isNull } from 'drizzle-orm';
 import { authTokens, users } from '@blackliving/db/schema';
 import { createId } from '@paralleldrive/cuid2';
 import type { Env } from '../index';
+import { verifyTurnstile } from '../utils/turnstile';
 
 const MAGIC_LINK_TTL_MINUTES = 15;
 const ACCESS_TOKEN_TTL_SECONDS = 60 * 60; // 1 hour
@@ -64,38 +65,7 @@ function generateToken() {
     .join('');
 }
 
-async function verifyTurnstile(c: any, token: string) {
-  const secret = c.env.TURNSTILE_SECRET_KEY;
-  if (!secret) {
-    throw new Error('Turnstile secret key not configured');
-  }
 
-  const ip =
-    c.req.header('cf-connecting-ip') ||
-    c.req.header('x-forwarded-for')?.split(',')[0]?.trim() ||
-    c.req.header('x-real-ip') ||
-    '';
-
-  const response = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
-    body: new URLSearchParams({
-      secret,
-      response: token,
-      remoteip: ip,
-    }),
-  });
-
-  if (!response.ok) {
-    console.error('Turnstile verification failed with status', response.status);
-    return false;
-  }
-
-  const data = await response.json();
-  return data.success === true;
-}
 
 async function checkRateLimit(cache: any, key: string, limit: number, windowSeconds: number) {
   const now = Date.now();

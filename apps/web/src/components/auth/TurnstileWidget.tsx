@@ -7,12 +7,14 @@ declare global {
         element: HTMLElement,
         options: {
           sitekey: string;
+          theme?: 'light' | 'dark' | 'auto';
           callback: (token: string) => void;
           'expired-callback'?: () => void;
           'error-callback'?: () => void;
         }
       ) => string;
       reset: (widgetId?: string) => void;
+      remove: (widgetId?: string) => void;
     };
   }
 }
@@ -25,10 +27,15 @@ interface TurnstileWidgetProps {
 
 const SCRIPT_SRC = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
 
-export function TurnstileWidget({ onToken, siteKey, disabled = false }: TurnstileWidgetProps) {
+export function TurnstileWidget({ onToken, siteKey, disabled = false, theme = 'light' }: TurnstileWidgetProps & { theme?: 'light' | 'dark' | 'auto' }) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const widgetIdRef = useRef<string | null>(null);
   const [scriptLoaded, setScriptLoaded] = useState<boolean>(false);
+  const onTokenRef = useRef(onToken);
+
+  useEffect(() => {
+    onTokenRef.current = onToken;
+  }, [onToken]);
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -71,26 +78,33 @@ export function TurnstileWidget({ onToken, siteKey, disabled = false }: Turnstil
       return;
     }
 
+    // If widget is already rendered, don't render again
+    if (widgetIdRef.current) {
+      return;
+    }
+
     widgetIdRef.current = window.turnstile.render(containerRef.current, {
       sitekey: siteKey,
-      callback: (token) => onToken(token),
-      'expired-callback': () => onToken(null),
-      'error-callback': () => onToken(null),
+      theme,
+      callback: (token) => onTokenRef.current(token),
+      'expired-callback': () => onTokenRef.current(null),
+      'error-callback': () => onTokenRef.current(null),
     });
 
     return () => {
       if (widgetIdRef.current) {
-        window.turnstile?.reset(widgetIdRef.current);
+        window.turnstile?.remove(widgetIdRef.current);
+        widgetIdRef.current = null;
       }
     };
-  }, [scriptLoaded, siteKey, onToken]);
+  }, [scriptLoaded, siteKey, theme]);
 
   useEffect(() => {
     if (disabled && widgetIdRef.current && window.turnstile) {
       window.turnstile.reset(widgetIdRef.current);
-      onToken(null);
+      onTokenRef.current(null);
     }
-  }, [disabled, onToken]);
+  }, [disabled]);
 
   return <div ref={containerRef} className="flex justify-center" />;
 }

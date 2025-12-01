@@ -340,6 +340,20 @@ export const contacts = sqliteTable('contacts', {
   createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
 });
 
+// Business Cooperation Form Submissions
+export const businessCooperation = sqliteTable('business_cooperation', {
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => createId()),
+  name: text('name').notNull(),
+  email: text('email').notNull(),
+  phone: text('phone').notNull(),
+  subject: text('subject').notNull(), // e.g. 行銷合作, etc.
+  content: text('content').notNull(),
+  status: text('status').default('new'), // new, replied, closed
+  createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
+});
+
 // Customer Profiles - Enhanced customer management
 export const customerProfiles = sqliteTable('customer_profiles', {
   id: text('id')

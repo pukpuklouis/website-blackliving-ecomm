@@ -19,6 +19,7 @@ import Calendar from '@lucide/react/calendar';
 import BarChart3 from '@lucide/react/bar-chart-3';
 import Users from '@lucide/react/users';
 import LayoutTemplate from '@lucide/react/layout-template';
+import Briefcase from '@lucide/react/briefcase';
 
 const data = {
   user: {
@@ -66,6 +67,11 @@ const data = {
       title: '分析報表',
       url: '/dashboard/analytics',
       icon: BarChart3,
+    },
+    {
+      title: '異業合作',
+      url: '/dashboard/business-cooperation',
+      icon: Briefcase,
     },
   ],
   navSecondary: [

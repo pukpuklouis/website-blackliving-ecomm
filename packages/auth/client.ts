@@ -2,6 +2,11 @@ import { createAuthClient } from 'better-auth/react';
 
 // Get base URL with enhanced security validation
 const getBaseURL = () => {
+  // Priority 1: Use environment variable if available (most flexible)
+  if (typeof import.meta !== 'undefined' && import.meta.env?.PUBLIC_API_URL) {
+    return import.meta.env.PUBLIC_API_URL;
+  }
+
   if (typeof window !== 'undefined') {
     // Browser environment with security checks
     const hostname = window.location.hostname;
@@ -27,7 +32,7 @@ const getBaseURL = () => {
       throw new Error('Unauthorized domain access');
     }
 
-    // Environment detection based on hostname
+    // Environment detection based on hostname (fallback)
     if (hostname === 'localhost') {
       return 'http://localhost:8787'; // Local API server
     }
@@ -82,9 +87,6 @@ export const {
   signOut,
   signUp,
   useSession,
-  // Additional useful hooks
-  useUser,
-  useActiveSession,
 } = authClient;
 
 // Helper functions for OAuth flows

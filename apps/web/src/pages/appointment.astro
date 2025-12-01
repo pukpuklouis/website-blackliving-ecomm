@@ -3,11 +3,11 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import MultiStepAppointmentForm from '../components/appointment/MultiStepAppointmentForm.tsx';
 ---
 
-<BaseLayout>
-  <main class='container mx-auto px-4 py-8 min-h-screen bg-gray-50'>
-    <div class='text-center mb-12'>
-      <h1 class='text-4xl font-bold text-gray-900 mb-4'>預約試躺</h1>
-      <p class='text-xl text-gray-600'>一步步完成您的席夢思黑標床墊預約</p>
+<BaseLayout title="預約試躺" description="一步步完成您的席夢思黑標床墊預約">
+  <main class="container mx-auto px-4 py-8 min-h-screen bg-gray-50">
+    <div class="text-center mb-12">
+      <h1 class="text-4xl font-bold text-gray-900 mb-4">預約試躺</h1>
+      <p class="text-xl text-gray-600">一步步完成您的席夢思黑標床墊預約</p>
     </div>
 
     <MultiStepAppointmentForm client:load />

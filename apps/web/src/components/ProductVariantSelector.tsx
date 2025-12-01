@@ -48,10 +48,10 @@ export default function ProductVariantSelector({
 }: ProductVariantSelectorProps) {
   const optionNames =
     variants &&
-    variants.length > 0 &&
-    variants[0] &&
-    variants[0].options &&
-    typeof variants[0].options === 'object'
+      variants.length > 0 &&
+      variants[0] &&
+      variants[0].options &&
+      typeof variants[0].options === 'object'
       ? Object.keys(variants[0].options)
       : [];
 
@@ -186,26 +186,26 @@ export default function ProductVariantSelector({
       {/* Dynamic Option Selections */}
       {optionConfigs.map((config) => (
         <div key={config.name}>
-          <label className="block text-sm md:text-md font-medium text-gray-700 mb-3">
+          <label className="block text-md md:text-lg font-medium text-gray-700 mb-3">
             選擇{config.displayName} *
           </label>
           <Select
             value={selectedOptions[config.name] || ''}
             onValueChange={(value: string) => handleVariantChange(config.name, value)}
           >
-            <SelectTrigger className="w-full md:w-[50%]">
+            <SelectTrigger className="w-full text-md md:text-lg md:w-[50%]">
               <SelectValue placeholder={`請選擇${config.displayName}`} />
             </SelectTrigger>
             <SelectContent>
               {config.values.map((value) => (
                 <SelectItem key={value} value={value}>
-                  <span className="font-medium">{value}</span>
+                  <span className="text-md md:text-lg font-medium">{value}</span>
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
           {errors[config.name] && (
-            <p className="text-destructive text-sm mt-1">{errors[config.name]}</p>
+            <p className="text-destructive text-md mt-1">{errors[config.name]}</p>
           )}
         </div>
       ))}
