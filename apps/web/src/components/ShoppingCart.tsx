@@ -6,16 +6,18 @@ import CheckoutForm from './CheckoutForm';
 const ShoppingCart: FC = () => {
   const {
     items: cartItems,
-    itemCount,
-    subtotal,
-    shippingFee,
-    total,
     updateQuantity,
     removeItem,
     error,
     isSubmittingOrder,
     logisticSettings,
   } = useCartStore();
+
+  // Use selectors for computed values
+  const itemCount = useCartStore((state) => state.getItemCount());
+  const subtotal = useCartStore((state) => state.getSubtotal());
+  const shippingFee = useCartStore((state) => state.getShippingFee());
+  const total = useCartStore((state) => state.getTotal());
 
   const [showCheckout, setShowCheckout] = useState(false);
 

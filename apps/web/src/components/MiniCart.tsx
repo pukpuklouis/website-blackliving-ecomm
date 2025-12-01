@@ -15,8 +15,13 @@ interface MiniCartProps {
 }
 
 const MiniCart: FC<MiniCartProps> = ({ isOpen, onClose, onCheckout, className = '' }) => {
-  const { items, itemCount, subtotal, shippingFee, total, updateQuantity, removeItem, logisticSettings } =
-    useCartStore();
+  const { items, updateQuantity, removeItem, logisticSettings } = useCartStore();
+
+  // Use selectors to get computed values reactively
+  const itemCount = useCartStore((state) => state.getItemCount());
+  const subtotal = useCartStore((state) => state.getSubtotal());
+  const shippingFee = useCartStore((state) => state.getShippingFee());
+  const total = useCartStore((state) => state.getTotal());
 
   const [isAnimating, setIsAnimating] = useState(false);
 

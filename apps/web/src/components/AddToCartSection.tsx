@@ -57,7 +57,8 @@ const AddToCartSection: FC<AddToCartSectionProps> = ({
   onAddToCartError,
   className = '',
 }) => {
-  const { addItem, error, setError, itemCount, items } = useCartStore();
+  const { addItem, error, setError, items } = useCartStore();
+  const itemCount = useCartStore((state) => state.getItemCount());
   const [quantity, setQuantity] = useState(1);
   const [isAdding, setIsAdding] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);

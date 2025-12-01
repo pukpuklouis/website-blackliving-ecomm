@@ -81,11 +81,11 @@ export interface CartStore {
   isSubmittingOrder: boolean;
   logisticSettings: LogisticSettings;
 
-  // Computed values
-  itemCount: number;
-  subtotal: number;
-  shippingFee: number;
-  total: number;
+  // Computed selectors (methods that calculate values on demand)
+  getItemCount: () => number;
+  getSubtotal: () => number;
+  getShippingFee: () => number;
+  getTotal: () => number;
 
   // Actions
   addItem: (item: Omit<CartItem, 'quantity'>) => void;
@@ -227,22 +227,24 @@ export const useCartStore = create<CartStore>()(
         remoteZones: [],
       },
 
-      // Computed values (getters)
-      get itemCount() {
+      // Computed selectors (NOT persisted, calculated on demand)
+      getItemCount: () => {
         return get().items.reduce((sum, item) => sum + item.quantity, 0);
       },
 
-      get subtotal() {
+      getSubtotal: () => {
         return get().items.reduce((sum, item) => sum + item.price * item.quantity, 0);
       },
 
-      get shippingFee() {
+      getShippingFee: () => {
         const state = get();
-        return calculateShippingFee(state.subtotal, state.logisticSettings, state.shippingAddress);
+        const subtotal = state.getSubtotal();
+        return calculateShippingFee(subtotal, state.logisticSettings, state.shippingAddress);
       },
 
-      get total() {
-        return get().subtotal + get().shippingFee;
+      getTotal: () => {
+        const state = get();
+        return state.getSubtotal() + state.getShippingFee();
       },
 
       // Actions
@@ -366,9 +368,9 @@ export const useCartStore = create<CartStore>()(
             state.shippingAddress,
             state.paymentMethod,
             state.notes,
-            state.subtotal,
-            state.shippingFee,
-            state.total
+            state.getSubtotal(),
+            state.getShippingFee(),
+            state.getTotal()
           );
 
           if (result.success) {
@@ -438,7 +440,7 @@ export const useCartStore = create<CartStore>()(
     }),
     {
       name: 'cart-store',
-      version: 1,
+      version: 2,
       partialize: (state) => ({
         items: state.items,
         customerInfo: state.customerInfo,
@@ -448,6 +450,14 @@ export const useCartStore = create<CartStore>()(
         logisticSettings: state.logisticSettings,
         // Don't persist UI state
       }),
+      merge: (persistedState, currentState) => {
+        // Merge persisted state with current state
+        // Methods (getters) are never persisted, so they're safe
+        return {
+          ...currentState,
+          ...(persistedState || {}),
+        };
+      },
     }
   )
 );

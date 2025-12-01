@@ -4,6 +4,7 @@ import { Image } from 'astro:assets';
 import { getEntry } from 'astro:content';
 import { CartIcon } from '@blackliving/ui';
 import { UserIcon } from '@blackliving/ui';
+import CartTrigger from './cart/CartTrigger';
 
 export interface Props {
   class?: string;
@@ -76,14 +77,7 @@ const menuItems = navigationData?.data.items.sort((a, b) => a.order - b.order) |
               <span class="text-xs">⌘</span>K
             </kbd>
           </button>
-          <a
-            href="/cart"
-            class="text-black text-sm lg:text-base font-normal hover:text-gray-600 transition-colors flex items-center gap-1"
-            aria-label="購物車"
-          >
-            <CartIcon />
-            購物車
-          </a>
+          <CartTrigger client:load />
           <a
             href="/account"
             class="text-black text-sm lg:text-base font-normal hover:text-gray-600 transition-colors flex items-center gap-1"
@@ -258,13 +252,10 @@ const menuItems = navigationData?.data.items.sort((a, b) => a.order - b.order) |
       <div class="px-4 py-3 space-y-1">
         <!-- Mobile User Actions -->
         <div class="flex items-center gap-4 px-6 pb-3 border-b border-primary-foreground/20 mb-3">
-          <a
-            href="/cart"
-            class="text-primary-foreground/80 text-sm font-normal hover:text-primary-foreground transition-colors flex items-center gap-2"
-          >
-            <CartIcon />
-            購物車
-          </a>
+          <CartTrigger
+            client:load
+            className="text-primary-foreground/80 text-sm font-normal hover:text-primary-foreground transition-colors flex items-center gap-2"
+          />
           <a
             href="/account"
             class="text-primary-foreground/80 text-sm font-normal hover:text-primary-foreground transition-colors flex items-center gap-2"

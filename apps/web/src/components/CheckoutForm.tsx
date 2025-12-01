@@ -9,9 +9,6 @@ interface CheckoutFormProps {
 const CheckoutForm: FC<CheckoutFormProps> = ({ onSuccess }) => {
   const {
     items,
-    subtotal,
-    shippingFee,
-    total,
     customerInfo,
     shippingAddress,
     paymentMethod,
@@ -25,6 +22,11 @@ const CheckoutForm: FC<CheckoutFormProps> = ({ onSuccess }) => {
     isSubmittingOrder,
     validateCart,
   } = useCartStore();
+
+  // Use selectors for computed values
+  const subtotal = useCartStore((state) => state.getSubtotal());
+  const shippingFee = useCartStore((state) => state.getShippingFee());
+  const total = useCartStore((state) => state.getTotal());
 
   const [currentStep, setCurrentStep] = useState(1);
   const [localCustomerInfo, setLocalCustomerInfo] = useState<CustomerInfo>(
@@ -154,9 +156,8 @@ const CheckoutForm: FC<CheckoutFormProps> = ({ onSuccess }) => {
           {[1, 2, 3].map((step) => (
             <div key={step} className="flex items-center">
               <div
-                className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold ${
-                  step <= currentStep ? 'bg-black text-white' : 'bg-gray-200 text-gray-600'
-                }`}
+                className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold ${step <= currentStep ? 'bg-black text-white' : 'bg-gray-200 text-gray-600'
+                  }`}
               >
                 {step}
               </div>

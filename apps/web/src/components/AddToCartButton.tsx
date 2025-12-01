@@ -44,7 +44,8 @@ const AddToCartButton: FC<AddToCartButtonProps> = ({
   onAddToCartSuccess,
   onAddToCartError,
 }) => {
-  const { addItem, error, setError, itemCount } = useCartStore();
+  const { addItem, error, setError } = useCartStore();
+  const itemCount = useCartStore((state) => state.getItemCount());
   const [quantity, setQuantity] = useState(1);
   const [isAdding, setIsAdding] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
