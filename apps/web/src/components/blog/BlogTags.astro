@@ -1,25 +1,26 @@
 ---
 export interface Props {
   tags: string[];
-  layout?: 'sidebar' | 'inline';
+  layout?: "sidebar" | "inline";
   class?: string;
   locale?: string;
 }
 
-const { 
-  tags, 
-  layout = 'sidebar', 
-  class: className = '', 
-  locale = 'zh-TW' 
+const {
+  tags,
+  layout = "sidebar",
+  class: className = "",
+  locale = "zh-TW",
 } = Astro.props;
 
 // Internationalization for tag labels
 const tagLabels = {
-  'zh-TW': '標籤',
-  'en': 'Tags'
+  "zh-TW": "標籤",
+  en: "Tags",
 };
 
-const tagLabel = tagLabels[locale as keyof typeof tagLabels] || tagLabels['zh-TW'];
+const tagLabel =
+  tagLabels[locale as keyof typeof tagLabels] || tagLabels["zh-TW"];
 ---
 
 {tags && tags.length > 0 && (
@@ -40,4 +41,3 @@ const tagLabel = tagLabels[locale as keyof typeof tagLabels] || tagLabels['zh-TW
     </div>
   </div>
 )}
-

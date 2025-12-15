@@ -1,23 +1,23 @@
 ---
-import type { BlogPost as CoreBlogPost } from '@blackliving/types';
+import type { BlogPost as CoreBlogPost } from "@blackliving/types";
 
 type BlogPost = Pick<
   CoreBlogPost,
-  | 'id'
-  | 'title'
-  | 'slug'
-  | 'description'
-  | 'excerpt'
-  | 'category'
-  | 'categoryId'
-  | 'categorySlug'
-  | 'featuredImage'
-  | 'publishedAt'
+  | "id"
+  | "title"
+  | "slug"
+  | "description"
+  | "excerpt"
+  | "category"
+  | "categoryId"
+  | "categorySlug"
+  | "featuredImage"
+  | "publishedAt"
 >;
 
 export interface Props {
   posts: BlogPost[];
-  layout?: 'inline' | 'grid';
+  layout?: "inline" | "grid";
   class?: string;
   maxPosts?: number;
   locale?: string;
@@ -25,27 +25,27 @@ export interface Props {
 
 const {
   posts,
-  layout = 'inline',
-  class: className = '',
+  layout = "inline",
+  class: className = "",
   maxPosts = 3,
-  locale = 'zh-TW',
+  locale = "zh-TW",
 } = Astro.props;
 
 const relatedPosts = posts.slice(0, maxPosts);
 
 // Internationalization
 const labels = {
-  'zh-TW': {
-    title: '相關文章',
-    readMore: '繼續閱讀',
+  "zh-TW": {
+    title: "相關文章",
+    readMore: "繼續閱讀",
   },
   en: {
-    title: 'Related Posts',
-    readMore: 'Read More',
+    title: "Related Posts",
+    readMore: "Read More",
   },
 };
 
-const label = labels[locale as keyof typeof labels] || labels['zh-TW'];
+const label = labels[locale as keyof typeof labels] || labels["zh-TW"];
 ---
 
 {

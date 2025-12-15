@@ -1,10 +1,10 @@
-import { Star } from 'lucide-react';
+import { Star } from "lucide-react";
 
 interface StarRatingProps {
   rating: number;
   reviewCount?: number;
   showReviews?: boolean;
-  size?: 'sm' | 'md' | 'lg';
+  size?: "sm" | "md" | "lg";
   className?: string;
 }
 
@@ -12,19 +12,19 @@ export const StarRating = ({
   rating,
   reviewCount,
   showReviews = true,
-  size = 'md',
-  className = '',
+  size = "md",
+  className = "",
 }: StarRatingProps) => {
   const sizeClasses = {
-    sm: 'w-3 h-3',
-    md: 'w-4 h-4',
-    lg: 'w-5 h-5',
+    sm: "w-3 h-3",
+    md: "w-4 h-4",
+    lg: "w-5 h-5",
   };
 
   const textSizeClasses = {
-    sm: 'text-xs',
-    md: 'text-sm',
-    lg: 'text-base',
+    sm: "text-xs",
+    md: "text-sm",
+    lg: "text-base",
   };
 
   const renderStars = () => {
@@ -36,8 +36,8 @@ export const StarRating = ({
     for (let i = 0; i < fullStars; i++) {
       stars.push(
         <Star
-          key={`full-${i}`}
           className={`${sizeClasses[size]} fill-yellow-400 text-yellow-400`}
+          key={`full-${i}`}
         />
       );
     }
@@ -45,10 +45,12 @@ export const StarRating = ({
     // Render half star if needed
     if (hasHalfStar) {
       stars.push(
-        <div key="half" className={`relative ${sizeClasses[size]}`}>
-          <Star className={`${sizeClasses[size]} text-gray-300 absolute`} />
-          <div className="overflow-hidden w-1/2">
-            <Star className={`${sizeClasses[size]} fill-yellow-400 text-yellow-400`} />
+        <div className={`relative ${sizeClasses[size]}`} key="half">
+          <Star className={`${sizeClasses[size]} absolute text-gray-300`} />
+          <div className="w-1/2 overflow-hidden">
+            <Star
+              className={`${sizeClasses[size]} fill-yellow-400 text-yellow-400`}
+            />
           </div>
         </div>
       );
@@ -57,7 +59,12 @@ export const StarRating = ({
     // Render empty stars
     const emptyStars = 5 - Math.ceil(rating);
     for (let i = 0; i < emptyStars; i++) {
-      stars.push(<Star key={`empty-${i}`} className={`${sizeClasses[size]} text-gray-300`} />);
+      stars.push(
+        <Star
+          className={`${sizeClasses[size]} text-gray-300`}
+          key={`empty-${i}`}
+        />
+      );
     }
 
     return stars;
@@ -67,7 +74,7 @@ export const StarRating = ({
     <div className={`flex items-center gap-1 ${className}`}>
       <div className="flex items-center">{renderStars()}</div>
       {showReviews && (
-        <span className={`text-gray-600 ml-1 ${textSizeClasses[size]}`}>
+        <span className={`ml-1 text-gray-600 ${textSizeClasses[size]}`}>
           ({reviewCount || 0} 則評論)
         </span>
       )}

@@ -1,6 +1,6 @@
-import type { CategoryConfig } from '../types/category.ts';
+import type { CategoryConfig } from "../types/category.ts";
 
-const API_BASE = import.meta.env.PUBLIC_API_BASE_URL || 'http://localhost:8787';
+const API_BASE = import.meta.env.PUBLIC_API_BASE_URL || "http://localhost:8787";
 
 type CategoryApiEntry = {
   category: Record<string, unknown>;
@@ -32,7 +32,7 @@ function normalizeFeatures(rawFeatures: unknown): string[] {
     return rawFeatures.map((feature) => String(feature));
   }
 
-  if (typeof rawFeatures === 'string') {
+  if (typeof rawFeatures === "string") {
     try {
       const parsed = JSON.parse(rawFeatures);
       if (Array.isArray(parsed)) {
@@ -41,7 +41,7 @@ function normalizeFeatures(rawFeatures: unknown): string[] {
       return [rawFeatures];
     } catch {
       return rawFeatures
-        .split(',')
+        .split(",")
         .map((feature) => feature.trim())
         .filter(Boolean);
     }
@@ -51,32 +51,34 @@ function normalizeFeatures(rawFeatures: unknown): string[] {
 }
 
 function coerceBoolean(input: unknown): boolean | undefined {
-  if (typeof input === 'boolean') {
+  if (typeof input === "boolean") {
     return input;
   }
-  if (typeof input === 'number') {
+  if (typeof input === "number") {
     return input === 1;
   }
-  if (typeof input === 'string') {
-    if (input === '1' || input.toLowerCase() === 'true') {
+  if (typeof input === "string") {
+    if (input === "1" || input.toLowerCase() === "true") {
       return true;
     }
-    if (input === '0' || input.toLowerCase() === 'false') {
+    if (input === "0" || input.toLowerCase() === "false") {
       return false;
     }
   }
-  return undefined;
+  return;
 }
 
-function mapCategoryPayload(payload: Record<string, unknown> | undefined): CategoryConfig | null {
+function mapCategoryPayload(
+  payload: Record<string, unknown> | undefined
+): CategoryConfig | null {
   if (!payload) {
     return null;
   }
 
   const slugCandidate =
-    typeof payload.slug === 'string'
+    typeof payload.slug === "string"
       ? payload.slug
-      : typeof payload.category === 'string'
+      : typeof payload.category === "string"
         ? payload.category
         : null;
 
@@ -86,31 +88,37 @@ function mapCategoryPayload(payload: Record<string, unknown> | undefined): Categ
 
   const features = normalizeFeatures(payload.features);
   const urlPath =
-    typeof payload.urlPath === 'string' && payload.urlPath.length > 0
+    typeof payload.urlPath === "string" && payload.urlPath.length > 0
       ? payload.urlPath
       : `/shop/${slugCandidate}`;
 
   const title =
-    typeof payload.title === 'string' && payload.title.length > 0 ? payload.title : slugCandidate;
+    typeof payload.title === "string" && payload.title.length > 0
+      ? payload.title
+      : slugCandidate;
 
   const series =
-    typeof payload.series === 'string' && payload.series.length > 0 ? payload.series : title;
+    typeof payload.series === "string" && payload.series.length > 0
+      ? payload.series
+      : title;
 
   return {
     slug: slugCandidate,
     category: slugCandidate,
     title,
-    description: typeof payload.description === 'string' ? payload.description : '',
+    description:
+      typeof payload.description === "string" ? payload.description : "",
     series,
-    brand: typeof payload.brand === 'string' ? payload.brand : '',
+    brand: typeof payload.brand === "string" ? payload.brand : "",
     features,
-    seoKeywords: typeof payload.seoKeywords === 'string' ? payload.seoKeywords : '',
+    seoKeywords:
+      typeof payload.seoKeywords === "string" ? payload.seoKeywords : "",
     urlPath,
     isActive: coerceBoolean(payload.isActive),
     sortOrder:
-      typeof payload.sortOrder === 'number'
+      typeof payload.sortOrder === "number"
         ? payload.sortOrder
-        : typeof payload.sortOrder === 'string'
+        : typeof payload.sortOrder === "string"
           ? Number.parseInt(payload.sortOrder, 10)
           : undefined,
   };
@@ -135,16 +143,20 @@ async function fetchJson<T>(endpoint: string): Promise<T | null> {
 }
 
 export async function fetchCategories(): Promise<CategoryConfig[]> {
-  const data = await fetchJson<CategoryListResponse>('/api/products/categories');
+  const data = await fetchJson<CategoryListResponse>(
+    "/api/products/categories"
+  );
 
-  if (!data || !data.success) {
+  if (!(data && data.success)) {
     return [];
   }
 
   const entries = data.data?.categories ?? [];
 
   return entries
-    .map((entry) => mapCategoryPayload(entry.category as Record<string, unknown>))
+    .map((entry) =>
+      mapCategoryPayload(entry.category as Record<string, unknown>)
+    )
     .filter((category): category is CategoryConfig => category !== null);
 }
 
@@ -152,21 +164,23 @@ export async function generateCategoryStaticPaths() {
   const categories = await fetchCategories();
 
   if (categories.length === 0) {
-    console.warn('No categories available for static generation, using fallback category path');
+    console.warn(
+      "No categories available for static generation, using fallback category path"
+    );
     return [
       {
-        params: { category: 'catalog-sample' },
+        params: { category: "catalog-sample" },
         props: {
           categoryConfig: {
-            slug: 'catalog-sample',
-            category: 'catalog-sample',
-            title: '示範產品分類',
-            description: '此為預設示範分類，請確認 API 類別資料是否正確提供。',
-            series: 'Sample Series',
-            brand: 'Black Living',
-            features: ['示範特色一', '示範特色二', '示範特色三'],
-            seoKeywords: 'sample,category',
-            urlPath: '/shop/catalog-sample',
+            slug: "catalog-sample",
+            category: "catalog-sample",
+            title: "示範產品分類",
+            description: "此為預設示範分類，請確認 API 類別資料是否正確提供。",
+            series: "Sample Series",
+            brand: "Black Living",
+            features: ["示範特色一", "示範特色二", "示範特色三"],
+            seoKeywords: "sample,category",
+            urlPath: "/shop/catalog-sample",
           } satisfies CategoryConfig,
         },
       },
@@ -183,10 +197,12 @@ export async function generateProductStaticPaths() {
   const categories = await fetchCategories();
 
   if (categories.length === 0) {
-    console.warn('No categories available for product static generation, using fallback paths');
+    console.warn(
+      "No categories available for product static generation, using fallback paths"
+    );
     return [
       {
-        params: { category: 'catalog-sample', productSlug: 'sample-product' },
+        params: { category: "catalog-sample", productSlug: "sample-product" },
       },
     ];
   }
@@ -206,7 +222,10 @@ export async function generateProductStaticPaths() {
       return productsData.map((product: Record<string, unknown>) => ({
         params: {
           category: category.slug,
-          productSlug: typeof product.slug === 'string' ? product.slug : `${category.slug}-sample`,
+          productSlug:
+            typeof product.slug === "string"
+              ? product.slug
+              : `${category.slug}-sample`,
         },
         props: {
           categoryConfig: category,
@@ -231,7 +250,7 @@ export async function fetchCategoryConfig(
       return {
         categoryConfig: fallback,
         stats: undefined,
-        error: 'Category fetch failed, using fallback data',
+        error: "Category fetch failed, using fallback data",
         notFound: false,
       };
     }
@@ -239,7 +258,7 @@ export async function fetchCategoryConfig(
     return {
       categoryConfig: null,
       stats: undefined,
-      error: 'Category not found',
+      error: "Category not found",
       notFound: true,
     };
   }
@@ -248,18 +267,20 @@ export async function fetchCategoryConfig(
     return {
       categoryConfig: fallback ?? null,
       stats: undefined,
-      error: 'Category response returned unsuccessful status',
+      error: "Category response returned unsuccessful status",
       notFound: !fallback,
     };
   }
 
-  const mapped = mapCategoryPayload(detail.data?.category as Record<string, unknown>);
+  const mapped = mapCategoryPayload(
+    detail.data?.category as Record<string, unknown>
+  );
 
   if (!mapped) {
     return {
       categoryConfig: fallback ?? null,
       stats: undefined,
-      error: 'Category payload missing or malformed',
+      error: "Category payload missing or malformed",
       notFound: !fallback,
     };
   }
@@ -291,8 +312,8 @@ export async function fetchProduct(productSlug: string) {
 
     return { product, error: null, notFound: false };
   } catch (err) {
-    console.error('Error fetching product:', err);
-    const error = err instanceof Error ? err.message : 'Unknown error occurred';
+    console.error("Error fetching product:", err);
+    const error = err instanceof Error ? err.message : "Unknown error occurred";
     return { product: null, error, notFound: false };
   }
 }

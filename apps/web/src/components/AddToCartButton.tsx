@@ -1,9 +1,9 @@
-import { useState } from 'react';
-import type { FC } from 'react';
-import { useCartStore, type CartItem } from '../stores/cartStore';
-import { Button } from '@blackliving/ui/components/ui/button';
-import { Minus, Plus, ShoppingCart, Check } from 'lucide-react';
-import { cn } from '@blackliving/ui/lib/utils';
+import { Button } from "@blackliving/ui/components/ui/button";
+import { cn } from "@blackliving/ui/lib/utils";
+import { Check, Minus, Plus, ShoppingCart } from "lucide-react";
+import type { FC } from "react";
+import { useState } from "react";
+import { type CartItem, useCartStore } from "../stores/cartStore";
 
 interface Product {
   id: string;
@@ -27,7 +27,7 @@ interface AddToCartButtonProps {
   product: Product;
   selectedVariantId?: string;
   className?: string;
-  size?: 'sm' | 'md' | 'lg';
+  size?: "sm" | "md" | "lg";
   showQuantitySelector?: boolean;
   disabled?: boolean;
   onAddToCartSuccess?: (item: CartItem) => void;
@@ -37,8 +37,8 @@ interface AddToCartButtonProps {
 const AddToCartButton: FC<AddToCartButtonProps> = ({
   product,
   selectedVariantId,
-  className = '',
-  size = 'md',
+  className = "",
+  size = "md",
   showQuantitySelector = true,
   disabled = false,
   onAddToCartSuccess,
@@ -61,33 +61,33 @@ const AddToCartButton: FC<AddToCartButtonProps> = ({
 
   // If no variants, create a default one from product
   const variant = selectedVariant || {
-    id: 'default',
-    name: 'Standard',
+    id: "default",
+    name: "Standard",
     price: 0, // This should be set appropriately
     inStock: product.inStock,
   };
 
   const isAvailable = variant.inStock && product.inStock && !disabled;
   const displayPrice = variant.price;
-  const displayImage = product.images[0] || '/images/placeholder-product.jpg';
+  const displayImage = product.images[0] || "/images/placeholder-product.jpg";
   const currentError = localError || error;
 
   const sizeClasses = {
-    sm: 'h-9 px-4 text-sm',
-    md: 'h-11 px-6 text-base',
-    lg: 'h-12 px-8 text-lg',
+    sm: "h-9 px-4 text-sm",
+    md: "h-11 px-6 text-base",
+    lg: "h-12 px-8 text-lg",
   };
 
   const handleAddToCart = async () => {
     if (!isAvailable) {
-      const errorMsg = '此商品目前缺貨';
+      const errorMsg = "此商品目前缺貨";
       setLocalError(errorMsg);
       onAddToCartError?.(errorMsg);
       return;
     }
 
     if (!selectedVariantId && product.variants.length > 1) {
-      const errorMsg = '請先選擇商品規格';
+      const errorMsg = "請先選擇商品規格";
       setLocalError(errorMsg);
       onAddToCartError?.(errorMsg);
       return;
@@ -98,11 +98,11 @@ const AddToCartButton: FC<AddToCartButtonProps> = ({
     setLocalError(null);
 
     try {
-      const cartItem: Omit<CartItem, 'quantity'> = {
+      const cartItem: Omit<CartItem, "quantity"> = {
         productId: product.id,
         variantId: selectedVariantId,
         name: product.name,
-        variant: variant.name !== 'Standard' ? variant.name : undefined,
+        variant: variant.name !== "Standard" ? variant.name : undefined,
         size: variant.size,
         price: variant.price,
         originalPrice: variant.originalPrice,
@@ -119,7 +119,7 @@ const AddToCartButton: FC<AddToCartButtonProps> = ({
       setShowSuccess(true);
       onAddToCartSuccess?.({
         ...cartItem,
-        quantity: quantity,
+        quantity,
       });
 
       // Open cart drawer
@@ -132,8 +132,8 @@ const AddToCartButton: FC<AddToCartButtonProps> = ({
         setQuantity(1);
       }
     } catch (err) {
-      console.error('Error adding to cart:', err);
-      const errorMsg = '加入購物車失敗，請稍後再試';
+      console.error("Error adding to cart:", err);
+      const errorMsg = "加入購物車失敗，請稍後再試";
       setLocalError(errorMsg);
       onAddToCartError?.(errorMsg);
     } finally {
@@ -150,7 +150,11 @@ const AddToCartButton: FC<AddToCartButtonProps> = ({
   if (showSuccess) {
     return (
       <Button
-        className={cn(sizeClasses[size], 'bg-green-600 hover:bg-green-700 text-white', className)}
+        className={cn(
+          sizeClasses[size],
+          "bg-green-600 text-white hover:bg-green-700",
+          className
+        )}
         disabled
       >
         <Check className="mr-2 h-4 w-4" />
@@ -163,7 +167,7 @@ const AddToCartButton: FC<AddToCartButtonProps> = ({
     <div className="space-y-4">
       {/* Error Messages */}
       {currentError && (
-        <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
+        <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-red-600 text-sm">
           {currentError}
         </div>
       )}
@@ -172,17 +176,17 @@ const AddToCartButton: FC<AddToCartButtonProps> = ({
       {displayPrice > 0 && (
         <div className="flex items-center justify-between">
           <div>
-            <div className="text-2xl font-bold text-gray-900">
+            <div className="font-bold text-2xl text-gray-900">
               NT$ {displayPrice.toLocaleString()}
             </div>
             {variant.originalPrice && variant.originalPrice > displayPrice && (
-              <div className="text-sm text-gray-500 line-through">
+              <div className="text-gray-500 text-sm line-through">
                 原價 NT$ {variant.originalPrice.toLocaleString()}
               </div>
             )}
           </div>
           {variant.size && (
-            <div className="text-sm text-gray-600 bg-gray-100 px-2 py-1 rounded">
+            <div className="rounded bg-gray-100 px-2 py-1 text-gray-600 text-sm">
               尺寸: {variant.size}
             </div>
           )}
@@ -192,55 +196,55 @@ const AddToCartButton: FC<AddToCartButtonProps> = ({
       {/* Quantity Selector */}
       {showQuantitySelector && isAvailable && (
         <div className="flex items-center space-x-4">
-          <label className="text-sm font-medium text-gray-700">數量:</label>
-          <div className="flex items-center border rounded-lg">
+          <label className="font-medium text-gray-700 text-sm">數量:</label>
+          <div className="flex items-center rounded-lg border">
             <Button
+              className="h-10 w-10 p-0"
+              disabled={quantity <= 1 || isAdding}
+              onClick={() => handleQuantityChange(quantity - 1)}
+              size="sm"
               type="button"
               variant="ghost"
-              size="sm"
-              onClick={() => handleQuantityChange(quantity - 1)}
-              disabled={quantity <= 1 || isAdding}
-              className="h-10 w-10 p-0"
             >
               <Minus className="h-4 w-4" />
             </Button>
-            <div className="px-4 py-2 text-center font-medium min-w-[50px]">{quantity}</div>
+            <div className="min-w-[50px] px-4 py-2 text-center font-medium">
+              {quantity}
+            </div>
             <Button
+              className="h-10 w-10 p-0"
+              disabled={quantity >= maxQuantity || isAdding}
+              onClick={() => handleQuantityChange(quantity + 1)}
+              size="sm"
               type="button"
               variant="ghost"
-              size="sm"
-              onClick={() => handleQuantityChange(quantity + 1)}
-              disabled={quantity >= maxQuantity || isAdding}
-              className="h-10 w-10 p-0"
             >
               <Plus className="h-4 w-4" />
             </Button>
           </div>
-          <span className="text-xs text-gray-500">最多 {maxQuantity} 件</span>
+          <span className="text-gray-500 text-xs">最多 {maxQuantity} 件</span>
         </div>
       )}
 
       {/* Add to Cart Button */}
       <Button
-        onClick={handleAddToCart}
-        disabled={!isAvailable || isAdding}
         className={cn(
           sizeClasses[size],
-          'w-full font-semibold transition-all duration-200',
+          "w-full font-semibold transition-all duration-200",
           isAvailable
-            ? 'bg-black hover:bg-gray-800 text-white shadow-lg hover:shadow-xl'
-            : 'bg-gray-300 text-gray-500 cursor-not-allowed',
+            ? "bg-black text-white shadow-lg hover:bg-gray-800 hover:shadow-xl"
+            : "cursor-not-allowed bg-gray-300 text-gray-500",
           className
         )}
+        disabled={!isAvailable || isAdding}
+        onClick={handleAddToCart}
       >
         {isAdding ? (
           <>
-            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+            <div className="mr-2 h-4 w-4 animate-spin rounded-full border-white border-b-2" />
             加入購物車中...
           </>
-        ) : !isAvailable ? (
-          '目前缺貨'
-        ) : (
+        ) : isAvailable ? (
           <>
             <ShoppingCart className="mr-2 h-4 w-4" />
             加入購物車
@@ -248,20 +252,26 @@ const AddToCartButton: FC<AddToCartButtonProps> = ({
               <span className="ml-2 text-sm">({quantity} 件)</span>
             )}
           </>
+        ) : (
+          "目前缺貨"
         )}
       </Button>
 
       {/* Variant Selection Hint */}
       {product.variants.length > 1 && !selectedVariantId && (
-        <div className="p-2 bg-amber-50 border border-amber-200 rounded text-amber-700 text-xs">
+        <div className="rounded border border-amber-200 bg-amber-50 p-2 text-amber-700 text-xs">
           💡 提示：將使用預設規格，建議先選擇所需規格
         </div>
       )}
 
       {/* Stock Information */}
-      {variant.stock !== undefined && variant.stock > 0 && variant.stock <= 5 && (
-        <div className="text-xs text-orange-600">⚠️ 僅剩 {variant.stock} 件庫存</div>
-      )}
+      {variant.stock !== undefined &&
+        variant.stock > 0 &&
+        variant.stock <= 5 && (
+          <div className="text-orange-600 text-xs">
+            ⚠️ 僅剩 {variant.stock} 件庫存
+          </div>
+        )}
     </div>
   );
 };

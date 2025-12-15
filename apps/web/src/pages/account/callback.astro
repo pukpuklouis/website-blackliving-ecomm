@@ -1,77 +1,82 @@
 ---
-import BaseLayout from '../../layouts/BaseLayout.astro';
+import BaseLayout from "../../layouts/BaseLayout.astro";
 ---
 
 <BaseLayout>
-  <main class='container mx-auto px-4 py-8'>
-    <div class='max-w-md mx-auto text-center'>
-      <div class='bg-white p-8 rounded-lg shadow-md'>
-        <div class='mb-4'>
-          <div class='inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-black'></div>
+  <main class="container mx-auto px-4 py-8">
+    <div class="max-w-md mx-auto text-center">
+      <div class="bg-white p-8 rounded-lg shadow-md">
+        <div class="mb-4">
+          <div
+            class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-black"
+          ></div>
         </div>
-        <h1 class='text-2xl font-bold text-gray-900 mb-4'>登入中...</h1>
-        <p class='text-gray-600'>正在完成 Google 登入，請稍候...</p>
+        <h1 class="text-2xl font-bold text-gray-900 mb-4">登入中...</h1>
+        <p class="text-gray-600">正在完成 Google 登入，請稍候...</p>
       </div>
     </div>
   </main>
 </BaseLayout>
 
 <script>
-  const API_BASE = import.meta.env.PUBLIC_API_URL || 'http://localhost:8787';
+  const API_BASE = import.meta.env.PUBLIC_API_URL || "http://localhost:8787";
 
   async function handleCallback() {
     const urlParams = new URLSearchParams(window.location.search);
-    const error = urlParams.get('error');
+    const error = urlParams.get("error");
 
     if (error) {
-      console.error('OAuth error:', error);
-      window.location.href = '/login?error=' + encodeURIComponent(error);
+      console.error("OAuth error:", error);
+      window.location.href = "/login?error=" + encodeURIComponent(error);
       return;
     }
 
     try {
       // Check if we have a valid session
       const response = await fetch(`${API_BASE}/api/auth/get-session`, {
-        credentials: 'include',
+        credentials: "include",
       });
 
       if (response.ok) {
         const data = await response.json();
         if (data.user && data.session) {
           // Clean up URL
-          window.history.replaceState({}, '', '/account/callback');
+          window.history.replaceState({}, "", "/account/callback");
           // Redirect to profile - any authenticated user can access
-          window.location.href = '/account/profile';
+          window.location.href = "/account/profile";
         } else {
-          window.location.href = '/login?error=unauthorized';
+          window.location.href = "/login?error=unauthorized";
         }
       } else {
         // Session not found, try again in a moment
         setTimeout(async () => {
           try {
-            const retryResponse = await fetch(`${API_BASE}/api/auth/get-session`, {
-              credentials: 'include',
-            });
+            const retryResponse = await fetch(
+              `${API_BASE}/api/auth/get-session`,
+              {
+                credentials: "include",
+              }
+            );
 
             if (retryResponse.ok) {
               const retryData = await retryResponse.json();
               if (retryData.user && retryData.session) {
-                window.location.href = '/account/profile';
+                window.location.href = "/account/profile";
               } else {
-                window.location.href = '/login?error=session_failed';
+                window.location.href = "/login?error=session_failed";
               }
             } else {
-              window.location.href = '/login?error=session_failed';
+              window.location.href = "/login?error=session_failed";
             }
           } catch (retryError) {
-            console.error('Session retry failed:', retryError);
-            window.location.href = '/login?error=session_failed';
+            console.error("Session retry failed:", retryError);
+            window.location.href = "/login?error=session_failed";
           }
         }, 1000);
       }
     } catch (error) {
-      console.error('Callback error:', error);
-      window.location.href = '/login?error=callback_failed';
+      console.error("Callback error:", error);
+      window.location.href = "/login?error=callback_failed";
     }
   }
 

@@ -9,14 +9,14 @@ export interface Props {
   trackingId?: string;
 }
 
-const { 
-  image, 
-  link, 
-  alt = '推廣內容',
+const {
+  image,
+  link,
+  alt = "推廣內容",
   title,
   description,
-  class: className = '',
-  trackingId
+  class: className = "",
+  trackingId,
 } = Astro.props;
 ---
 
@@ -81,19 +81,20 @@ const {
   </div>
 )}
 
-
 <script>
   // Analytics tracking for promo image clicks
-  document.addEventListener('DOMContentLoaded', function() {
-    const promoLinks = document.querySelectorAll('.promo-image__link[data-tracking-id]');
-    
-    promoLinks.forEach(link => {
-      link.addEventListener('click', function(e) {
-        const trackingId = this.getAttribute('data-tracking-id');
-        if (trackingId && typeof gtag !== 'undefined') {
-          gtag('event', 'click', {
-            event_category: 'promo',
-            event_label: trackingId
+  document.addEventListener("DOMContentLoaded", () => {
+    const promoLinks = document.querySelectorAll(
+      ".promo-image__link[data-tracking-id]"
+    );
+
+    promoLinks.forEach((link) => {
+      link.addEventListener("click", function (e) {
+        const trackingId = this.getAttribute("data-tracking-id");
+        if (trackingId && typeof gtag !== "undefined") {
+          gtag("event", "click", {
+            event_category: "promo",
+            event_label: trackingId,
           });
         }
       });

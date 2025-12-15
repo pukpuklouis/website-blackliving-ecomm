@@ -1,6 +1,10 @@
-import { useState } from 'react';
-import type { FC } from 'react';
-import { useCartStore, type CustomerInfo, type ShippingAddress } from '../stores/cartStore';
+import type { FC } from "react";
+import { useState } from "react";
+import {
+  type CustomerInfo,
+  type ShippingAddress,
+  useCartStore,
+} from "../stores/cartStore";
 
 interface CheckoutFormProps {
   onSuccess: () => void;
@@ -30,18 +34,19 @@ const CheckoutForm: FC<CheckoutFormProps> = ({ onSuccess }) => {
 
   const [currentStep, setCurrentStep] = useState(1);
   const [localCustomerInfo, setLocalCustomerInfo] = useState<CustomerInfo>(
-    customerInfo || { name: '', email: '', phone: '' }
+    customerInfo || { name: "", email: "", phone: "" }
   );
-  const [localShippingAddress, setLocalShippingAddress] = useState<ShippingAddress>(
-    shippingAddress || {
-      name: '',
-      phone: '',
-      address: '',
-      city: '',
-      district: '',
-      postalCode: '',
-    }
-  );
+  const [localShippingAddress, setLocalShippingAddress] =
+    useState<ShippingAddress>(
+      shippingAddress || {
+        name: "",
+        phone: "",
+        address: "",
+        city: "",
+        district: "",
+        postalCode: "",
+      }
+    );
   const [localNotes, setLocalNotes] = useState(notes);
   const [orderSuccess, setOrderSuccess] = useState<{
     success: boolean;
@@ -49,27 +54,27 @@ const CheckoutForm: FC<CheckoutFormProps> = ({ onSuccess }) => {
   } | null>(null);
 
   const cities = [
-    '台北市',
-    '新北市',
-    '桃園市',
-    '台中市',
-    '台南市',
-    '高雄市',
-    '新竹縣',
-    '新竹市',
-    '苗栗縣',
-    '彰化縣',
-    '南投縣',
-    '雲林縣',
-    '嘉義縣',
-    '嘉義市',
-    '屏東縣',
-    '宜蘭縣',
-    '花蓮縣',
-    '台東縣',
-    '澎湖縣',
-    '金門縣',
-    '連江縣',
+    "台北市",
+    "新北市",
+    "桃園市",
+    "台中市",
+    "台南市",
+    "高雄市",
+    "新竹縣",
+    "新竹市",
+    "苗栗縣",
+    "彰化縣",
+    "南投縣",
+    "雲林縣",
+    "嘉義縣",
+    "嘉義市",
+    "屏東縣",
+    "宜蘭縣",
+    "花蓮縣",
+    "台東縣",
+    "澎湖縣",
+    "金門縣",
+    "連江縣",
   ];
 
   const handleCustomerInfoSubmit = (e: React.FormEvent) => {
@@ -116,15 +121,17 @@ const CheckoutForm: FC<CheckoutFormProps> = ({ onSuccess }) => {
 
   if (orderSuccess?.success) {
     return (
-      <div className="max-w-2xl mx-auto text-center py-12">
-        <div className="bg-green-50 border border-green-200 rounded-lg p-8 mb-8">
-          <div className="text-green-600 text-6xl mb-4">✓</div>
-          <h2 className="text-2xl font-semibold text-green-800 mb-4">訂單建立成功！</h2>
-          <p className="text-green-700 mb-2">您的訂單編號：</p>
-          <p className="text-xl font-mono font-bold text-green-800 mb-4">
+      <div className="mx-auto max-w-2xl py-12 text-center">
+        <div className="mb-8 rounded-lg border border-green-200 bg-green-50 p-8">
+          <div className="mb-4 text-6xl text-green-600">✓</div>
+          <h2 className="mb-4 font-semibold text-2xl text-green-800">
+            訂單建立成功！
+          </h2>
+          <p className="mb-2 text-green-700">您的訂單編號：</p>
+          <p className="mb-4 font-bold font-mono text-green-800 text-xl">
             {orderSuccess.orderNumber}
           </p>
-          <div className="text-sm text-green-600 bg-green-100 rounded p-3">
+          <div className="rounded bg-green-100 p-3 text-green-600 text-sm">
             <p>📧 訂單確認信已發送至您的電子郵件</p>
             <p>💰 請依照信中指示完成付款程序</p>
             <p>📞 如有問題請聯繫客服：02-2345-6789</p>
@@ -133,13 +140,13 @@ const CheckoutForm: FC<CheckoutFormProps> = ({ onSuccess }) => {
 
         <div className="space-y-4">
           <button
+            className="rounded-lg bg-black px-8 py-3 text-white transition-colors hover:bg-gray-800"
             onClick={handleBackToCart}
-            className="bg-black text-white px-8 py-3 rounded-lg hover:bg-gray-800 transition-colors"
           >
             繼續購物
           </button>
           <div>
-            <a href="/account/orders" className="text-gray-600 hover:underline">
+            <a className="text-gray-600 hover:underline" href="/account/orders">
               查看我的訂單
             </a>
           </div>
@@ -149,94 +156,125 @@ const CheckoutForm: FC<CheckoutFormProps> = ({ onSuccess }) => {
   }
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="mx-auto max-w-4xl">
       {/* Progress Steps */}
       <div className="mb-8">
         <div className="flex items-center justify-center space-x-4">
           {[1, 2, 3].map((step) => (
-            <div key={step} className="flex items-center">
+            <div className="flex items-center" key={step}>
               <div
-                className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold ${
-                  step <= currentStep ? 'bg-black text-white' : 'bg-gray-200 text-gray-600'
+                className={`flex h-8 w-8 items-center justify-center rounded-full font-semibold text-sm ${
+                  step <= currentStep
+                    ? "bg-black text-white"
+                    : "bg-gray-200 text-gray-600"
                 }`}
               >
                 {step}
               </div>
               {step < 3 && (
-                <div className={`w-12 h-1 ${step < currentStep ? 'bg-black' : 'bg-gray-200'}`} />
+                <div
+                  className={`h-1 w-12 ${step < currentStep ? "bg-black" : "bg-gray-200"}`}
+                />
               )}
             </div>
           ))}
         </div>
-        <div className="flex justify-center mt-2 space-x-8 text-sm">
-          <span className={currentStep >= 1 ? 'text-black font-semibold' : 'text-gray-500'}>
+        <div className="mt-2 flex justify-center space-x-8 text-sm">
+          <span
+            className={
+              currentStep >= 1 ? "font-semibold text-black" : "text-gray-500"
+            }
+          >
             客戶資料
           </span>
-          <span className={currentStep >= 2 ? 'text-black font-semibold' : 'text-gray-500'}>
+          <span
+            className={
+              currentStep >= 2 ? "font-semibold text-black" : "text-gray-500"
+            }
+          >
             配送地址
           </span>
-          <span className={currentStep >= 3 ? 'text-black font-semibold' : 'text-gray-500'}>
+          <span
+            className={
+              currentStep >= 3 ? "font-semibold text-black" : "text-gray-500"
+            }
+          >
             確認訂單
           </span>
         </div>
       </div>
 
       {error && (
-        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+        <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4">
           <p className="text-red-600">{error}</p>
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
         <div className="lg:col-span-2">
           {/* Step 1: Customer Information */}
           {currentStep === 1 && (
-            <div className="bg-white p-6 rounded-lg shadow-md">
-              <h2 className="text-xl font-semibold mb-6">客戶資料</h2>
-              <form onSubmit={handleCustomerInfoSubmit} className="space-y-4">
+            <div className="rounded-lg bg-white p-6 shadow-md">
+              <h2 className="mb-6 font-semibold text-xl">客戶資料</h2>
+              <form className="space-y-4" onSubmit={handleCustomerInfoSubmit}>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">姓名 *</label>
+                  <label className="mb-1 block font-medium text-gray-700 text-sm">
+                    姓名 *
+                  </label>
                   <input
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-black"
+                    onChange={(e) =>
+                      setLocalCustomerInfo((prev) => ({
+                        ...prev,
+                        name: e.target.value,
+                      }))
+                    }
+                    required
                     type="text"
-                    required
                     value={localCustomerInfo.name}
-                    onChange={(e) =>
-                      setLocalCustomerInfo((prev) => ({ ...prev, name: e.target.value }))
-                    }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">電子郵件 *</label>
+                  <label className="mb-1 block font-medium text-gray-700 text-sm">
+                    電子郵件 *
+                  </label>
                   <input
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-black"
+                    onChange={(e) =>
+                      setLocalCustomerInfo((prev) => ({
+                        ...prev,
+                        email: e.target.value,
+                      }))
+                    }
+                    required
                     type="email"
-                    required
                     value={localCustomerInfo.email}
-                    onChange={(e) =>
-                      setLocalCustomerInfo((prev) => ({ ...prev, email: e.target.value }))
-                    }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">電話號碼 *</label>
+                  <label className="mb-1 block font-medium text-gray-700 text-sm">
+                    電話號碼 *
+                  </label>
                   <input
-                    type="tel"
-                    required
-                    value={localCustomerInfo.phone}
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-black"
                     onChange={(e) =>
-                      setLocalCustomerInfo((prev) => ({ ...prev, phone: e.target.value }))
+                      setLocalCustomerInfo((prev) => ({
+                        ...prev,
+                        phone: e.target.value,
+                      }))
                     }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
                     placeholder="例：0912345678"
+                    required
+                    type="tel"
+                    value={localCustomerInfo.phone}
                   />
                 </div>
 
                 <button
+                  className="w-full rounded-lg bg-black py-3 text-white transition-colors hover:bg-gray-800"
                   type="submit"
-                  className="w-full bg-black text-white py-3 rounded-lg hover:bg-gray-800 transition-colors"
                 >
                   下一步
                 </button>
@@ -246,58 +284,72 @@ const CheckoutForm: FC<CheckoutFormProps> = ({ onSuccess }) => {
 
           {/* Step 2: Shipping Address */}
           {currentStep === 2 && (
-            <div className="bg-white p-6 rounded-lg shadow-md">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-semibold">配送地址</h2>
+            <div className="rounded-lg bg-white p-6 shadow-md">
+              <div className="mb-6 flex items-center justify-between">
+                <h2 className="font-semibold text-xl">配送地址</h2>
                 <button
-                  onClick={() => setCurrentStep(1)}
                   className="text-gray-600 hover:text-gray-800"
+                  onClick={() => setCurrentStep(1)}
                 >
                   ← 返回
                 </button>
               </div>
 
-              <form onSubmit={handleShippingAddressSubmit} className="space-y-4">
+              <form
+                className="space-y-4"
+                onSubmit={handleShippingAddressSubmit}
+              >
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="mb-1 block font-medium text-gray-700 text-sm">
                     收件人姓名 *
                   </label>
                   <input
-                    type="text"
-                    required
-                    value={localShippingAddress.name}
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-black"
                     onChange={(e) =>
-                      setLocalShippingAddress((prev) => ({ ...prev, name: e.target.value }))
+                      setLocalShippingAddress((prev) => ({
+                        ...prev,
+                        name: e.target.value,
+                      }))
                     }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
+                    required
+                    type="text"
+                    value={localShippingAddress.name}
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="mb-1 block font-medium text-gray-700 text-sm">
                     收件人電話 *
                   </label>
                   <input
-                    type="tel"
-                    required
-                    value={localShippingAddress.phone}
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-black"
                     onChange={(e) =>
-                      setLocalShippingAddress((prev) => ({ ...prev, phone: e.target.value }))
+                      setLocalShippingAddress((prev) => ({
+                        ...prev,
+                        phone: e.target.value,
+                      }))
                     }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
+                    required
+                    type="tel"
+                    value={localShippingAddress.phone}
                   />
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">城市 *</label>
+                    <label className="mb-1 block font-medium text-gray-700 text-sm">
+                      城市 *
+                    </label>
                     <select
+                      className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-black"
+                      onChange={(e) =>
+                        setLocalShippingAddress((prev) => ({
+                          ...prev,
+                          city: e.target.value,
+                        }))
+                      }
                       required
                       value={localShippingAddress.city}
-                      onChange={(e) =>
-                        setLocalShippingAddress((prev) => ({ ...prev, city: e.target.value }))
-                      }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
                     >
                       <option value="">請選擇城市</option>
                       {cities.map((city) => (
@@ -309,51 +361,66 @@ const CheckoutForm: FC<CheckoutFormProps> = ({ onSuccess }) => {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">區域 *</label>
+                    <label className="mb-1 block font-medium text-gray-700 text-sm">
+                      區域 *
+                    </label>
                     <input
-                      type="text"
-                      required
-                      value={localShippingAddress.district}
+                      className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-black"
                       onChange={(e) =>
-                        setLocalShippingAddress((prev) => ({ ...prev, district: e.target.value }))
+                        setLocalShippingAddress((prev) => ({
+                          ...prev,
+                          district: e.target.value,
+                        }))
                       }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
                       placeholder="例：信義區"
+                      required
+                      type="text"
+                      value={localShippingAddress.district}
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">詳細地址 *</label>
+                  <label className="mb-1 block font-medium text-gray-700 text-sm">
+                    詳細地址 *
+                  </label>
                   <input
-                    type="text"
-                    required
-                    value={localShippingAddress.address}
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-black"
                     onChange={(e) =>
-                      setLocalShippingAddress((prev) => ({ ...prev, address: e.target.value }))
+                      setLocalShippingAddress((prev) => ({
+                        ...prev,
+                        address: e.target.value,
+                      }))
                     }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
                     placeholder="例：忠孝東路四段123號5樓"
+                    required
+                    type="text"
+                    value={localShippingAddress.address}
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">郵遞區號 *</label>
+                  <label className="mb-1 block font-medium text-gray-700 text-sm">
+                    郵遞區號 *
+                  </label>
                   <input
-                    type="text"
-                    required
-                    value={localShippingAddress.postalCode}
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-black"
                     onChange={(e) =>
-                      setLocalShippingAddress((prev) => ({ ...prev, postalCode: e.target.value }))
+                      setLocalShippingAddress((prev) => ({
+                        ...prev,
+                        postalCode: e.target.value,
+                      }))
                     }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
                     placeholder="例：110"
+                    required
+                    type="text"
+                    value={localShippingAddress.postalCode}
                   />
                 </div>
 
                 <button
+                  className="w-full rounded-lg bg-black py-3 text-white transition-colors hover:bg-gray-800"
                   type="submit"
-                  className="w-full bg-black text-white py-3 rounded-lg hover:bg-gray-800 transition-colors"
                 >
                   下一步
                 </button>
@@ -364,51 +431,57 @@ const CheckoutForm: FC<CheckoutFormProps> = ({ onSuccess }) => {
           {/* Step 3: Order Confirmation */}
           {currentStep === 3 && (
             <div className="space-y-6">
-              <div className="bg-white p-6 rounded-lg shadow-md">
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-xl font-semibold">確認訂單</h2>
+              <div className="rounded-lg bg-white p-6 shadow-md">
+                <div className="mb-6 flex items-center justify-between">
+                  <h2 className="font-semibold text-xl">確認訂單</h2>
                   <button
-                    onClick={() => setCurrentStep(2)}
                     className="text-gray-600 hover:text-gray-800"
+                    onClick={() => setCurrentStep(2)}
                   >
                     ← 返回
                   </button>
                 </div>
 
-                <form onSubmit={handleFinalSubmit} className="space-y-6">
+                <form className="space-y-6" onSubmit={handleFinalSubmit}>
                   <div>
-                    <h3 className="font-semibold mb-2">付款方式</h3>
+                    <h3 className="mb-2 font-semibold">付款方式</h3>
                     <div className="space-y-2">
                       <label className="flex items-center">
                         <input
-                          type="radio"
-                          name="paymentMethod"
-                          value="bank_transfer"
-                          checked={paymentMethod === 'bank_transfer'}
-                          onChange={(e) => setPaymentMethod(e.target.value as any)}
+                          checked={paymentMethod === "bank_transfer"}
                           className="mr-2"
+                          name="paymentMethod"
+                          onChange={(e) =>
+                            setPaymentMethod(e.target.value as any)
+                          }
+                          type="radio"
+                          value="bank_transfer"
                         />
                         銀行轉帳
                       </label>
                       <label className="flex items-center">
                         <input
-                          type="radio"
-                          name="paymentMethod"
-                          value="credit_card"
-                          checked={paymentMethod === 'credit_card'}
-                          onChange={(e) => setPaymentMethod(e.target.value as any)}
+                          checked={paymentMethod === "credit_card"}
                           className="mr-2"
+                          name="paymentMethod"
+                          onChange={(e) =>
+                            setPaymentMethod(e.target.value as any)
+                          }
+                          type="radio"
+                          value="credit_card"
                         />
                         信用卡付款
                       </label>
                       <label className="flex items-center">
                         <input
-                          type="radio"
-                          name="paymentMethod"
-                          value="cash_on_delivery"
-                          checked={paymentMethod === 'cash_on_delivery'}
-                          onChange={(e) => setPaymentMethod(e.target.value as any)}
+                          checked={paymentMethod === "cash_on_delivery"}
                           className="mr-2"
+                          name="paymentMethod"
+                          onChange={(e) =>
+                            setPaymentMethod(e.target.value as any)
+                          }
+                          type="radio"
+                          value="cash_on_delivery"
                         />
                         貨到付款
                       </label>
@@ -416,22 +489,24 @@ const CheckoutForm: FC<CheckoutFormProps> = ({ onSuccess }) => {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">備註</label>
+                    <label className="mb-1 block font-medium text-gray-700 text-sm">
+                      備註
+                    </label>
                     <textarea
-                      value={localNotes}
+                      className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-black"
                       onChange={(e) => setLocalNotes(e.target.value)}
-                      rows={3}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
                       placeholder="如有特殊需求請註明..."
+                      rows={3}
+                      value={localNotes}
                     />
                   </div>
 
                   <button
-                    type="submit"
+                    className="w-full rounded-lg bg-black py-3 text-white transition-colors hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
                     disabled={isSubmittingOrder}
-                    className="w-full bg-black text-white py-3 rounded-lg hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    type="submit"
                   >
-                    {isSubmittingOrder ? '建立訂單中...' : '確認下單'}
+                    {isSubmittingOrder ? "建立訂單中..." : "確認下單"}
                   </button>
                 </form>
               </div>
@@ -441,19 +516,21 @@ const CheckoutForm: FC<CheckoutFormProps> = ({ onSuccess }) => {
 
         {/* Order Summary Sidebar */}
         <div className="lg:col-span-1">
-          <div className="bg-white p-6 rounded-lg shadow-md sticky top-4">
-            <h3 className="text-lg font-semibold mb-4">訂單摘要</h3>
+          <div className="sticky top-4 rounded-lg bg-white p-6 shadow-md">
+            <h3 className="mb-4 font-semibold text-lg">訂單摘要</h3>
 
-            <div className="space-y-3 mb-4">
+            <div className="mb-4 space-y-3">
               {items.map((item) => {
                 const itemKey = item.variantId
                   ? `${item.productId}-${item.variantId}`
                   : item.productId;
                 return (
-                  <div key={itemKey} className="flex justify-between text-sm">
+                  <div className="flex justify-between text-sm" key={itemKey}>
                     <div className="flex-1">
                       <p className="font-medium">{item.name}</p>
-                      {item.variant && <p className="text-gray-500">{item.variant}</p>}
+                      {item.variant && (
+                        <p className="text-gray-500">{item.variant}</p>
+                      )}
                       <p className="text-gray-500">數量: {item.quantity}</p>
                     </div>
                     <p className="font-medium">
@@ -464,7 +541,7 @@ const CheckoutForm: FC<CheckoutFormProps> = ({ onSuccess }) => {
               })}
             </div>
 
-            <div className="space-y-2 pt-4 border-t">
+            <div className="space-y-2 border-t pt-4">
               <div className="flex justify-between">
                 <span>小計</span>
                 <span>NT$ {subtotal.toLocaleString()}</span>
@@ -479,7 +556,7 @@ const CheckoutForm: FC<CheckoutFormProps> = ({ onSuccess }) => {
                   )}
                 </span>
               </div>
-              <div className="flex justify-between text-lg font-semibold pt-2 border-t">
+              <div className="flex justify-between border-t pt-2 font-semibold text-lg">
                 <span>總計</span>
                 <span>NT$ {total.toLocaleString()}</span>
               </div>

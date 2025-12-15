@@ -11,61 +11,66 @@ interface Props {
   bgColor?: string;
   textColor?: string;
   borderColor?: string;
-  textAlign?: 'left' | 'center' | 'right';
+  textAlign?: "left" | "center" | "right";
   infoBoxPosition?:
-    | 'top-left'
-    | 'top-right'
-    | 'bottom-left'
-    | 'bottom-right'
-    | 'center-left'
-    | 'center-right';
-  responsivePosition?: 'top' | 'bottom';
+    | "top-left"
+    | "top-right"
+    | "bottom-left"
+    | "bottom-right"
+    | "center-left"
+    | "center-right";
+  responsivePosition?: "top" | "bottom";
 }
 
 const {
   embedUrl,
   infoBox,
-  mapHeight = 'h-[32rem]',
-  bgColor = 'bg-white/90',
-  textColor = 'text-slate-800',
-  borderColor = 'border-slate-200',
-  textAlign = 'left',
-  infoBoxPosition = 'top-left',
-  responsivePosition = 'bottom',
+  mapHeight = "h-[32rem]",
+  bgColor = "bg-white/90",
+  textColor = "text-slate-800",
+  borderColor = "border-slate-200",
+  textAlign = "left",
+  infoBoxPosition = "top-left",
+  responsivePosition = "bottom",
 } = Astro.props;
 
 const alignClass = `text-${textAlign}`;
 // Mobile classes - applied to all screen sizes, overridden by desktop
 const mobileClasses =
-  responsivePosition === 'top'
-    ? 'top-4 w-full left-0 right-0 mx-auto'
-    : 'bottom-4 w-full left-0 right-0 mx-auto';
+  responsivePosition === "top"
+    ? "top-4 w-full left-0 right-0 mx-auto"
+    : "bottom-4 w-full left-0 right-0 mx-auto";
 
 // Desktop classes - completely override mobile positioning with proper resets
 let desktopClasses: string;
 switch (infoBoxPosition) {
-  case 'top-left':
-    desktopClasses = 'md:top-4 md:bottom-auto md:left-4 md:right-auto md:w-auto md:mx-0';
-    break;
-  case 'top-right':
-    desktopClasses = 'md:top-4 md:bottom-auto md:right-4 md:left-auto md:w-auto md:mx-0';
-    break;
-  case 'bottom-left':
-    desktopClasses = 'md:bottom-4 md:top-auto md:left-4 md:right-auto md:w-auto md:mx-0';
-    break;
-  case 'bottom-right':
-    desktopClasses = 'md:bottom-4 md:top-auto md:right-4 md:left-auto md:w-auto md:mx-0';
-    break;
-  case 'center-left':
+  case "top-left":
     desktopClasses =
-      'md:top-1/2 md:bottom-auto md:-translate-y-1/2 md:left-24 md:right-auto md:w-auto md:mx-0';
+      "md:top-4 md:bottom-auto md:left-4 md:right-auto md:w-auto md:mx-0";
     break;
-  case 'center-right':
+  case "top-right":
     desktopClasses =
-      'md:top-1/2 md:bottom-auto md:-translate-y-1/2 md:right-4 md:left-auto md:w-auto md:mx-0';
+      "md:top-4 md:bottom-auto md:right-4 md:left-auto md:w-auto md:mx-0";
+    break;
+  case "bottom-left":
+    desktopClasses =
+      "md:bottom-4 md:top-auto md:left-4 md:right-auto md:w-auto md:mx-0";
+    break;
+  case "bottom-right":
+    desktopClasses =
+      "md:bottom-4 md:top-auto md:right-4 md:left-auto md:w-auto md:mx-0";
+    break;
+  case "center-left":
+    desktopClasses =
+      "md:top-1/2 md:bottom-auto md:-translate-y-1/2 md:left-24 md:right-auto md:w-auto md:mx-0";
+    break;
+  case "center-right":
+    desktopClasses =
+      "md:top-1/2 md:bottom-auto md:-translate-y-1/2 md:right-4 md:left-auto md:w-auto md:mx-0";
     break;
   default:
-    desktopClasses = 'md:top-4 md:bottom-auto md:left-4 md:right-auto md:w-auto md:mx-0';
+    desktopClasses =
+      "md:top-4 md:bottom-auto md:left-4 md:right-auto md:w-auto md:mx-0";
     break;
 }
 
@@ -78,14 +83,28 @@ const positionClasses = `${mobileClasses} ${desktopClasses}`;
     class="w-full h-full border-0"
     allowfullscreen
     loading="lazy"
-    referrerpolicy="no-referrer-when-downgrade"></iframe>
+    referrerpolicy="no-referrer-when-downgrade"
+  ></iframe>
   <div
     class={`absolute p-4 md:p-12 rounded-lg shadow-lg max-w-sm z-10 ${bgColor} ${textColor} ${alignClass} ${positionClasses}`}
   >
     <h3 class="font-bold text-lg mb-2">{infoBox.name}</h3>
-    <p class="mb-1"><strong>地址Address:</strong><br />{infoBox.address}</p>
+    <p class="mb-1">
+      <strong>地址Address:</strong>
+      <br>
+      {infoBox.address}
+    </p>
     <p class="text-md font-semibold">
-      本公司試躺採預約制<br /><span class="font-normal">請加<a href="https://line.me/R/ti/p/@blackking" target="_blank" class="underline decoration-dotted underline-offset-4">官方line</a>詢問</span>
+      本公司試躺採預約制
+      <br>
+      <span class="font-normal"
+        >請加<a
+          href="https://line.me/R/ti/p/@blackking"
+          target="_blank"
+          class="underline decoration-dotted underline-offset-4"
+          >官方line</a
+        >詢問</span
+      >
     </p>
     <button
       class={`mt-4 px-4 py-2  rounded-lg border-1 ${borderColor} ${bgColor} ${textColor} ${alignClass} transition-colors w-full md:w-auto`}

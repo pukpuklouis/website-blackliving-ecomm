@@ -1,111 +1,122 @@
 ---
-import BaseLayout from '../../../layouts/BaseLayout.astro';
-import CTA from '../../../components/CTA.astro';
-import BlogPostCard from '../../../components/BlogPostCard.astro';
-import type { BlogPost, BlogPostSummary, PostCategory } from '@blackliving/types';
+import type {
+  BlogPost,
+  BlogPostSummary,
+  PostCategory,
+} from "@blackliving/types";
+import BlogPostCard from "../../../components/BlogPostCard.astro";
+import CTA from "../../../components/CTA.astro";
+import BaseLayout from "../../../layouts/BaseLayout.astro";
 
 interface StaticCategory extends PostCategory {
   postsCount?: number;
 }
 
-const apiUrl = import.meta.env.PUBLIC_API_BASE_URL || 'http://localhost:8787';
+const apiUrl = import.meta.env.PUBLIC_API_BASE_URL || "http://localhost:8787";
 
 const fallbackCategories: StaticCategory[] = [
   {
-    id: 'cat_001',
-    slug: 'blog-post',
-    name: '好文分享',
-    description: '睡眠知識與健康生活分享，專業床墊選購指南與使用心得',
-    color: '#1f2937',
-    icon: '🛏️',
+    id: "cat_001",
+    slug: "blog-post",
+    name: "好文分享",
+    description: "睡眠知識與健康生活分享，專業床墊選購指南與使用心得",
+    color: "#1f2937",
+    icon: "🛏️",
     postsCount: 0,
   },
   {
-    id: 'cat_002',
-    slug: 'blogger-testimonial',
-    name: '部落格推薦',
-    description: '精選媒體與部落客合作推薦，掌握品牌評測與趨勢觀點',
-    color: '#0EA5E9',
-    icon: '📝',
+    id: "cat_002",
+    slug: "blogger-testimonial",
+    name: "部落格推薦",
+    description: "精選媒體與部落客合作推薦，掌握品牌評測與趨勢觀點",
+    color: "#0EA5E9",
+    icon: "📝",
     postsCount: 0,
   },
   {
-    id: 'cat_003',
-    slug: 'simmons-knowledge',
-    name: '席夢思小知識',
-    description: '分享席夢思的相關小知識',
-    color: '#6B7280',
-    icon: 'ℹ️',
+    id: "cat_003",
+    slug: "simmons-knowledge",
+    name: "席夢思小知識",
+    description: "分享席夢思的相關小知識",
+    color: "#6B7280",
+    icon: "ℹ️",
     postsCount: 0,
   },
   {
-    id: 'cat_004',
-    slug: 'customer-reviews',
-    name: '顧客真實回饋',
-    description: '來自真實客戶的睡眠體驗分享，了解 Simmons 黑牌床墊的實際使用心得與評價',
-    color: '#10B981',
-    icon: '⭐',
+    id: "cat_004",
+    slug: "customer-reviews",
+    name: "顧客真實回饋",
+    description:
+      "來自真實客戶的睡眠體驗分享，了解 Simmons 黑牌床墊的實際使用心得與評價",
+    color: "#10B981",
+    icon: "⭐",
     postsCount: 0,
   },
 ];
 
 function normalizeCategorySlug(value?: string | null): string {
-  if (!value) return 'blog-post';
+  if (!value) return "blog-post";
   const input = value.trim().toLowerCase();
-  if (['blogger-testimonial', 'blogger testimonial', '部落格推薦'].includes(input)) {
-    return 'blogger-testimonial';
+  if (
+    ["blogger-testimonial", "blogger testimonial", "部落格推薦"].includes(input)
+  ) {
+    return "blogger-testimonial";
   }
-  if (['customer-reviews', '顧客真實回饋', '顧客好評', '客戶評價'].includes(input)) {
-    return 'customer-reviews';
+  if (
+    ["customer-reviews", "顧客真實回饋", "顧客好評", "客戶評價"].includes(input)
+  ) {
+    return "customer-reviews";
   }
-  if (['blog-post', '好文分享', '部落格文章', 'blog'].includes(input)) {
-    return 'blog-post';
+  if (["blog-post", "好文分享", "部落格文章", "blog"].includes(input)) {
+    return "blog-post";
   }
-  if (['simmons-knowledge', '席夢思小知識', 'simmons knowledge'].includes(input)) {
-    return 'simmons-knowledge';
+  if (
+    ["simmons-knowledge", "席夢思小知識", "simmons knowledge"].includes(input)
+  ) {
+    return "simmons-knowledge";
   }
-  if (input.startsWith('cat_')) {
-    if (input === 'cat_001') return 'blog-post';
-    if (input === 'cat_002') return 'blogger-testimonial';
-    if (input === 'cat_003') return 'simmons-knowledge';
-    if (input === 'cat_004') return 'customer-reviews';
+  if (input.startsWith("cat_")) {
+    if (input === "cat_001") return "blog-post";
+    if (input === "cat_002") return "blogger-testimonial";
+    if (input === "cat_003") return "simmons-knowledge";
+    if (input === "cat_004") return "customer-reviews";
     return input.slice(4);
   }
-  return input.replace(/\s+/g, '-');
+  return input.replace(/\s+/g, "-");
 }
 
 function resolveCategoryName(slug: string, fallback?: string): string {
-  if (slug === 'customer-reviews') return '顧客真實回饋';
-  if (slug === 'blogger-testimonial') return '部落格推薦';
-  if (slug === 'simmons-knowledge') return '席夢思小知識';
-  if (slug === 'blog-post') return '好文分享';
+  if (slug === "customer-reviews") return "顧客真實回饋";
+  if (slug === "blogger-testimonial") return "部落格推薦";
+  if (slug === "simmons-knowledge") return "席夢思小知識";
+  if (slug === "blog-post") return "好文分享";
   return fallback || slug;
 }
 
 function resolveCategoryDescription(slug: string, fallback?: string): string {
   if (fallback) return fallback;
-  if (slug === 'blogger-testimonial') {
-    return '精選媒體與部落客合作推薦，掌握品牌評測與趨勢觀點';
+  if (slug === "blogger-testimonial") {
+    return "精選媒體與部落客合作推薦，掌握品牌評測與趨勢觀點";
   }
-  if (slug === 'customer-reviews') {
-    return '來自真實客戶的睡眠體驗分享，了解 Simmons 黑牌床墊的實際使用心得與評價';
+  if (slug === "customer-reviews") {
+    return "來自真實客戶的睡眠體驗分享，了解 Simmons 黑牌床墊的實際使用心得與評價";
   }
-  if (slug === 'blog-post') {
-    return '睡眠知識與健康生活分享，專業床墊選購指南與使用心得';
+  if (slug === "blog-post") {
+    return "睡眠知識與健康生活分享，專業床墊選購指南與使用心得";
   }
-  if (slug === 'simmons-knowledge') {
-    return '分享席夢思的相關小知識';
+  if (slug === "simmons-knowledge") {
+    return "分享席夢思的相關小知識";
   }
-  return '';
+  return "";
 }
 
 function isPostCategory(data: any): data is PostCategory {
   return (
     data &&
-    typeof data === 'object' &&
-    typeof data.id === 'string' &&
-    typeof data.slug === 'string' &&
-    typeof data.name === 'string'
+    typeof data === "object" &&
+    typeof data.id === "string" &&
+    typeof data.slug === "string" &&
+    typeof data.name === "string"
   );
 }
 
@@ -119,7 +130,7 @@ export async function getStaticPaths() {
       if (categories.length > 0) {
         return categories
           .map((category: any) => {
-            if (!category?.slug && !category?.name) return null;
+            if (!(category?.slug || category?.name)) return null;
             const slug = normalizeCategorySlug(category.slug || category.name);
             return {
               params: { post_category: slug },
@@ -139,66 +150,70 @@ export async function getStaticPaths() {
           .filter(Boolean);
       }
     } else {
-      console.error('Failed to fetch post categories for static paths:', response.status);
+      console.error(
+        "Failed to fetch post categories for static paths:",
+        response.status
+      );
     }
   } catch (error) {
-    console.error('Error fetching post categories for static paths:', error);
+    console.error("Error fetching post categories for static paths:", error);
   }
 
   // Inline fallbacks to avoid any scope issues in dev/build
   return [
     {
-      params: { post_category: 'blog-post' },
+      params: { post_category: "blog-post" },
       props: {
         category: {
-          id: 'cat_001',
-          slug: 'blog-post',
-          name: '好文分享',
-          description: '睡眠知識與健康生活分享，專業床墊選購指南與使用心得',
-          color: '#1f2937',
-          icon: '🛏️',
+          id: "cat_001",
+          slug: "blog-post",
+          name: "好文分享",
+          description: "睡眠知識與健康生活分享，專業床墊選購指南與使用心得",
+          color: "#1f2937",
+          icon: "🛏️",
           postsCount: 0,
         },
       },
     },
     {
-      params: { post_category: 'blogger-testimonial' },
+      params: { post_category: "blogger-testimonial" },
       props: {
         category: {
-          id: 'cat_002',
-          slug: 'blogger-testimonial',
-          name: '部落格推薦',
-          description: '精選媒體與部落客合作推薦，掌握品牌評測與趨勢觀點',
-          color: '#0EA5E9',
-          icon: '📝',
+          id: "cat_002",
+          slug: "blogger-testimonial",
+          name: "部落格推薦",
+          description: "精選媒體與部落客合作推薦，掌握品牌評測與趨勢觀點",
+          color: "#0EA5E9",
+          icon: "📝",
           postsCount: 0,
         },
       },
     },
     {
-      params: { post_category: 'simmons-knowledge' },
+      params: { post_category: "simmons-knowledge" },
       props: {
         category: {
-          id: 'cat_003',
-          slug: 'simmons-knowledge',
-          name: '席夢思小知識',
-          description: '分享席夢思的相關小知識',
-          color: '#6B7280',
-          icon: 'ℹ️',
+          id: "cat_003",
+          slug: "simmons-knowledge",
+          name: "席夢思小知識",
+          description: "分享席夢思的相關小知識",
+          color: "#6B7280",
+          icon: "ℹ️",
           postsCount: 0,
         },
       },
     },
     {
-      params: { post_category: 'customer-reviews' },
+      params: { post_category: "customer-reviews" },
       props: {
         category: {
-          id: 'cat_004',
-          slug: 'customer-reviews',
-          name: '顧客真實回饋',
-          description: '來自真實客戶的睡眠體驗分享，了解 Simmons 黑牌床墊的實際使用心得與評價',
-          color: '#10B981',
-          icon: '⭐',
+          id: "cat_004",
+          slug: "customer-reviews",
+          name: "顧客真實回饋",
+          description:
+            "來自真實客戶的睡眠體驗分享，了解 Simmons 黑牌床墊的實際使用心得與評價",
+          color: "#10B981",
+          icon: "⭐",
           postsCount: 0,
         },
       },
@@ -207,7 +222,7 @@ export async function getStaticPaths() {
 }
 
 // Conditional prerender: disabled in dev for easier preview, enabled in staging/production for static generation
-export const prerender = import.meta.env.MODE !== 'development';
+export const prerender = import.meta.env.MODE !== "development";
 
 interface Props {
   category?: StaticCategory;
@@ -225,7 +240,9 @@ let category = staticCategory ?? null;
 
 if (!category) {
   try {
-    const categoryResponse = await fetch(`${apiUrl}/api/posts/categories/${routeCategorySlug}`);
+    const categoryResponse = await fetch(
+      `${apiUrl}/api/posts/categories/${routeCategorySlug}`
+    );
     if (categoryResponse.ok) {
       const categoryPayload = await categoryResponse.json();
       if (categoryPayload?.success && categoryPayload?.data) {
@@ -241,12 +258,14 @@ if (!category) {
       }
     }
   } catch (error) {
-    console.error('Error fetching category detail:', error);
+    console.error("Error fetching category detail:", error);
   }
 }
 
 if (!category) {
-  const fallback = fallbackCategories.find((item) => item.slug === routeCategorySlug);
+  const fallback = fallbackCategories.find(
+    (item) => item.slug === routeCategorySlug
+  );
   if (fallback) {
     category = fallback;
   } else {
@@ -256,7 +275,10 @@ if (!category) {
 
 const categorySlug = normalizeCategorySlug(category.slug);
 const categoryName = resolveCategoryName(categorySlug, category.name);
-const categoryDescription = resolveCategoryDescription(categorySlug, category.description);
+const categoryDescription = resolveCategoryDescription(
+  categorySlug,
+  category.description
+);
 
 let rawPosts: (BlogPost & { category?: PostCategory | string })[] = [];
 
@@ -270,10 +292,13 @@ try {
 
     rawPosts = Array.isArray(postsPayload?.data) ? postsPayload.data : [];
   } else {
-    console.warn(`Failed to fetch posts for category "${categorySlug}":`, postsResponse.status);
+    console.warn(
+      `Failed to fetch posts for category "${categorySlug}":`,
+      postsResponse.status
+    );
   }
 } catch (error) {
-  console.error('Error fetching posts for category:', error);
+  console.error("Error fetching posts for category:", error);
 }
 
 const posts: BlogPostSummary[] = rawPosts.map((post) => {
@@ -283,13 +308,18 @@ const posts: BlogPostSummary[] = rawPosts.map((post) => {
 
   if (isPostCategory(categoryData)) {
     slugSource = categoryData.slug || categoryData.id;
-    categoryLabel = categoryData.name || resolveCategoryName(normalizeCategorySlug(slugSource));
-  } else if (typeof categoryData === 'string') {
+    categoryLabel =
+      categoryData.name ||
+      resolveCategoryName(normalizeCategorySlug(slugSource));
+  } else if (typeof categoryData === "string") {
     slugSource = categoryData;
-    categoryLabel = resolveCategoryName(normalizeCategorySlug(slugSource), categoryData);
+    categoryLabel = resolveCategoryName(
+      normalizeCategorySlug(slugSource),
+      categoryData
+    );
   } else {
     slugSource = undefined;
-    categoryLabel = resolveCategoryName('');
+    categoryLabel = resolveCategoryName("");
   }
 
   return {
@@ -305,9 +335,10 @@ const posts: BlogPostSummary[] = rawPosts.map((post) => {
   };
 });
 
-const cardVariant = categorySlug === 'blogger-testimonial' ? 'vertical' : 'horizontal';
+const cardVariant =
+  categorySlug === "blogger-testimonial" ? "vertical" : "horizontal";
 const pageTitle = `${categoryName} - Black Living 黑哥家居`;
-const pageDescription = categoryDescription || '最新文章與品牌故事分享';
+const pageDescription = categoryDescription || "最新文章與品牌故事分享";
 ---
 
 <BaseLayout title={pageTitle} description={pageDescription}>

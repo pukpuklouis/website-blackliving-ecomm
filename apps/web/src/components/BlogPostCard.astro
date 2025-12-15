@@ -1,5 +1,5 @@
 ---
-import { BlogPostCard } from './BlogPostCard';
+import { BlogPostCard } from "./BlogPostCard";
 
 interface Props {
   post: {
@@ -18,14 +18,14 @@ interface Props {
   href: string;
 }
 
-const { post, variant = "vertical", class: className = '', href } = Astro.props as Props & { href: string };
+const {
+  post,
+  variant = "vertical",
+  class: className = "",
+  href,
+} = Astro.props as Props & { href: string };
 ---
 
 <div class={className}>
-  <BlogPostCard 
-    post={post} 
-    variant={variant} 
-    href={href}
-    client:load 
-  />
+  <BlogPostCard post={post} variant={variant} href={href} client:load/>
 </div>

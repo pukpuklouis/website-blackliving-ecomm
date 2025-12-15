@@ -1,8 +1,8 @@
 ---
-import { getCollection } from 'astro:content';
-import TestimonialCard from './testimonialCard.astro';
+import { getCollection } from "astro:content";
+import TestimonialCard from "./testimonialCard.astro";
 
-const testimonialsData = await getCollection('testimonials');
+const testimonialsData = await getCollection("testimonials");
 const testimonials = testimonialsData[0]?.data.testimonials || [];
 ---
 
@@ -19,7 +19,9 @@ const testimonials = testimonialsData[0]?.data.testimonials || [];
     </div>
 
     <div class="text-center mt-8">
-      <a href="/testimonials" class="text-black font-semibold hover:underline">查看更多好評 →</a>
+      <a href="/testimonials" class="text-black font-semibold hover:underline"
+        >查看更多好評 →</a
+      >
     </div>
   </div>
 </section>

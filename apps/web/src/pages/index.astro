@@ -1,20 +1,20 @@
 ---
+import { Image } from "astro:assets";
+import { getEntry } from "astro:content";
+import BrandStory from "../components/BrandStory.astro";
+import CTA from "../components/CTA.astro";
+import FeatureAd from "../components/FeatureAd.astro";
+import FeaturedProducts from "../components/FeaturedProducts.astro";
+import FeatureIcons from "../components/FeatureIcons.astro";
+import FeatureProductBanner from "../components/FeatureProductBanner.astro";
+import HeroSlider from "../components/HeroSlider.astro";
+import StoreMaps from "../components/StoreMaps.astro";
+import Testimonial from "../components/Testimonial.astro";
 // Homepage for Black Living
-import BaseLayout from '../layouts/BaseLayout.astro';
-import HeroSlider from '../components/HeroSlider.astro';
-import BrandStory from '../components/BrandStory.astro';
-import FeatureIcons from '../components/FeatureIcons.astro';
-import FeatureAd from '../components/FeatureAd.astro';
-import FeatureProductBanner from '../components/FeatureProductBanner.astro';
-import FeaturedProducts from '../components/FeaturedProducts.astro';
-import CTA from '../components/CTA.astro';
-import StoreMaps from '../components/StoreMaps.astro';
-import Testimonial from '../components/Testimonial.astro';
-import { Image } from 'astro:assets';
-import { getEntry } from 'astro:content';
+import BaseLayout from "../layouts/BaseLayout.astro";
 
 // Get store information from content collection
-const storeData = await getEntry('storeinfo', 'storeinfo');
+const storeData = await getEntry("storeinfo", "storeinfo");
 const stores = storeData?.data.stores || [];
 ---
 
@@ -25,11 +25,11 @@ const stores = storeData?.data.stores || [];
   image="/og-image.jpg"
 >
   <!-- Hero Section -->
-  <HeroSlider />
+  <HeroSlider/>
   <!-- Brand Story -->
-  <BrandStory />
+  <BrandStory/>
   <!-- Feature Icons -->
-  <FeatureIcons />
+  <FeatureIcons/>
   <!-- Feature Product Banner -->
   <FeatureProductBanner
     imageUrl="/feature-banner/blackliving-feature-banner.webp"
@@ -106,9 +106,23 @@ const stores = storeData?.data.stores || [];
     limit={4}
     class="!bg-primary/25"
   />
+  <FeatureProductBanner
+    imageUrl="/feature-banner/blackliving-feature-banner-shopee-no1.webp"
+    alt="蝦皮第一賣家"
+    aspectRatio="video"
+    showOnDesktop={true}
+    showOnMobile={true}
+    gradientDirection="right-to-left"
+    gradientFromColor="transparent"
+    gradientToColor="var(--primary)"
+    gradientOpacity={0}
+    textPosition="left"
+    textTitle=""
+    textDescription=""
+  />
 
   <!-- Testimonials Preview -->
-  <Testimonial />
+  <Testimonial/>
 
   <!-- CTA Section -->
   <CTA

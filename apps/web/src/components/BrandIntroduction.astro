@@ -1,13 +1,14 @@
 ---
-import { Image } from 'astro:assets';
+import { Image } from "astro:assets";
+
 interface Props {
   headline?: string;
   body?: string;
 }
 
 const {
-  headline = '品牌介紹',
-  body = '黑哥居家 Black Living｜Simmons Black Label 平行輸入首選\n黑哥居家是全台最大 Simmons 席夢思黑標床墊平行輸入商，擁有多年貿易經驗，商品100%美國製造、原廠直送，提供最齊全的款式與現貨庫存，長期服務設計師、建案與家具通路。',
+  headline = "品牌介紹",
+  body = "黑哥居家 Black Living｜Simmons Black Label 平行輸入首選\n黑哥居家是全台最大 Simmons 席夢思黑標床墊平行輸入商，擁有多年貿易經驗，商品100%美國製造、原廠直送，提供最齊全的款式與現貨庫存，長期服務設計師、建案與家具通路。",
 } = Astro.props;
 ---
 
@@ -30,9 +31,7 @@ const {
       </h2>
       <!-- Body text -->
       <div class="prose prose-lg md:prose-xl mx-auto">
-        <p class="text-gray-700 leading-relaxed text-lg md:text-xl">
-          {body}
-        </p>
+        <p class="text-gray-700 leading-relaxed text-lg md:text-xl">{body}</p>
       </div>
     </div>
   </div>

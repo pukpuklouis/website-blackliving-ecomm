@@ -1,6 +1,6 @@
-import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
-import { z } from 'zod';
+import { z } from "zod";
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
 
 // Types and schemas
 export interface ProductVariant {
@@ -54,18 +54,18 @@ export interface LogisticSettings {
 // Validation schemas
 
 const customerInfoSchema = z.object({
-  name: z.string().min(1, '請輸入姓名'),
-  email: z.string().email('請輸入有效的電子郵件'),
-  phone: z.string().min(10, '請輸入有效的電話號碼'),
+  name: z.string().min(1, "請輸入姓名"),
+  email: z.string().email("請輸入有效的電子郵件"),
+  phone: z.string().min(10, "請輸入有效的電話號碼"),
 });
 
 const shippingAddressSchema = z.object({
-  name: z.string().min(1, '請輸入收件人姓名'),
-  phone: z.string().min(10, '請輸入收件人電話'),
-  address: z.string().min(1, '請輸入詳細地址'),
-  city: z.string().min(1, '請選擇城市'),
-  district: z.string().min(1, '請選擇區域'),
-  postalCode: z.string().regex(/^\d{3,5}$/, '請輸入有效的郵遞區號'),
+  name: z.string().min(1, "請輸入收件人姓名"),
+  phone: z.string().min(10, "請輸入收件人電話"),
+  address: z.string().min(1, "請輸入詳細地址"),
+  city: z.string().min(1, "請選擇城市"),
+  district: z.string().min(1, "請選擇區域"),
+  postalCode: z.string().regex(/^\d{3,5}$/, "請輸入有效的郵遞區號"),
 });
 
 export interface CartStore {
@@ -75,7 +75,7 @@ export interface CartStore {
   error: string | null;
   customerInfo: CustomerInfo | null;
   shippingAddress: ShippingAddress | null;
-  paymentMethod: 'bank_transfer' | 'credit_card' | 'cash_on_delivery';
+  paymentMethod: "bank_transfer" | "credit_card" | "cash_on_delivery";
   notes: string;
   isSubmittingOrder: boolean;
   logisticSettings: LogisticSettings;
@@ -87,15 +87,21 @@ export interface CartStore {
   getTotal: () => number;
 
   // Actions
-  addItem: (item: Omit<CartItem, 'quantity'>) => void;
+  addItem: (item: Omit<CartItem, "quantity">) => void;
   removeItem: (productId: string, variantId?: string) => void;
-  updateQuantity: (productId: string, quantity: number, variantId?: string) => void;
+  updateQuantity: (
+    productId: string,
+    quantity: number,
+    variantId?: string
+  ) => void;
   clearCart: () => void;
 
   // Customer & shipping
   setCustomerInfo: (info: CustomerInfo) => void;
   setShippingAddress: (address: ShippingAddress) => void;
-  setPaymentMethod: (method: 'bank_transfer' | 'credit_card' | 'cash_on_delivery') => void;
+  setPaymentMethod: (
+    method: "bank_transfer" | "credit_card" | "cash_on_delivery"
+  ) => void;
   setNotes: (notes: string) => void;
 
   // UI State
@@ -105,7 +111,11 @@ export interface CartStore {
   toggleCart: () => void;
 
   // Order creation
-  createOrder: () => Promise<{ success: boolean; orderNumber?: string; error?: string }>;
+  createOrder: () => Promise<{
+    success: boolean;
+    orderNumber?: string;
+    error?: string;
+  }>;
 
   // Utility
   setError: (error: string | null) => void;
@@ -123,13 +133,13 @@ const getApiUrl = (): string => {
     import.meta.env.PUBLIC_API_URL,
   ];
 
-  if (typeof globalThis !== 'undefined') {
+  if (typeof globalThis !== "undefined") {
     const runtimeEnv =
       (globalThis as Record<string, unknown>).ENV ??
       (globalThis as Record<string, unknown>).__ENV__ ??
       (globalThis as Record<string, unknown>).__ENV;
 
-    if (runtimeEnv && typeof runtimeEnv === 'object') {
+    if (runtimeEnv && typeof runtimeEnv === "object") {
       const envRecord = runtimeEnv as Record<string, unknown>;
       candidates.push(envRecord.PUBLIC_API_BASE_URL);
       candidates.push(envRecord.PUBLIC_API_URL);
@@ -138,14 +148,14 @@ const getApiUrl = (): string => {
 
   const apiUrl = candidates.reduce<string>((acc, candidate) => {
     if (acc) return acc;
-    if (typeof candidate === 'string') {
+    if (typeof candidate === "string") {
       const trimmed = candidate.trim();
       if (trimmed) {
-        return trimmed.endsWith('/') ? trimmed.slice(0, -1) : trimmed;
+        return trimmed.endsWith("/") ? trimmed.slice(0, -1) : trimmed;
       }
     }
     return acc;
-  }, '');
+  }, "");
 
   // Return the found URL or empty string (will fallback to relative URL)
   return apiUrl;
@@ -169,12 +179,16 @@ export const calculateShippingFee = (
   if (address && settings.remoteZones.length > 0) {
     const zone = settings.remoteZones.find((z) => {
       // Simple string matching, can be improved
-      const cityMatch = address.city.includes(z.city) || z.city.includes(address.city);
+      const cityMatch =
+        address.city.includes(z.city) || z.city.includes(address.city);
       if (!cityMatch) return false;
 
       // If zone has district, it must match
       if (z.district) {
-        return address.district.includes(z.district) || z.district.includes(address.district);
+        return (
+          address.district.includes(z.district) ||
+          z.district.includes(address.district)
+        );
       }
       return true;
     });
@@ -187,9 +201,8 @@ export const calculateShippingFee = (
   return fee;
 };
 
-const getItemKey = (productId: string, variantId?: string): string => {
-  return variantId ? `${productId}-${variantId}` : productId;
-};
+const getItemKey = (productId: string, variantId?: string): string =>
+  variantId ? `${productId}-${variantId}` : productId;
 
 const createOrder = async (
   items: CartItem[],
@@ -221,12 +234,12 @@ const createOrder = async (
     };
 
     const apiUrl = getApiUrl();
-    const orderEndpoint = apiUrl ? `${apiUrl}/api/orders` : '/api/orders';
+    const orderEndpoint = apiUrl ? `${apiUrl}/api/orders` : "/api/orders";
 
     const response = await fetch(orderEndpoint, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
       body: JSON.stringify(orderData),
     });
@@ -234,7 +247,7 @@ const createOrder = async (
     const result = await response.json();
 
     if (!response.ok) {
-      throw new Error(result.error || '訂單建立失敗');
+      throw new Error(result.error || "訂單建立失敗");
     }
 
     return {
@@ -242,10 +255,11 @@ const createOrder = async (
       orderNumber: result.data?.orderNumber,
     };
   } catch (error) {
-    console.error('Order creation error:', error);
+    console.error("Order creation error:", error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : '訂單建立失敗，請稍後再試',
+      error:
+        error instanceof Error ? error.message : "訂單建立失敗，請稍後再試",
     };
   }
 };
@@ -259,29 +273,31 @@ export const useCartStore = create<CartStore>()(
       error: null,
       customerInfo: null,
       shippingAddress: null,
-      paymentMethod: 'bank_transfer',
-      notes: '',
+      paymentMethod: "bank_transfer",
+      notes: "",
       isSubmittingOrder: false,
       isCartOpen: false,
       logisticSettings: {
         baseFee: 1500,
-        freeShippingThreshold: 30000,
+        freeShippingThreshold: 30_000,
         remoteZones: [],
       },
 
       // Computed selectors (NOT persisted, calculated on demand)
-      getItemCount: () => {
-        return get().items.reduce((sum, item) => sum + item.quantity, 0);
-      },
+      getItemCount: () =>
+        get().items.reduce((sum, item) => sum + item.quantity, 0),
 
-      getSubtotal: () => {
-        return get().items.reduce((sum, item) => sum + item.price * item.quantity, 0);
-      },
+      getSubtotal: () =>
+        get().items.reduce((sum, item) => sum + item.price * item.quantity, 0),
 
       getShippingFee: () => {
         const state = get();
         const subtotal = state.getSubtotal();
-        return calculateShippingFee(subtotal, state.logisticSettings, state.shippingAddress);
+        return calculateShippingFee(
+          subtotal,
+          state.logisticSettings,
+          state.shippingAddress
+        );
       },
 
       getTotal: () => {
@@ -305,12 +321,11 @@ export const useCartStore = create<CartStore>()(
               quantity: updatedItems[existingItemIndex].quantity + 1,
             };
             return { items: updatedItems };
-          } else {
-            // Add new item
-            return {
-              items: [...state.items, { ...newItem, quantity: 1 }],
-            };
           }
+          // Add new item
+          return {
+            items: [...state.items, { ...newItem, quantity: 1 }],
+          };
         });
       },
 
@@ -357,7 +372,7 @@ export const useCartStore = create<CartStore>()(
           error: null,
           customerInfo: null,
           shippingAddress: null,
-          notes: '',
+          notes: "",
         });
       },
 
@@ -367,7 +382,7 @@ export const useCartStore = create<CartStore>()(
           set({ customerInfo: info, error: null });
         } catch (error) {
           if (error instanceof z.ZodError) {
-            set({ error: error.issues[0]?.message || '客戶資料格式錯誤' });
+            set({ error: error.issues[0]?.message || "客戶資料格式錯誤" });
           }
         }
       },
@@ -378,7 +393,7 @@ export const useCartStore = create<CartStore>()(
           set({ shippingAddress: address, error: null });
         } catch (error) {
           if (error instanceof z.ZodError) {
-            set({ error: error.issues[0]?.message || '配送地址格式錯誤' });
+            set({ error: error.issues[0]?.message || "配送地址格式錯誤" });
           }
         }
       },
@@ -419,7 +434,7 @@ export const useCartStore = create<CartStore>()(
             // Clear cart on successful order
             get().clearCart();
           } else {
-            set({ error: result.error || '訂單建立失敗' });
+            set({ error: result.error || "訂單建立失敗" });
           }
 
           return result;
@@ -436,17 +451,19 @@ export const useCartStore = create<CartStore>()(
         const errors: string[] = [];
 
         if (state.items.length === 0) {
-          errors.push('購物車不能為空');
+          errors.push("購物車不能為空");
         }
 
         if (!state.customerInfo) {
-          errors.push('請填寫客戶資料');
+          errors.push("請填寫客戶資料");
         }
 
         // Check stock availability
         const outOfStockItems = state.items.filter((item) => !item.inStock);
         if (outOfStockItems.length > 0) {
-          errors.push(`以下商品缺貨：${outOfStockItems.map((item) => item.name).join(', ')}`);
+          errors.push(
+            `以下商品缺貨：${outOfStockItems.map((item) => item.name).join(", ")}`
+          );
         }
 
         return {
@@ -467,26 +484,30 @@ export const useCartStore = create<CartStore>()(
           const apiUrl = getApiUrl();
           const logisticEndpoint = apiUrl
             ? `${apiUrl}/api/settings/logistic_settings`
-            : '/api/settings/logistic_settings';
+            : "/api/settings/logistic_settings";
 
-          const response = await fetch(logisticEndpoint);
+          const response = await fetch(logisticEndpoint, {
+            credentials: "include",
+          });
           if (response.ok) {
             const result = await response.json();
             if (result.success && result.data) {
               const currentSettings = get().logisticSettings;
               // Only update if settings have changed to avoid unnecessary re-renders
-              if (JSON.stringify(currentSettings) !== JSON.stringify(result.data)) {
+              if (
+                JSON.stringify(currentSettings) !== JSON.stringify(result.data)
+              ) {
                 set({ logisticSettings: result.data });
               }
             }
           }
         } catch (error) {
-          console.error('Failed to fetch logistic settings:', error);
+          console.error("Failed to fetch logistic settings:", error);
         }
       },
     }),
     {
-      name: 'cart-store',
+      name: "cart-store",
       version: 2,
       partialize: (state) => ({
         items: state.items,

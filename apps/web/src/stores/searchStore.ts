@@ -1,14 +1,13 @@
-import { create } from 'zustand';
-import {
-  type RecentSearchEntry,
-  type SearchResultSections,
-  type UnifiedSearchResult,
-} from '@blackliving/types/search';
+import type {
+  RecentSearchEntry,
+  SearchResultSections,
+  UnifiedSearchResult,
+} from "@blackliving/types/search";
+import { create } from "zustand";
+import { analyticsService } from "../services/analyticsService";
+import { meiliSearchService } from "../services/meiliSearchService";
 
-import { meiliSearchService } from '../services/meiliSearchService';
-import { analyticsService } from '../services/analyticsService';
-
-const RECENT_STORAGE_KEY = 'blackliving:search:recent';
+const RECENT_STORAGE_KEY = "blackliving:search:recent";
 const MAX_RECENT_ITEMS = 8;
 
 const EMPTY_RESULTS = (): SearchResultSections => ({
@@ -17,7 +16,7 @@ const EMPTY_RESULTS = (): SearchResultSections => ({
   pages: [],
 });
 
-type SearchTypeFilter = 'product' | 'post' | 'page';
+type SearchTypeFilter = "product" | "post" | "page";
 
 type SearchOptions = {
   query?: string;
@@ -51,7 +50,8 @@ interface SearchStoreState {
 }
 
 function loadRecentEntries(): RecentSearchEntry[] {
-  const storage = (globalThis as typeof globalThis & { localStorage?: Storage }).localStorage;
+  const storage = (globalThis as typeof globalThis & { localStorage?: Storage })
+    .localStorage;
   if (!storage) return [];
 
   try {
@@ -62,29 +62,33 @@ function loadRecentEntries(): RecentSearchEntry[] {
     if (!Array.isArray(parsed)) return [];
 
     return parsed
-      .filter((entry) => typeof entry?.id === 'string' && typeof entry?.query === 'string')
+      .filter(
+        (entry) =>
+          typeof entry?.id === "string" && typeof entry?.query === "string"
+      )
       .slice(0, MAX_RECENT_ITEMS);
   } catch (error) {
-    console.warn('Failed to parse recent searches', error);
+    console.warn("Failed to parse recent searches", error);
     return [];
   }
 }
 
 function persistRecentEntries(entries: RecentSearchEntry[]) {
-  const storage = (globalThis as typeof globalThis & { localStorage?: Storage }).localStorage;
+  const storage = (globalThis as typeof globalThis & { localStorage?: Storage })
+    .localStorage;
   if (!storage) return;
 
   try {
     storage.setItem(RECENT_STORAGE_KEY, JSON.stringify(entries));
   } catch (error) {
-    console.warn('Failed to persist recent searches', error);
+    console.warn("Failed to persist recent searches", error);
   }
 }
 
 function createRecentEntry(query: string): RecentSearchEntry {
   return {
     id:
-      typeof crypto !== 'undefined' && crypto.randomUUID
+      typeof crypto !== "undefined" && crypto.randomUUID
         ? crypto.randomUUID()
         : `${Date.now()}-${Math.random()}`,
     query,
@@ -94,7 +98,7 @@ function createRecentEntry(query: string): RecentSearchEntry {
 
 export const useSearchStore = create<SearchStoreState>((set, get) => ({
   isOpen: false,
-  query: '',
+  query: "",
   results: EMPTY_RESULTS(),
   isLoading: false,
   error: null,
@@ -145,7 +149,10 @@ export const useSearchStore = create<SearchStoreState>((set, get) => ({
 
     const { recent } = get();
     const filtered = recent.filter((entry) => entry.query !== trimmed);
-    const nextEntries = [createRecentEntry(trimmed), ...filtered].slice(0, MAX_RECENT_ITEMS);
+    const nextEntries = [createRecentEntry(trimmed), ...filtered].slice(
+      0,
+      MAX_RECENT_ITEMS
+    );
 
     set({ recent: nextEntries });
     persistRecentEntries(nextEntries);
@@ -163,7 +170,7 @@ export const useSearchStore = create<SearchStoreState>((set, get) => ({
 
     // Track result click analytics
     analyticsService.trackResultClick(
-      state.query || '',
+      state.query || "",
       result.id,
       result.type,
       position || 1, // Default to position 1 if not provided
@@ -179,7 +186,12 @@ export const useSearchStore = create<SearchStoreState>((set, get) => ({
     const query = (options?.query ?? state.query).trim();
 
     if (!query) {
-      set({ results: EMPTY_RESULTS(), isLoading: false, error: null, lastFetchedQuery: null });
+      set({
+        results: EMPTY_RESULTS(),
+        isLoading: false,
+        error: null,
+        lastFetchedQuery: null,
+      });
       return;
     }
 
@@ -224,11 +236,11 @@ export const useSearchStore = create<SearchStoreState>((set, get) => ({
         lastFetchedQuery: response.query,
       });
     } catch (error) {
-      if ((error as Error).name === 'AbortError') {
+      if ((error as Error).name === "AbortError") {
         return;
       }
 
-      const errorMessage = (error as Error).message || '搜尋失敗，請稍後再試';
+      const errorMessage = (error as Error).message || "搜尋失敗，請稍後再試";
 
       // Track search error analytics
       analyticsService.trackSearchError(query, errorMessage, {
@@ -247,7 +259,7 @@ export type { SearchStoreState };
 export function resetSearchStoreState() {
   useSearchStore.setState({
     isOpen: false,
-    query: '',
+    query: "",
     results: EMPTY_RESULTS(),
     isLoading: false,
     error: null,

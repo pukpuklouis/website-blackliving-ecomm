@@ -1,12 +1,12 @@
 ---
+import { PRODUCT_TYPE_TEMPLATES } from "@blackliving/types";
+import Breadcrumbs from "../components/blog/Breadcrumbs.astro";
+import CategoryImageBanner from "../components/CategoryImageBanner.astro";
+import CTA from "../components/CTA.astro";
+import ProductCard from "../components/ProductCard.astro";
 // Base layout for all Black Living product category pages
-import BaseLayout from '../layouts/BaseLayout.astro';
-import Breadcrumbs from '../components/blog/Breadcrumbs.astro';
-import ProductCard from '../components/ProductCard.astro';
-import CategoryImageBanner from '../components/CategoryImageBanner.astro';
-import type { CategoryConfig } from '../types/category.ts';
-import CTA from '../components/CTA.astro';
-import { PRODUCT_TYPE_TEMPLATES } from '@blackliving/types';
+import BaseLayout from "../layouts/BaseLayout.astro";
+import type { CategoryConfig } from "../types/category.ts";
 
 export interface Props {
   categoryConfig: CategoryConfig;
@@ -16,31 +16,33 @@ const { categoryConfig } = Astro.props;
 
 const categorySlug = categoryConfig.slug || categoryConfig.category;
 const categoryUrlPath = categoryConfig.urlPath || `/${categorySlug}`;
-const features = Array.isArray(categoryConfig.features) ? categoryConfig.features : [];
+const features = Array.isArray(categoryConfig.features)
+  ? categoryConfig.features
+  : [];
 const [
-  primaryFeature = '品質保證',
-  secondaryFeature = '優質價格，物超所值',
-  tertiaryFeature = '貼心服務',
+  primaryFeature = "品質保證",
+  secondaryFeature = "優質價格，物超所值",
+  tertiaryFeature = "貼心服務",
 ] = features;
 const ACCESSORY_SUBTYPE_LABELS: Record<string, string> = {
-  pillow: '枕頭',
-  'sheet-set': '寢具組',
-  protector: '保潔墊',
-  duvet: '羽絨被',
-  topper: '記憶床墊／Topper',
-  'adjustable-base': '電動床架',
-  foundation: '下墊',
+  pillow: "枕頭",
+  "sheet-set": "寢具組",
+  protector: "保潔墊",
+  duvet: "羽絨被",
+  topper: "記憶床墊／Topper",
+  "adjustable-base": "電動床架",
+  foundation: "下墊",
 };
 
 const accessorySubtypeSet = new Set(
   Object.values(PRODUCT_TYPE_TEMPLATES)
-    .filter((template) => template.category === 'accessories')
+    .filter((template) => template.category === "accessories")
     .map((template) => template.id)
 );
 
 const subtypeSlugPattern = /^[a-z0-9,-]+$/;
-const isAccessoriesCategory = categorySlug === 'accessories';
-const rawSubtypeParam = Astro.url?.searchParams?.get('type') ?? null;
+const isAccessoriesCategory = categorySlug === "accessories";
+const rawSubtypeParam = Astro.url?.searchParams?.get("type") ?? null;
 const normalizedSubtype =
   rawSubtypeParam && subtypeSlugPattern.test(rawSubtypeParam)
     ? rawSubtypeParam.toLowerCase()
@@ -49,28 +51,35 @@ const normalizedSubtype =
 const hasValidSubtype = Boolean(
   isAccessoriesCategory &&
     normalizedSubtype &&
-    normalizedSubtype.split(',').every((type) => accessorySubtypeSet.has(type.trim()))
+    normalizedSubtype
+      .split(",")
+      .every((type) => accessorySubtypeSet.has(type.trim()))
 );
 const appliedSubtype = hasValidSubtype ? normalizedSubtype : null;
 // Generate label for multiple types
 const activeSubtypeLabel = isAccessoriesCategory
   ? appliedSubtype
     ? appliedSubtype
-        .split(',')
+        .split(",")
         .map((type) => ACCESSORY_SUBTYPE_LABELS[type.trim()] || type)
-        .join('、')
-    : '全部精選周邊'
+        .join("、")
+    : "全部精選周邊"
   : null;
 const invalidSubtypeQuery =
-  isAccessoriesCategory && rawSubtypeParam && !appliedSubtype ? rawSubtypeParam : null;
+  isAccessoriesCategory && rawSubtypeParam && !appliedSubtype
+    ? rawSubtypeParam
+    : null;
 
 // API configuration
-const API_BASE = import.meta.env.PUBLIC_API_BASE_URL || 'http://localhost:8787';
+const API_BASE = import.meta.env.PUBLIC_API_BASE_URL || "http://localhost:8787";
 
 // SEO and page metadata
 const pageTitle = categoryConfig.title;
 const pageDescription = categoryConfig.description;
-const canonicalUrl = new URL(categoryUrlPath, Astro.site || 'https://blackliving.com.tw');
+const canonicalUrl = new URL(
+  categoryUrlPath,
+  Astro.site || "https://blackliving.com.tw"
+);
 
 // Fetch products from API
 let products: any[] = [];
@@ -80,19 +89,19 @@ let isLoading = false;
 try {
   isLoading = true;
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+  const timeoutId = setTimeout(() => controller.abort(), 10_000); // 10s timeout
 
-  const productApiUrl = new URL('/api/products', API_BASE);
-  productApiUrl.searchParams.set('category', categorySlug);
+  const productApiUrl = new URL("/api/products", API_BASE);
+  productApiUrl.searchParams.set("category", categorySlug);
   if (appliedSubtype) {
-    productApiUrl.searchParams.set('subCategory', appliedSubtype);
+    productApiUrl.searchParams.set("subCategory", appliedSubtype);
   }
 
   const response = await fetch(productApiUrl.toString(), {
     signal: controller.signal,
     headers: {
-      Accept: 'application/json',
-      'User-Agent': 'BlackLiving-Web/1.0',
+      Accept: "application/json",
+      "User-Agent": "BlackLiving-Web/1.0",
     },
   });
 
@@ -114,17 +123,17 @@ try {
   ) {
     products = data.data.products;
   } else {
-    console.error('API未返回正確的產品陣列格式:', data);
+    console.error("API未返回正確的產品陣列格式:", data);
     products = [];
   }
 } catch (err) {
   console.error(`獲取${categoryConfig.series}產品時發生錯誤:`, err);
-  if (err instanceof Error && err.name === 'AbortError') {
-    error = '請求逾時，請稍後再試';
+  if (err instanceof Error && err.name === "AbortError") {
+    error = "請求逾時，請稍後再試";
   } else if (err instanceof Error) {
     error = err.message;
   } else {
-    error = '發生未知錯誤';
+    error = "發生未知錯誤";
   }
 } finally {
   isLoading = false;
@@ -136,7 +145,7 @@ const transformedProducts = Array.isArray(products)
       id: product.id,
       name: product.name,
       series: categoryConfig.series,
-      image: product.images?.[0] || '/images/placeholder-mattress.jpg',
+      image: product.images?.[0] || "/images/placeholder-mattress.jpg",
       features: product.features || [],
       priceFrom: product.variants?.[0]?.price || null,
       originalPrice: product.variants?.[0]?.originalPrice || null,
@@ -148,22 +157,22 @@ const transformedProducts = Array.isArray(products)
 
 // Generate structured data for SEO
 const structuredData = {
-  '@context': 'https://schema.org',
-  '@type': 'CollectionPage',
+  "@context": "https://schema.org",
+  "@type": "CollectionPage",
   name: pageTitle,
   description: pageDescription,
   url: canonicalUrl.toString(),
   breadcrumb: {
-    '@type': 'BreadcrumbList',
+    "@type": "BreadcrumbList",
     itemListElement: [
       {
-        '@type': 'ListItem',
+        "@type": "ListItem",
         position: 1,
-        name: '首頁',
-        item: Astro.site?.toString() || 'https://blackliving.com.tw',
+        name: "首頁",
+        item: Astro.site?.toString() || "https://blackliving.com.tw",
       },
       {
-        '@type': 'ListItem',
+        "@type": "ListItem",
         position: 2,
         name: categoryConfig.series,
         item: canonicalUrl.toString(),
@@ -171,28 +180,31 @@ const structuredData = {
     ],
   },
   mainEntity: {
-    '@type': 'ItemList',
+    "@type": "ItemList",
     numberOfItems: transformedProducts.length,
     itemListElement: transformedProducts.map((product, index) => ({
-      '@type': 'Product',
+      "@type": "Product",
       position: index + 1,
       name: product.name,
       description: `${categoryConfig.series} - ${product.name}`,
       image: product.image,
-      url: new URL(product.href, Astro.site || 'https://blackliving.com.tw').toString(),
+      url: new URL(
+        product.href,
+        Astro.site || "https://blackliving.com.tw"
+      ).toString(),
       brand: {
-        '@type': 'Brand',
+        "@type": "Brand",
         name: categoryConfig.brand,
       },
-      category: '床墊',
+      category: "床墊",
       ...(product.priceFrom && {
         offers: {
-          '@type': 'Offer',
+          "@type": "Offer",
           price: product.priceFrom,
-          priceCurrency: 'TWD',
+          priceCurrency: "TWD",
           availability: product.inStock
-            ? 'https://schema.org/InStock'
-            : 'https://schema.org/OutOfStock',
+            ? "https://schema.org/InStock"
+            : "https://schema.org/OutOfStock",
         },
       }),
     })),
@@ -200,26 +212,32 @@ const structuredData = {
 };
 ---
 
-<BaseLayout title={pageTitle} description={pageDescription} canonical={canonicalUrl.toString()}>
+<BaseLayout
+  title={pageTitle}
+  description={pageDescription}
+  canonical={canonicalUrl.toString()}
+>
   <!-- Structured Data -->
-  <script type="application/ld+json" set:html={JSON.stringify(structuredData)} />
+  <script type="application/ld+json" set:html={JSON.stringify(structuredData)}/>
 
   <!-- Enhanced Meta Tags -->
-  <meta slot="head" property="og:title" content={pageTitle} />
-  <meta slot="head" property="og:description" content={pageDescription} />
-  <meta slot="head" property="og:url" content={canonicalUrl.toString()} />
-  <meta slot="head" property="og:type" content="website" />
-  <meta slot="head" property="og:locale" content="zh_TW" />
-  <meta slot="head" name="twitter:card" content="summary_large_image" />
-  <meta slot="head" name="twitter:title" content={pageTitle} />
-  <meta slot="head" name="twitter:description" content={pageDescription} />
-  <meta slot="head" name="keywords" content={categoryConfig.seoKeywords} />
-  <meta slot="head" name="robots" content="index,follow" />
-  <link slot="head" rel="canonical" href={canonicalUrl.toString()} />
+  <meta slot="head" property="og:title" content={pageTitle}>
+  <meta slot="head" property="og:description" content={pageDescription}>
+  <meta slot="head" property="og:url" content={canonicalUrl.toString()}>
+  <meta slot="head" property="og:type" content="website">
+  <meta slot="head" property="og:locale" content="zh_TW">
+  <meta slot="head" name="twitter:card" content="summary_large_image">
+  <meta slot="head" name="twitter:title" content={pageTitle}>
+  <meta slot="head" name="twitter:description" content={pageDescription}>
+  <meta slot="head" name="keywords" content={categoryConfig.seoKeywords}>
+  <meta slot="head" name="robots" content="index,follow">
+  <link slot="head" rel="canonical" href={canonicalUrl.toString()}>
 
   <main class="container mx-auto px-4 py-8">
     <!-- Breadcrumbs -->
-    <Breadcrumbs category={{ name: categoryConfig.series, slug: categoryConfig.slug }} />
+    <Breadcrumbs
+      category={{ name: categoryConfig.series, slug: categoryConfig.slug }}
+    />
     <!-- Hero Section -->
     <CategoryImageBanner
       categoryConfig={categoryConfig}

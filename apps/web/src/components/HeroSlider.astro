@@ -1,9 +1,9 @@
 ---
 // Hero slider component for homepage, now using shadcn/ui Carousel
-import { getCollection } from 'astro:content';
-import HeroCarousel from './HeroCarousel.tsx';
+import { getCollection } from "astro:content";
+import HeroCarousel from "./HeroCarousel.tsx";
 
-const heroSliderCollection = await getCollection('hero-slider');
+const heroSliderCollection = await getCollection("hero-slider");
 const slides =
   heroSliderCollection[0]?.data.slideset.slides?.map((s) => ({
     data: s,

@@ -1,69 +1,76 @@
-import { defineConfig, fontProviders } from 'astro/config';
-import react from '@astrojs/react';
-import sitemap from '@astrojs/sitemap';
-import cloudflare from '@astrojs/cloudflare';
-import tailwindcss from '@tailwindcss/vite';
-import type { Plugin } from 'vite';
+import cloudflare from "@astrojs/cloudflare";
+import react from "@astrojs/react";
+import sitemap from "@astrojs/sitemap";
+import tailwindcss from "@tailwindcss/vite";
+import { defineConfig, fontProviders } from "astro/config";
+import type { Plugin } from "vite";
 
 // Environment detection
-const isDev = process.env.NODE_ENV !== 'production';
+const isDev = process.env.NODE_ENV !== "production";
 
 // Lucide icon import resolver for both dev and production
 function lucideIconResolver(): Plugin {
   return {
-    name: 'lucide-icon-resolver',
+    name: "lucide-icon-resolver",
     resolveId(id: string) {
       // Handle @lucide/react/* imports in both dev and production
-      if (id.startsWith('@lucide/react/')) {
-        const iconName = id.replace('@lucide/react/', '');
+      if (id.startsWith("@lucide/react/")) {
+        const iconName = id.replace("@lucide/react/", "");
 
         if (isDev) {
           // Development: create virtual module ID
           return `\0lucide-icon:${iconName}`;
-        } else {
-          // Production: resolve to individual icon files for tree-shaking
-          // The iconName is already in kebab-case (e.g., "panel-left")
-          return {
-            id: `lucide-react/dist/esm/icons/${iconName}.js`,
-            external: false
-          };
         }
+        // Production: resolve to individual icon files for tree-shaking
+        // The iconName is already in kebab-case (e.g., "panel-left")
+        return {
+          id: `lucide-react/dist/esm/icons/${iconName}.js`,
+          external: false,
+        };
       }
       return null;
     },
     load(id: string) {
       // In development, create a virtual module that exports the icon from lucide-react
-      if (isDev && id.startsWith('\0lucide-icon:')) {
-        const iconName = id.replace('\0lucide-icon:', '');
+      if (isDev && id.startsWith("\0lucide-icon:")) {
+        const iconName = id.replace("\0lucide-icon:", "");
         // Convert kebab-case to PascalCase for the actual export name
-        const pascalIconName = iconName.split('-').map((word: string) =>
-          word.charAt(0).toUpperCase() + word.slice(1)
-        ).join('');
+        const pascalIconName = iconName
+          .split("-")
+          .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
+          .join("");
 
         return `export { ${pascalIconName} as default } from 'lucide-react';`;
       }
       return null;
-    }
+    },
   };
 }
-
 
 // Function to fetch dynamic pages for sitemap
 async function getDynamicPages(): Promise<string[]> {
   try {
-    const apiUrl = process.env.PUBLIC_API_URL || 'http://localhost:8787';
+    const apiUrl = process.env.PUBLIC_API_URL || "http://localhost:8787";
     // Fetch published pages
-    const response = await fetch(`${apiUrl}/api/pages?status=published&limit=1000`);
+    const response = await fetch(
+      `${apiUrl}/api/pages?status=published&limit=1000`
+    );
     if (!response.ok) return [];
-    const json = await response.json() as { success: boolean; data: { pages: { slug: string }[] } };
+    const json = (await response.json()) as {
+      success: boolean;
+      data: { pages: { slug: string }[] };
+    };
     if (!json.success) return [];
 
-    const siteUrl = process.env.PUBLIC_SITE_URL ||
-      (process.env.NODE_ENV === 'production' ? "https://blackliving-web.pages.dev" : "http://localhost:4321");
+    const siteUrl =
+      process.env.PUBLIC_SITE_URL ||
+      (process.env.NODE_ENV === "production"
+        ? "https://blackliving-web.pages.dev"
+        : "http://localhost:4321");
 
-    return json.data.pages.map(page => `${siteUrl}/${page.slug}`);
+    return json.data.pages.map((page) => `${siteUrl}/${page.slug}`);
   } catch (error) {
-    console.warn('Failed to fetch dynamic pages for sitemap:', error);
+    console.warn("Failed to fetch dynamic pages for sitemap:", error);
     return [];
   }
 }
@@ -71,16 +78,19 @@ async function getDynamicPages(): Promise<string[]> {
 // https://astro.build/config
 // Note: Using Tailwind v4 - no @astrojs/tailwind integration needed
 export default defineConfig({
-  site: process.env.PUBLIC_SITE_URL ||
-    (process.env.NODE_ENV === 'production' ? "https://blackliving-web.pages.dev" : "http://localhost:4321"),
+  site:
+    process.env.PUBLIC_SITE_URL ||
+    (process.env.NODE_ENV === "production"
+      ? "https://blackliving-web.pages.dev"
+      : "http://localhost:4321"),
   integrations: [
     react(),
     sitemap({
       customPages: await getDynamicPages(),
-    })
+    }),
   ],
 
-  output: 'server',
+  output: "server",
   adapter: cloudflare(),
   markdown: {
     gfm: true,
@@ -93,34 +103,26 @@ export default defineConfig({
         provider: "local",
         variants: [
           {
-            src: [
-              "./src/assets/fonts/agatho/Agatho_Light.woff2"
-            ],
+            src: ["./src/assets/fonts/agatho/Agatho_Light.woff2"],
             weight: "300",
-            style: "normal"
+            style: "normal",
           },
           {
-            src: [
-              "./src/assets/fonts/agatho/Agatho_Regular.woff2"
-            ],
+            src: ["./src/assets/fonts/agatho/Agatho_Regular.woff2"],
             weight: "400",
-            style: "normal"
+            style: "normal",
           },
           {
-            src: [
-              "./src/assets/fonts/agatho/Agatho_Medium.woff2"
-            ],
+            src: ["./src/assets/fonts/agatho/Agatho_Medium.woff2"],
             weight: "500",
-            style: "normal"
+            style: "normal",
           },
           {
-            src: [
-              "./src/assets/fonts/agatho/Agatho_Bold.woff2"
-            ],
+            src: ["./src/assets/fonts/agatho/Agatho_Bold.woff2"],
             weight: "700",
-            style: "normal"
-          }
-        ]
+            style: "normal",
+          },
+        ],
       },
       {
         provider: fontProviders.google(),
@@ -128,69 +130,107 @@ export default defineConfig({
         weights: [400, 500, 600, 700],
         styles: ["normal"],
         subsets: ["chinese-traditional"],
-        cssVariable: "--font-noto-tc"
+        cssVariable: "--font-noto-tc",
       },
       {
         provider: fontProviders.google(),
         name: "Crimson Text",
         weights: [400, 600, 700],
         styles: ["normal", "italic"],
-        cssVariable: "--font-crimson-text"
-      }
-    ]
+        cssVariable: "--font-crimson-text",
+      },
+    ],
   },
 
   vite: {
     plugins: [tailwindcss(), lucideIconResolver()],
     resolve: {
       alias: {
-        '~': new URL('./src', import.meta.url).pathname,
-        '@': new URL('../../packages/ui', import.meta.url).pathname,
-        '@/lib': new URL('../../packages/ui/lib', import.meta.url).pathname,
-        '@/components': new URL('../../packages/ui/components', import.meta.url).pathname,
-        '@/hooks': new URL('../../packages/ui/hooks', import.meta.url).pathname,
+        "~": new URL("./src", import.meta.url).pathname,
+        "@": new URL("../../packages/ui", import.meta.url).pathname,
+        "@/lib": new URL("../../packages/ui/lib", import.meta.url).pathname,
+        "@/components": new URL("../../packages/ui/components", import.meta.url)
+          .pathname,
+        "@/hooks": new URL("../../packages/ui/hooks", import.meta.url).pathname,
         // Simple alias approach for Lucide icons
-        ...(isDev ? {} : {
-          '@lucide/react/': 'lucide-react/dist/esm/icons/'
-        }),
+        ...(isDev
+          ? {}
+          : {
+              "@lucide/react/": "lucide-react/dist/esm/icons/",
+            }),
         ...(!isDev && {
-          "react-dom/server": "react-dom/server.edge"
-        })
+          "react-dom/server": "react-dom/server.edge",
+        }),
       },
-      dedupe: ['react', 'react-dom', 'lucide-react']
+      dedupe: [
+        "prosemirror-state",
+        "prosemirror-view",
+        "prosemirror-model",
+        "prosemirror-transform",
+        "prosemirror-schema-list",
+        "prosemirror-gapcursor",
+        "@blocknote/core",
+        "@blocknote/react",
+        "@blocknote/shadcn",
+        "@blocknote/xl-multi-column",
+      ],
     },
     optimizeDeps: {
-      include: ['marked', ...(isDev ? ['lucide-react'] : [])],
-      exclude: isDev ? [] : ['lucide-react']
+      include: ["marked", ...(isDev ? ["lucide-react"] : [])],
+      exclude: isDev ? [] : ["lucide-react"],
     },
     ssr: {
-      noExternal: ['marked']
+      noExternal: [
+        "marked",
+        "@blocknote/core",
+        "@blocknote/react",
+        "@blocknote/shadcn",
+        "@blocknote/xl-multi-column",
+      ],
     },
     build: {
       rollupOptions: {
+        external: [
+          "prosemirror-model",
+          "prosemirror-state",
+          "prosemirror-view",
+          "prosemirror-transform",
+          "prosemirror-schema-list",
+          "prosemirror-gapcursor",
+        ],
         output: {
           manualChunks(id: string) {
             // Group node_modules into vendor chunk
-            if (id.includes('node_modules')) {
+            if (id.includes("node_modules")) {
               // Large packages get their own chunks
-              if (id.includes('@blackliving/ui')) return 'ui';
+              if (id.includes("@blackliving/ui")) return "ui";
+
+              // Group BlockNote and ProseMirror together to ensure single instance
+              if (
+                id.includes("@blocknote") ||
+                id.includes("prosemirror") ||
+                id.includes("yjs")
+              ) {
+                return "editor";
+              }
+
               // Markdown parser gets its own chunk
-              if (id.includes('marked')) return 'markdown';
+              if (id.includes("marked")) return "markdown";
               // Other vendor packages
-              return 'vendor';
+              return "vendor";
             }
-          }
-        }
-      }
+          },
+        },
+      },
     },
     server: {
       proxy: {
-        '/api': {
-          target: 'http://localhost:8787',
+        "/api": {
+          target: "http://localhost:8787",
           changeOrigin: true,
-          secure: false
-        }
-      }
-    }
-  }
+          secure: false,
+        },
+      },
+    },
+  },
 });

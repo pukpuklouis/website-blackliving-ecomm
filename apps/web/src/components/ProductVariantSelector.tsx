@@ -1,20 +1,34 @@
-import React, { useState, useEffect } from 'react';
-import { z } from 'zod';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@blackliving/ui';
-import { OPTION_DISPLAY_NAMES } from '@blackliving/types/product-templates';
+import { OPTION_DISPLAY_NAMES } from "@blackliving/types/product-templates";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@blackliving/ui";
+import { useEffect, useState } from "react";
+import { z } from "zod";
 
 // Dynamic validation schema that adapts to available variants
-const createVariantSchema = (optionNames: string[], variants: ProductVariant[]) => {
+const createVariantSchema = (
+  optionNames: string[],
+  variants: ProductVariant[]
+) => {
   const schemaShape: Record<string, z.ZodTypeAny> = {};
 
   optionNames.forEach((optionName) => {
-    const availableValues = [...new Set(variants.map((v) => v.options[optionName]))];
+    const availableValues = [
+      ...new Set(variants.map((v) => v.options[optionName])),
+    ];
     schemaShape[optionName] = z.enum(availableValues as [string, ...string[]], {
       message: `請選擇${optionName}`,
     });
   });
 
-  schemaShape.quantity = z.number().min(1, '數量至少為1').max(10, '數量不能超過10');
+  schemaShape.quantity = z
+    .number()
+    .min(1, "數量至少為1")
+    .max(10, "數量不能超過10");
 
   return z.object(schemaShape);
 };
@@ -34,7 +48,9 @@ interface ProductVariant {
 interface ProductVariantSelectorProps {
   productId: string;
   variants: ProductVariant[];
-  onVariantChange: (variant: VariantData & { price: number; sku: string }) => void;
+  onVariantChange: (
+    variant: VariantData & { price: number; sku: string }
+  ) => void;
   onAddToCart?: (variant: VariantData & { price: number; sku: string }) => void;
   className?: string;
 }
@@ -44,22 +60,24 @@ export default function ProductVariantSelector({
   variants,
   onVariantChange,
   onAddToCart,
-  className = '',
+  className = "",
 }: ProductVariantSelectorProps) {
   const optionNames =
     variants &&
-      variants.length > 0 &&
-      variants[0] &&
-      variants[0].options &&
-      typeof variants[0].options === 'object'
+    variants.length > 0 &&
+    variants[0] &&
+    variants[0].options &&
+    typeof variants[0].options === "object"
       ? Object.keys(variants[0].options)
       : [];
 
-  const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
+  const [selectedOptions, setSelectedOptions] = useState<
+    Record<string, string>
+  >({});
   const [quantity, setQuantity] = useState<number>(1);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [currentPrice, setCurrentPrice] = useState<number | null>(null);
-  const [currentSku, setCurrentSku] = useState<string>('');
+  const [currentSku, setCurrentSku] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
 
   // Auto-select variant if only one option exists
@@ -74,18 +92,24 @@ export default function ProductVariantSelector({
   const optionConfigs = optionNames.map((optionName) => ({
     name: optionName,
     displayName: OPTION_DISPLAY_NAMES[optionName] || optionName,
-    values: [...new Set(variants.map((v) => v.options?.[optionName]).filter(Boolean))],
-    isColor: optionName.toLowerCase().includes('color'),
+    values: [
+      ...new Set(variants.map((v) => v.options?.[optionName]).filter(Boolean)),
+    ],
+    isColor: optionName.toLowerCase().includes("color"),
   }));
 
   // Update price and SKU when variant selection changes
   useEffect(() => {
     if (variants.length === 0 || optionNames.length === 0) return;
 
-    const allOptionsSelected = optionNames.every((name) => selectedOptions[name]);
+    const allOptionsSelected = optionNames.every(
+      (name) => selectedOptions[name]
+    );
     if (allOptionsSelected) {
       const variant = variants.find(
-        (v) => v.options && optionNames.every((name) => v.options[name] === selectedOptions[name])
+        (v) =>
+          v.options &&
+          optionNames.every((name) => v.options[name] === selectedOptions[name])
       );
 
       if (variant) {
@@ -94,7 +118,10 @@ export default function ProductVariantSelector({
 
         try {
           const variantSchema = createVariantSchema(optionNames, variants);
-          const validatedData = variantSchema.parse({ ...selectedOptions, quantity });
+          const validatedData = variantSchema.parse({
+            ...selectedOptions,
+            quantity,
+          });
           onVariantChange({
             options: selectedOptions,
             quantity,
@@ -109,7 +136,7 @@ export default function ProductVariantSelector({
   }, [selectedOptions, quantity, variants, onVariantChange, optionNames]);
 
   const handleVariantChange = (field: string, value: string | number) => {
-    if (field === 'quantity') {
+    if (field === "quantity") {
       setQuantity(value as number);
     } else {
       setSelectedOptions((prev) => ({ ...prev, [field]: value as string }));
@@ -126,24 +153,30 @@ export default function ProductVariantSelector({
   };
 
   const validateAndAddToCart = async () => {
-    if (!onAddToCart || variants.length === 0 || optionNames.length === 0) return;
+    if (!onAddToCart || variants.length === 0 || optionNames.length === 0)
+      return;
 
     setIsLoading(true);
     setErrors({});
 
     try {
       const variantSchema = createVariantSchema(optionNames, variants);
-      const validatedData = variantSchema.parse({ ...selectedOptions, quantity });
+      const validatedData = variantSchema.parse({
+        ...selectedOptions,
+        quantity,
+      });
       const variant = variants.find(
-        (v) => v.options && optionNames.every((name) => v.options[name] === selectedOptions[name])
+        (v) =>
+          v.options &&
+          optionNames.every((name) => v.options[name] === selectedOptions[name])
       );
 
       if (!variant) {
-        throw new Error('找不到對應的產品規格');
+        throw new Error("找不到對應的產品規格");
       }
 
       if (variant.stock < quantity) {
-        throw new Error('庫存不足');
+        throw new Error("庫存不足");
       }
 
       await onAddToCart({
@@ -162,7 +195,7 @@ export default function ProductVariantSelector({
         });
         setErrors(fieldErrors);
       } else {
-        alert(error instanceof Error ? error.message : '加入購物車失敗');
+        alert(error instanceof Error ? error.message : "加入購物車失敗");
       }
     } finally {
       setIsLoading(false);
@@ -171,10 +204,14 @@ export default function ProductVariantSelector({
 
   const getCurrentStock = () => {
     if (variants.length === 0 || optionNames.length === 0) return null;
-    const allOptionsSelected = optionNames.every((name) => selectedOptions[name]);
+    const allOptionsSelected = optionNames.every(
+      (name) => selectedOptions[name]
+    );
     if (!allOptionsSelected) return null;
     const variant = variants.find(
-      (v) => v.options && optionNames.every((name) => v.options[name] === selectedOptions[name])
+      (v) =>
+        v.options &&
+        optionNames.every((name) => v.options[name] === selectedOptions[name])
     );
     return variant?.stock || 0;
   };
@@ -186,93 +223,121 @@ export default function ProductVariantSelector({
       {/* Dynamic Option Selections */}
       {optionConfigs.map((config) => (
         <div key={config.name}>
-          <label className="block text-md md:text-lg font-medium text-gray-700 mb-3">
+          <label className="mb-3 block font-medium text-gray-700 text-md md:text-lg">
             選擇{config.displayName} *
           </label>
           <Select
-            value={selectedOptions[config.name] || ''}
-            onValueChange={(value: string) => handleVariantChange(config.name, value)}
+            onValueChange={(value: string) =>
+              handleVariantChange(config.name, value)
+            }
+            value={selectedOptions[config.name] || ""}
           >
-            <SelectTrigger className="w-full text-md md:text-lg md:w-[50%]">
+            <SelectTrigger className="w-full text-md md:w-[50%] md:text-lg">
               <SelectValue placeholder={`請選擇${config.displayName}`} />
             </SelectTrigger>
             <SelectContent>
               {config.values.map((value) => (
                 <SelectItem key={value} value={value}>
-                  <span className="text-md md:text-lg font-medium">{value}</span>
+                  <span className="font-medium text-md md:text-lg">
+                    {value}
+                  </span>
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
           {errors[config.name] && (
-            <p className="text-destructive text-md mt-1">{errors[config.name]}</p>
+            <p className="mt-1 text-destructive text-md">
+              {errors[config.name]}
+            </p>
           )}
         </div>
       ))}
 
       {/* Price Display */}
       {currentPrice && (
-        <div className="p-4 bg-gray-50 rounded-lg">
-          <div className="flex justify-between items-center">
-            <span className="text-lg font-semibold">售價</span>
-            <span className="text-2xl md:text-3xl font-bold text-destructive">
+        <div className="rounded-lg bg-gray-50 p-4">
+          <div className="flex items-center justify-between">
+            <span className="font-semibold text-lg">售價</span>
+            <span className="font-bold text-2xl text-destructive md:text-3xl">
               NT$ {currentPrice.toLocaleString()}
             </span>
           </div>
           {currentStock !== null && (
-            <div className="text-sm text-gray-600 mt-1">庫存: {currentStock} 件</div>
+            <div className="mt-1 text-gray-600 text-sm">
+              庫存: {currentStock} 件
+            </div>
           )}
         </div>
       )}
 
       {/* Quantity Selection */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">數量 *</label>
+        <label className="mb-2 block font-medium text-gray-700 text-sm">
+          數量 *
+        </label>
         <div className="flex items-center space-x-3">
           <button
-            type="button"
-            onClick={() => handleVariantChange('quantity', Math.max(1, quantity - 1))}
-            className="w-10 h-10 border border-gray-300 rounded-lg flex items-center justify-center hover:bg-gray-50"
+            className="flex h-10 w-10 items-center justify-center rounded-lg border border-gray-300 hover:bg-gray-50"
             disabled={quantity <= 1}
+            onClick={() =>
+              handleVariantChange("quantity", Math.max(1, quantity - 1))
+            }
+            type="button"
           >
             -
           </button>
           <input
-            type="number"
-            min="1"
+            className="w-20 rounded-lg border border-gray-300 py-2 text-center"
             max={Math.min(10, currentStock || 10)}
+            min="1"
+            onChange={(e) =>
+              handleVariantChange(
+                "quantity",
+                Number.parseInt(e.target.value) || 1
+              )
+            }
+            type="number"
             value={quantity}
-            onChange={(e) => handleVariantChange('quantity', parseInt(e.target.value) || 1)}
-            className="w-20 text-center border border-gray-300 rounded-lg py-2"
           />
           <button
-            type="button"
-            onClick={() =>
-              handleVariantChange('quantity', Math.min(10, currentStock || 10, quantity + 1))
-            }
-            className="w-10 h-10 border border-gray-300 rounded-lg flex items-center justify-center hover:bg-gray-50"
+            className="flex h-10 w-10 items-center justify-center rounded-lg border border-gray-300 hover:bg-gray-50"
             disabled={quantity >= Math.min(10, currentStock || 10)}
+            onClick={() =>
+              handleVariantChange(
+                "quantity",
+                Math.min(10, currentStock || 10, quantity + 1)
+              )
+            }
+            type="button"
           >
             +
           </button>
         </div>
-        {errors.quantity && <p className="text-red-500 text-sm mt-1">{errors.quantity}</p>}
+        {errors.quantity && (
+          <p className="mt-1 text-red-500 text-sm">{errors.quantity}</p>
+        )}
       </div>
 
       {/* Add to Cart Button */}
       {onAddToCart && (
         <button
-          type="button"
-          onClick={validateAndAddToCart}
+          className="w-full rounded-lg bg-black px-6 py-4 font-semibold text-lg text-white transition-colors hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
           disabled={isLoading || !currentPrice || currentStock === 0}
-          className="w-full bg-black text-white py-4 px-6 rounded-lg font-semibold text-lg hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          onClick={validateAndAddToCart}
+          type="button"
         >
-          {isLoading ? '處理中...' : currentStock === 0 ? '暫時缺貨' : '加入購物車'}
+          {isLoading
+            ? "處理中..."
+            : currentStock === 0
+              ? "暫時缺貨"
+              : "加入購物車"}
         </button>
       )}
 
       {/* SKU Display */}
-      {currentSku && <div className="text-xs text-gray-500">商品編號: {currentSku}</div>}
+      {currentSku && (
+        <div className="text-gray-500 text-xs">商品編號: {currentSku}</div>
+      )}
     </div>
   );
 }

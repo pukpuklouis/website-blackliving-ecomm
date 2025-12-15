@@ -10,18 +10,14 @@ interface Props {
 }
 
 const { items } = Astro.props;
-
 ---
 
-<div class='relative max-w-4xl mx-auto'>
+<div class="relative max-w-4xl mx-auto">
   <!-- Vertical connecting line -->
-  <div
-    class='absolute left-1 top-1 bottom-9 md:bottom-4 w-2 bg-primary'
-  >
-  </div>
+  <div class="absolute left-1 top-1 bottom-9 md:bottom-4 w-2 bg-primary"></div>
 
   <!-- Timeline items -->
-  <div class='space-y-12'>
+  <div class="space-y-12">
     {
       items.map((item, index) => (
         <div class='relative flex items-top gap-8 group'>

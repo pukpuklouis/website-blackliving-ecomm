@@ -4,7 +4,7 @@ export interface Props {
   testimonials?: Array<{
     id: string;
     name: string;
-    source: 'shopee' | 'google' | 'line' | 'facebook';
+    source: "shopee" | "google" | "line" | "facebook";
     rating: number;
     content: string;
     date?: string;
@@ -17,88 +17,93 @@ const { testimonials = [], limit } = Astro.props;
 
 const defaultTestimonials = [
   {
-    id: '1',
-    name: 'Chen先生',
-    source: 'shopee' as const,
+    id: "1",
+    name: "Chen先生",
+    source: "shopee" as const,
     rating: 5,
     content:
-      '床墊品質真的很好，價格也比專櫃便宜很多，客服回復很快速專業！睡了三個月，腰痛問題改善很多。',
-    date: '2024-12-15',
+      "床墊品質真的很好，價格也比專櫃便宜很多，客服回復很快速專業！睡了三個月，腰痛問題改善很多。",
+    date: "2024-12-15",
   },
   {
-    id: '2',
-    name: 'Lin小姐',
-    source: 'google' as const,
+    id: "2",
+    name: "Lin小姐",
+    source: "google" as const,
     rating: 5,
-    content: '實體店面試躺後決定購買，睡了半年品質依然很好，推薦！黑哥的服務態度很棒。',
-    date: '2024-11-28',
+    content:
+      "實體店面試躺後決定購買，睡了半年品質依然很好，推薦！黑哥的服務態度很棒。",
+    date: "2024-11-28",
   },
   {
-    id: '3',
-    name: 'Wang太太',
-    source: 'line' as const,
+    id: "3",
+    name: "Wang太太",
+    source: "line" as const,
     rating: 5,
-    content: '從諮詢到送貨都很滿意，黑哥的服務真的沒話說！老公的打鼾問題也改善了。',
-    date: '2024-12-01',
+    content:
+      "從諮詢到送貨都很滿意，黑哥的服務真的沒話說！老公的打鼾問題也改善了。",
+    date: "2024-12-01",
   },
   {
-    id: '4',
-    name: 'Zhang先生',
-    source: 'shopee' as const,
+    id: "4",
+    name: "Zhang先生",
+    source: "shopee" as const,
     rating: 5,
-    content: '買貴退差價真的有兌現，而且床墊軟硬適中，全家都很滿意這次的購買。',
-    date: '2024-11-20',
+    content: "買貴退差價真的有兌現，而且床墊軟硬適中，全家都很滿意這次的購買。",
+    date: "2024-11-20",
   },
   {
-    id: '5',
-    name: 'Liu小姐',
-    source: 'google' as const,
+    id: "5",
+    name: "Liu小姐",
+    source: "google" as const,
     rating: 5,
-    content: '十年保固讓人很安心，床墊躺起來很舒服，材質摸起來也很好。值得推薦！',
-    date: '2024-12-08',
+    content:
+      "十年保固讓人很安心，床墊躺起來很舒服，材質摸起來也很好。值得推薦！",
+    date: "2024-12-08",
   },
   {
-    id: '6',
-    name: 'Wu先生',
-    source: 'facebook' as const,
+    id: "6",
+    name: "Wu先生",
+    source: "facebook" as const,
     rating: 5,
-    content: '中和展間服務很好，可以慢慢試躺比較，最後選了S3系列，全家都很滿意。',
-    date: '2024-11-15',
+    content:
+      "中和展間服務很好，可以慢慢試躺比較，最後選了S3系列，全家都很滿意。",
+    date: "2024-11-15",
   },
 ];
 
-const reviewsToShow = testimonials.length > 0 ? testimonials : defaultTestimonials;
+const reviewsToShow =
+  testimonials.length > 0 ? testimonials : defaultTestimonials;
 const finalReviews = limit ? reviewsToShow.slice(0, limit) : reviewsToShow;
 
 const getSourceName = (source: string) => {
   const sourceMap = {
-    shopee: '蝦皮買家',
-    google: 'Google評論',
-    line: 'Line客戶',
-    facebook: 'Facebook粉絲',
+    shopee: "蝦皮買家",
+    google: "Google評論",
+    line: "Line客戶",
+    facebook: "Facebook粉絲",
   };
   return sourceMap[source as keyof typeof sourceMap] || source;
 };
 
 const getSourceColor = (source: string) => {
   const colorMap = {
-    shopee: 'text-orange-600',
-    google: 'text-blue-600',
-    line: 'text-green-600',
-    facebook: 'text-blue-800',
+    shopee: "text-orange-600",
+    google: "text-blue-600",
+    line: "text-green-600",
+    facebook: "text-blue-800",
   };
-  return colorMap[source as keyof typeof colorMap] || 'text-gray-600';
+  return colorMap[source as keyof typeof colorMap] || "text-gray-600";
 };
 ---
 
-<section class='py-16 bg-gray-50'>
-  <div class='container mx-auto px-4'>
-    <div class='text-center mb-12'>
-      <h2 class='text-3xl font-bold mb-4'>顧客真實好評</h2>
-      <p class='text-gray-600'>來自蝦皮、Google、Line等平台的真實客戶回饋</p>
+<section class="py-16 bg-gray-50">
+  <div class="container mx-auto px-4">
+    <div class="text-center mb-12">
+      <h2 class="text-3xl font-bold mb-4">顧客真實好評</h2>
+      <p class="text-gray-600">來自蝦皮、Google、Line等平台的真實客戶回饋</p>
     </div>
 
-    <div class='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {
         finalReviews.map(review => (
           <div class='bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow'>
@@ -145,15 +150,14 @@ const getSourceColor = (source: string) => {
     {/* Load More / View All */}
     {
       limit && reviewsToShow.length > limit && (
-        <div class='text-center mt-8'>
-          <a
-            href='/testimonials'
-            class='inline-block bg-black text-white px-6 py-3 rounded-lg font-semibold hover:bg-gray-800 transition-colors'
-          >
-            查看更多好評 ({reviewsToShow.length - limit}+)
-          </a>
-        </div>
-      )
-    }
+    <div class="text-center mt-8">
+      <a
+        href="/testimonials"
+        class="inline-block bg-black text-white px-6 py-3 rounded-lg font-semibold hover:bg-gray-800 transition-colors"
+      >
+        查看更多好評 ({reviewsToShow.length - limit}+)
+      </a>
+    </div>
+    ) }
   </div>
 </section>

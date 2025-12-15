@@ -1,13 +1,13 @@
-import { useEffect } from 'react';
+import { useEffect } from "react";
 
-import { useSearchStore } from '../stores/searchStore';
+import { useSearchStore } from "../stores/searchStore";
 
 function isFocusableElement(target: EventTarget | null): boolean {
-  if (!target || !(target instanceof HTMLElement)) {
+  if (!(target && target instanceof HTMLElement)) {
     return false;
   }
 
-  const focusableTags = ['INPUT', 'TEXTAREA', 'SELECT'];
+  const focusableTags = ["INPUT", "TEXTAREA", "SELECT"];
   return target.isContentEditable || focusableTags.includes(target.tagName);
 }
 
@@ -24,20 +24,20 @@ export function useSearchKeyboardShortcut() {
       const isModifier = event.metaKey || event.ctrlKey;
       const key = event.key.toLowerCase();
 
-      if (isModifier && key === 'k') {
+      if (isModifier && key === "k") {
         if (isFocusableElement(event.target)) return;
         event.preventDefault();
         openModal();
         return;
       }
 
-      if (key === '/' && !isFocusableElement(event.target)) {
+      if (key === "/" && !isFocusableElement(event.target)) {
         event.preventDefault();
         openModal();
         return;
       }
 
-      if (key === 'escape' && isOpen) {
+      if (key === "escape" && isOpen) {
         closeModal();
       }
     };
@@ -46,16 +46,16 @@ export function useSearchKeyboardShortcut() {
     const handleCloseEvent = () => closeModal();
     const handleToggleEvent = () => toggleModal();
 
-    window.addEventListener('keydown', handleKeyDown);
-    window.addEventListener('cmdk:open', handleOpenEvent);
-    window.addEventListener('cmdk:close', handleCloseEvent);
-    window.addEventListener('cmdk:toggle', handleToggleEvent);
+    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("cmdk:open", handleOpenEvent);
+    window.addEventListener("cmdk:close", handleCloseEvent);
+    window.addEventListener("cmdk:toggle", handleToggleEvent);
 
     return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-      window.removeEventListener('cmdk:open', handleOpenEvent);
-      window.removeEventListener('cmdk:close', handleCloseEvent);
-      window.removeEventListener('cmdk:toggle', handleToggleEvent);
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("cmdk:open", handleOpenEvent);
+      window.removeEventListener("cmdk:close", handleCloseEvent);
+      window.removeEventListener("cmdk:toggle", handleToggleEvent);
     };
   }, [openModal, closeModal, toggleModal, isOpen]);
 }

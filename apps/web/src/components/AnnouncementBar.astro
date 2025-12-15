@@ -1,11 +1,11 @@
 ---
 // AnnouncementBar component with date-based visibility control
-import { 
-  currentAnnouncement, 
-  isAnnouncementVisible, 
+import {
+  type AnnouncementConfig,
+  currentAnnouncement,
+  isAnnouncementVisible,
   typeClasses,
-  type AnnouncementConfig 
-} from '../config/announcements';
+} from "../config/announcements";
 
 const announcementConfig = currentAnnouncement;
 const isVisible = isAnnouncementVisible(announcementConfig);
@@ -55,34 +55,39 @@ const isVisible = isAnnouncementVisible(announcementConfig);
 <script>
   // Client-side script for managing announcement visibility and dismissal
   function initAnnouncementBar() {
-    const announcementBar = document.getElementById('announcement-bar');
+    const announcementBar = document.getElementById("announcement-bar");
     if (!announcementBar) return;
-    
-    const announcementId = announcementBar.getAttribute('data-announcement-id');
+
+    const announcementId = announcementBar.getAttribute("data-announcement-id");
     if (!announcementId) return;
-    
+
     // Check if user has dismissed this announcement
-    const isDismissed = localStorage.getItem(`announcement-dismissed-${announcementId}`) === 'true';
-    
+    const isDismissed =
+      localStorage.getItem(`announcement-dismissed-${announcementId}`) ===
+      "true";
+
     if (!isDismissed) {
       // Show the announcement bar
-      announcementBar.style.display = 'block';
-      
+      announcementBar.style.display = "block";
+
       // Set up dismiss button if it exists
-      const dismissButton = document.getElementById('dismiss-announcement');
+      const dismissButton = document.getElementById("dismiss-announcement");
       if (dismissButton) {
-        dismissButton.addEventListener('click', () => {
+        dismissButton.addEventListener("click", () => {
           // Save dismissal to localStorage
-          localStorage.setItem(`announcement-dismissed-${announcementId}`, 'true');
-          
+          localStorage.setItem(
+            `announcement-dismissed-${announcementId}`,
+            "true"
+          );
+
           // Hide announcement with animation
-          announcementBar.style.transform = 'translateY(-100%)';
-          announcementBar.style.opacity = '0';
-          
+          announcementBar.style.transform = "translateY(-100%)";
+          announcementBar.style.opacity = "0";
+
           setTimeout(() => {
-            announcementBar.style.display = 'none';
+            announcementBar.style.display = "none";
             // Dispatch custom event for other components that might need to adjust layout
-            window.dispatchEvent(new CustomEvent('announcementDismissed'));
+            window.dispatchEvent(new CustomEvent("announcementDismissed"));
           }, 300);
         });
       }
@@ -90,26 +95,26 @@ const isVisible = isAnnouncementVisible(announcementConfig);
   }
 
   // Initialize when DOM is loaded
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initAnnouncementBar);
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initAnnouncementBar);
   } else {
     initAnnouncementBar();
   }
 
   // Re-initialize on page navigation (for SPA-like behavior)
-  document.addEventListener('astro:page-load', initAnnouncementBar);
+  document.addEventListener("astro:page-load", initAnnouncementBar);
 </script>
 
 <style>
   #announcement-bar {
     z-index: 1000;
   }
-  
+
   /* Smooth entrance animation */
   #announcement-bar {
     animation: slideDown 0.3s ease-out;
   }
-  
+
   @keyframes slideDown {
     from {
       transform: translateY(-100%);
@@ -127,12 +132,12 @@ const isVisible = isAnnouncementVisible(announcementConfig);
       padding: 0.75rem 1rem;
       font-size: 0.813rem;
     }
-    
+
     #announcement-bar .container {
       flex-direction: column;
       gap: 0.5rem;
     }
-    
+
     #announcement-bar button {
       margin-left: 0;
       align-self: flex-end;

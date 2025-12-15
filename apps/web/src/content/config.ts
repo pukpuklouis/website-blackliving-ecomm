@@ -1,7 +1,7 @@
-import { defineCollection, z } from 'astro:content';
+import { defineCollection, z } from "astro:content";
 
 const heroSlider = defineCollection({
-  type: 'data',
+  type: "data",
   schema: z.object({
     slideset: z.object({
       slides: z.array(
@@ -22,7 +22,7 @@ const heroSlider = defineCollection({
 });
 
 const navigation = defineCollection({
-  type: 'data',
+  type: "data",
   schema: z.object({
     items: z.array(
       z.object({
@@ -44,7 +44,7 @@ const navigation = defineCollection({
 });
 
 const pages = defineCollection({
-  type: 'content',
+  type: "content",
   schema: z.object({
     title: z.string(),
     description: z.string(),
@@ -55,7 +55,7 @@ const pages = defineCollection({
 });
 
 const storeinfo = defineCollection({
-  type: 'data',
+  type: "data",
   schema: z.object({
     stores: z.array(
       z.object({
@@ -65,26 +65,26 @@ const storeinfo = defineCollection({
         opening: z.string(),
         embedUrl: z.string(),
         infoBoxPosition: z.enum([
-          'top-left',
-          'top-right',
-          'bottom-left',
-          'bottom-right',
-          'center-left',
-          'center-right',
+          "top-left",
+          "top-right",
+          "bottom-left",
+          "bottom-right",
+          "center-left",
+          "center-right",
         ]),
         mapHeight: z.string(),
-        responsivePosition: z.enum(['top', 'bottom']),
+        responsivePosition: z.enum(["top", "bottom"]),
         bgColor: z.string(),
         textColor: z.string(),
         borderColor: z.string(),
-        textAlign: z.enum(['left', 'center', 'right']),
+        textAlign: z.enum(["left", "center", "right"]),
       })
     ),
   }),
 });
 
 const features = defineCollection({
-  type: 'data',
+  type: "data",
   schema: z.object({
     defaultFeatures: z.array(
       z.object({
@@ -97,7 +97,7 @@ const features = defineCollection({
 });
 
 const testimonials = defineCollection({
-  type: 'data',
+  type: "data",
   schema: z.object({
     testimonials: z.array(
       z.object({
@@ -111,7 +111,7 @@ const testimonials = defineCollection({
 });
 
 const footer = defineCollection({
-  type: 'data',
+  type: "data",
   schema: z.object({
     sections: z.array(
       z.object({
@@ -128,7 +128,7 @@ const footer = defineCollection({
 });
 
 export const collections = {
-  'hero-slider': heroSlider,
+  "hero-slider": heroSlider,
   navigation,
   pages,
   storeinfo,

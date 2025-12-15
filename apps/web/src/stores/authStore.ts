@@ -1,19 +1,19 @@
-import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
 
-export interface AuthUser {
+export type AuthUser = {
   id: string;
   email: string;
-}
+};
 
-interface TokenResponse {
+type TokenResponse = {
   accessToken: string;
   refreshToken: string;
   accessTokenExpiresAt: number;
   refreshTokenExpiresAt: number;
-}
+};
 
-interface AuthState {
+type AuthState = {
   accessToken: string | null;
   refreshToken: string | null;
   accessTokenExpiresAt: number | null;
@@ -22,12 +22,11 @@ interface AuthState {
   lastEmail: string;
   isRefreshing: boolean;
   setAuth: (data: { tokens: TokenResponse; user?: AuthUser }) => void;
+  setUser: (user: AuthUser) => void;
   setLastEmail: (email: string) => void;
   clearAuth: () => void;
   ensureFreshAccessToken: () => Promise<string | null>;
-}
-
-const API_BASE = import.meta.env.PUBLIC_API_BASE_URL || 'http://localhost:8787';
+};
 
 export const useAuthStore = create<AuthState>()(
   persist(
@@ -37,7 +36,7 @@ export const useAuthStore = create<AuthState>()(
       accessTokenExpiresAt: null,
       refreshTokenExpiresAt: null,
       user: null,
-      lastEmail: '',
+      lastEmail: "",
       isRefreshing: false,
       setAuth: ({ tokens, user }) => {
         set({
@@ -49,6 +48,7 @@ export const useAuthStore = create<AuthState>()(
           isRefreshing: false,
         });
       },
+      setUser: (user) => set({ user }),
       setLastEmail: (email) => set({ lastEmail: email }),
       clearAuth: () =>
         set({
@@ -59,49 +59,28 @@ export const useAuthStore = create<AuthState>()(
           user: null,
           isRefreshing: false,
         }),
-      ensureFreshAccessToken: async () => {
-        const { accessToken, accessTokenExpiresAt, refreshToken, isRefreshing } = get();
+      ensureFreshAccessToken: () => {
+        const { accessToken, accessTokenExpiresAt } = get();
         const now = Date.now();
 
-        if (accessToken && accessTokenExpiresAt && accessTokenExpiresAt - now > 30_000) {
-          return accessToken;
+        // Return existing token if still valid (with 30s buffer)
+        // Note: With Better Auth, session management is handled via HTTP-only cookies
+        // This function is for backwards compatibility
+        if (
+          accessToken &&
+          accessTokenExpiresAt &&
+          accessTokenExpiresAt - now > 30_000
+        ) {
+          return Promise.resolve(accessToken);
         }
 
-        if (!refreshToken || isRefreshing) {
-          return null;
-        }
-
-        set({ isRefreshing: true });
-        try {
-          const response = await fetch(`${API_BASE}/api/auth/refresh`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
-            body: JSON.stringify({ refreshToken }),
-          });
-
-          if (!response.ok) {
-            throw new Error('Refresh failed');
-          }
-
-          const result = await response.json();
-          if (!result?.success) {
-            throw new Error(result?.error || 'Refresh failed');
-          }
-
-          set({ isRefreshing: false });
-          get().setAuth({ tokens: result.tokens });
-          return result.tokens.accessToken as string;
-        } catch (error) {
-          console.error('Failed to refresh access token', error);
-          set({ isRefreshing: false });
-          get().clearAuth();
-          return null;
-        }
+        // No custom refresh endpoint anymore - Better Auth handles sessions via cookies
+        // Return null to signal that component should rely on cookie-based auth
+        return Promise.resolve(null);
       },
     }),
     {
-      name: 'reservation-auth',
+      name: "reservation-auth",
       partialize: (state) => ({
         accessToken: state.accessToken,
         refreshToken: state.refreshToken,

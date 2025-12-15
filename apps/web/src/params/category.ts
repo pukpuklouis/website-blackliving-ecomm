@@ -1,4 +1,4 @@
-import { isPostCategorySlug } from './post_category';
+import { isPostCategorySlug } from "./post_category";
 
 export const match = (param: string): boolean => {
   if (!param) return false;

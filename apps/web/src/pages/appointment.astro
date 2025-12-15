@@ -1,15 +1,17 @@
 ---
-import BaseLayout from '../layouts/BaseLayout.astro';
-import MultiStepAppointmentForm from '../components/appointment/MultiStepAppointmentForm.tsx';
+import MultiStepAppointmentForm from "../components/appointment/MultiStepAppointmentForm.tsx";
+import BaseLayout from "../layouts/BaseLayout.astro";
 ---
 
 <BaseLayout title="預約試躺" description="一步步完成您的席夢思黑標床墊預約">
-  <main class="container mx-auto px-4 py-8 min-h-screen bg-gray-50">
+  <main class="w-full mx-auto px-4 py-8 min-h-screen bg-gray-50">
     <div class="text-center mb-12">
       <h1 class="text-4xl font-bold text-gray-900 mb-4">預約試躺</h1>
-      <p class="text-xl text-gray-600">一步步完成您的席夢思黑標床墊預約</p>
+      <p class="text-xl text-gray-600">
+        為了協助您找到最適合的床墊，並提供最優質的價格，以下有幾個小問題想先向您確認～再麻煩您依序回覆，謝謝您！
+      </p>
     </div>
 
-    <MultiStepAppointmentForm client:load />
+    <MultiStepAppointmentForm client:load/>
   </main>
 </BaseLayout>

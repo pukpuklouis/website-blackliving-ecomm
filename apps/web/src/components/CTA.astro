@@ -1,5 +1,5 @@
 ---
-import { Image } from 'astro:assets';
+import { Image } from "astro:assets";
 export interface Props {
   title?: string;
   description?: string;
@@ -12,10 +12,14 @@ export interface Props {
   desktopImage?: string;
   mobileImage?: string;
   // Text position (alignment of buttons)
-  textAlignDesktop?: 'left' | 'center' | 'right';
-  textAlignMobile?: 'left' | 'center' | 'right';
+  textAlignDesktop?: "left" | "center" | "right";
+  textAlignMobile?: "left" | "center" | "right";
   // Gradient overlay
-  gradientDirection?: 'left-to-right' | 'right-to-left' | 'top-to-bottom' | 'bottom-to-top';
+  gradientDirection?:
+    | "left-to-right"
+    | "right-to-left"
+    | "top-to-bottom"
+    | "bottom-to-top";
   gradientFromColor?: string;
   gradientToColor?: string;
   gradientOpacity?: number;
@@ -23,61 +27,65 @@ export interface Props {
 }
 
 const {
-  title = '準備好體驗頂級睡眠了嗎？',
-  description = '歡迎蒞臨我們的實體展間，親自體驗席夢思黑標床墊的舒適感受',
-  desktopImage = '/CTA/blackliving-CTA-background-img.webp',
-  mobileImage = '/CTA/blackliving-CTA-background-img.webp',
-  textAlignDesktop = 'left',
-  textAlignMobile = 'center',
-  gradientDirection = 'left-to-right',
-  gradientFromColor = 'transparent',
-  gradientToColor = 'black',
+  title = "準備好體驗頂級睡眠了嗎？",
+  description = "歡迎蒞臨我們的實體展間，親自體驗席夢思黑標床墊的舒適感受",
+  desktopImage = "/CTA/blackliving-CTA-background-img.webp",
+  mobileImage = "/CTA/blackliving-CTA-background-img.webp",
+  textAlignDesktop = "left",
+  textAlignMobile = "center",
+  gradientDirection = "left-to-right",
+  gradientFromColor = "transparent",
+  gradientToColor = "black",
   gradientOpacity = 0.6,
-  primaryButtonText = '立即預約試躺',
-  primaryButtonHref = '/appointment',
-  secondaryButtonText = 'Line 線上諮詢',
-  secondaryButtonHref = 'https://line.me/R/ti/p/@blackking',
-  secondaryButtonTarget = '_blank',
-  className = '',
+  primaryButtonText = "立即預約試躺",
+  primaryButtonHref = "/appointment",
+  secondaryButtonText = "Line 線上諮詢",
+  secondaryButtonHref = "https://line.me/R/ti/p/@blackking",
+  secondaryButtonTarget = "_blank",
+  className = "",
 } = Astro.props;
 
 // Convert gradient direction to Tailwind classes
 const getTailwindGradient = (direction: string) => {
   switch (direction) {
-    case 'left-to-right':
-      return 'bg-gradient-to-r';
-    case 'right-to-left':
-      return 'bg-gradient-to-l';
-    case 'top-to-bottom':
-      return 'bg-gradient-to-b';
-    case 'bottom-to-top':
-      return 'bg-gradient-to-t';
+    case "left-to-right":
+      return "bg-gradient-to-r";
+    case "right-to-left":
+      return "bg-gradient-to-l";
+    case "top-to-bottom":
+      return "bg-gradient-to-b";
+    case "bottom-to-top":
+      return "bg-gradient-to-t";
     default:
-      return 'bg-gradient-to-r';
+      return "bg-gradient-to-r";
   }
 };
 
 // Convert color and opacity to Tailwind gradient colors
-const getTailwindGradientColors = (fromColor: string, toColor: string, opacity: number) => {
+const getTailwindGradientColors = (
+  fromColor: string,
+  toColor: string,
+  opacity: number
+) => {
   // For custom colors or rgba values, use CSS custom properties
   if (
-    fromColor.includes('rgba') ||
-    toColor.includes('rgba') ||
-    fromColor.includes('var(') ||
-    toColor.includes('var(')
+    fromColor.includes("rgba") ||
+    toColor.includes("rgba") ||
+    fromColor.includes("var(") ||
+    toColor.includes("var(")
   ) {
-    return ''; // Will fall back to inline styles
+    return ""; // Will fall back to inline styles
   }
 
   // Map common colors to Tailwind classes
   const colorMap: Record<string, string> = {
-    transparent: 'transparent',
-    black: 'black',
-    white: 'white',
-    gray: 'gray-900',
-    red: 'red-900',
-    blue: 'blue-900',
-    green: 'green-900',
+    transparent: "transparent",
+    black: "black",
+    white: "white",
+    gray: "gray-900",
+    red: "red-900",
+    blue: "blue-900",
+    green: "green-900",
   };
 
   const fromTailwind = colorMap[fromColor] || fromColor;
@@ -85,9 +93,13 @@ const getTailwindGradientColors = (fromColor: string, toColor: string, opacity: 
 
   // Apply opacity if not using transparent
   const fromWithOpacity =
-    fromColor === 'transparent' ? 'transparent' : `${fromTailwind}/${Math.round(opacity * 100)}`;
+    fromColor === "transparent"
+      ? "transparent"
+      : `${fromTailwind}/${Math.round(opacity * 100)}`;
   const toWithOpacity =
-    toColor === 'transparent' ? 'transparent' : `${toTailwind}/${Math.round(opacity * 100)}`;
+    toColor === "transparent"
+      ? "transparent"
+      : `${toTailwind}/${Math.round(opacity * 100)}`;
 
   return `from-${fromWithOpacity} to-${toWithOpacity}`;
 };

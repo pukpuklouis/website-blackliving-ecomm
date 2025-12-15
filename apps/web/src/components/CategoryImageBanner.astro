@@ -1,6 +1,6 @@
 ---
-import ImageBanner from './ImageBanner.astro';
-import type { CategoryConfig } from '../types/category.ts';
+import type { CategoryConfig } from "../types/category.ts";
+import ImageBanner from "./ImageBanner.astro";
 
 interface Props {
   categoryConfig: CategoryConfig;
@@ -11,41 +11,52 @@ interface Props {
 
 const {
   categoryConfig,
-  className = '',
-  aspectRatio = '16/9',
-  overlayClassName = 'absolute inset-0 flex flex-row items-center text-white bg-black/20',
+  className = "",
+  aspectRatio = "16/9",
+  overlayClassName = "absolute inset-0 flex flex-row items-center text-white bg-black/20",
 } = Astro.props;
 
 // Determine image source based on category
 const getCategoryImage = (category: string) => {
   // Map category slugs to banner images
   const imageMap: Record<string, string> = {
-    'simmons-black': '/images/banners/blackliving-categories-beautyrest-banner-rev.webp',
-    'accessories': '/images/banners/blackliving-categories-accesories-banner-rev.webp',
-    'us-imports': '/images/banners/us-imports-banner.webp',
+    "simmons-black":
+      "/images/banners/blackliving-categories-beautyrest-banner-rev.webp",
+    accessories:
+      "/images/banners/blackliving-categories-accesories-banner-rev.webp",
+    "us-imports": "/images/banners/us-imports-banner.webp",
     // Add more category mappings as needed
   };
 
-  return imageMap[category] || '/images/banners/default-category-banner.webp';
+  return imageMap[category] || "/images/banners/default-category-banner.webp";
 };
 
 const bannerImage = getCategoryImage(categoryConfig.slug);
-const altText = `${categoryConfig.series} - ${categoryConfig.description.split('。')[0]}`;
+const altText = `${categoryConfig.series} - ${categoryConfig.description.split("。")[0]}`;
 
 // Determine justify-content based on category for horizontal positioning
 const justifyClass =
-  categoryConfig.slug === 'simmons-black'
-    ? 'justify-end'
-    : categoryConfig.slug === 'accessories'
-      ? 'justify-start'
-      : 'justify-center';
+  categoryConfig.slug === "simmons-black"
+    ? "justify-end"
+    : categoryConfig.slug === "accessories"
+      ? "justify-start"
+      : "justify-center";
 ---
 
 <div class={`relative ${className}`}>
-  <ImageBanner src={bannerImage} alt={altText} aspectRatio={aspectRatio} className="w-full" />
+  <ImageBanner
+    src={bannerImage}
+    alt={altText}
+    aspectRatio={aspectRatio}
+    className="w-full"
+  />
 
   <!-- Overlay Content -->
-  <div class={`${overlayClassName} ${justifyClass}`} role="banner" aria-labelledby="category-title">
+  <div
+    class={`${overlayClassName} ${justifyClass}`}
+    role="banner"
+    aria-labelledby="category-title"
+  >
     <h1
       id="category-title"
       class="text-xl md:text-3xl lg:text-5xl font-bold my-4 px-6 md:px-8 lg:px-18 drop-shadow-lg leading-tight"

@@ -1,5 +1,5 @@
 ---
-import { Image } from 'astro:assets';
+import { Image } from "astro:assets";
 
 // Product card component for displaying mattresses
 export interface Props {
@@ -15,7 +15,7 @@ export interface Props {
   class?: string;
 }
 
-const { product, class: className = '' } = Astro.props;
+const { product, class: className = "" } = Astro.props;
 ---
 
 <a
@@ -44,7 +44,9 @@ const { product, class: className = '' } = Astro.props;
   </div>
   <div class="flex flex-col justify-between items-center p-6 gap-3">
     <!-- Product Name -->
-    <p class="text-xl font-semibold text-center hover:text-gray-600 transition-colors">
+    <p
+      class="text-xl font-semibold text-center hover:text-gray-600 transition-colors"
+    >
       {product.name}
     </p>
 
@@ -68,11 +70,11 @@ const { product, class: className = '' } = Astro.props;
 
 <script>
   // Handle card clicks
-  document.addEventListener('DOMContentLoaded', () => {
+  document.addEventListener("DOMContentLoaded", () => {
     const productCards = document.querySelectorAll('a[href*="/"]');
 
     productCards.forEach((card) => {
-      card.addEventListener('click', (e) => {
+      card.addEventListener("click", (e) => {
         // Allow normal link behavior - no additional handling needed
         // The entire card is already wrapped in an anchor tag
       });

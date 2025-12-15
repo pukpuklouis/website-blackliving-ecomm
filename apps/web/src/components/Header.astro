@@ -1,20 +1,20 @@
 ---
 // Header component for Black Living website
-import { Image } from 'astro:assets';
-import { getEntry } from 'astro:content';
-import { CartIcon } from '@blackliving/ui';
-import { UserIcon } from '@blackliving/ui';
-import CartTrigger from './cart/CartTrigger';
+import { Image } from "astro:assets";
+import { getEntry } from "astro:content";
+import { CartIcon, UserIcon } from "@blackliving/ui";
+import CartTrigger from "./cart/CartTrigger";
 
-export interface Props {
+export type Props = {
   class?: string;
-}
+};
 
 const { class: className } = Astro.props;
 
 // Get navigation data from content collection
-const navigationData = await getEntry('navigation', 'main-menu');
-const menuItems = navigationData?.data.items.sort((a, b) => a.order - b.order) || [];
+const navigationData = await getEntry("navigation", "main-menu");
+const menuItems =
+  navigationData?.data.items.sort((a, b) => a.order - b.order) || [];
 ---
 
 <header
@@ -68,7 +68,8 @@ const menuItems = navigationData?.data.items.sort((a, b) => a.order - b.order) |
                 stroke-linecap="round"
                 stroke-linejoin="round"
                 stroke-width="2"
-                d="m21 21-4.35-4.35M10 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16z"></path>
+                d="m21 21-4.35-4.35M10 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16z"
+              ></path>
             </svg>
             <span class="hidden lg:inline text-sm text-gray-600">搜尋</span>
             <kbd
@@ -77,13 +78,13 @@ const menuItems = navigationData?.data.items.sort((a, b) => a.order - b.order) |
               <span class="text-xs">⌘</span>K
             </kbd>
           </button>
-          <CartTrigger client:load />
+          <CartTrigger client:load/>
           <a
             href="/account"
             class="text-black text-sm lg:text-base font-normal hover:text-gray-600 transition-colors flex items-center gap-1"
             aria-label="會員中心"
           >
-            <UserIcon />
+            <UserIcon/>
             會員中心
           </a>
         </div>
@@ -107,7 +108,8 @@ const menuItems = navigationData?.data.items.sort((a, b) => a.order - b.order) |
               stroke-linecap="round"
               stroke-linejoin="round"
               stroke-width="2"
-              d="m21 21-4.35-4.35M10 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16z"></path>
+              d="m21 21-4.35-4.35M10 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16z"
+            ></path>
           </svg>
         </button>
 
@@ -130,7 +132,8 @@ const menuItems = navigationData?.data.items.sort((a, b) => a.order - b.order) |
               stroke-linecap="round"
               stroke-linejoin="round"
               stroke-width="2"
-              d="M4 6h16M4 12h16M4 18h16"></path>
+              d="M4 6h16M4 12h16M4 18h16"
+            ></path>
           </svg>
         </button>
       </div>
@@ -140,8 +143,14 @@ const menuItems = navigationData?.data.items.sort((a, b) => a.order - b.order) |
   <!-- Desktop Navigation -->
   <div class="hidden md:block bg-primary relative" id="nav-section">
     <div class="container mx-auto px-4 lg:px-6">
-      <nav class="flex justify-center py-3" role="navigation" aria-label="主導航">
-        <ul class="flex items-center gap-4 md:gap-2 lg:gap-6 justify-center relative">
+      <nav
+        class="flex justify-center py-3"
+        role="navigation"
+        aria-label="主導航"
+      >
+        <ul
+          class="flex items-center gap-4 md:gap-2 lg:gap-6 justify-center relative"
+        >
           {
             menuItems.map((item) => (
               <li class={`relative group ${item.subItems ? 'has-submenu' : ''}`}>
@@ -196,8 +205,7 @@ const menuItems = navigationData?.data.items.sort((a, b) => a.order - b.order) |
     id="mobile-menu-backdrop"
     class="md:hidden fixed inset-0 bg-black/20 backdrop-blur-sm z-40 hidden transition-all duration-300"
     aria-hidden="true"
-  >
-  </div>
+  ></div>
 
   <!-- Mobile Navigation Overlay -->
   <div
@@ -211,7 +219,11 @@ const menuItems = navigationData?.data.items.sort((a, b) => a.order - b.order) |
       <div class="container mx-auto px-4">
         <div class="flex items-center justify-between py-3">
           <!-- Logo -->
-          <a href="/" class="flex items-center" aria-label="Black Living 黑哥家居 首頁">
+          <a
+            href="/"
+            class="flex items-center"
+            aria-label="Black Living 黑哥家居 首頁"
+          >
             <Image
               src="/blackliving-logo-zh.svg"
               width={102}
@@ -240,7 +252,8 @@ const menuItems = navigationData?.data.items.sort((a, b) => a.order - b.order) |
                 stroke-linecap="round"
                 stroke-linejoin="round"
                 stroke-width="2"
-                d="M6 18L18 6M6 6l12 12"></path>
+                d="M6 18L18 6M6 6l12 12"
+              ></path>
             </svg>
           </button>
         </div>
@@ -251,7 +264,9 @@ const menuItems = navigationData?.data.items.sort((a, b) => a.order - b.order) |
     <div class="bg-primary max-h-screen overflow-y-auto">
       <div class="px-4 py-3 space-y-1">
         <!-- Mobile User Actions -->
-        <div class="flex items-center gap-4 px-6 pb-3 border-b border-primary-foreground/20 mb-3">
+        <div
+          class="flex items-center gap-4 px-6 pb-3 border-b border-primary-foreground/20 mb-3"
+        >
           <CartTrigger
             client:load
             className="text-primary-foreground/80 text-sm font-normal hover:text-primary-foreground transition-colors flex items-center gap-2"
@@ -260,7 +275,7 @@ const menuItems = navigationData?.data.items.sort((a, b) => a.order - b.order) |
             href="/account"
             class="text-primary-foreground/80 text-sm font-normal hover:text-primary-foreground transition-colors flex items-center gap-2"
           >
-            <UserIcon />
+            <UserIcon/>
             會員中心
           </a>
         </div>
@@ -320,83 +335,91 @@ const menuItems = navigationData?.data.items.sort((a, b) => a.order - b.order) |
 
 <script>
   // Search modal functionality
-  document.addEventListener('DOMContentLoaded', () => {
-    const searchTriggerDesktop = document.getElementById('search-trigger');
-    const searchTriggerMobile = document.getElementById('search-trigger-mobile');
+  document.addEventListener("DOMContentLoaded", () => {
+    const searchTriggerDesktop = document.getElementById("search-trigger");
+    const searchTriggerMobile = document.getElementById(
+      "search-trigger-mobile"
+    );
 
     const openSearchModal = (event?: Event) => {
       event?.preventDefault?.();
-      window.dispatchEvent(new CustomEvent('cmdk:open'));
+      window.dispatchEvent(new CustomEvent("cmdk:open"));
     };
 
-    searchTriggerDesktop?.addEventListener('click', openSearchModal);
-    searchTriggerMobile?.addEventListener('click', openSearchModal);
+    searchTriggerDesktop?.addEventListener("click", openSearchModal);
+    searchTriggerMobile?.addEventListener("click", openSearchModal);
 
     // Mobile menu overlay functionality
-    const mobileMenuButton = document.getElementById('mobile-menu-button');
-    const mobileMenuClose = document.getElementById('mobile-menu-close');
-    const mobileMenu = document.getElementById('mobile-menu');
-    const mobileMenuBackdrop = document.getElementById('mobile-menu-backdrop');
+    const mobileMenuButton = document.getElementById("mobile-menu-button");
+    const mobileMenuClose = document.getElementById("mobile-menu-close");
+    const mobileMenu = document.getElementById("mobile-menu");
+    const mobileMenuBackdrop = document.getElementById("mobile-menu-backdrop");
 
-    if (mobileMenuButton && mobileMenu && mobileMenuBackdrop && mobileMenuClose) {
+    if (
+      mobileMenuButton &&
+      mobileMenu &&
+      mobileMenuBackdrop &&
+      mobileMenuClose
+    ) {
       // Function to open mobile menu
       const openMobileMenu = () => {
         // Show backdrop
-        mobileMenuBackdrop.classList.remove('hidden');
+        mobileMenuBackdrop.classList.remove("hidden");
 
         // Animate menu slide down
         requestAnimationFrame(() => {
-          mobileMenu.classList.remove('-translate-y-full');
-          mobileMenu.classList.add('translate-y-0');
+          mobileMenu.classList.remove("-translate-y-full");
+          mobileMenu.classList.add("translate-y-0");
         });
 
         // Update button state
-        mobileMenuButton.setAttribute('aria-expanded', 'true');
+        mobileMenuButton.setAttribute("aria-expanded", "true");
 
         // Update button icon to close
-        const icon = mobileMenuButton.querySelector('svg');
+        const icon = mobileMenuButton.querySelector("svg");
         if (icon) {
           icon.innerHTML =
             '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>';
-          mobileMenuButton.setAttribute('aria-label', '關閉選單');
+          mobileMenuButton.setAttribute("aria-label", "關閉選單");
         }
 
         // Prevent body scroll
-        document.body.style.overflow = 'hidden';
+        document.body.style.overflow = "hidden";
       };
 
       // Function to close mobile menu
       const closeMobileMenu = () => {
         // Animate menu slide up
-        mobileMenu.classList.remove('translate-y-0');
-        mobileMenu.classList.add('-translate-y-full');
+        mobileMenu.classList.remove("translate-y-0");
+        mobileMenu.classList.add("-translate-y-full");
 
         // Hide backdrop after animation
         setTimeout(() => {
-          mobileMenuBackdrop.classList.add('hidden');
+          mobileMenuBackdrop.classList.add("hidden");
         }, 300);
 
         // Update button state
-        mobileMenuButton.setAttribute('aria-expanded', 'false');
+        mobileMenuButton.setAttribute("aria-expanded", "false");
 
         // Reset button icon to hamburger
-        const icon = mobileMenuButton.querySelector('svg');
+        const icon = mobileMenuButton.querySelector("svg");
         if (icon) {
           icon.innerHTML =
             '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>';
-          mobileMenuButton.setAttribute('aria-label', '開啟選單');
+          mobileMenuButton.setAttribute("aria-label", "開啟選單");
         }
 
         // Restore body scroll
-        document.body.style.overflow = '';
+        document.body.style.overflow = "";
 
         // Close all submenus
         closeAllSubmenus();
       };
 
       // Mobile menu button click handler
-      mobileMenuButton.addEventListener('click', () => {
-        const isExpanded = mobileMenuButton.getAttribute('aria-expanded') === 'true';
+      mobileMenuButton.addEventListener("click", () => {
+        const isExpanded =
+          mobileMenuButton.getAttribute("aria-expanded") === "true";
 
         if (isExpanded) {
           closeMobileMenu();
@@ -406,15 +429,16 @@ const menuItems = navigationData?.data.items.sort((a, b) => a.order - b.order) |
       });
 
       // Mobile menu close button click handler
-      mobileMenuClose.addEventListener('click', closeMobileMenu);
+      mobileMenuClose.addEventListener("click", closeMobileMenu);
 
       // Close mobile menu when clicking backdrop
-      mobileMenuBackdrop.addEventListener('click', closeMobileMenu);
+      mobileMenuBackdrop.addEventListener("click", closeMobileMenu);
 
       // Close mobile menu on escape key
-      document.addEventListener('keydown', (event) => {
-        if (event.key === 'Escape') {
-          const isExpanded = mobileMenuButton.getAttribute('aria-expanded') === 'true';
+      document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") {
+          const isExpanded =
+            mobileMenuButton.getAttribute("aria-expanded") === "true";
           if (isExpanded) {
             closeMobileMenu();
             mobileMenuButton.focus(); // Return focus to button
@@ -423,7 +447,7 @@ const menuItems = navigationData?.data.items.sort((a, b) => a.order - b.order) |
       });
 
       // Handle window resize - close mobile menu if switching to desktop
-      window.addEventListener('resize', () => {
+      window.addEventListener("resize", () => {
         if (window.innerWidth >= 768) {
           // md breakpoint
           closeMobileMenu();
@@ -431,60 +455,66 @@ const menuItems = navigationData?.data.items.sort((a, b) => a.order - b.order) |
       });
 
       // Mobile submenu toggle functionality
-      const submenuToggles = mobileMenu.querySelectorAll('[data-submenu-toggle]');
+      const submenuToggles = mobileMenu.querySelectorAll(
+        "[data-submenu-toggle]"
+      );
       const closeAllSubmenus = () => {
-        submenuToggles.forEach((toggle) => {
-          const href = toggle.getAttribute('data-submenu-toggle');
+        for (const toggle of submenuToggles) {
+          const href = toggle.getAttribute("data-submenu-toggle");
           const submenu = document.getElementById(`submenu-${href}`);
           const icon = document.getElementById(`toggle-icon-${href}`);
           if (submenu) {
-            submenu.classList.add('max-h-0');
-            toggle.setAttribute('aria-expanded', 'false');
+            submenu.classList.add("max-h-0");
+            toggle.setAttribute("aria-expanded", "false");
           }
           if (icon) {
-            icon.classList.remove('rotate-180');
+            icon.classList.remove("rotate-180");
           }
-        });
+        }
       };
 
-      submenuToggles.forEach((toggle) => {
-        toggle.addEventListener('click', (e) => {
-          e.preventDefault(); // Prevent navigating to parent href on toggle
+      const handleSubmenuToggle = (e: Event) => {
+        e.preventDefault(); // Prevent navigating to parent href on toggle
 
-          const href = toggle.getAttribute('data-submenu-toggle');
-          const submenu = document.getElementById(`submenu-${href}`);
-          const icon = document.getElementById(`toggle-icon-${href}`);
-          const isExpanded = toggle.getAttribute('aria-expanded') === 'true';
+        const toggle = e.currentTarget as HTMLElement;
+        const href = toggle.getAttribute("data-submenu-toggle");
+        const submenu = document.getElementById(`submenu-${href}`);
+        const icon = document.getElementById(`toggle-icon-${href}`);
+        const isExpanded = toggle.getAttribute("aria-expanded") === "true";
 
-          // Close all other submenus
-          closeAllSubmenus();
+        // Close all other submenus
+        closeAllSubmenus();
 
-          if (!isExpanded && submenu) {
-            // Open this submenu
-            submenu.classList.remove('max-h-0');
-            submenu.style.maxHeight = submenu.scrollHeight + 'px'; // Smooth expand
-            toggle.setAttribute('aria-expanded', 'true');
-            if (icon) {
-              icon.classList.add('rotate-180');
-            }
-          } else {
-            // Already open or no submenu - navigate to parent
-            if (href) {
-              window.location.href = href;
-            }
+        if (!isExpanded && submenu) {
+          // Open this submenu
+          submenu.classList.remove("max-h-0");
+          submenu.style.maxHeight = `${submenu.scrollHeight}px`; // Smooth expand
+          toggle.setAttribute("aria-expanded", "true");
+          if (icon) {
+            icon.classList.add("rotate-180");
           }
-        });
-      });
+        } else if (href) {
+          // Already open or no submenu - navigate to parent
+          window.location.href = href;
+        }
+      };
+
+      for (const toggle of submenuToggles) {
+        toggle.addEventListener("click", handleSubmenuToggle);
+      }
 
       // Allow Enter key to toggle submenus on desktop too (for accessibility)
-      document.addEventListener('keydown', (e) => {
+      document.addEventListener("keydown", (e) => {
         const target = e.target as HTMLElement;
-        if (e.key === 'Enter' && target?.closest('.has-submenu a[aria-haspopup="true"]')) {
+        if (
+          e.key === "Enter" &&
+          target?.closest('.has-submenu a[aria-haspopup="true"]')
+        ) {
           e.preventDefault();
-          const parentLi = target.closest('li');
+          const parentLi = target.closest("li");
           if (parentLi) {
-            parentLi.querySelector('ul')?.classList.toggle('opacity-100');
-            parentLi.querySelector('ul')?.classList.toggle('invisible');
+            parentLi.querySelector("ul")?.classList.toggle("opacity-100");
+            parentLi.querySelector("ul")?.classList.toggle("invisible");
           }
         }
       });

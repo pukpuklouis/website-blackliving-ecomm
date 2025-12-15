@@ -3,14 +3,22 @@
  * Handles password change functionality with proper validation
  */
 
-import React, { useState } from 'react';
-import { Button } from '@blackliving/ui';
-import { Input } from '@blackliving/ui';
-import { Label } from '@blackliving/ui';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@blackliving/ui';
-import { Alert, AlertDescription } from '@blackliving/ui';
-import { Loader2, Key, Eye, EyeOff } from 'lucide-react';
-import { validatePasswordForm } from '../../lib/validation';
+import {
+  Alert,
+  AlertDescription,
+  Button,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  Input,
+  Label,
+} from "@blackliving/ui";
+import { Eye, EyeOff, Key, Loader2 } from "lucide-react";
+import type React from "react";
+import { useState } from "react";
+import { validatePasswordForm } from "../../lib/validation";
 
 interface PasswordModalProps {
   onSuccess?: (message: string) => void;
@@ -24,9 +32,9 @@ interface PasswordFormData {
 }
 
 const initialFormData: PasswordFormData = {
-  currentPassword: '',
-  newPassword: '',
-  confirmPassword: '',
+  currentPassword: "",
+  newPassword: "",
+  confirmPassword: "",
 };
 
 export function PasswordModal({ onSuccess, onError }: PasswordModalProps) {
@@ -46,12 +54,12 @@ export function PasswordModal({ onSuccess, onError }: PasswordModalProps) {
 
     // Clear field error when user types
     if (errors[field]) {
-      setErrors((prev) => ({ ...prev, [field]: '' }));
+      setErrors((prev) => ({ ...prev, [field]: "" }));
     }
   };
 
   // Toggle password visibility
-  const togglePasswordVisibility = (field: 'current' | 'new' | 'confirm') => {
+  const togglePasswordVisibility = (field: "current" | "new" | "confirm") => {
     setShowPasswords((prev) => ({ ...prev, [field]: !prev[field] }));
   };
 
@@ -77,16 +85,16 @@ export function PasswordModal({ onSuccess, onError }: PasswordModalProps) {
     setIsSubmitting(true);
 
     try {
-      const response = await fetch('/api/auth/change-password', {
-        method: 'POST',
+      const response = await fetch("/api/auth/change-password", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           currentPassword: formData.currentPassword,
           newPassword: formData.newPassword,
         }),
-        credentials: 'include',
+        credentials: "include",
       });
 
       if (!response.ok) {
@@ -99,13 +107,14 @@ export function PasswordModal({ onSuccess, onError }: PasswordModalProps) {
         setShowModal(false);
         setFormData(initialFormData);
         setErrors({});
-        onSuccess?.(result.message || '密碼更新成功！');
+        onSuccess?.(result.message || "密碼更新成功！");
       } else {
-        setErrors({ currentPassword: result.error || '密碼更新失敗' });
-        onError?.(result.error || '密碼更新失敗');
+        setErrors({ currentPassword: result.error || "密碼更新失敗" });
+        onError?.(result.error || "密碼更新失敗");
       }
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : '網路錯誤，請稍後再試';
+      const errorMessage =
+        error instanceof Error ? error.message : "網路錯誤，請稍後再試";
       setErrors({ currentPassword: errorMessage });
       onError?.(errorMessage);
     } finally {
@@ -124,20 +133,17 @@ export function PasswordModal({ onSuccess, onError }: PasswordModalProps) {
   };
 
   // Check if form is valid
-  const isFormValid = () => {
-    return (
-      formData.currentPassword &&
-      formData.newPassword &&
-      formData.confirmPassword &&
-      Object.keys(errors).length === 0
-    );
-  };
+  const isFormValid = () =>
+    formData.currentPassword &&
+    formData.newPassword &&
+    formData.confirmPassword &&
+    Object.keys(errors).length === 0;
 
   return (
-    <Dialog open={showModal} onOpenChange={handleClose}>
+    <Dialog onOpenChange={handleClose} open={showModal}>
       <DialogTrigger asChild>
-        <Button variant="outline" onClick={() => setShowModal(true)}>
-          <Key className="h-4 w-4 mr-2" />
+        <Button onClick={() => setShowModal(true)} variant="outline">
+          <Key className="mr-2 h-4 w-4" />
           更改密碼
         </Button>
       </DialogTrigger>
@@ -147,26 +153,30 @@ export function PasswordModal({ onSuccess, onError }: PasswordModalProps) {
           <DialogTitle>更改密碼</DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form className="space-y-4" onSubmit={handleSubmit}>
           {/* Current Password */}
           <div className="space-y-2">
             <Label htmlFor="currentPassword">目前密碼 *</Label>
             <div className="relative">
               <Input
+                className={
+                  errors.currentPassword ? "border-red-500 pr-10" : "pr-10"
+                }
                 id="currentPassword"
-                type={showPasswords.current ? 'text' : 'password'}
-                value={formData.currentPassword}
-                onChange={(e) => handleInputChange('currentPassword', e.target.value)}
-                className={errors.currentPassword ? 'border-red-500 pr-10' : 'pr-10'}
+                onChange={(e) =>
+                  handleInputChange("currentPassword", e.target.value)
+                }
                 placeholder="請輸入目前密碼"
                 required
+                type={showPasswords.current ? "text" : "password"}
+                value={formData.currentPassword}
               />
               <Button
+                className="-translate-y-1/2 absolute top-1/2 right-2 h-auto p-1"
+                onClick={() => togglePasswordVisibility("current")}
+                size="sm"
                 type="button"
                 variant="ghost"
-                size="sm"
-                className="absolute right-2 top-1/2 -translate-y-1/2 h-auto p-1"
-                onClick={() => togglePasswordVisibility('current')}
               >
                 {showPasswords.current ? (
                   <EyeOff className="h-4 w-4" />
@@ -176,7 +186,7 @@ export function PasswordModal({ onSuccess, onError }: PasswordModalProps) {
               </Button>
             </div>
             {errors.currentPassword && (
-              <p className="text-sm text-red-500">{errors.currentPassword}</p>
+              <p className="text-red-500 text-sm">{errors.currentPassword}</p>
             )}
           </div>
 
@@ -185,26 +195,38 @@ export function PasswordModal({ onSuccess, onError }: PasswordModalProps) {
             <Label htmlFor="newPassword">新密碼 *</Label>
             <div className="relative">
               <Input
+                className={
+                  errors.newPassword ? "border-red-500 pr-10" : "pr-10"
+                }
                 id="newPassword"
-                type={showPasswords.new ? 'text' : 'password'}
-                value={formData.newPassword}
-                onChange={(e) => handleInputChange('newPassword', e.target.value)}
-                className={errors.newPassword ? 'border-red-500 pr-10' : 'pr-10'}
+                onChange={(e) =>
+                  handleInputChange("newPassword", e.target.value)
+                }
                 placeholder="請輸入新密碼"
                 required
+                type={showPasswords.new ? "text" : "password"}
+                value={formData.newPassword}
               />
               <Button
+                className="-translate-y-1/2 absolute top-1/2 right-2 h-auto p-1"
+                onClick={() => togglePasswordVisibility("new")}
+                size="sm"
                 type="button"
                 variant="ghost"
-                size="sm"
-                className="absolute right-2 top-1/2 -translate-y-1/2 h-auto p-1"
-                onClick={() => togglePasswordVisibility('new')}
               >
-                {showPasswords.new ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                {showPasswords.new ? (
+                  <EyeOff className="h-4 w-4" />
+                ) : (
+                  <Eye className="h-4 w-4" />
+                )}
               </Button>
             </div>
-            {errors.newPassword && <p className="text-sm text-red-500">{errors.newPassword}</p>}
-            <p className="text-xs text-gray-600">密碼至少需要8個字符，包含大小寫字母和數字</p>
+            {errors.newPassword && (
+              <p className="text-red-500 text-sm">{errors.newPassword}</p>
+            )}
+            <p className="text-gray-600 text-xs">
+              密碼至少需要8個字符，包含大小寫字母和數字
+            </p>
           </div>
 
           {/* Confirm Password */}
@@ -212,20 +234,24 @@ export function PasswordModal({ onSuccess, onError }: PasswordModalProps) {
             <Label htmlFor="confirmPassword">確認新密碼 *</Label>
             <div className="relative">
               <Input
+                className={
+                  errors.confirmPassword ? "border-red-500 pr-10" : "pr-10"
+                }
                 id="confirmPassword"
-                type={showPasswords.confirm ? 'text' : 'password'}
-                value={formData.confirmPassword}
-                onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
-                className={errors.confirmPassword ? 'border-red-500 pr-10' : 'pr-10'}
+                onChange={(e) =>
+                  handleInputChange("confirmPassword", e.target.value)
+                }
                 placeholder="請再次輸入新密碼"
                 required
+                type={showPasswords.confirm ? "text" : "password"}
+                value={formData.confirmPassword}
               />
               <Button
+                className="-translate-y-1/2 absolute top-1/2 right-2 h-auto p-1"
+                onClick={() => togglePasswordVisibility("confirm")}
+                size="sm"
                 type="button"
                 variant="ghost"
-                size="sm"
-                className="absolute right-2 top-1/2 -translate-y-1/2 h-auto p-1"
-                onClick={() => togglePasswordVisibility('confirm')}
               >
                 {showPasswords.confirm ? (
                   <EyeOff className="h-4 w-4" />
@@ -235,7 +261,7 @@ export function PasswordModal({ onSuccess, onError }: PasswordModalProps) {
               </Button>
             </div>
             {errors.confirmPassword && (
-              <p className="text-sm text-red-500">{errors.confirmPassword}</p>
+              <p className="text-red-500 text-sm">{errors.confirmPassword}</p>
             )}
           </div>
 
@@ -243,7 +269,7 @@ export function PasswordModal({ onSuccess, onError }: PasswordModalProps) {
           <Alert>
             <AlertDescription className="text-sm">
               <strong>密碼安全提示：</strong>
-              <ul className="mt-1 ml-4 list-disc text-xs space-y-1">
+              <ul className="mt-1 ml-4 list-disc space-y-1 text-xs">
                 <li>使用至少8個字符的密碼</li>
                 <li>包含大小寫字母、數字</li>
                 <li>避免使用個人資訊</li>
@@ -254,17 +280,22 @@ export function PasswordModal({ onSuccess, onError }: PasswordModalProps) {
 
           {/* Action Buttons */}
           <div className="flex justify-end space-x-2 pt-4">
-            <Button type="button" variant="outline" onClick={handleClose} disabled={isSubmitting}>
+            <Button
+              disabled={isSubmitting}
+              onClick={handleClose}
+              type="button"
+              variant="outline"
+            >
               取消
             </Button>
-            <Button type="submit" disabled={!isFormValid() || isSubmitting}>
+            <Button disabled={!isFormValid() || isSubmitting} type="submit">
               {isSubmitting ? (
                 <>
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   更新中...
                 </>
               ) : (
-                '更新密碼'
+                "更新密碼"
               )}
             </Button>
           </div>

@@ -1,10 +1,15 @@
-import { memo, useMemo } from 'react';
-import { cn } from '@blackliving/ui';
+import { cn } from "@blackliving/ui";
+import { memo, useMemo } from "react";
 
 export interface OverlaySettings {
   enabled?: boolean;
   title?: string;
-  placement?: 'bottom-left' | 'bottom-right' | 'bottom-center' | 'top-left' | 'center';
+  placement?:
+    | "bottom-left"
+    | "bottom-right"
+    | "bottom-center"
+    | "top-left"
+    | "center";
   gradientDirection?: string;
 }
 
@@ -23,12 +28,15 @@ export interface OverlayContainerProps {
  * Placement class mapping for performance optimization
  * Pre-computed mapping avoids conditional logic in render
  */
-const PLACEMENT_CLASSES: Record<NonNullable<OverlaySettings['placement']>, string> = {
-  'bottom-left': 'items-end justify-start p-4 md:p-5',
-  'bottom-right': 'items-end justify-end p-4 md:p-5 text-right',
-  'bottom-center': 'items-end justify-center p-4 md:p-5 text-center',
-  'top-left': 'items-start justify-start p-4 md:p-5',
-  center: 'text-center',
+const PLACEMENT_CLASSES: Record<
+  NonNullable<OverlaySettings["placement"]>,
+  string
+> = {
+  "bottom-left": "items-end justify-start p-4 md:p-5",
+  "bottom-right": "items-end justify-end p-4 md:p-5 text-right",
+  "bottom-center": "items-end justify-center p-4 md:p-5 text-center",
+  "top-left": "items-start justify-start p-4 md:p-5",
+  center: "text-center",
 } as const;
 
 /**
@@ -36,14 +44,14 @@ const PLACEMENT_CLASSES: Record<NonNullable<OverlaySettings['placement']>, strin
  * Pre-computed mapping avoids conditional logic in render
  */
 const GRADIENT_CLASSES: Record<string, string> = {
-  t: 'bg-gradient-to-t',
-  tr: 'bg-gradient-to-tr',
-  r: 'bg-gradient-to-r',
-  br: 'bg-gradient-to-br',
-  b: 'bg-gradient-to-b',
-  bl: 'bg-gradient-to-bl',
-  l: 'bg-gradient-to-l',
-  tl: 'bg-gradient-to-tl',
+  t: "bg-gradient-to-t",
+  tr: "bg-gradient-to-tr",
+  r: "bg-gradient-to-r",
+  br: "bg-gradient-to-br",
+  b: "bg-gradient-to-b",
+  bl: "bg-gradient-to-bl",
+  l: "bg-gradient-to-l",
+  tl: "bg-gradient-to-tl",
 } as const;
 
 /**
@@ -51,7 +59,7 @@ const GRADIENT_CLASSES: Record<string, string> = {
  * Separated for better performance and maintainability
  */
 const BASE_GRADIENT_CLASSES =
-  'absolute inset-0 bg-gradient-to-t from-black/95 via-black/90 via-20% to-35% to-transparent';
+  "absolute inset-0 bg-gradient-to-t from-black/95 via-black/90 via-20% to-35% to-transparent";
 
 /**
  * OverlayContainer - Reusable component for overlay text positioning
@@ -83,15 +91,18 @@ export const OverlayContainer = memo(function OverlayContainer({
   }
 
   // Memoize IDs to prevent regeneration on re-renders
-  const overlayId = useMemo(() => id || `overlay-${Math.random().toString(36).substr(2, 9)}`, [id]);
+  const overlayId = useMemo(
+    () => id || `overlay-${Math.random().toString(36).substr(2, 9)}`,
+    [id]
+  );
   const gradientId = useMemo(() => `${overlayId}-gradient`, [overlayId]);
 
   // Memoize container classes - only recompute when placement or className changes
   const containerClasses = useMemo(
     () =>
       cn(
-        'absolute inset-0 flex items-center justify-center',
-        settings.placement ? PLACEMENT_CLASSES[settings.placement] : '',
+        "absolute inset-0 flex items-center justify-center",
+        settings.placement ? PLACEMENT_CLASSES[settings.placement] : "",
         className
       ),
     [settings.placement, className]
@@ -102,25 +113,32 @@ export const OverlayContainer = memo(function OverlayContainer({
     () =>
       cn(
         BASE_GRADIENT_CLASSES,
-        settings.gradientDirection ? GRADIENT_CLASSES[settings.gradientDirection] : ''
+        settings.gradientDirection
+          ? GRADIENT_CLASSES[settings.gradientDirection]
+          : ""
       ),
     [settings.gradientDirection]
   );
 
   return (
     <div
+      aria-describedby={overlayId}
+      aria-label="圖片疊加內容"
       className={containerClasses}
       role="region"
-      aria-label="圖片疊加內容"
-      aria-describedby={overlayId}
     >
       {/* Gradient Background - Decorative element with aria-hidden */}
-      <div id={gradientId} className={gradientClasses} aria-hidden="true" role="presentation" />
+      <div
+        aria-hidden="true"
+        className={gradientClasses}
+        id={gradientId}
+        role="presentation"
+      />
 
       {/* Content - With proper semantic structure and contrast */}
-      <div id={overlayId} className="relative z-10 text-white">
+      <div className="relative z-10 text-white" id={overlayId}>
         {settings.title && (
-          <h2 className="text-lg md:text-2xl font-bold drop-shadow-lg whitespace-nowrap line-clamp-1 text-white">
+          <h2 className="line-clamp-1 whitespace-nowrap font-bold text-lg text-white drop-shadow-lg md:text-2xl">
             {settings.title}
           </h2>
         )}
@@ -131,4 +149,4 @@ export const OverlayContainer = memo(function OverlayContainer({
 });
 
 // Display name for React DevTools
-OverlayContainer.displayName = 'OverlayContainer';
+OverlayContainer.displayName = "OverlayContainer";

@@ -1,11 +1,17 @@
-import { useState, useEffect } from 'react';
-import type { FC } from 'react';
-import { useCartStore } from '../stores/cartStore';
-import { Button } from '@blackliving/ui';
-import { Badge } from '@blackliving/ui';
-import { Separator } from '@blackliving/ui';
-import { ShoppingCart, X, Plus, Minus, Trash2, ArrowRight, Package, Truck } from 'lucide-react';
-import { cn } from '@blackliving/ui';
+import { Badge, Button, cn, Separator } from "@blackliving/ui";
+import {
+  ArrowRight,
+  Minus,
+  Package,
+  Plus,
+  ShoppingCart,
+  Trash2,
+  Truck,
+  X,
+} from "lucide-react";
+import type { FC } from "react";
+import { useEffect, useState } from "react";
+import { useCartStore } from "../stores/cartStore";
 
 interface MiniCartProps {
   isOpen: boolean;
@@ -14,8 +20,14 @@ interface MiniCartProps {
   className?: string;
 }
 
-const MiniCart: FC<MiniCartProps> = ({ isOpen, onClose, onCheckout, className = '' }) => {
-  const { items, updateQuantity, removeItem, logisticSettings } = useCartStore();
+const MiniCart: FC<MiniCartProps> = ({
+  isOpen,
+  onClose,
+  onCheckout,
+  className = "",
+}) => {
+  const { items, updateQuantity, removeItem, logisticSettings } =
+    useCartStore();
 
   // Use selectors to get computed values reactively
   const itemCount = useCartStore((state) => state.getItemCount());
@@ -38,21 +50,21 @@ const MiniCart: FC<MiniCartProps> = ({ isOpen, onClose, onCheckout, className = 
   // Close on escape key
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isOpen) {
+      if (e.key === "Escape" && isOpen) {
         onClose();
       }
     };
 
     if (isOpen) {
-      document.addEventListener('keydown', handleEscape);
-      document.body.style.overflow = 'hidden';
+      document.addEventListener("keydown", handleEscape);
+      document.body.style.overflow = "hidden";
     } else {
-      document.body.style.overflow = 'unset';
+      document.body.style.overflow = "unset";
     }
 
     return () => {
-      document.removeEventListener('keydown', handleEscape);
-      document.body.style.overflow = 'unset';
+      document.removeEventListener("keydown", handleEscape);
+      document.body.style.overflow = "unset";
     };
   }, [isOpen, onClose]);
 
@@ -73,7 +85,7 @@ const MiniCart: FC<MiniCartProps> = ({ isOpen, onClose, onCheckout, className = 
     onClose();
   };
 
-  if (!isAnimating && !isOpen) {
+  if (!(isAnimating || isOpen)) {
     return null;
   }
 
@@ -82,8 +94,8 @@ const MiniCart: FC<MiniCartProps> = ({ isOpen, onClose, onCheckout, className = 
       {/* Backdrop */}
       <div
         className={cn(
-          'fixed inset-0 bg-black/60 backdrop-blur-sm z-50 transition-opacity duration-300',
-          isOpen ? 'opacity-100' : 'opacity-0'
+          "fixed inset-0 z-50 bg-black/60 backdrop-blur-sm transition-opacity duration-300",
+          isOpen ? "opacity-100" : "opacity-0"
         )}
         onClick={onClose}
       />
@@ -91,106 +103,125 @@ const MiniCart: FC<MiniCartProps> = ({ isOpen, onClose, onCheckout, className = 
       {/* Mini Cart Drawer */}
       <div
         className={cn(
-          'fixed right-0 top-0 h-full w-full max-w-md bg-white shadow-2xl z-50',
-          'transform transition-transform duration-300 ease-out',
-          'flex flex-col',
-          isOpen ? 'translate-x-0' : 'translate-x-full',
+          "fixed top-0 right-0 z-50 h-full w-full max-w-md bg-white shadow-2xl",
+          "transform transition-transform duration-300 ease-out",
+          "flex flex-col",
+          isOpen ? "translate-x-0" : "translate-x-full",
           className
         )}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b bg-gray-50">
+        <div className="flex items-center justify-between border-b bg-gray-50 p-4">
           <div className="flex items-center space-x-2">
             <ShoppingCart className="h-5 w-5" />
-            <h2 className="text-lg font-semibold">購物車</h2>
+            <h2 className="font-semibold text-lg">購物車</h2>
             {itemCount > 0 && (
-              <Badge variant="secondary" className="ml-2">
+              <Badge className="ml-2" variant="secondary">
                 {itemCount} 件
               </Badge>
             )}
           </div>
           <Button
-            variant="ghost"
-            size="sm"
-            onClick={onClose}
-            className="p-1 h-8 w-8"
             aria-label="關閉購物車"
+            className="h-8 w-8 p-1"
+            onClick={onClose}
+            size="sm"
+            variant="ghost"
           >
             <X className="h-4 w-4" />
           </Button>
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-hidden flex flex-col">
+        <div className="flex flex-1 flex-col overflow-hidden">
           {items.length === 0 ? (
             /* Empty Cart */
-            <div className="flex-1 flex flex-col items-center justify-center p-8 text-gray-500">
-              <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
+            <div className="flex flex-1 flex-col items-center justify-center p-8 text-gray-500">
+              <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gray-100">
                 <ShoppingCart className="h-8 w-8 text-gray-400" />
               </div>
-              <h3 className="text-lg font-medium mb-2">購物車是空的</h3>
-              <p className="text-sm text-center mb-6">瀏覽我們的商品，將喜歡的床墊加入購物車吧！</p>
-              <Button onClick={onClose} className="bg-black hover:bg-gray-800 text-white">
+              <h3 className="mb-2 font-medium text-lg">購物車是空的</h3>
+              <p className="mb-6 text-center text-sm">
+                瀏覽我們的商品，將喜歡的床墊加入購物車吧！
+              </p>
+              <Button
+                className="bg-black text-white hover:bg-gray-800"
+                onClick={onClose}
+              >
                 繼續購物
               </Button>
             </div>
           ) : (
             <>
               {/* Cart Items */}
-              <div className="flex-1 overflow-y-auto p-4 space-y-4">
+              <div className="flex-1 space-y-4 overflow-y-auto p-4">
                 {items.map((item) => (
                   <div
-                    key={`${item.productId}-${item.variantId || 'default'}`}
-                    className="flex space-x-3 p-3 border rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors"
+                    className="flex space-x-3 rounded-lg border bg-gray-50 p-3 transition-colors hover:bg-gray-100"
+                    key={`${item.productId}-${item.variantId || "default"}`}
                   >
                     {/* Product Image */}
                     <div className="flex-shrink-0">
                       <img
-                        src={item.image}
                         alt={item.name}
-                        className="w-16 h-16 object-cover rounded-lg bg-white border"
+                        className="h-16 w-16 rounded-lg border bg-white object-cover"
                         onError={(e) => {
                           const target = e.target as HTMLImageElement;
-                          target.src = '/images/placeholder-mattress.jpg';
+                          target.src = "/images/placeholder-mattress.jpg";
                         }}
+                        src={item.image}
                       />
                     </div>
 
                     {/* Product Info */}
-                    <div className="flex-1 min-w-0">
-                      <h4 className="font-medium text-sm text-gray-900 truncate">{item.name}</h4>
-                      {item.variant && <p className="text-xs text-gray-600 mt-1">{item.variant}</p>}
-                      {item.size && <p className="text-xs text-gray-500">尺寸: {item.size}</p>}
+                    <div className="min-w-0 flex-1">
+                      <h4 className="truncate font-medium text-gray-900 text-sm">
+                        {item.name}
+                      </h4>
+                      {item.variant && (
+                        <p className="mt-1 text-gray-600 text-xs">
+                          {item.variant}
+                        </p>
+                      )}
+                      {item.size && (
+                        <p className="text-gray-500 text-xs">
+                          尺寸: {item.size}
+                        </p>
+                      )}
 
                       {/* Price */}
-                      <div className="flex items-center justify-between mt-2">
+                      <div className="mt-2 flex items-center justify-between">
                         <div className="flex items-center space-x-2">
                           <span className="font-semibold text-sm">
                             NT$ {item.price.toLocaleString()}
                           </span>
-                          {item.originalPrice && item.originalPrice > item.price && (
-                            <span className="text-xs text-gray-500 line-through">
-                              NT$ {item.originalPrice.toLocaleString()}
-                            </span>
-                          )}
+                          {item.originalPrice &&
+                            item.originalPrice > item.price && (
+                              <span className="text-gray-500 text-xs line-through">
+                                NT$ {item.originalPrice.toLocaleString()}
+                              </span>
+                            )}
                         </div>
                         <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => removeItem(item.productId, item.variantId)}
-                          className="p-1 h-6 w-6 text-red-500 hover:text-red-700 hover:bg-red-50"
                           aria-label="移除商品"
+                          className="h-6 w-6 p-1 text-red-500 hover:bg-red-50 hover:text-red-700"
+                          onClick={() =>
+                            removeItem(item.productId, item.variantId)
+                          }
+                          size="sm"
+                          variant="ghost"
                         >
                           <Trash2 className="h-3 w-3" />
                         </Button>
                       </div>
 
                       {/* Quantity Controls */}
-                      <div className="flex items-center space-x-2 mt-2">
-                        <div className="flex items-center border rounded bg-white">
+                      <div className="mt-2 flex items-center space-x-2">
+                        <div className="flex items-center rounded border bg-white">
                           <Button
-                            variant="ghost"
-                            size="sm"
+                            aria-label="減少數量"
+                            className="h-7 w-7 p-1"
+                            disabled={item.quantity <= 1}
                             onClick={() =>
                               handleQuantityChange(
                                 item.productId,
@@ -198,18 +229,18 @@ const MiniCart: FC<MiniCartProps> = ({ isOpen, onClose, onCheckout, className = 
                                 item.quantity - 1
                               )
                             }
-                            disabled={item.quantity <= 1}
-                            className="p-1 h-7 w-7"
-                            aria-label="減少數量"
+                            size="sm"
+                            variant="ghost"
                           >
                             <Minus className="h-3 w-3" />
                           </Button>
-                          <span className="px-3 py-1 text-sm font-medium min-w-[40px] text-center">
+                          <span className="min-w-[40px] px-3 py-1 text-center font-medium text-sm">
                             {item.quantity}
                           </span>
                           <Button
-                            variant="ghost"
-                            size="sm"
+                            aria-label="增加數量"
+                            className="h-7 w-7 p-1"
+                            disabled={item.quantity >= 10}
                             onClick={() =>
                               handleQuantityChange(
                                 item.productId,
@@ -217,21 +248,21 @@ const MiniCart: FC<MiniCartProps> = ({ isOpen, onClose, onCheckout, className = 
                                 item.quantity + 1
                               )
                             }
-                            disabled={item.quantity >= 10}
-                            className="p-1 h-7 w-7"
-                            aria-label="增加數量"
+                            size="sm"
+                            variant="ghost"
                           >
                             <Plus className="h-3 w-3" />
                           </Button>
                         </div>
-                        <span className="text-xs text-gray-500">
-                          小計: NT$ {(item.price * item.quantity).toLocaleString()}
+                        <span className="text-gray-500 text-xs">
+                          小計: NT${" "}
+                          {(item.price * item.quantity).toLocaleString()}
                         </span>
                       </div>
 
                       {/* Stock Warning */}
                       {!item.inStock && (
-                        <div className="mt-1 text-xs text-red-600 bg-red-50 px-2 py-1 rounded">
+                        <div className="mt-1 rounded bg-red-50 px-2 py-1 text-red-600 text-xs">
                           ⚠️ 商品目前缺貨
                         </div>
                       )}
@@ -241,7 +272,7 @@ const MiniCart: FC<MiniCartProps> = ({ isOpen, onClose, onCheckout, className = 
               </div>
 
               {/* Footer */}
-              <div className="border-t bg-white p-4 space-y-4">
+              <div className="space-y-4 border-t bg-white p-4">
                 {/* Price Summary */}
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
@@ -249,21 +280,26 @@ const MiniCart: FC<MiniCartProps> = ({ isOpen, onClose, onCheckout, className = 
                     <span>NT$ {subtotal.toLocaleString()}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-600 flex items-center space-x-1">
+                    <span className="flex items-center space-x-1 text-gray-600">
                       <Truck className="h-3 w-3" />
                       <span>運費</span>
                     </span>
-                    <span className={shippingFee === 0 ? 'text-green-600' : ''}>
-                      {shippingFee === 0 ? '免運' : `NT$ ${shippingFee.toLocaleString()}`}
+                    <span className={shippingFee === 0 ? "text-green-600" : ""}>
+                      {shippingFee === 0
+                        ? "免運"
+                        : `NT$ ${shippingFee.toLocaleString()}`}
                     </span>
                   </div>
-                  {subtotal < logisticSettings.freeShippingThreshold && shippingFee > 0 && (
-                    <div className="text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded">
-                      💡 再購買 NT${' '}
-                      {(logisticSettings.freeShippingThreshold - subtotal).toLocaleString()}{' '}
-                      即可免運
-                    </div>
-                  )}
+                  {subtotal < logisticSettings.freeShippingThreshold &&
+                    shippingFee > 0 && (
+                      <div className="rounded bg-amber-50 px-2 py-1 text-amber-600 text-xs">
+                        💡 再購買 NT${" "}
+                        {(
+                          logisticSettings.freeShippingThreshold - subtotal
+                        ).toLocaleString()}{" "}
+                        即可免運
+                      </div>
+                    )}
                   <Separator />
                   <div className="flex justify-between font-semibold text-base">
                     <span>總計</span>
@@ -274,22 +310,26 @@ const MiniCart: FC<MiniCartProps> = ({ isOpen, onClose, onCheckout, className = 
                 {/* Action Buttons */}
                 <div className="space-y-2">
                   <Button
-                    onClick={handleCheckout}
-                    className="w-full bg-black hover:bg-gray-800 text-white h-12 text-base font-semibold"
+                    className="h-12 w-full bg-black font-semibold text-base text-white hover:bg-gray-800"
                     disabled={items.some((item) => !item.inStock)}
+                    onClick={handleCheckout}
                   >
                     <span className="flex items-center justify-center space-x-2">
                       <span>前往結帳</span>
                       <ArrowRight className="h-4 w-4" />
                     </span>
                   </Button>
-                  <Button onClick={onClose} variant="outline" className="w-full">
+                  <Button
+                    className="w-full"
+                    onClick={onClose}
+                    variant="outline"
+                  >
                     繼續購物
                   </Button>
                 </div>
 
                 {/* Service Info */}
-                <div className="grid grid-cols-2 gap-2 text-xs text-gray-500 pt-2 border-t">
+                <div className="grid grid-cols-2 gap-2 border-t pt-2 text-gray-500 text-xs">
                   <div className="flex items-center space-x-1">
                     <Package className="h-3 w-3" />
                     <span>3-5 天配送</span>

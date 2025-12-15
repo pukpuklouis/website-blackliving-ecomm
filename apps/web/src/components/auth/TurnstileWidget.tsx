@@ -1,16 +1,17 @@
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from "react";
 
 declare global {
+  // biome-ignore lint/style/useConsistentTypeDefinitions: Global augmentation requires interface for TypeScript merging
   interface Window {
     turnstile?: {
       render: (
         element: HTMLElement,
         options: {
           sitekey: string;
-          theme?: 'light' | 'dark' | 'auto';
+          theme?: "light" | "dark" | "auto";
           callback: (token: string) => void;
-          'expired-callback'?: () => void;
-          'error-callback'?: () => void;
+          "expired-callback"?: () => void;
+          "error-callback"?: () => void;
         }
       ) => string;
       reset: (widgetId?: string) => void;
@@ -19,15 +20,25 @@ declare global {
   }
 }
 
-interface TurnstileWidgetProps {
+type TurnstileScriptElement = HTMLScriptElement & {
+  __turnstileLoaded?: boolean;
+};
+
+type TurnstileWidgetProps = {
   onToken: (token: string | null) => void;
   siteKey: string;
   disabled?: boolean;
-}
+};
 
-const SCRIPT_SRC = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
+const SCRIPT_SRC =
+  "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
 
-export function TurnstileWidget({ onToken, siteKey, disabled = false, theme = 'light' }: TurnstileWidgetProps & { theme?: 'light' | 'dark' | 'auto' }) {
+export function TurnstileWidget({
+  onToken,
+  siteKey,
+  disabled = false,
+  theme = "light",
+}: TurnstileWidgetProps & { theme?: "light" | "dark" | "auto" }) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const widgetIdRef = useRef<string | null>(null);
   const [scriptLoaded, setScriptLoaded] = useState<boolean>(false);
@@ -38,7 +49,7 @@ export function TurnstileWidget({ onToken, siteKey, disabled = false, theme = 'l
   }, [onToken]);
 
   useEffect(() => {
-    if (typeof window === 'undefined') {
+    if (typeof window === "undefined") {
       return;
     }
 
@@ -47,34 +58,36 @@ export function TurnstileWidget({ onToken, siteKey, disabled = false, theme = 'l
       return;
     }
 
-    const existingScript = document.querySelector<HTMLScriptElement>(`script[src="${SCRIPT_SRC}"]`);
+    const existingScript = document.querySelector<HTMLScriptElement>(
+      `script[src="${SCRIPT_SRC}"]`
+    );
     if (existingScript) {
-      if ((existingScript as any).__turnstileLoaded) {
+      if ((existingScript as TurnstileScriptElement).__turnstileLoaded) {
         setScriptLoaded(true);
         return;
       }
 
       const handleLoad = () => {
-        (existingScript as any).__turnstileLoaded = true;
+        (existingScript as TurnstileScriptElement).__turnstileLoaded = true;
         setScriptLoaded(true);
       };
-      existingScript.addEventListener('load', handleLoad, { once: true });
-      return () => existingScript.removeEventListener('load', handleLoad);
+      existingScript.addEventListener("load", handleLoad, { once: true });
+      return () => existingScript.removeEventListener("load", handleLoad);
     }
 
-    const script = document.createElement('script');
+    const script = document.createElement("script");
     script.src = SCRIPT_SRC;
     script.async = true;
     script.defer = true;
     script.onload = () => {
-      (script as any).__turnstileLoaded = true;
+      (script as TurnstileScriptElement).__turnstileLoaded = true;
       setScriptLoaded(true);
     };
     document.head.appendChild(script);
   }, []);
 
   useEffect(() => {
-    if (!scriptLoaded || !containerRef.current || !window.turnstile) {
+    if (!(scriptLoaded && containerRef.current && window.turnstile)) {
       return;
     }
 
@@ -87,8 +100,8 @@ export function TurnstileWidget({ onToken, siteKey, disabled = false, theme = 'l
       sitekey: siteKey,
       theme,
       callback: (token) => onTokenRef.current(token),
-      'expired-callback': () => onTokenRef.current(null),
-      'error-callback': () => onTokenRef.current(null),
+      "expired-callback": () => onTokenRef.current(null),
+      "error-callback": () => onTokenRef.current(null),
     });
 
     return () => {
@@ -106,7 +119,7 @@ export function TurnstileWidget({ onToken, siteKey, disabled = false, theme = 'l
     }
   }, [disabled]);
 
-  return <div ref={containerRef} className="flex justify-center" />;
+  return <div className="flex justify-center" ref={containerRef} />;
 }
 
 export default TurnstileWidget;

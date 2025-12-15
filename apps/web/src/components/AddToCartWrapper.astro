@@ -1,6 +1,6 @@
 ---
-import AddToCartSection from './AddToCartSection';
-import type { CategoryConfig } from '../types/category';
+import type { CategoryConfig } from "../types/category";
+import AddToCartSection from "./AddToCartSection";
 
 export interface Props {
   product: {
@@ -28,44 +28,51 @@ export interface Props {
   className?: string;
 }
 
-const { 
-  product, 
-  selectedVariantId, 
+const {
+  product,
+  selectedVariantId,
   categoryConfig,
-  className = '' 
+  className = "",
 } = Astro.props;
 
 // Server-side validation and data preparation
 if (!product) {
-  throw new Error('Product data is required for AddToCartWrapper');
+  throw new Error("Product data is required for AddToCartWrapper");
 }
 
 // Ensure product has proper structure for cart operations
 const processedProduct = {
   ...product,
   // Ensure images array exists
-  images: product.images && product.images.length > 0 
-    ? product.images 
-    : ['/images/placeholder-mattress.jpg'],
-  
+  images:
+    product.images && product.images.length > 0
+      ? product.images
+      : ["/images/placeholder-mattress.jpg"],
+
   // Ensure variants array exists and is properly structured
-  variants: product.variants && product.variants.length > 0 
-    ? product.variants.map(variant => ({
-        ...variant,
-        // Ensure required fields have defaults
-        name: variant.name || 'Standard',
-        price: typeof variant.price === 'number' ? variant.price : 0,
-        inStock: typeof variant.inStock === 'boolean' ? variant.inStock : false,
-        // Add category context to variant name if available
-        displayName: categoryConfig?.series ? `${categoryConfig.series} - ${variant.name}` : variant.name,
-      }))
-    : [{
-        id: 'default',
-        name: 'Standard',
-        price: 0,
-        inStock: product.inStock || false,
-      }],
-  
+  variants:
+    product.variants && product.variants.length > 0
+      ? product.variants.map((variant) => ({
+          ...variant,
+          // Ensure required fields have defaults
+          name: variant.name || "Standard",
+          price: typeof variant.price === "number" ? variant.price : 0,
+          inStock:
+            typeof variant.inStock === "boolean" ? variant.inStock : false,
+          // Add category context to variant name if available
+          displayName: categoryConfig?.series
+            ? `${categoryConfig.series} - ${variant.name}`
+            : variant.name,
+        }))
+      : [
+          {
+            id: "default",
+            name: "Standard",
+            price: 0,
+            inStock: product.inStock,
+          },
+        ],
+
   // Add category info if available
   category: categoryConfig?.series || product.category,
 };
@@ -74,7 +81,9 @@ const processedProduct = {
 const initialVariantId = selectedVariantId || processedProduct.variants[0]?.id;
 
 // Check if product has valid pricing
-const hasValidPricing = processedProduct.variants.some(variant => variant.price > 0);
+const hasValidPricing = processedProduct.variants.some(
+  (variant) => variant.price > 0
+);
 
 // Validate product data processing
 // All product data should be properly processed at this point

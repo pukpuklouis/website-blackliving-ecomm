@@ -3,7 +3,7 @@ interface Photo {
   src: string;
   alt: string;
   text?: string;
-  textAlign?: 'left' | 'right' | 'center';
+  textAlign?: "left" | "right" | "center";
   focalPoint?: { x: string; y: string }; // e.g., { x: '50%', y: '50%' }
   backgroundSize?: string; // e.g., 'cover', 'contain', '150%', '200%', default 'cover'
   gradientFrom?: string; // e.g., 'rgba(0,0,0,0.7)'
@@ -20,7 +20,13 @@ interface Props {
   fullWidth?: boolean;
 }
 
-const { photos, columns = 1, gap = '2', aspectRatio = '16/4', fullWidth = false } = Astro.props;
+const {
+  photos,
+  columns = 1,
+  gap = "2",
+  aspectRatio = "16/4",
+  fullWidth = false,
+} = Astro.props;
 ---
 
 <div
@@ -84,13 +90,13 @@ const { photos, columns = 1, gap = '2', aspectRatio = '16/4', fullWidth = false 
 
 <style>
   /* Hover scale effect using CSS variable */
-  .group:hover > div[style*='--hover-scale'] {
+  .group:hover > div[style*="--hover-scale"] {
     transform: scale(var(--hover-scale));
   }
 
   /* Responsive grid */
   @media (max-width: 768px) {
-    div[class*='grid'] {
+    div[class*="grid"] {
       grid-template-columns: 1fr !important;
     }
   }

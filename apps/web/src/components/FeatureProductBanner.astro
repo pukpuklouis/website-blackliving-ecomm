@@ -1,27 +1,31 @@
 ---
-import { Image } from 'astro:assets';
+import { Image } from "astro:assets";
 
 // Feature product banner with configurable overlays
-export interface Props {
+export type Props = {
   // Background image
   imageUrl?: string;
   alt?: string;
 
   // Layout
-  aspectRatio?: 'wide' | 'standard';
+  aspectRatio?: "wide" | "standard" | "video";
 
   // Visibility
   showOnDesktop?: boolean;
   showOnMobile?: boolean;
 
   // Gradient overlay
-  gradientDirection?: 'left-to-right' | 'right-to-left' | 'top-to-bottom' | 'bottom-to-top';
+  gradientDirection?:
+    | "left-to-right"
+    | "right-to-left"
+    | "top-to-bottom"
+    | "bottom-to-top";
   gradientFromColor?: string;
   gradientToColor?: string;
   gradientOpacity?: number;
 
   // Text overlay
-  textPosition?: 'left' | 'right' | 'center';
+  textPosition?: "left" | "right" | "center";
   textTitle?: string;
   textDescription?: string;
   textClassName?: string;
@@ -29,98 +33,100 @@ export interface Props {
   // Image overlay
   overlayImageUrl?: string;
   overlayImageAlt?: string;
-  overlayImagePosition?: 'left' | 'right';
-  overlayImageSize?: 'sm' | 'md' | 'lg';
+  overlayImagePosition?: "left" | "right";
+  overlayImageSize?: "sm" | "md" | "lg";
 
   // Interaction
   href?: string;
   hoverEffect?: boolean;
-}
+};
 
 const {
-  imageUrl = '/feature-banner/blackliving-feature-banner.webp',
-  alt = 'Black Living 特別優惠',
-  aspectRatio = 'wide',
+  imageUrl = "/feature-banner/blackliving-feature-banner.webp",
+  alt = "Black Living 特別優惠",
+  aspectRatio = "wide",
   showOnDesktop = true,
   showOnMobile = true,
-  gradientDirection = 'left-to-right',
-  gradientFromColor = 'transparent',
-  gradientToColor = 'black',
+  gradientDirection = "left-to-right",
+  gradientFromColor = "transparent",
+  gradientToColor = "black",
   gradientOpacity = 0.3,
-  textPosition = 'left',
+  textPosition = "left",
   textTitle,
   textDescription,
-  textClassName = '',
+  textClassName = "",
   overlayImageUrl,
-  overlayImageAlt = '',
-  overlayImagePosition = 'right',
-  overlayImageSize = 'md',
+  overlayImageAlt = "",
+  overlayImagePosition = "right",
+  overlayImageSize = "md",
   href,
   hoverEffect = false,
 } = Astro.props;
 
 // Aspect ratio classes
 const aspectRatioClasses = {
-  wide: 'aspect-[32/14]',
-  standard: 'aspect-[9/3]',
+  wide: "aspect-[32/14]",
+  standard: "aspect-[9/3]",
+  video: "aspect-[16/9]",
 };
 
 // Visibility classes based on device
-const getVisibilityClasses = (showOnDesktop: boolean, showOnMobile: boolean) => {
-  if (showOnDesktop && showOnMobile) {
-    return '';
-  } else if (showOnDesktop && !showOnMobile) {
-    return 'hidden md:block';
-  } else if (!showOnDesktop && showOnMobile) {
-    return 'block md:hidden';
-  } else {
-    return 'hidden';
+const getVisibilityClasses = (showDesktop: boolean, showMobile: boolean) => {
+  if (showDesktop && showMobile) {
+    return "";
   }
+  if (showDesktop && !showMobile) {
+    return "hidden md:block";
+  }
+  if (!showDesktop && showMobile) {
+    return "block md:hidden";
+  }
+  return "hidden";
 };
 
 const visibilityClasses = getVisibilityClasses(showOnDesktop, showOnMobile);
 
 // Gradient direction classes
 const gradientDirections = {
-  'left-to-right': 'bg-gradient-to-r',
-  'right-to-left': 'bg-gradient-to-l',
-  'top-to-bottom': 'bg-gradient-to-b',
-  'bottom-to-top': 'bg-gradient-to-t',
+  "left-to-right": "bg-gradient-to-r",
+  "right-to-left": "bg-gradient-to-l",
+  "top-to-bottom": "bg-gradient-to-b",
+  "bottom-to-top": "bg-gradient-to-t",
 };
 
 // Text position classes
 const textPositions = {
-  left: 'items-start justify-center pl-8 lg:pl-32',
-  right: 'items-end justify-center pr-8 lg:pr-32',
-  center: 'items-center justify-center',
+  left: "items-start justify-center pl-8 lg:pl-32",
+  right: "items-end justify-center pr-8 lg:pr-32",
+  center: "items-center justify-center",
 };
 
 // Overlay image size classes
 // Overlay image sizes proportional to banner dimensions
 const overlayImageSizes = {
-  sm: 'w-[12%] h-[12%]',
-  md: 'w-[18%] h-[18%]',
-  lg: 'w-[24%] h-[24%]',
+  sm: "w-[12%] h-[12%]",
+  md: "w-[18%] h-[18%]",
+  lg: "w-[24%] h-[24%]",
 };
 
 // Overlay image position classes
 const overlayImagePositions = {
-  left: 'left-4 lg:left-8',
-  right: 'right-4 lg:right-8',
+  left: "left-4 lg:left-8",
+  right: "right-4 lg:right-8",
 };
 
 // Convert color names to Tailwind gradient classes
 const getGradientColors = (from: string, to: string) => {
   const colorMap: Record<string, string> = {
-    transparent: 'transparent',
-    black: 'black',
-    white: 'white',
-    gray: 'gray-900',
-    'gray-light': 'gray-600',
-    red: 'red-500',
-    blue: 'blue-500',
-    green: 'green-500',
-    purple: 'purple-500',
+    transparent: "transparent",
+    black: "black",
+    white: "white",
+    gray: "gray-900",
+    "gray-light": "gray-600",
+    red: "red-500",
+    blue: "blue-500",
+    green: "green-500",
+    purple: "purple-500",
   };
 
   return {
@@ -130,13 +136,16 @@ const getGradientColors = (from: string, to: string) => {
 };
 
 const gradientColors = getGradientColors(gradientFromColor, gradientToColor);
-const Component = href ? 'a' : 'div';
+const Component = href ? "a" : "div";
 ---
 
 <section class={`bg-primary/25 ${visibilityClasses}`.trim()}>
   <div class="container">
     <div class="w-screen h-fit">
-      <Component {...href ? { href } : {}} class={`relative block ${hoverEffect ? 'group' : ''}`}>
+      <Component
+        {...href ? { href } : {}}
+        class={`relative block ${hoverEffect ? 'group' : ''}`}
+      >
         <!-- Background Image -->
         <Image
           src={imageUrl}

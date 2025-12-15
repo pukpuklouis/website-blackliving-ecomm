@@ -1,6 +1,6 @@
 ---
-import { Image } from 'astro:assets';
-import { getEntry } from 'astro:content';
+import { Image } from "astro:assets";
+import { getEntry } from "astro:content";
 
 // Feature icons section for Black Living homepage
 interface FeatureItem {
@@ -16,19 +16,24 @@ export interface Props {
 const { features = [] } = Astro.props;
 
 // Get default features from content collection
-const featuresCollection = await getEntry('features', 'featureicon');
+const featuresCollection = await getEntry("features", "featureicon");
 const defaultFeatures = featuresCollection?.data.defaultFeatures || [];
 
-const featuresToShow: FeatureItem[] = features.length > 0 ? features : defaultFeatures;
+const featuresToShow: FeatureItem[] =
+  features.length > 0 ? features : defaultFeatures;
 ---
 
 <section class="py-16 bg-gray-50">
   <div class="container md:max-w-7xl mx-auto px-4">
-    <h2 class="text-2xl md:text-3xl font-sans text-gray-800 font-bold text-center mb-12">
+    <h2
+      class="text-2xl md:text-3xl font-sans text-gray-800 font-bold text-center mb-12"
+    >
       價格安心 x 服務貼心 x 品質放心
     </h2>
 
-    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-8 px-8 md:px-0 mx-auto">
+    <div
+      class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-8 px-8 md:px-0 mx-auto"
+    >
       {
         featuresToShow.map((feature) => (
           <div class="text-center">

@@ -1,47 +1,47 @@
 ---
-import { marked } from 'marked';
+import { marked } from "marked";
 
 export interface Props {
   content: string;
   className?: string;
 }
 
-const { content, className = '' } = Astro.props as Props;
+const { content, className = "" } = Astro.props as Props;
 
 marked.use({ gfm: true, breaks: true, async: true });
-const html = await marked.parse(content ?? '');
+const html = await marked.parse(content ?? "");
 const proseClasses = [
-  'prose',
+  "prose",
   // 'md:prose-lg',
   // 'prose-base',
-  'prose-fluidScale',
-  'max-w-none',
-  'prose-headings:font-semibold',
-  'prose-headings:text-foreground',
-  'prose-headings:scroll-mt-20',
-  'prose-p:text-base',
-  'md:prose-p:text-lg',
-  'prose-p:leading-relaxed',
-  'prose-a:text-primary',
-  'prose-a:no-underline',
-  'prose-a:transition-colors',
-  'prose-a:hover:text-primary/80',
-  'prose-strong:text-foreground',
-  'prose-code:bg-muted/50',
-  'prose-code:text-foreground',
-  'prose-code:px-1.5',
-  'prose-code:py-0.5',
-  'prose-pre:bg-muted',
-  'prose-pre:text-foreground',
-  'prose-li:marker:text-muted-foreground',
-  'prose-img:rounded-lg',
-  'prose-img:shadow-sm',
+  "prose-fluidScale",
+  "max-w-none",
+  "prose-headings:font-semibold",
+  "prose-headings:text-foreground",
+  "prose-headings:scroll-mt-20",
+  "prose-p:text-base",
+  "md:prose-p:text-lg",
+  "prose-p:leading-relaxed",
+  "prose-a:text-primary",
+  "prose-a:no-underline",
+  "prose-a:transition-colors",
+  "prose-a:hover:text-primary/80",
+  "prose-strong:text-foreground",
+  "prose-code:bg-muted/50",
+  "prose-code:text-foreground",
+  "prose-code:px-1.5",
+  "prose-code:py-0.5",
+  "prose-pre:bg-muted",
+  "prose-pre:text-foreground",
+  "prose-li:marker:text-muted-foreground",
+  "prose-img:rounded-lg",
+  "prose-img:shadow-sm",
   className,
 ]
   .filter(Boolean)
-  .join(' ');
+  .join(" ");
 ---
 
 <div class={proseClasses}>
-  <article set:html={html} />
+  <article set:html={html}/>
 </div>

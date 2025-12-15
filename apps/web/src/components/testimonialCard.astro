@@ -1,5 +1,6 @@
 ---
-import { Image } from 'astro:assets';
+import { Image } from "astro:assets";
+
 interface Props {
   testimonial: {
     rating: number;
@@ -27,12 +28,8 @@ const { testimonial } = Astro.props;
     )
   }
   <div class="flex flex-col items-start mb-4">
-    <div class="flex text-yellow-400">
-      {'★'.repeat(testimonial.rating)}
-    </div>
+    <div class="flex text-yellow-400">{'★'.repeat(testimonial.rating)}</div>
     <span class="text-sm md:text-sm text-gray-600">{testimonial.source}</span>
   </div>
-  <p class="text-md md:text-lg text-gray-700">
-    "{testimonial.text}"
-  </p>
+  <p class="text-md md:text-lg text-gray-700">"{testimonial.text}"</p>
 </div>

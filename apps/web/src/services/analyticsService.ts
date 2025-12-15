@@ -1,4 +1,4 @@
-import type { SearchAnalyticsEvent } from '@blackliving/types/search';
+import type { SearchAnalyticsEvent } from "@blackliving/types/search";
 
 class AnalyticsService {
   private sessionId: string;
@@ -15,20 +15,26 @@ class AnalyticsService {
       return `session_${Date.now()}_${Math.random()}`;
     }
 
-    let sessionId = storage.getItem('search_session_id');
+    let sessionId = storage.getItem("search_session_id");
     if (!sessionId) {
       sessionId = `session_${Date.now()}_${Math.random()}`;
-      storage.setItem('search_session_id', sessionId);
+      storage.setItem("search_session_id", sessionId);
       // Clear session after 24 hours
-      storage.setItem('search_session_expires', String(Date.now() + 24 * 60 * 60 * 1000));
+      storage.setItem(
+        "search_session_expires",
+        String(Date.now() + 24 * 60 * 60 * 1000)
+      );
     }
 
     // Check if session expired
-    const expires = storage.getItem('search_session_expires');
-    if (expires && Date.now() > parseInt(expires)) {
+    const expires = storage.getItem("search_session_expires");
+    if (expires && Date.now() > Number.parseInt(expires)) {
       sessionId = `session_${Date.now()}_${Math.random()}`;
-      storage.setItem('search_session_id', sessionId);
-      storage.setItem('search_session_expires', String(Date.now() + 24 * 60 * 60 * 1000));
+      storage.setItem("search_session_id", sessionId);
+      storage.setItem(
+        "search_session_expires",
+        String(Date.now() + 24 * 60 * 60 * 1000)
+      );
     }
 
     return sessionId;
@@ -38,7 +44,9 @@ class AnalyticsService {
     this.userId = userId;
   }
 
-  private async sendEvent(event: Omit<SearchAnalyticsEvent, 'id' | 'userId' | 'sessionId'>) {
+  private async sendEvent(
+    event: Omit<SearchAnalyticsEvent, "id" | "userId" | "sessionId">
+  ) {
     try {
       const fullEvent: SearchAnalyticsEvent = {
         id: `evt_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
@@ -47,27 +55,27 @@ class AnalyticsService {
         ...event,
       };
 
-      const response = await fetch('/api/analytics/search', {
-        method: 'POST',
+      const response = await fetch("/api/analytics/search", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(fullEvent),
       });
 
       if (!response.ok) {
-        console.warn('Failed to send analytics event:', response.status);
+        console.warn("Failed to send analytics event:", response.status);
       }
     } catch (error) {
       // Silently fail analytics - don't break user experience
-      console.warn('Analytics error:', error);
+      console.warn("Analytics error:", error);
     }
   }
 
   // Track search queries
   trackSearchQuery(query: string, filters?: Record<string, any>) {
     this.sendEvent({
-      type: 'search_query',
+      type: "search_query",
       timestamp: new Date().toISOString(),
       query,
       filters,
@@ -78,12 +86,12 @@ class AnalyticsService {
   trackResultClick(
     query: string,
     resultId: string,
-    resultType: 'product' | 'post' | 'page',
+    resultType: "product" | "post" | "page",
     position: number,
     filters?: Record<string, any>
   ) {
     this.sendEvent({
-      type: 'search_result_click',
+      type: "search_result_click",
       timestamp: new Date().toISOString(),
       query,
       resultId,
@@ -96,7 +104,7 @@ class AnalyticsService {
   // Track no results
   trackNoResults(query: string, filters?: Record<string, any>) {
     this.sendEvent({
-      type: 'search_no_results',
+      type: "search_no_results",
       timestamp: new Date().toISOString(),
       query,
       filters,
@@ -104,9 +112,13 @@ class AnalyticsService {
   }
 
   // Track search errors
-  trackSearchError(query: string, error: string, filters?: Record<string, any>) {
+  trackSearchError(
+    query: string,
+    error: string,
+    filters?: Record<string, any>
+  ) {
     this.sendEvent({
-      type: 'search_error',
+      type: "search_error",
       timestamp: new Date().toISOString(),
       query,
       filters,
@@ -117,14 +129,14 @@ class AnalyticsService {
   // Get analytics summary (for admin/debugging)
   async getAnalyticsSummary() {
     try {
-      const response = await fetch('/api/analytics/search/summary');
+      const response = await fetch("/api/analytics/search/summary");
       if (!response.ok) {
-        throw new Error('Failed to fetch analytics summary');
+        throw new Error("Failed to fetch analytics summary");
       }
       const data = await response.json();
       return data.data;
     } catch (error) {
-      console.error('Failed to get analytics summary:', error);
+      console.error("Failed to get analytics summary:", error);
       return null;
     }
   }

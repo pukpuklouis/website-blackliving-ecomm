@@ -1,11 +1,11 @@
 ---
-import AccountNavComponent from './ui/AccountNav.tsx';
+import AccountNavComponent from "./ui/AccountNav.tsx";
 
-export interface Props {
-  currentPage: 'profile' | 'orders' | 'appointments';
+export type Props = {
+  currentPage: "profile" | "orders" | "appointments";
 }
 
 const { currentPage } = Astro.props;
 ---
 
-<AccountNavComponent {currentPage} client:only="react" />
+<AccountNavComponent {currentPage} client:only="react"/>

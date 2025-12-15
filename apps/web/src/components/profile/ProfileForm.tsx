@@ -1,6 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import type { ProfileUpdateRequest } from "@blackliving/types";
 import {
+  Alert,
+  AlertDescription,
   Button,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
   Input,
   Label,
   Select,
@@ -8,17 +14,16 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  Alert,
-  AlertDescription,
-} from '@blackliving/ui';
-import { Loader2, Save, RotateCcw } from 'lucide-react';
-import { useProfile } from '../../hooks/use-profile';
-import { validateFirstName, validateLastName, validatePhone } from '../../lib/validation';
-import type { ProfileUpdateRequest } from '@blackliving/types';
+} from "@blackliving/ui";
+import { Loader2, RotateCcw, Save } from "lucide-react";
+import type React from "react";
+import { useEffect, useState } from "react";
+import { useProfile } from "../../hooks/use-profile";
+import {
+  validateFirstName,
+  validateLastName,
+  validatePhone,
+} from "../../lib/validation";
 
 interface ProfileFormProps {
   className?: string;
@@ -35,32 +40,51 @@ interface FormData {
   contactPreference: string;
 }
 
-export function ProfileForm({ className, onSuccess, onError }: ProfileFormProps) {
-  const { profile, loading, error, isDirty, updateProfile, checkDirty, resetForm } = useProfile();
+export function ProfileForm({
+  className,
+  onSuccess,
+  onError,
+}: ProfileFormProps) {
+  const {
+    profile,
+    loading,
+    error,
+    isDirty,
+    updateProfile,
+    checkDirty,
+    resetForm,
+  } = useProfile();
 
   const [formData, setFormData] = useState<FormData>({
-    firstName: '',
-    lastName: '',
-    phone: '',
-    birthday: '',
-    gender: 'unspecified',
-    contactPreference: 'email',
+    firstName: "",
+    lastName: "",
+    phone: "",
+    birthday: "",
+    gender: "unspecified",
+    contactPreference: "email",
   });
 
-  const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>({});
+  const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>(
+    {}
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [successMessage, setSuccessMessage] = useState('');
+  const [successMessage, setSuccessMessage] = useState("");
 
   // Sync form data with profile
   useEffect(() => {
-    if (profile && profile.user && profile.customerProfile && profile.userProfile) {
+    if (
+      profile &&
+      profile.user &&
+      profile.customerProfile &&
+      profile.userProfile
+    ) {
       setFormData({
-        firstName: profile.user.firstName || '',
-        lastName: profile.user.lastName || '',
-        phone: profile.customerProfile.phone || '',
-        birthday: profile.userProfile.birthday || '',
-        gender: profile.userProfile.gender || 'unspecified',
-        contactPreference: profile.userProfile.contactPreference || 'email',
+        firstName: profile.user.firstName || "",
+        lastName: profile.user.lastName || "",
+        phone: profile.customerProfile.phone || "",
+        birthday: profile.userProfile.birthday || "",
+        gender: profile.userProfile.gender || "unspecified",
+        contactPreference: profile.userProfile.contactPreference || "email",
       });
     }
   }, [profile]);
@@ -69,15 +93,22 @@ export function ProfileForm({ className, onSuccess, onError }: ProfileFormProps)
   const [localIsDirty, setLocalIsDirty] = useState(false);
 
   useEffect(() => {
-    if (profile && profile.user && profile.customerProfile && profile.userProfile) {
+    if (
+      profile &&
+      profile.user &&
+      profile.customerProfile &&
+      profile.userProfile
+    ) {
       const dirty =
-        formData.firstName !== (profile.user.firstName || '') ||
-        formData.lastName !== (profile.user.lastName || '') ||
-        formData.phone !== (profile.customerProfile.phone || '') ||
-        (formData.birthday !== '' && formData.birthday !== (profile.userProfile.birthday || '')) ||
-        (formData.gender !== 'unspecified' &&
-          formData.gender !== (profile.userProfile.gender || 'unspecified')) ||
-        formData.contactPreference !== (profile.userProfile.contactPreference || 'email');
+        formData.firstName !== (profile.user.firstName || "") ||
+        formData.lastName !== (profile.user.lastName || "") ||
+        formData.phone !== (profile.customerProfile.phone || "") ||
+        (formData.birthday !== "" &&
+          formData.birthday !== (profile.userProfile.birthday || "")) ||
+        (formData.gender !== "unspecified" &&
+          formData.gender !== (profile.userProfile.gender || "unspecified")) ||
+        formData.contactPreference !==
+          (profile.userProfile.contactPreference || "email");
 
       setLocalIsDirty(dirty);
       checkDirty({
@@ -85,7 +116,7 @@ export function ProfileForm({ className, onSuccess, onError }: ProfileFormProps)
         lastName: formData.lastName,
         phone: formData.phone,
         birthday: formData.birthday,
-        gender: formData.gender === 'unspecified' ? undefined : formData.gender,
+        gender: formData.gender === "unspecified" ? undefined : formData.gender,
         contactPreference: formData.contactPreference,
       });
     }
@@ -94,21 +125,21 @@ export function ProfileForm({ className, onSuccess, onError }: ProfileFormProps)
   // Handle input changes with validation
   const handleInputChange = (field: keyof FormData, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
-    setSuccessMessage(''); // Clear success message on edit
+    setSuccessMessage(""); // Clear success message on edit
 
     // Real-time validation
-    let error = '';
+    let error = "";
     switch (field) {
-      case 'firstName':
-        error = validateFirstName(value) || '';
+      case "firstName":
+        error = validateFirstName(value) || "";
         break;
-      case 'lastName':
-        error = validateLastName(value) || '';
+      case "lastName":
+        error = validateLastName(value) || "";
         break;
-      case 'phone':
+      case "phone":
         // Only validate phone if it's not empty
-        if (value.trim() !== '') {
-          error = validatePhone(value) || '';
+        if (value.trim() !== "") {
+          error = validatePhone(value) || "";
         }
         break;
     }
@@ -149,18 +180,19 @@ export function ProfileForm({ className, onSuccess, onError }: ProfileFormProps)
         lastName: formData.lastName,
         phone: formData.phone || undefined,
         birthday: formData.birthday || undefined,
-        gender: (formData.gender === 'unspecified' ? undefined : formData.gender) as
-          | 'male'
-          | 'female'
-          | 'other'
-          | undefined,
-        contactPreference: formData.contactPreference as 'email' | 'phone' | 'sms',
+        gender: (formData.gender === "unspecified"
+          ? undefined
+          : formData.gender) as "male" | "female" | "other" | undefined,
+        contactPreference: formData.contactPreference as
+          | "email"
+          | "phone"
+          | "sms",
       };
 
       // Remove empty strings and convert to undefined
       Object.keys(updateData).forEach((key) => {
         const value = updateData[key as keyof ProfileUpdateRequest];
-        if (value === '') {
+        if (value === "") {
           delete updateData[key as keyof ProfileUpdateRequest];
         }
       });
@@ -168,14 +200,14 @@ export function ProfileForm({ className, onSuccess, onError }: ProfileFormProps)
       const result = await updateProfile(updateData);
 
       if (result.success) {
-        setSuccessMessage(result.message || '個人資料更新成功！');
+        setSuccessMessage(result.message || "個人資料更新成功！");
         setLocalIsDirty(false);
-        setTimeout(() => setSuccessMessage(''), 3000); // Auto-hide after 3 seconds
+        setTimeout(() => setSuccessMessage(""), 3000); // Auto-hide after 3 seconds
       } else {
-        onError?.(result.error || '更新失敗');
+        onError?.(result.error || "更新失敗");
       }
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : '更新失敗';
+      const errorMessage = err instanceof Error ? err.message : "更新失敗";
       onError?.(errorMessage);
     } finally {
       setIsSubmitting(false);
@@ -192,16 +224,17 @@ export function ProfileForm({ className, onSuccess, onError }: ProfileFormProps)
       originalProfile.userProfile
     ) {
       setFormData({
-        firstName: originalProfile.user.firstName || '',
-        lastName: originalProfile.user.lastName || '',
-        phone: originalProfile.customerProfile.phone || '',
-        birthday: originalProfile.userProfile.birthday || '',
-        gender: originalProfile.userProfile.gender || 'unspecified',
-        contactPreference: originalProfile.userProfile.contactPreference || 'email',
+        firstName: originalProfile.user.firstName || "",
+        lastName: originalProfile.user.lastName || "",
+        phone: originalProfile.customerProfile.phone || "",
+        birthday: originalProfile.userProfile.birthday || "",
+        gender: originalProfile.userProfile.gender || "unspecified",
+        contactPreference:
+          originalProfile.userProfile.contactPreference || "email",
       });
     }
     setErrors({});
-    setSuccessMessage('');
+    setSuccessMessage("");
     setLocalIsDirty(false);
   };
 
@@ -243,43 +276,47 @@ export function ProfileForm({ className, onSuccess, onError }: ProfileFormProps)
       </CardHeader>
       <CardContent>
         {successMessage && (
-          <div className="relatvie  w-fit h-6 text-green-600 mb-4 p-2 bg-green-50 rounded-full border border-green-200">
-            <span className="relative flex h-2 w-2 mr-1">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+          <div className="relatvie mb-4 h-6 w-fit rounded-full border border-green-200 bg-green-50 p-2 text-green-600">
+            <span className="relative mr-1 flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-green-500" />
             </span>
-            <span className="text-xs w-fit">成功</span>
+            <span className="w-fit text-xs">成功</span>
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form className="space-y-4" onSubmit={handleSubmit}>
           {/* Name Fields */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="firstName">姓氏 *</Label>
               <Input
+                className={errors.firstName ? "border-red-500" : ""}
                 id="firstName"
-                type="text"
-                value={formData.firstName}
-                onChange={(e) => handleInputChange('firstName', e.target.value)}
-                className={errors.firstName ? 'border-red-500' : ''}
+                onChange={(e) => handleInputChange("firstName", e.target.value)}
                 placeholder="請輸入姓氏"
                 required
+                type="text"
+                value={formData.firstName}
               />
-              {errors.firstName && <p className="text-sm text-red-500">{errors.firstName}</p>}
+              {errors.firstName && (
+                <p className="text-red-500 text-sm">{errors.firstName}</p>
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="lastName">名字 *</Label>
               <Input
+                className={errors.lastName ? "border-red-500" : ""}
                 id="lastName"
-                type="text"
-                value={formData.lastName}
-                onChange={(e) => handleInputChange('lastName', e.target.value)}
-                className={errors.lastName ? 'border-red-500' : ''}
+                onChange={(e) => handleInputChange("lastName", e.target.value)}
                 placeholder="請輸入名字"
                 required
+                type="text"
+                value={formData.lastName}
               />
-              {errors.lastName && <p className="text-sm text-red-500">{errors.lastName}</p>}
+              {errors.lastName && (
+                <p className="text-red-500 text-sm">{errors.lastName}</p>
+              )}
             </div>
           </div>
 
@@ -287,15 +324,17 @@ export function ProfileForm({ className, onSuccess, onError }: ProfileFormProps)
           <div className="space-y-2">
             <Label htmlFor="phone">手機號碼</Label>
             <Input
+              className={errors.phone ? "border-red-500" : ""}
               id="phone"
+              onChange={(e) => handleInputChange("phone", e.target.value)}
+              placeholder="09xxxxxxxx"
               type="tel"
               value={formData.phone}
-              onChange={(e) => handleInputChange('phone', e.target.value)}
-              className={errors.phone ? 'border-red-500' : ''}
-              placeholder="09xxxxxxxx"
             />
-            {errors.phone && <p className="text-sm text-red-500">{errors.phone}</p>}
-            <p className="text-sm text-gray-600">格式：09xxxxxxxx</p>
+            {errors.phone && (
+              <p className="text-red-500 text-sm">{errors.phone}</p>
+            )}
+            <p className="text-gray-600 text-sm">格式：09xxxxxxxx</p>
           </div>
 
           {/* Birthday Field */}
@@ -303,9 +342,9 @@ export function ProfileForm({ className, onSuccess, onError }: ProfileFormProps)
             <Label htmlFor="birthday">生日</Label>
             <Input
               id="birthday"
+              onChange={(e) => handleInputChange("birthday", e.target.value)}
               type="date"
               value={formData.birthday}
-              onChange={(e) => handleInputChange('birthday', e.target.value)}
             />
           </div>
 
@@ -314,8 +353,8 @@ export function ProfileForm({ className, onSuccess, onError }: ProfileFormProps)
             <Label htmlFor="gender">性別</Label>
             <Select
               key={formData.gender}
+              onValueChange={(value) => handleInputChange("gender", value)}
               value={formData.gender}
-              onValueChange={(value) => handleInputChange('gender', value)}
             >
               <SelectTrigger>
                 <SelectValue placeholder="請選擇性別" />
@@ -334,8 +373,10 @@ export function ProfileForm({ className, onSuccess, onError }: ProfileFormProps)
             <Label htmlFor="contactPreference">聯絡方式偏好</Label>
             <Select
               key={formData.contactPreference}
+              onValueChange={(value) =>
+                handleInputChange("contactPreference", value)
+              }
               value={formData.contactPreference}
-              onValueChange={(value) => handleInputChange('contactPreference', value)}
             >
               <SelectTrigger>
                 <SelectValue />
@@ -351,24 +392,24 @@ export function ProfileForm({ className, onSuccess, onError }: ProfileFormProps)
           {/* Action Buttons */}
           <div className="flex justify-between pt-4">
             <Button
+              className="flex items-center gap-2"
+              disabled={!localIsDirty || isSubmitting}
+              onClick={handleReset}
               type="button"
               variant="outline"
-              onClick={handleReset}
-              disabled={!localIsDirty || isSubmitting}
-              className="flex items-center gap-2"
             >
               <RotateCcw className="h-4 w-4" />
               重置
             </Button>
 
             <Button
-              type="submit"
+              className="flex items-center gap-2"
               disabled={
                 !localIsDirty ||
                 isSubmitting ||
                 Object.keys(errors).some((key) => errors[key as keyof FormData])
               }
-              className="flex items-center gap-2"
+              type="submit"
             >
               {isSubmitting ? (
                 <>

@@ -1,8 +1,8 @@
-import React, { type FC } from 'react';
-import { useCartStore } from '../stores/cartStore';
-import { useToast } from './ToastNotification';
-import { StarRating } from './StarRating';
-import ProductVariantSelector from './ProductVariantSelector';
+import type { FC } from "react";
+import { useCartStore } from "../stores/cartStore";
+import ProductVariantSelector from "./ProductVariantSelector";
+import { StarRating } from "./StarRating";
+import { useToast } from "./ToastNotification";
 
 interface Product {
   id: string;
@@ -42,7 +42,11 @@ interface ProductDetailProps {
   className?: string;
 }
 
-const ProductDetail: FC<ProductDetailProps> = ({ product, categoryConfig, className = '' }) => {
+const ProductDetail: FC<ProductDetailProps> = ({
+  product,
+  categoryConfig,
+  className = "",
+}) => {
   const { addItem } = useCartStore();
   const { addToast } = useToast();
 
@@ -56,15 +60,15 @@ const ProductDetail: FC<ProductDetailProps> = ({ product, categoryConfig, classN
   const convertedVariants = product.variants.map((variant) => {
     // Dynamically extract options by excluding known non-option fields
     const reservedKeys = [
-      'id',
-      'name',
-      'price',
-      'originalPrice',
-      'stock',
-      'sku',
-      'inStock',
-      'image',
-      'images',
+      "id",
+      "name",
+      "price",
+      "originalPrice",
+      "stock",
+      "sku",
+      "inStock",
+      "image",
+      "images",
     ];
     const options: Record<string, string> = {};
 
@@ -78,14 +82,14 @@ const ProductDetail: FC<ProductDetailProps> = ({ product, categoryConfig, classN
       options,
       price: variant.price || 0,
       stock: variant.stock || 10, // Default to 10 since API doesn't provide stock
-      sku: variant.sku || variant.id || Object.values(options).join('-'),
+      sku: variant.sku || variant.id || Object.values(options).join("-"),
     };
   });
 
   // Handle add to cart from ProductVariantSelector
   const handleAddToCart = async (variantData: any) => {
     const options = variantData.options || {};
-    const variantLabel = Object.values(options).join(' / ');
+    const variantLabel = Object.values(options).join(" / ");
 
     // Create cart item compatible with existing cartStore interface
     const cartItem = {
@@ -96,7 +100,7 @@ const ProductDetail: FC<ProductDetailProps> = ({ product, categoryConfig, classN
       // Spread all options so they are saved in the cart item
       ...options,
       price: variantData.price,
-      image: product.images?.[0] || '',
+      image: product.images?.[0] || "",
       inStock: true, // Assume in stock if we can add to cart
     };
 
@@ -106,51 +110,53 @@ const ProductDetail: FC<ProductDetailProps> = ({ product, categoryConfig, classN
     }
 
     addToast({
-      type: 'success',
-      title: '已成功加入購物車！',
+      type: "success",
+      title: "已成功加入購物車！",
       message: `${product.name} (${variantLabel}) x${variantData.quantity}`,
       duration: 4000,
     });
   };
 
   return (
-    <div className={`bg-white rounded-xl p-6 ${className}`}>
+    <div className={`rounded-xl bg-white p-6 ${className}`}>
       {/* Series Information */}
       <div className="mb-4">
-        <div className="inline-block bg-black text-white text-sm px-3 py-1 rounded">
+        <div className="inline-block rounded bg-black px-3 py-1 text-sm text-white">
           {categoryConfig.title}
         </div>
       </div>
 
       {/* Product Name */}
       <div className="mb-6">
-        <h1 className="text-2xl lg:text-4xl font-bold text-gray-900 mb-2">{product.name}</h1>
+        <h1 className="mb-2 font-bold text-2xl text-gray-900 lg:text-4xl">
+          {product.name}
+        </h1>
 
         {/* Star Rating */}
         <StarRating
+          className="mb-3"
           rating={reviewsData.rating}
           reviewCount={reviewsData.count}
           size="md"
-          className="mb-3"
         />
 
         {/* Product Description */}
-        <p className="text-gray-600 text-md md:text-lg whitespace-break-spaces">
+        <p className="whitespace-break-spaces text-gray-600 text-md md:text-lg">
           {product.description}
         </p>
       </div>
 
       {/* Variant Selector with integrated quantity and add to cart */}
       <ProductVariantSelector
+        className="mb-6"
+        onAddToCart={handleAddToCart}
+        onVariantChange={() => {}} // Optional callback for variant changes
         productId={product.id}
         variants={convertedVariants}
-        onVariantChange={() => {}} // Optional callback for variant changes
-        onAddToCart={handleAddToCart}
-        className="mb-6"
       />
 
       {/* Delivery Information */}
-      <div className="text-center text-sm text-gray-600 bg-gray-50 p-3 rounded-lg">
+      <div className="rounded-lg bg-gray-50 p-3 text-center text-gray-600 text-sm">
         預估配送期：訂單成立後約 3 個月
       </div>
     </div>

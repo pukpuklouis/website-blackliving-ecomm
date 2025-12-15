@@ -1,9 +1,9 @@
-import { MeiliSearch } from 'meilisearch';
 import type {
   SearchQueryOptions,
   UnifiedSearchResponse,
   UnifiedSearchResult,
-} from '@blackliving/types/search';
+} from "@blackliving/types/search";
+import { MeiliSearch } from "meilisearch";
 
 interface MeiliSearchServiceConfig {
   host: string;
@@ -26,13 +26,13 @@ class MeiliSearchService {
         import.meta.env.PUBLIC_API_URL,
       ];
 
-      if (typeof globalThis !== 'undefined') {
+      if (typeof globalThis !== "undefined") {
         const runtimeEnv =
           (globalThis as Record<string, unknown>).ENV ??
           (globalThis as Record<string, unknown>).__ENV__ ??
           (globalThis as Record<string, unknown>).__ENV;
 
-        if (runtimeEnv && typeof runtimeEnv === 'object') {
+        if (runtimeEnv && typeof runtimeEnv === "object") {
           const envRecord = runtimeEnv as Record<string, unknown>;
           candidates.push(envRecord.PUBLIC_API_BASE_URL);
           candidates.push(envRecord.PUBLIC_API_URL);
@@ -41,34 +41,34 @@ class MeiliSearchService {
 
       const apiUrl = candidates.reduce<string>((acc, candidate) => {
         if (acc) return acc;
-        if (typeof candidate === 'string') {
+        if (typeof candidate === "string") {
           const trimmed = candidate.trim();
           if (trimmed) {
-            return trimmed.endsWith('/') ? trimmed.slice(0, -1) : trimmed;
+            return trimmed.endsWith("/") ? trimmed.slice(0, -1) : trimmed;
           }
         }
         return acc;
-      }, '');
+      }, "");
 
       if (!apiUrl) {
-        throw new Error('PUBLIC_API_URL is not configured');
+        throw new Error("PUBLIC_API_URL is not configured");
       }
 
       // Get search key from API
       const response = await fetch(`${apiUrl}/api/search/keys`);
       if (!response.ok) {
-        throw new Error('Failed to fetch search configuration');
+        throw new Error("Failed to fetch search configuration");
       }
 
       const data = await response.json();
-      if (!data.success || !data.data) {
-        throw new Error('Invalid search configuration response');
+      if (!(data.success && data.data)) {
+        throw new Error("Invalid search configuration response");
       }
 
       this.config = {
         host: data.data.host,
         apiKey: data.data.searchKey,
-        indexName: data.data.indexName || 'blackliving_content',
+        indexName: data.data.indexName || "blackliving_content",
       };
 
       this.client = new MeiliSearch({
@@ -78,7 +78,7 @@ class MeiliSearchService {
 
       this.initialized = true;
     } catch (error) {
-      console.warn('Failed to initialize MeiliSearch client:', error);
+      console.warn("Failed to initialize MeiliSearch client:", error);
       // Don't throw - allow graceful degradation
     }
   }
@@ -90,17 +90,17 @@ class MeiliSearchService {
       await this.initialize();
     }
 
-    if (!this.client || !this.config) {
+    if (!(this.client && this.config)) {
       // Fallback to API-based search if MeiliSearch is not available
-      console.warn('MeiliSearch not available, falling back to API search');
-      const { fetchUnifiedSearch } = await import('./searchService');
+      console.warn("MeiliSearch not available, falling back to API search");
+      const { fetchUnifiedSearch } = await import("./searchService");
       return fetchUnifiedSearch(options);
     }
 
     try {
       const trimmedQuery = options.query.trim();
       if (!trimmedQuery) {
-        throw new Error('Search query cannot be empty');
+        throw new Error("Search query cannot be empty");
       }
 
       // Build search parameters
@@ -114,7 +114,9 @@ class MeiliSearchService {
       const filters: string[] = [];
 
       if (options.types && options.types.length > 0) {
-        filters.push(`type IN [${options.types.map((t) => `"${t}"`).join(', ')}]`);
+        filters.push(
+          `type IN [${options.types.map((t) => `"${t}"`).join(", ")}]`
+        );
       }
 
       if (options.category) {
@@ -138,7 +140,7 @@ class MeiliSearchService {
         slug: hit.slug,
         href:
           hit.href ||
-          `/${hit.type === 'product' ? 'products' : hit.type === 'post' ? 'blog' : 'pages'}/${hit.slug}`,
+          `/${hit.type === "product" ? "products" : hit.type === "post" ? "blog" : "pages"}/${hit.slug}`,
         type: hit.type,
         thumbnail: hit.image || null,
         metadata: {
@@ -153,9 +155,9 @@ class MeiliSearchService {
       const allResults = searchResult.hits.map(transformToSearchResult);
 
       // Redistribute results back to categories
-      const finalProducts = allResults.filter((r) => r.type === 'product');
-      const finalPosts = allResults.filter((r) => r.type === 'post');
-      const finalPages = allResults.filter((r) => r.type === 'page');
+      const finalProducts = allResults.filter((r) => r.type === "product");
+      const finalPosts = allResults.filter((r) => r.type === "post");
+      const finalPages = allResults.filter((r) => r.type === "page");
 
       return {
         query: trimmedQuery,
@@ -168,9 +170,9 @@ class MeiliSearchService {
         took: searchResult.processingTimeMs,
       };
     } catch (error) {
-      console.error('MeiliSearch query failed:', error);
+      console.error("MeiliSearch query failed:", error);
       if (error instanceof Error) {
-        console.error('Error details:', {
+        console.error("Error details:", {
           message: error.message,
           stack: error.stack,
           name: error.name,
@@ -178,8 +180,8 @@ class MeiliSearchService {
       }
 
       // Fallback to API-based search
-      console.warn('Falling back to API search due to MeiliSearch error');
-      const { fetchUnifiedSearch } = await import('./searchService');
+      console.warn("Falling back to API search due to MeiliSearch error");
+      const { fetchUnifiedSearch } = await import("./searchService");
       return fetchUnifiedSearch(options);
     }
   }

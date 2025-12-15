@@ -1,35 +1,37 @@
 ---
 export interface Props {
   adId?: string;
-  adType?: 'banner' | 'square' | 'vertical';
-  adNetwork?: 'google' | 'custom';
+  adType?: "banner" | "square" | "vertical";
+  adNetwork?: "google" | "custom";
   fallbackText?: string;
   class?: string;
   width?: number;
   height?: number;
 }
 
-const { 
+const {
   adId,
-  adType = 'banner',
-  adNetwork = 'custom',
-  fallbackText = '廣告',
-  class: className = '',
+  adType = "banner",
+  adNetwork = "custom",
+  fallbackText = "廣告",
+  class: className = "",
   width = 300,
-  height = 250
+  height = 250,
 } = Astro.props;
 
 // Ad dimensions based on type
 const adDimensions = {
   banner: { width: 320, height: 100 },
   square: { width: 300, height: 250 },
-  vertical: { width: 160, height: 600 }
+  vertical: { width: 160, height: 600 },
 };
 
 const dimensions = adDimensions[adType] || { width, height };
 ---
 
-<div class={`ad-space ad-space--${adType} ${className} bg-white rounded-lg border border-gray-200 overflow-hidden relative ${adType === 'banner' ? 'mb-4' : ''} ${adType === 'square' ? 'mb-6' : ''} ${adType === 'vertical' ? 'sticky top-4' : ''}`}>
+<div
+  class={`ad-space ad-space--${adType} ${className} bg-white rounded-lg border border-gray-200 overflow-hidden relative ${adType === 'banner' ? 'mb-4' : ''} ${adType === 'square' ? 'mb-6' : ''} ${adType === 'vertical' ? 'sticky top-4' : ''}`}
+>
   {adId ? (
     <div class='ad-space__container flex items-center justify-center' data-ad-id={adId} data-ad-network={adNetwork}>
       {adNetwork === 'google' ? (
@@ -68,8 +70,10 @@ const dimensions = adDimensions[adType] || { width, height };
   )}
 
   <!-- Ad label for transparency -->
-  <div class='ad-space__label absolute top-2 right-2 bg-white bg-opacity-80 px-2 py-1 rounded text-xs'>
-    <span class='text-xs text-gray-400'>廣告</span>
+  <div
+    class="ad-space__label absolute top-2 right-2 bg-white bg-opacity-80 px-2 py-1 rounded text-xs"
+  >
+    <span class="text-xs text-gray-400">廣告</span>
   </div>
 </div>
 
@@ -86,7 +90,7 @@ const dimensions = adDimensions[adType] || { width, height };
       margin-left: 1rem;
       margin-right: 1rem;
     }
-    
+
     .ad-space--banner .ad-space__container,
     .ad-space--banner .ad-space__placeholder {
       width: 100% !important;
@@ -104,56 +108,60 @@ const dimensions = adDimensions[adType] || { width, height };
 
 <script>
   // Google AdSense initialization
-  if (typeof window !== 'undefined') {
-    document.addEventListener('DOMContentLoaded', function() {
-      const googleAds = document.querySelectorAll('.adsbygoogle');
-      
+  if (typeof window !== "undefined") {
+    document.addEventListener("DOMContentLoaded", () => {
+      const googleAds = document.querySelectorAll(".adsbygoogle");
+
       if (googleAds.length > 0) {
         // Load Google AdSense script if not already loaded
-        if (!window.adsbygoogle) {
-          const script = document.createElement('script');
-          script.async = true;
-          script.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js';
-          document.head.appendChild(script);
-          
-          script.onload = function() {
-            googleAds.forEach(ad => {
-              try {
-                (adsbygoogle = window.adsbygoogle || []).push({});
-              } catch (e) {
-                console.warn('AdSense error:', e);
-              }
-            });
-          };
-        } else {
-          googleAds.forEach(ad => {
+        if (window.adsbygoogle) {
+          googleAds.forEach((ad) => {
             try {
               (adsbygoogle = window.adsbygoogle || []).push({});
             } catch (e) {
-              console.warn('AdSense error:', e);
+              console.warn("AdSense error:", e);
             }
           });
+        } else {
+          const script = document.createElement("script");
+          script.async = true;
+          script.src =
+            "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js";
+          document.head.appendChild(script);
+
+          script.onload = () => {
+            googleAds.forEach((ad) => {
+              try {
+                (adsbygoogle = window.adsbygoogle || []).push({});
+              } catch (e) {
+                console.warn("AdSense error:", e);
+              }
+            });
+          };
         }
       }
 
       // Track ad visibility for analytics
-      const adSpaces = document.querySelectorAll('.ad-space__container');
-      if ('IntersectionObserver' in window) {
-        const observer = new IntersectionObserver((entries) => {
-          entries.forEach(entry => {
-            if (entry.isIntersecting) {
-              const adId = entry.target.getAttribute('data-ad-id');
-              if (adId && typeof gtag !== 'undefined') {
-                gtag('event', 'ad_impression', {
-                  event_category: 'ads',
-                  event_label: adId
-                });
+      const adSpaces = document.querySelectorAll(".ad-space__container");
+      if ("IntersectionObserver" in window) {
+        const observer = new IntersectionObserver(
+          (entries) => {
+            entries.forEach((entry) => {
+              if (entry.isIntersecting) {
+                const adId = entry.target.getAttribute("data-ad-id");
+                if (adId && typeof gtag !== "undefined") {
+                  gtag("event", "ad_impression", {
+                    event_category: "ads",
+                    event_label: adId,
+                  });
+                }
               }
-            }
-          });
-        }, { threshold: 0.5 });
+            });
+          },
+          { threshold: 0.5 }
+        );
 
-        adSpaces.forEach(ad => observer.observe(ad));
+        adSpaces.forEach((ad) => observer.observe(ad));
       }
     });
   }

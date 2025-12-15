@@ -1,4 +1,14 @@
 ---
-// Redirect to login page
-return Astro.redirect('/login');
+// Check for auth cookies
+const hasSession = 
+  Astro.cookies.has("better-auth.session_token") || 
+  Astro.cookies.has("bl_access_token") || 
+  Astro.cookies.has("bl_refresh_token");
+
+if (hasSession) {
+  return Astro.redirect('/account/profile');
+}
+// Redirect to login page if no session
+return Astro.redirect('/login?redirect=/account/profile');
 ---
+

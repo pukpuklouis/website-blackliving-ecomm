@@ -1,13 +1,15 @@
-'use client';
+"use client";
 
-import { useEffect, useMemo } from 'react';
-import { SearchCommand as SearchCommandUI, type SearchResultItem } from '@blackliving/ui';
-import { useShallow } from 'zustand/react/shallow';
+import {
+  SearchCommand as SearchCommandUI,
+  type SearchResultItem,
+} from "@blackliving/ui";
+import { useEffect, useMemo } from "react";
+import { useShallow } from "zustand/react/shallow";
+import { useSearchKeyboardShortcut } from "../hooks/useSearchKeyboardShortcut";
+import { useSearchStore } from "../stores/searchStore";
 
-import { useSearchStore } from '../stores/searchStore';
-import { useSearchKeyboardShortcut } from '../hooks/useSearchKeyboardShortcut';
-
-const SUCCESS_FOOTER = '使用 ⌘ + K（或 Ctrl + K）快速開啟搜尋 · Esc 關閉';
+const SUCCESS_FOOTER = "使用 ⌘ + K（或 Ctrl + K）快速開啟搜尋 · Esc 關閉";
 
 export default function SearchModal() {
   const {
@@ -72,9 +74,13 @@ export default function SearchModal() {
       return `搜尋發生錯誤：${error}`;
     }
     if (!query.trim()) {
-      return '輸入關鍵字以搜尋商品、文章或頁面';
+      return "輸入關鍵字以搜尋商品、文章或頁面";
     }
-    if (!isLoading && results.products.length + results.posts.length + results.pages.length === 0) {
+    if (
+      !isLoading &&
+      results.products.length + results.posts.length + results.pages.length ===
+        0
+    ) {
       return `找不到與「${query}」相關的結果`;
     }
     return SUCCESS_FOOTER;
@@ -93,7 +99,7 @@ export default function SearchModal() {
       thumbnail: item.thumbnail ?? undefined,
       metadata: item.metadata ?? undefined,
     });
-    setQuery('');
+    setQuery("");
     setError(null);
     closeModal();
     window.setTimeout(() => {
@@ -103,20 +109,20 @@ export default function SearchModal() {
 
   return (
     <SearchCommandUI
-      open={isOpen}
+      footer={footerMessage}
+      isLoading={isLoading}
       onOpenChange={(open) => (open ? openModal() : closeModal())}
-      query={query}
       onQueryChange={(value) => {
         setError(null);
         setQuery(value);
       }}
-      results={results}
-      isLoading={isLoading}
-      recentSearches={recent}
       onRecentSelect={(entry) => setQuery(entry.query)}
       onResultSelect={handleResultSelect}
-      footer={footerMessage}
+      open={isOpen}
       placeholder="搜尋商品、文章與頁面"
+      query={query}
+      recentSearches={recent}
+      results={results}
     />
   );
 }

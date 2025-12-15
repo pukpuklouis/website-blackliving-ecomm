@@ -3,34 +3,30 @@
  * Handles CRUD operations for customer addresses with caching
  */
 
-import { useState, useCallback, useEffect } from 'react';
 import type {
-  CustomerAddress,
-  AddressCreateRequest,
-  AddressUpdateRequest,
-  AddressesApiResponse,
   AddressApiResponse,
-} from '@blackliving/types/profile';
+  AddressCreateRequest,
+  AddressesApiResponse,
+  AddressUpdateRequest,
+  CustomerAddress,
+} from "@blackliving/types/profile";
+import { useCallback, useEffect, useState } from "react";
 
-interface UseAddressesOptions {
+type UseAddressesOptions = {
   autoLoad?: boolean;
-  cacheTimeout?: number;
-}
+};
 
-interface AddressesState {
+type AddressesState = {
   addresses: CustomerAddress[];
   loading: boolean;
   error: string | null;
   lastUpdated: Date | null;
-}
+};
 
-const API_BASE = '/api/customers/profile/addresses';
+const API_BASE = "/api/customers/profile/addresses";
 
 export function useAddresses(options: UseAddressesOptions = {}) {
-  const {
-    autoLoad = true,
-    cacheTimeout = 180000, // 3 minutes
-  } = options;
+  const { autoLoad = true } = options;
 
   const [state, setState] = useState<AddressesState>({
     addresses: [],
@@ -45,9 +41,9 @@ export function useAddresses(options: UseAddressesOptions = {}) {
 
     try {
       const response = await fetch(API_BASE, {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
+        method: "GET",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
       });
 
       const result: AddressesApiResponse = await response.json();
@@ -59,97 +55,111 @@ export function useAddresses(options: UseAddressesOptions = {}) {
       if (result.success && result.data) {
         setState((prev) => ({
           ...prev,
-          addresses: result.data!,
+          addresses: result.data || [],
           loading: false,
           lastUpdated: new Date(),
         }));
-        return result.data;
-      } else {
-        throw new Error(result.error || 'Failed to load addresses');
+        return result.data || [];
       }
+      throw new Error(result.error || "Failed to load addresses");
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      console.error('[useAddresses] Error loading addresses:', errorMessage);
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error";
+      console.error("[useAddresses] Error loading addresses:", errorMessage);
       setState((prev) => ({ ...prev, error: errorMessage, loading: false }));
       return null;
     }
   }, []);
 
   // Create new address
-  const createAddress = useCallback(async (addressData: AddressCreateRequest) => {
-    setState((prev) => ({ ...prev, loading: true, error: null }));
+  const createAddress = useCallback(
+    async (addressData: AddressCreateRequest) => {
+      setState((prev) => ({ ...prev, loading: true, error: null }));
 
-    try {
-      const response = await fetch(API_BASE, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(addressData),
-        credentials: 'include',
-      });
+      try {
+        const response = await fetch(API_BASE, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(addressData),
+          credentials: "include",
+        });
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const result: AddressApiResponse = await response.json();
+
+        if (result.success && result.data) {
+          // Add new address to state
+          const newAddress = result.data;
+          setState((prev) => ({
+            ...prev,
+            addresses: [...prev.addresses, newAddress],
+            loading: false,
+            lastUpdated: new Date(),
+          }));
+
+          return { success: true, data: newAddress, message: result.message };
+        }
+        throw new Error(result.error || "Failed to create address");
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error ? error.message : "Unknown error";
+        setState((prev) => ({ ...prev, error: errorMessage, loading: false }));
+        return { success: false, error: errorMessage };
       }
-
-      const result: AddressApiResponse = await response.json();
-
-      if (result.success && result.data) {
-        // Add new address to state
-        setState((prev) => ({
-          ...prev,
-          addresses: [...prev.addresses, result.data!],
-          loading: false,
-          lastUpdated: new Date(),
-        }));
-
-        return { success: true, data: result.data, message: result.message };
-      } else {
-        throw new Error(result.error || 'Failed to create address');
-      }
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      setState((prev) => ({ ...prev, error: errorMessage, loading: false }));
-      return { success: false, error: errorMessage };
-    }
-  }, []);
+    },
+    []
+  );
 
   // Update existing address
-  const updateAddress = useCallback(async (addressId: string, updateData: AddressUpdateRequest) => {
-    setState((prev) => ({ ...prev, loading: true, error: null }));
+  const updateAddress = useCallback(
+    async (addressId: string, updateData: AddressUpdateRequest) => {
+      setState((prev) => ({ ...prev, loading: true, error: null }));
 
-    try {
-      const response = await fetch(`${API_BASE}/${addressId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updateData),
-        credentials: 'include',
-      });
+      try {
+        const response = await fetch(`${API_BASE}/${addressId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(updateData),
+          credentials: "include",
+        });
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const result: AddressApiResponse = await response.json();
+
+        if (result.success && result.data) {
+          // Update address in state
+          const updatedAddress = result.data;
+          setState((prev) => ({
+            ...prev,
+            addresses: prev.addresses.map((addr) =>
+              addr.id === addressId ? updatedAddress : addr
+            ),
+            loading: false,
+            lastUpdated: new Date(),
+          }));
+
+          return {
+            success: true,
+            data: updatedAddress,
+            message: result.message,
+          };
+        }
+        throw new Error(result.error || "Failed to update address");
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error ? error.message : "Unknown error";
+        setState((prev) => ({ ...prev, error: errorMessage, loading: false }));
+        return { success: false, error: errorMessage };
       }
-
-      const result: AddressApiResponse = await response.json();
-
-      if (result.success && result.data) {
-        // Update address in state
-        setState((prev) => ({
-          ...prev,
-          addresses: prev.addresses.map((addr) => (addr.id === addressId ? result.data! : addr)),
-          loading: false,
-          lastUpdated: new Date(),
-        }));
-
-        return { success: true, data: result.data, message: result.message };
-      } else {
-        throw new Error(result.error || 'Failed to update address');
-      }
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      setState((prev) => ({ ...prev, error: errorMessage, loading: false }));
-      return { success: false, error: errorMessage };
-    }
-  }, []);
+    },
+    []
+  );
 
   // Delete address
   const deleteAddress = useCallback(async (addressId: string) => {
@@ -157,9 +167,9 @@ export function useAddresses(options: UseAddressesOptions = {}) {
 
     try {
       const response = await fetch(`${API_BASE}/${addressId}`, {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
       });
 
       if (!response.ok) {
@@ -178,11 +188,11 @@ export function useAddresses(options: UseAddressesOptions = {}) {
         }));
 
         return { success: true, message: result.message };
-      } else {
-        throw new Error(result.error || 'Failed to delete address');
       }
+      throw new Error(result.error || "Failed to delete address");
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error";
       setState((prev) => ({ ...prev, error: errorMessage, loading: false }));
       return { success: false, error: errorMessage };
     }
@@ -194,9 +204,9 @@ export function useAddresses(options: UseAddressesOptions = {}) {
 
     try {
       const response = await fetch(`${API_BASE}/${addressId}/default`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
       });
 
       if (!response.ok) {
@@ -218,26 +228,28 @@ export function useAddresses(options: UseAddressesOptions = {}) {
         }));
 
         return { success: true, data: result.data, message: result.message };
-      } else {
-        throw new Error(result.error || 'Failed to set default address');
       }
+      throw new Error(result.error || "Failed to set default address");
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error";
       setState((prev) => ({ ...prev, error: errorMessage, loading: false }));
       return { success: false, error: errorMessage };
     }
   }, []);
 
   // Get default address
-  const getDefaultAddress = useCallback(() => {
-    return state.addresses.find((addr) => addr.isDefault) || null;
-  }, [state.addresses]);
+  const getDefaultAddress = useCallback(
+    () => state.addresses.find((addr) => addr.isDefault) || null,
+    [state.addresses]
+  );
 
   // Get addresses by type
   const getAddressesByType = useCallback(
-    (type: 'shipping' | 'billing' | 'both') => {
-      return state.addresses.filter((addr) => addr.type === type || addr.type === 'both');
-    },
+    (type: "shipping" | "billing" | "both") =>
+      state.addresses.filter(
+        (addr) => addr.type === type || addr.type === "both"
+      ),
     [state.addresses]
   );
 
@@ -254,8 +266,8 @@ export function useAddresses(options: UseAddressesOptions = {}) {
 
     // Computed values
     defaultAddress: getDefaultAddress(),
-    shippingAddresses: getAddressesByType('shipping'),
-    billingAddresses: getAddressesByType('billing'),
+    shippingAddresses: getAddressesByType("shipping"),
+    billingAddresses: getAddressesByType("billing"),
     isEmpty: state.addresses.length === 0,
 
     // Actions
@@ -268,6 +280,7 @@ export function useAddresses(options: UseAddressesOptions = {}) {
 
     // Utilities
     refresh: loadAddresses,
-    findById: (id: string) => state.addresses.find((addr) => addr.id === id) || null,
+    findById: (id: string) =>
+      state.addresses.find((addr) => addr.id === id) || null,
   };
 }

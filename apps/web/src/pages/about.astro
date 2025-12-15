@@ -1,90 +1,92 @@
 ---
-import BaseLayout from '../layouts/BaseLayout.astro';
-import BrandIntroduction from '../components/BrandIntroduction.astro';
-import BrandTimeline from '../components/BrandTimeline.astro';
-import CircularAdvantages from '../components/CircularAdvantages.astro';
-import PhotoGrid from '../components/PhotoGrid.astro';
-import ComparisonTable from '../components/ComparisonTable.astro';
-import ImageBanner from '../components/ImageBanner.astro';
+import BrandIntroduction from "../components/BrandIntroduction.astro";
+import BrandTimeline from "../components/BrandTimeline.astro";
+import CircularAdvantages from "../components/CircularAdvantages.astro";
+import ComparisonTable from "../components/ComparisonTable.astro";
+import ImageBanner from "../components/ImageBanner.astro";
+import PhotoGrid from "../components/PhotoGrid.astro";
+import BaseLayout from "../layouts/BaseLayout.astro";
 
 //set seo const
 const aboutPage = {
-  title: '關於黑哥',
-  description: '了解Black Living黑哥家居的品牌故事，從黑標王到專業居家生活品牌的發展歷程',
-  seoTitle: '關於黑哥 - Black Living 黑哥家居品牌故事',
+  title: "關於黑哥",
+  description:
+    "了解Black Living黑哥家居的品牌故事，從黑標王到專業居家生活品牌的發展歷程",
+  seoTitle: "關於黑哥 - Black Living 黑哥家居品牌故事",
   seoDescription:
-    '了解Black Living黑哥家居的品牌故事，從黑標王到專業居家生活品牌的發展歷程，以及我們對品質與服務的承諾。',
+    "了解Black Living黑哥家居的品牌故事，從黑標王到專業居家生活品牌的發展歷程，以及我們對品質與服務的承諾。",
 };
 // Timeline data - updated years: 2018, 2023, 2024, 2025, 至今, 未來
 const timelineItems = [
   {
-    year: '2018',
-    description: '創立「黑標王」，於蝦皮開設席夢思黑標專賣店，同年在中壢成立首間實體門市。',
+    year: "2018",
+    description:
+      "創立「黑標王」，於蝦皮開設席夢思黑標專賣店，同年在中壢成立首間實體門市。",
   },
   {
-    year: '2023',
-    description: '成為蝦皮席夢思銷售第一的賣家，累積服務超過 3,000 位客戶。',
+    year: "2023",
+    description: "成為蝦皮席夢思銷售第一的賣家，累積服務超過 3,000 位客戶。",
   },
   {
-    year: '2024',
-    description: '品牌升級為「黑哥居家」，商品線擴展至多元居家用品。',
+    year: "2024",
+    description: "品牌升級為「黑哥居家」，商品線擴展至多元居家用品。",
   },
   {
-    year: '2025',
-    description: '在中和設立新門市，服務範圍進一步擴展至大台北地區。',
+    year: "2025",
+    description: "在中和設立新門市，服務範圍進一步擴展至大台北地區。",
   },
   {
-    year: '至今',
-    description: '全台最大席夢思黑標銷售商，客戶遍佈全台。',
+    year: "至今",
+    description: "全台最大席夢思黑標銷售商，客戶遍佈全台。",
   },
   {
-    year: '未來',
-    description: '將成立自有品牌，持續推出更多優質商品，提供更完整的居家服務。',
+    year: "未來",
+    description: "將成立自有品牌，持續推出更多優質商品，提供更完整的居家服務。",
   },
 ];
 
 // Warehouse photos with text overlays and gradients
 const warehousePhotos = [
   {
-    src: '/images/about/blackliving-about-warehouse.webp',
-    alt: '美國台灣倉庫',
-    text: '自有美國及台灣倉庫',
-    textAlign: 'left' as const,
-    focalPoint: { x: '50%', y: '100%' },
-    backgroundSize: 'cover',
-    gradientFrom: '#F1E9DE',
+    src: "/images/about/blackliving-about-warehouse.webp",
+    alt: "美國台灣倉庫",
+    text: "自有美國及台灣倉庫",
+    textAlign: "left" as const,
+    focalPoint: { x: "50%", y: "100%" },
+    backgroundSize: "cover",
+    gradientFrom: "#F1E9DE",
     gradientCoverage: 30,
-    gradientTo: 'transparent',
+    gradientTo: "transparent",
   },
 ];
 
 // Beautyrest photos with text overlays and gradients
 const beautyrestPhotos = [
   {
-    src: '/images/about/blackliving-about-original.webp',
-    alt: '美國席夢思原廠下單',
-    text: '美國席夢思原廠下單',
-    textAlign: 'left' as const,
-    focalPoint: { x: '10%', y: '75%' },
-    backgroundSize: '150%',
-    gradientFrom: '#F1E9DE',
+    src: "/images/about/blackliving-about-original.webp",
+    alt: "美國席夢思原廠下單",
+    text: "美國席夢思原廠下單",
+    textAlign: "left" as const,
+    focalPoint: { x: "10%", y: "75%" },
+    backgroundSize: "150%",
+    gradientFrom: "#F1E9DE",
     gradientCoverage: 30,
-    gradientTo: 'transparent',
+    gradientTo: "transparent",
   },
 ];
 
 // Logistics photos with text overlays and gradients
 const logisticsPhotos = [
   {
-    src: '/images/about/blackliving-about-delivery.webp',
-    alt: '自有物流配送到府',
-    text: '自有物流配送到府',
-    textAlign: 'left' as const,
-    focalPoint: { x: '270%', y: '69%' },
-    backgroundSize: '90%',
-    gradientFrom: '#F1E9DE',
+    src: "/images/about/blackliving-about-delivery.webp",
+    alt: "自有物流配送到府",
+    text: "自有物流配送到府",
+    textAlign: "left" as const,
+    focalPoint: { x: "270%", y: "69%" },
+    backgroundSize: "90%",
+    gradientFrom: "#F1E9DE",
     gradientCoverage: 30,
-    gradientTo: 'transparent',
+    gradientTo: "transparent",
   },
 ];
 ---
@@ -103,8 +105,12 @@ const logisticsPhotos = [
   <!-- 2. Brand Timeline -->
   <section class="py-8 bg-white">
     <div class="container mx-auto px-4">
-      <h2 class="text-3xl md:text-4xl font-bold text-center mb-16 text-gray-800">品牌發展</h2>
-      <BrandTimeline items={timelineItems} />
+      <h2
+        class="text-3xl md:text-4xl font-bold text-center mb-16 text-gray-800"
+      >
+        品牌發展
+      </h2>
+      <BrandTimeline items={timelineItems}/>
     </div>
   </section>
 
@@ -121,39 +127,44 @@ const logisticsPhotos = [
         preserveAspectRatio="none"
         xmlns="http://www.w3.org/2000/svg"
       >
-        <path d="M0,120 L0,0 L1440,0 L1440,120 Q720,0 0,120 Z" fill="currentColor"></path>
+        <path
+          d="M0,120 L0,0 L1440,0 L1440,120 Q720,0 0,120 Z"
+          fill="currentColor"
+        ></path>
       </svg>
     </div>
 
     <div class="container mx-auto px-4">
       <div class="flex justify-center items-center">
-        <CircularAdvantages />
+        <CircularAdvantages/>
       </div>
     </div>
   </section>
 
   <!-- 4. Beautyrest BLACK Banner -->
   <section class="py-2 bg-primary/25 overflow-hidden">
-    <PhotoGrid photos={beautyrestPhotos} columns={1} gap="0" fullWidth={true} />
+    <PhotoGrid photos={beautyrestPhotos} columns={1} gap="0" fullWidth={true}/>
   </section>
 
   <!-- 5. Warehouse Photos -->
   <section class="py-2 bg-primary/25 overflow-hidden">
-    <PhotoGrid photos={warehousePhotos} columns={1} gap="0" fullWidth={true} />
+    <PhotoGrid photos={warehousePhotos} columns={1} gap="0" fullWidth={true}/>
   </section>
 
   <!-- 6. Logistics Photos -->
   <section class="py-2 pb-8 bg-primary/25 overflow-hidden">
-    <PhotoGrid photos={logisticsPhotos} columns={1} gap="0" fullWidth={true} />
+    <PhotoGrid photos={logisticsPhotos} columns={1} gap="0" fullWidth={true}/>
   </section>
 
   <!-- 7. Comparison Table: 我們為什麼可以這麼便宜？ -->
   <section class="py-8 bg-primary/25">
     <div class="container mx-auto px-4">
-      <h2 class="text-2xl md:text-4xl font-bold text-center mb-18 text-gray-800">
+      <h2
+        class="text-2xl md:text-4xl font-bold text-center mb-18 text-gray-800"
+      >
         我們為什麼可以這麼便宜？
       </h2>
-      <ComparisonTable />
+      <ComparisonTable/>
     </div>
   </section>
 
@@ -161,10 +172,15 @@ const logisticsPhotos = [
   <section class="py-8 pb-24 bg-primary/25">
     <div class="container mx-auto px-4">
       <div class="text-center mb-12">
-        <h2 class="text-3xl md:text-4xl font-bold mb-6 text-gray-800">好睡，才是好生活</h2>
-        <p class="text-md md:text-xl text-gray-700 max-w-3xl mx-auto leading-relaxed">
-          從黑標王到 Black Living<br
-          />我們起步於專營席夢思「黑標」床墊，憑藉對品質的堅持與對客戶的承諾，成為蝦皮第一賣家。如今，我們已將服務領域拓展至整個居家生活，致力於為每個家庭提供更高品質的居家環境，並全面提升生活品味。
+        <h2 class="text-3xl md:text-4xl font-bold mb-6 text-gray-800">
+          好睡，才是好生活
+        </h2>
+        <p
+          class="text-md md:text-xl text-gray-700 max-w-3xl mx-auto leading-relaxed"
+        >
+          從黑標王到 Black Living
+          <br>
+          我們起步於專營席夢思「黑標」床墊，憑藉對品質的堅持與對客戶的承諾，成為蝦皮第一賣家。如今，我們已將服務領域拓展至整個居家生活，致力於為每個家庭提供更高品質的居家環境，並全面提升生活品味。
         </p>
       </div>
       <div class="max-w-6xl flex justify-center mx-auto">
@@ -181,6 +197,8 @@ const logisticsPhotos = [
   </section>
   <!-- breakline whitespace -->
   <section>
-    <div class="absolute bg-primary w-6xl shadow-xl h-[2px] left-1/2 -translate-x-1/2"></div>
+    <div
+      class="absolute bg-primary w-6xl shadow-xl h-[2px] left-1/2 -translate-x-1/2"
+    ></div>
   </section>
 </BaseLayout>
