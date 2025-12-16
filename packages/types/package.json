@@ -7,7 +7,8 @@
   "exports": {
     ".": "./index.ts",
     "./search": "./search.ts",
-    "./product-templates": "./product-templates.ts"
+    "./product-templates": "./product-templates.ts",
+    "./profile": "./profile.ts"
   },
   "dependencies": {
     "zod": "^3.25.76"

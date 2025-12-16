@@ -1,29 +1,126 @@
-import { Context, Next } from 'hono';
-import { createHash } from 'crypto';
+import { createHash } from "crypto";
+import type { Context, Next } from "hono";
 
-export interface CacheOptions {
+export type CacheOptions = {
   ttl?: number; // Time to live in seconds
   keyPrefix?: string;
   varyByUser?: boolean;
   skipCache?: boolean;
   staleWhileRevalidate?: number; // Additional time to serve stale content
-}
+};
 
-export interface CacheHeaders {
+export type CacheHeaders = {
   maxAge?: number;
   etag?: string;
   lastModified?: Date;
   mustRevalidate?: boolean;
-}
+};
+
+type CacheConfig = {
+  ttl: number;
+  staleWhileRevalidate: number;
+};
+
+type ServeCacheOptions = {
+  c: Context;
+  next: Next;
+};
 
 /**
  * High-performance caching middleware for customer profile operations
  * Uses Cloudflare KV for distributed caching with intelligent cache invalidation
  */
+/**
+ * Serve cached response if available and valid
+ */
+async function serveCachedResponse(
+  ctx: ServeCacheOptions,
+  cache: KVNamespace,
+  cacheKey: string,
+  config: CacheConfig
+): Promise<Response | undefined> {
+  const { c, next } = ctx;
+  const cachedResponse = await getCachedResponse(cache, cacheKey);
+
+  if (!cachedResponse) {
+    return; // No cache available
+  }
+
+  const { data, timestamp, etag } = cachedResponse;
+  const age = Math.floor((Date.now() - timestamp) / 1000);
+
+  // Check if content is fresh
+  if (age < config.ttl) {
+    // Fresh content - serve from cache
+    setResponseHeaders(c, {
+      age,
+      etag,
+      cacheStatus: "HIT",
+      maxAge: config.ttl - age,
+    });
+
+    return c.json(data);
+  }
+
+  // Check if we can serve stale content while revalidating
+  if (age < config.ttl + config.staleWhileRevalidate) {
+    // Serve stale content immediately
+    setResponseHeaders(c, {
+      age,
+      etag,
+      cacheStatus: "STALE",
+      maxAge: 0, // Force revalidation on next request
+    });
+
+    // Trigger background revalidation (fire and forget)
+    c.executionCtx?.waitUntil(
+      revalidateCache({ c, next, cache, cacheKey, config })
+    );
+
+    return c.json(data);
+  }
+
+  return; // Cache expired
+}
+
+/**
+ * Cache successful response
+ */
+async function cacheSuccessfulResponse(
+  c: Context,
+  cache: KVNamespace,
+  cacheKey: string,
+  config: CacheConfig
+) {
+  if (c.res.status !== 200) {
+    return;
+  }
+
+  const responseData = await c.res.clone().json();
+
+  await setCachedResponse(
+    cache,
+    cacheKey,
+    {
+      data: responseData,
+      timestamp: Date.now(),
+      etag: generateETag(responseData),
+    },
+    config.ttl + config.staleWhileRevalidate
+  );
+
+  setResponseHeaders(c, {
+    age: 0,
+    etag: generateETag(responseData),
+    cacheStatus: "MISS",
+    maxAge: config.ttl,
+  });
+}
+
 export function cacheMiddleware(options: CacheOptions = {}) {
   const {
     ttl = 300, // 5 minutes default
-    keyPrefix = 'cache',
+    keyPrefix = "cache",
     varyByUser = true,
     skipCache = false,
     staleWhileRevalidate = 60, // 1 minute stale serving
@@ -31,83 +128,41 @@ export function cacheMiddleware(options: CacheOptions = {}) {
 
   return async (c: Context, next: Next) => {
     // Skip caching for non-GET requests or when explicitly disabled
-    if (c.req.method !== 'GET' || skipCache) {
+    if (c.req.method !== "GET" || skipCache) {
+      return next();
+    }
+
+    const cache = c.env.CACHE as KVNamespace;
+
+    if (!cache) {
+      console.warn("KV cache not available, skipping cache");
       return next();
     }
 
     try {
       const cacheKey = generateCacheKey(c, keyPrefix, varyByUser);
-      const cache = c.env.CACHE as KVNamespace;
 
-      if (!cache) {
-        console.warn('KV cache not available, skipping cache');
-        return next();
-      }
+      const config: CacheConfig = { ttl, staleWhileRevalidate };
 
-      // Try to get cached response
-      const cachedResponse = await getCachedResponse(cache, cacheKey);
+      // Try to serve from cache
+      const cachedResponse = await serveCachedResponse(
+        { c, next },
+        cache,
+        cacheKey,
+        config
+      );
 
       if (cachedResponse) {
-        const { data, timestamp, etag } = cachedResponse;
-        const age = Math.floor((Date.now() - timestamp) / 1000);
-
-        // Check if content is fresh
-        if (age < ttl) {
-          // Fresh content - serve from cache
-          setResponseHeaders(c, {
-            age,
-            etag,
-            cacheStatus: 'HIT',
-            maxAge: ttl - age,
-          });
-
-          return c.json(data);
-        }
-
-        // Check if we can serve stale content while revalidating
-        if (age < ttl + staleWhileRevalidate) {
-          // Serve stale content immediately
-          setResponseHeaders(c, {
-            age,
-            etag,
-            cacheStatus: 'STALE',
-            maxAge: 0, // Force revalidation on next request
-          });
-
-          // Trigger background revalidation (fire and forget)
-          c.executionCtx?.waitUntil(revalidateCache(c, next, cache, cacheKey, ttl));
-
-          return c.json(data);
-        }
+        return cachedResponse;
       }
 
       // No cache or expired - fetch fresh data
       await next();
 
-      // Cache the response if it's successful
-      if (c.res.status === 200) {
-        const responseData = await c.res.clone().json();
-
-        await setCachedResponse(
-          cache,
-          cacheKey,
-          {
-            data: responseData,
-            timestamp: Date.now(),
-            etag: generateETag(responseData),
-          },
-          ttl + staleWhileRevalidate
-        );
-
-        setResponseHeaders(c, {
-          age: 0,
-          etag: generateETag(responseData),
-          cacheStatus: 'MISS',
-          maxAge: ttl,
-        });
-      }
+      // Cache the response if successful
+      await cacheSuccessfulResponse(c, cache, cacheKey, config);
     } catch (error) {
-      console.error('Cache middleware error:', error);
+      console.error("Cache middleware error:", error);
       // Continue without caching on error
       return next();
     }
@@ -117,27 +172,31 @@ export function cacheMiddleware(options: CacheOptions = {}) {
 /**
  * Generate cache key based on request and user context
  */
-function generateCacheKey(c: Context, prefix: string, varyByUser: boolean): string {
+function generateCacheKey(
+  c: Context,
+  prefix: string,
+  varyByUser: boolean
+): string {
   const url = new URL(c.req.url);
   const pathname = url.pathname;
   const searchParams = url.searchParams.toString();
 
-  let keyParts = [prefix, pathname];
+  const keyParts = [prefix, pathname];
 
   if (searchParams) {
     keyParts.push(searchParams);
   }
 
   if (varyByUser) {
-    const user = c.get('user');
+    const user = c.get("user");
     if (user?.id) {
       keyParts.push(`user:${user.id}`);
     }
   }
 
   // Create a hash of the key to ensure consistent length and valid characters
-  const keyString = keyParts.join(':');
-  return createHash('md5').update(keyString).digest('hex');
+  const keyString = keyParts.join(":");
+  return createHash("md5").update(keyString).digest("hex");
 }
 
 /**
@@ -145,10 +204,10 @@ function generateCacheKey(c: Context, prefix: string, varyByUser: boolean): stri
  */
 async function getCachedResponse(cache: KVNamespace, key: string) {
   try {
-    const cached = await cache.get(key, 'json');
+    const cached = await cache.get(key, "json");
     return cached as CachedResponse | null;
   } catch (error) {
-    console.error('Error getting cached response:', error);
+    console.error("Error getting cached response:", error);
     return null;
   }
 }
@@ -167,51 +226,40 @@ async function setCachedResponse(
       expirationTtl: ttl,
     });
   } catch (error) {
-    console.error('Error setting cached response:', error);
+    console.error("Error setting cached response:", error);
   }
 }
 
 /**
  * Background revalidation for stale-while-revalidate
+ * Currently disabled due to c.clone() not being available in Hono
  */
-async function revalidateCache(
-  c: Context,
-  next: Next,
-  cache: KVNamespace,
-  cacheKey: string,
-  ttl: number
-) {
-  try {
-    // Create a new context for background execution
-    const newContext = c.clone();
-
-    await next();
-
-    if (newContext.res.status === 200) {
-      const responseData = await newContext.res.clone().json();
-
-      await setCachedResponse(
-        cache,
-        cacheKey,
-        {
-          data: responseData,
-          timestamp: Date.now(),
-          etag: generateETag(responseData),
-        },
-        ttl
-      );
-    }
-  } catch (error) {
-    console.error('Background revalidation error:', error);
-  }
+function revalidateCache(options: {
+  c: Context;
+  next: Next;
+  cache: KVNamespace;
+  cacheKey: string;
+  config: CacheConfig;
+}): Promise<void> {
+  const {
+    c: _c,
+    next: _next,
+    cache: _cache,
+    cacheKey: _cacheKey,
+    config: _config,
+  } = options;
+  // FIXME: c.clone() is not available in Hono.
+  // Background revalidation requires a more complex setup to safely re-run handlers.
+  // Disabling SWR revalidation to prevent runtime errors.
+  return Promise.resolve();
 }
 
 /**
  * Generate ETag for response data
  */
-function generateETag(data: any): string {
+function generateETag(data: unknown): string {
   const content = JSON.stringify(data);
-  return `"${createHash('md5').update(content).digest('hex')}"`;
+  return `"${createHash("md5").update(content).digest("hex")}"`;
 }
 
 /**
@@ -229,19 +277,19 @@ function setResponseHeaders(
   const { age, etag, cacheStatus, maxAge } = options;
 
   if (age !== undefined) {
-    c.res.headers.set('Age', age.toString());
+    c.res.headers.set("Age", age.toString());
   }
 
   if (etag) {
-    c.res.headers.set('ETag', etag);
+    c.res.headers.set("ETag", etag);
   }
 
   if (cacheStatus) {
-    c.res.headers.set('X-Cache-Status', cacheStatus);
+    c.res.headers.set("X-Cache-Status", cacheStatus);
   }
 
   if (maxAge !== undefined) {
-    c.res.headers.set('Cache-Control', `public, max-age=${maxAge}`);
+    c.res.headers.set("Cache-Control", `public, max-age=${maxAge}`);
   }
 }
 
@@ -251,24 +299,24 @@ function setResponseHeaders(
 export function setCacheHeaders(c: Context, headers: CacheHeaders) {
   const { maxAge, etag, lastModified, mustRevalidate } = headers;
 
-  let cacheControl = 'public';
+  let cacheControl = "public";
 
   if (maxAge !== undefined) {
     cacheControl += `, max-age=${maxAge}`;
   }
 
   if (mustRevalidate) {
-    cacheControl += ', must-revalidate';
+    cacheControl += ", must-revalidate";
   }
 
-  c.res.headers.set('Cache-Control', cacheControl);
+  c.res.headers.set("Cache-Control", cacheControl);
 
   if (etag) {
-    c.res.headers.set('ETag', etag);
+    c.res.headers.set("ETag", etag);
   }
 
   if (lastModified) {
-    c.res.headers.set('Last-Modified', lastModified.toUTCString());
+    c.res.headers.set("Last-Modified", lastModified.toUTCString());
   }
 }
 
@@ -276,7 +324,7 @@ export function setCacheHeaders(c: Context, headers: CacheHeaders) {
  * Cache invalidation utilities
  */
 export class CacheInvalidator {
-  private cache: KVNamespace;
+  private readonly cache: KVNamespace;
 
   constructor(cache: KVNamespace) {
     this.cache = cache;
@@ -287,21 +335,24 @@ export class CacheInvalidator {
    */
   async invalidateUserCache(userId: string, patterns: string[] = []) {
     const defaultPatterns = [
-      'profile',
-      'full-profile',
-      'analytics',
-      'addresses',
-      'payment-methods',
-      'wishlist',
-      'notifications',
+      "profile",
+      "full-profile",
+      "analytics",
+      "addresses",
+      "payment-methods",
+      "wishlist",
+      "notifications",
     ];
 
     const allPatterns = [...defaultPatterns, ...patterns];
 
     const deletePromises = allPatterns.map((pattern) => {
       const key = generateCacheKey(
-        { req: { url: `/${pattern}` }, get: () => ({ id: userId }) } as any,
-        'cache',
+        {
+          req: { url: `/${pattern}` },
+          get: () => ({ id: userId }),
+        } as unknown as Context,
+        "cache",
         true
       );
       return this.cache.delete(key);
@@ -320,10 +371,10 @@ export class CacheInvalidator {
   /**
    * Clear all cache (use with caution)
    */
-  async clearAllCache() {
+  clearAllCache() {
     // KV doesn't support bulk delete, so this would need to be implemented
     // with a prefix-based approach or keep track of keys separately
-    console.warn('clearAllCache not implemented - KV limitation');
+    console.warn("clearAllCache not implemented - KV limitation");
   }
 }
 
@@ -331,7 +382,7 @@ export class CacheInvalidator {
  * Smart cache warming for critical user data
  */
 export class CacheWarmer {
-  private cache: KVNamespace;
+  private readonly cache: KVNamespace;
 
   constructor(cache: KVNamespace) {
     this.cache = cache;
@@ -369,10 +420,10 @@ export class CacheWarmer {
 }
 
 // Types
-interface CachedResponse {
-  data: any;
+type CachedResponse = {
+  data: unknown;
   timestamp: number;
   etag: string;
-}
+};
 
 // Utilities are already exported at their class declarations above

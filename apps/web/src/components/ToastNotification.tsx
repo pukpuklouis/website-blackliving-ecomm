@@ -4,14 +4,14 @@ import type { FC } from "react";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 
-interface ToastProps {
+type ToastProps = {
   id: string;
   type: "success" | "error" | "warning" | "info";
   title: string;
   message?: string;
   duration?: number;
   onClose: (id: string) => void;
-}
+};
 
 const Toast: FC<ToastProps> = ({
   id,
@@ -104,19 +104,19 @@ const Toast: FC<ToastProps> = ({
   );
 };
 
-interface ToastNotification {
+type ToastNotification = {
   id: string;
   type: "success" | "error" | "warning" | "info";
   title: string;
   message?: string;
   duration?: number;
-}
+};
 
-interface ToastContextType {
+type ToastContextType = {
   toasts: ToastNotification[];
   addToast: (toast: Omit<ToastNotification, "id">) => void;
   removeToast: (id: string) => void;
-}
+};
 
 // Simple toast manager using React state
 export const useToast = () => {
@@ -135,10 +135,10 @@ export const useToast = () => {
   return { toasts, addToast, removeToast };
 };
 
-interface ToastContainerProps {
+type ToastContainerProps = {
   toasts: ToastNotification[];
   onRemoveToast: (id: string) => void;
-}
+};
 
 export const ToastContainer: FC<ToastContainerProps> = ({
   toasts,

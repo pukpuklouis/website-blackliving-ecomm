@@ -1,4 +1,4 @@
-export interface CategoryConfig {
+export type CategoryConfig = {
   slug: string;
   title: string;
   description: string;
@@ -10,4 +10,4 @@ export interface CategoryConfig {
   urlPath: string;
   isActive?: boolean;
   sortOrder?: number;
-}
+};

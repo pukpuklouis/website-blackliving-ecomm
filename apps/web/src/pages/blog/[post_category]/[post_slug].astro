@@ -11,7 +11,7 @@ type ApiPost = BlogPost & {
   seoDescription?: string;
 };
 
-interface CategoryMeta {
+type CategoryMeta = {
   id: string;
   slug: string;
   name: string;
@@ -25,7 +25,7 @@ const apiUrl = import.meta.env.PUBLIC_API_BASE_URL || "http://localhost:8787";
 // (No module-level fallbacks to avoid dev/build scope issues)
 
 function normalizeCategorySlug(raw?: string | null): string {
-  if (!raw) return "blog-post";
+  if (!raw) { return "blog-post"; }
   const input = raw.trim().toLowerCase();
   if (
     ["blogger-testimonial", "blogger testimonial", "部落格推薦"].includes(input)
@@ -47,10 +47,10 @@ function normalizeCategorySlug(raw?: string | null): string {
     return "simmons-knowledge";
   }
   if (input.startsWith("cat_")) {
-    if (input === "cat_001") return "blog-post";
-    if (input === "cat_002") return "blogger-testimonial";
-    if (input === "cat_003") return "simmons-knowledge";
-    if (input === "cat_004") return "customer-reviews";
+    if (input === "cat_001") { return "blog-post"; }
+    if (input === "cat_002") { return "blogger-testimonial"; }
+    if (input === "cat_003") { return "simmons-knowledge"; }
+    if (input === "cat_004") { return "customer-reviews"; }
 
     return input.slice(4);
   }
@@ -59,32 +59,29 @@ function normalizeCategorySlug(raw?: string | null): string {
 
 function resolveCategoryMeta(category: ApiPost["category"]): CategoryMeta {
   if (category && typeof category === "object") {
-    const slug = normalizeCategorySlug(category.slug || category.name);
+    const cat = category as PostCategory;
+    const slug = normalizeCategorySlug(cat.slug || cat.name);
     return {
-      id: category.id || slug,
+      id: cat.id || slug,
       slug,
-      name: category.name || category.slug || "好文分享",
-      description: category.description || "",
-      color: category.color || "#1f2937",
-      icon: category.icon || "",
+      name: cat.name || cat.slug || "好文分享",
+      description: cat.description || "",
+      color: cat.color || "#1f2937",
+      icon: cat.icon || "",
     };
   }
 
   const slug = normalizeCategorySlug(
     typeof category === "string" ? category : undefined
   );
-  const name =
-    slug === "customer-reviews"
-      ? "顧客真實回饋"
-      : slug === "blogger-testimonial"
-        ? "部落格推薦"
-        : slug === "blog-post"
-          ? "好文分享"
-          : slug === "simmons-knowledge"
-            ? "席夢思小知識"
-            : typeof category === "string"
-              ? category
-              : "好文分享";
+  const categoryNames: Record<string, string> = {
+    "customer-reviews": "顧客真實回饋",
+    "blogger-testimonial": "部落格推薦",
+    "blog-post": "好文分享",
+    "simmons-knowledge": "席夢思小知識",
+  };
+
+  const name = categoryNames[slug] || (typeof category === "string" ? category : "好文分享");
 
   return {
     id: slug,
@@ -97,16 +94,16 @@ function resolveCategoryMeta(category: ApiPost["category"]): CategoryMeta {
 }
 
 function mapApiPostToBlogPost(
-  entry: any,
+  entry: ApiPost,
   fallbackCategory?: CategoryMeta
 ): BlogPost {
   const categoryMeta = entry?.category
     ? resolveCategoryMeta(entry.category)
-    : (fallbackCategory ?? resolveCategoryMeta(undefined));
+    : (fallbackCategory ?? resolveCategoryMeta("blog-post"));
 
   const categorySlug = categoryMeta.slug;
 
-  return {
+  const result: BlogPost = {
     id: entry?.id ?? "",
     title: entry?.title ?? "",
     slug: entry?.slug ?? "",
@@ -132,6 +129,8 @@ function mapApiPostToBlogPost(
     createdAt: entry?.createdAt,
     updatedAt: entry?.updatedAt,
   };
+
+  return result;
 }
 
 export async function getStaticPaths() {
@@ -144,14 +143,14 @@ export async function getStaticPaths() {
 
       if (posts.length > 0) {
         return posts
-          .map((post: any) => {
+          .map((post: ApiPost) => {
             if (!post?.slug) return null;
-            const categoryMeta = resolveCategoryMeta(post.category);
+            const categoryMeta = resolveCategoryMeta(postItem.category);
 
             return {
               params: {
                 post_category: categoryMeta.slug,
-                post_slug: post.slug,
+                post_slug: postItem.slug,
               },
             };
           })
@@ -241,7 +240,6 @@ if (!apiPost) {
         "專業介紹 Simmons Black Label 系列床墊特色，幫您選擇最適合的床墊型號",
       createdAt: undefined,
       updatedAt: undefined,
-      featuredImage: "/images/blog/simmons-guide.jpg",
     } as unknown as ApiPost,
     {
       id: "fallback-post-2",
@@ -269,7 +267,6 @@ if (!apiPost) {
         "精選媒體與部落客對 Simmons Black Label 的評測與推薦亮點，快速掌握產品優勢",
       createdAt: undefined,
       updatedAt: undefined,
-      featuredImage: "/images/blog/simmons-media-review.jpg",
     } as unknown as ApiPost,
     {
       id: "fallback-post-3",
@@ -324,7 +321,7 @@ if (categoryMeta.slug) {
 }
 relatedParams.set("limit", "6");
 
-let relatedEntries: any[] = [];
+let relatedEntries: ApiPost[] = [];
 
 try {
   const relatedResponse = await fetch(
@@ -344,7 +341,7 @@ try {
 }
 
 if (relatedEntries.length === 0) {
-  const inlineFallbackPosts = [
+  const inlineFallbackPosts: Array<{ slug: string; categorySlug: string }> = [
     { slug: "simmons-black-label-buying-guide", categorySlug: "blog-post" },
     {
       slug: "simmons-black-label-media-review",
@@ -356,10 +353,10 @@ if (relatedEntries.length === 0) {
     },
   ];
   relatedEntries = inlineFallbackPosts.filter(
-    (entry) =>
+    (entry: { slug: string; categorySlug: string }) =>
       normalizeCategorySlug(entry.categorySlug) === categoryMeta.slug &&
       entry.slug !== post.slug
-  );
+  ) as ApiPost[];
 }
 
 const relatedPosts = relatedEntries

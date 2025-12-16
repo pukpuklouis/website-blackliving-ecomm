@@ -17,7 +17,8 @@
     "declaration": true,
     "declarationMap": true,
     "baseUrl": ".",
-    "types": ["vite/client"]
+    "types": ["vite/client"],
+    "strictNullChecks": true
   },
   "include": ["**/*.ts", "**/*.tsx"],
   "exclude": ["node_modules", "dist", "auth.deprecated.ts"]

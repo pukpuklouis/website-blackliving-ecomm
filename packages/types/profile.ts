@@ -1,51 +1,60 @@
-import type { User, UserProfile, CustomerProfile } from './user';
-import type { Address } from './address';
+import type { Address } from "./address";
+import type { CustomerProfile, User, UserProfile } from "./user";
 
-export interface FullUserProfile {
+export type FullUserProfile = {
   user: User;
   userProfile: UserProfile;
   customerProfile: CustomerProfile;
   addresses: Address[];
-}
+};
 
-export interface ProfileAnalytics {
+export type ProfileAnalytics = {
   totalSpent: number;
   orderCount: number;
   avgOrderValue: number;
   lastOrderAt?: Date;
   lastPurchaseAt?: Date;
   firstPurchaseAt?: Date;
-}
+};
 
 // Profile Update Request Types
-export interface ProfileUpdateRequest {
+export type ProfileUpdateRequest = {
   firstName?: string;
   lastName?: string;
   phone?: string;
   birthday?: string;
-  gender?: 'male' | 'female' | 'other';
-  contactPreference?: 'email' | 'phone' | 'sms';
+  gender?: "male" | "female" | "other";
+  contactPreference?: "email" | "phone" | "sms";
   notes?: string;
   preferences?: Record<string, unknown>;
-}
+};
 
 // Error Types
-export interface ProfileError {
+export type ProfileError = {
   code: string;
   message: string;
   field?: string;
   details?: Record<string, unknown>;
-}
+};
 
-export interface ProfileValidationError extends ProfileError {
-  code: 'VALIDATION_ERROR';
+export type ProfileValidationError = ProfileError & {
+  code: "VALIDATION_ERROR";
   field: string;
-}
+};
 
-export interface ProfileNotFoundError extends ProfileError {
-  code: 'PROFILE_NOT_FOUND';
-}
+export type ProfileNotFoundError = ProfileError & {
+  code: "PROFILE_NOT_FOUND";
+};
 
-export interface ProfileUnauthorizedError extends ProfileError {
-  code: 'UNAUTHORIZED';
-}
+export type ProfileUnauthorizedError = ProfileError & {
+  code: "UNAUTHORIZED";
+};
+
+// Re-export address-related types for convenience
+export type {
+  AddressApiResponse,
+  AddressCreateRequest,
+  AddressesApiResponse,
+  AddressUpdateRequest,
+  CustomerAddress,
+} from "./address";

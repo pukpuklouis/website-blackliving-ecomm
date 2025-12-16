@@ -530,11 +530,14 @@ export class LineNotificationService {
     await this.sendPushMessage(this.adminUserId, [message]);
   }
 
-  async sendTestNotification(): Promise<boolean> {
+  async sendTestNotification(): Promise<{ success: boolean; error?: any }> {
     await this.loadSettings();
 
     if (!(this.adminUserId && this.channelAccessToken)) {
-      return false;
+      return {
+        success: false,
+        error: "Settings not configured (Missing ID or Token)",
+      };
     }
 
     const message = {
@@ -588,9 +591,16 @@ export class LineNotificationService {
         }),
       });
 
-      return response.ok;
-    } catch {
-      return false;
+      if (response.ok) {
+        return { success: true };
+      }
+
+      const errorData = await response.json();
+      logger.error("Test notification failed", errorData);
+      return { success: false, error: errorData };
+    } catch (error) {
+      logger.error("Test notification network error", error);
+      return { success: false, error: "Network or unknown error" };
     }
   }
 }
