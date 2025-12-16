@@ -20,7 +20,7 @@ import FileText from "@lucide/react/file-text";
 import Globe from "@lucide/react/globe";
 import ImageIcon from "@lucide/react/image";
 import SaveIcon from "@lucide/react/save";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { type SubmitHandler, useForm } from "react-hook-form";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
@@ -79,7 +79,9 @@ export default function PageForm() {
 
   // Auto-generate slug
   useEffect(() => {
-    if (!watchedTitle || isEditing) return;
+    if (!watchedTitle || isEditing) {
+      return;
+    }
     const slug = watchedTitle
       .toLowerCase()
       .replace(/[^a-z0-9\u4e00-\u9fff\s-]/g, "")
@@ -92,6 +94,26 @@ export default function PageForm() {
     }
   }, [watchedTitle, isEditing, setValue, getValues]);
 
+  const populateForm = useCallback(
+    (page: Record<string, unknown>) => {
+      reset({
+        title: page.title as string,
+        slug: page.slug as string,
+        content: page.content,
+        contentMarkdown: (page.contentMarkdown as string) || "",
+        status: page.status as "draft" | "published" | "archived",
+        featuredImage: (page.featuredImage as string) || "",
+        seoTitle: (page.seoTitle as string) || "",
+        seoDescription: (page.seoDescription as string) || "",
+        seoKeywords: (page.seoKeywords as string[]) || [],
+        publishedAt: page.publishedAt
+          ? new Date(page.publishedAt as string).toISOString().slice(0, 16)
+          : "",
+      });
+    },
+    [reset]
+  );
+
   // Fetch page data if editing
   useEffect(() => {
     if (isEditing && pageId) {
@@ -101,24 +123,12 @@ export default function PageForm() {
           const response = await fetch(`${apiUrl}/api/pages/${pageId}`, {
             credentials: "include",
           });
-          if (!response.ok) throw new Error("Failed to fetch page");
+          if (!response.ok) {
+            throw new Error("Failed to fetch page");
+          }
           const json = await response.json();
           if (json.success) {
-            const page = json.data;
-            reset({
-              title: page.title,
-              slug: page.slug,
-              content: page.content,
-              contentMarkdown: page.contentMarkdown || "",
-              status: page.status,
-              featuredImage: page.featuredImage || "",
-              seoTitle: page.seoTitle || "",
-              seoDescription: page.seoDescription || "",
-              seoKeywords: page.seoKeywords || [],
-              publishedAt: page.publishedAt
-                ? new Date(page.publishedAt).toISOString().slice(0, 16)
-                : "",
-            });
+            populateForm(json.data);
           }
         } catch (error) {
           console.error("Error fetching page:", error);
@@ -129,7 +139,37 @@ export default function PageForm() {
       };
       fetchPage();
     }
-  }, [isEditing, pageId, apiUrl, reset]);
+  }, [isEditing, pageId, apiUrl, populateForm]);
+
+  const preparePayload = (data: PageFormData) => ({
+    ...data,
+    publishedAt: data.publishedAt
+      ? new Date(data.publishedAt).toISOString()
+      : undefined,
+    // content is already JSON blocks from onChangeBlocks
+  });
+
+  const savePage = async (
+    url: string,
+    method: string,
+    payload: Record<string, unknown>
+  ) => {
+    const response = await fetch(url, {
+      method,
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify(payload),
+    });
+
+    const json = await response.json();
+
+    if (!response.ok) {
+      console.error("Server error:", json);
+      throw new Error(json.message || json.error || "Failed to save page");
+    }
+
+    return json;
+  };
 
   const onSubmit: SubmitHandler<PageFormData> = async (data) => {
     try {
@@ -139,28 +179,8 @@ export default function PageForm() {
         : `${apiUrl}/api/pages`;
       const method = isEditing ? "PUT" : "POST";
 
-      // Prepare payload
-      const payload = {
-        ...data,
-        publishedAt: data.publishedAt
-          ? new Date(data.publishedAt).toISOString()
-          : undefined,
-        // content is already JSON blocks from onChangeBlocks
-      };
-
-      const response = await fetch(url, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify(payload),
-      });
-
-      const json = await response.json();
-
-      if (!response.ok) {
-        console.error("Server error:", json);
-        throw new Error(json.message || json.error || "Failed to save page");
-      }
+      const payload = preparePayload(data);
+      const json = await savePage(url, method, payload);
 
       if (json.success) {
         toast.success(isEditing ? "頁面已更新" : "頁面已建立");
@@ -254,9 +274,12 @@ export default function PageForm() {
                   {...register("title")}
                   placeholder="輸入頁面標題"
                 />
-                {errors.title && (
-                  <p className="text-red-500 text-sm">{errors.title.message}</p>
-                )}
+                {(() => {
+                  const message = errors.title?.message;
+                  return typeof message === "string" ? (
+                    <p className="text-red-500 text-sm">{message}</p>
+                  ) : null;
+                })()}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="slug">網址路徑 (Slug) *</Label>
@@ -265,9 +288,12 @@ export default function PageForm() {
                   {...register("slug")}
                   placeholder="page-url-slug"
                 />
-                {errors.slug && (
-                  <p className="text-red-500 text-sm">{errors.slug.message}</p>
-                )}
+                {(() => {
+                  const message = errors.slug?.message;
+                  return typeof message === "string" ? (
+                    <p className="text-red-500 text-sm">{message}</p>
+                  ) : null;
+                })()}
               </div>
               <div className="space-y-2">
                 <Label>內容</Label>
@@ -285,11 +311,12 @@ export default function PageForm() {
                     value={watch("contentMarkdown")}
                   />
                 </div>
-                {errors.content && (
-                  <p className="text-red-500 text-sm">
-                    {errors.content.message as string}
-                  </p>
-                )}
+                {(() => {
+                  const message = errors.content?.message;
+                  return typeof message === "string" ? (
+                    <p className="text-red-500 text-sm">{message}</p>
+                  ) : null;
+                })()}
               </div>
             </CardContent>
           </Card>
@@ -378,7 +405,9 @@ export default function PageForm() {
                 <Label>狀態</Label>
                 <Select
                   defaultValue={watch("status")}
-                  onValueChange={(val) => setValue("status", val as any)}
+                  onValueChange={(val: "draft" | "published" | "archived") =>
+                    setValue("status", val)
+                  }
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="選擇狀態" />
@@ -417,7 +446,10 @@ export default function PageForm() {
                     shouldDirty: true,
                   })
                 }
-                value={watch("featuredImage") ? [watch("featuredImage")!] : []}
+                value={(() => {
+                  const img = watch("featuredImage");
+                  return img ? [img] : [];
+                })()}
               />
             </CardContent>
           </Card>

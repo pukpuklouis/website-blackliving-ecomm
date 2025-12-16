@@ -1,7 +1,14 @@
-import React, { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@blackliving/ui';
-import { BlockNoteEditor } from '../../components/editor';
-import { Button, Textarea } from '@blackliving/ui';
+import {
+  Button,
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  Textarea,
+} from "@blackliving/ui";
+import { useState } from "react";
+import BlockNoteEditor from "../../components/editor/block-note-editor";
 
 export default function EditorPlayground() {
   const [md, setMd] = useState<string>(
@@ -11,7 +18,10 @@ export default function EditorPlayground() {
   const copy = async () => {
     try {
       await navigator.clipboard.writeText(md);
-    } catch {}
+    } catch (error) {
+      console.error("Failed to copy to clipboard:", error);
+      // TODO: Show user-friendly error message (e.g., toast notification)
+    }
   };
 
   return (
@@ -19,18 +29,20 @@ export default function EditorPlayground() {
       <Card>
         <CardHeader>
           <CardTitle>Editor Playground</CardTitle>
-          <CardDescription>獨立測試 BlockNoteEditor（Markdown 讀寫）</CardDescription>
+          <CardDescription>
+            獨立測試 BlockNoteEditor（Markdown 讀寫）
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <BlockNoteEditor value={md} onChange={setMd} />
+          <BlockNoteEditor onChange={setMd} value={md} />
           <div className="flex items-center gap-2">
-            <Button type="button" onClick={copy} size="sm">
+            <Button onClick={copy} size="sm" type="button">
               複製 Markdown
             </Button>
           </div>
           <div>
-            <p className="text-sm text-gray-700 mb-1">即時 Markdown 輸出</p>
-            <Textarea value={md} readOnly rows={10} />
+            <p className="mb-1 text-gray-700 text-sm">即時 Markdown 輸出</p>
+            <Textarea readOnly rows={10} value={md} />
           </div>
         </CardContent>
       </Card>
