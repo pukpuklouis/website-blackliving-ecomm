@@ -1,16 +1,21 @@
-import { useCallback } from 'react';
 import {
+  DragHandleButton,
   SideMenu,
   type SideMenuProps,
-  AddBlockButton,
-  DragHandleButton,
   useComponentsContext,
-} from '@blocknote/react';
-import ImageIcon from '@lucide/react/image';
-import PaperclipIcon from '@lucide/react/paperclip';
+} from "@blocknote/react";
+import ImageIcon from "@lucide/react/image";
+import { useCallback } from "react";
+import type { MediaLibraryItem } from "../../services/mediaLibrary";
 
 export type MediaSideMenuProps = SideMenuProps & {
-  onLaunchPicker: (category: 'images' | 'files', blockId?: string) => Promise<void>;
+  onLaunchPicker: (
+    category: "images" | "files",
+    blockId?: string
+  ) => Promise<MediaLibraryItem | undefined>;
+  block?: { id: string };
+  freezeMenu?: () => void;
+  unfreezeMenu?: () => void;
 };
 
 export function MediaSideMenu(props: MediaSideMenuProps) {
@@ -18,7 +23,7 @@ export function MediaSideMenu(props: MediaSideMenuProps) {
   const Components = useComponentsContext();
 
   const handleClick = useCallback(
-    (category: 'images' | 'files') => {
+    (category: "images" | "files") => {
       const execute = async () => {
         try {
           freezeMenu?.();
@@ -28,7 +33,7 @@ export function MediaSideMenu(props: MediaSideMenuProps) {
         }
       };
 
-      void execute();
+      execute();
     },
     [block?.id, freezeMenu, onLaunchPicker, unfreezeMenu]
   );
@@ -37,20 +42,12 @@ export function MediaSideMenu(props: MediaSideMenuProps) {
     <SideMenu {...props}>
       {/*<AddBlockButton {...props} />*/}
       {Components ? (
-        <>
-          <Components.SideMenu.Button
-            className="bn-button"
-            label="從媒體庫插入圖片"
-            onClick={() => handleClick('images')}
-            icon={<ImageIcon className="h-4 w-4" />}
-          />
-          {/*<Components.SideMenu.Button
-            className="bn-button"
-            label="從媒體庫插入檔案"
-            onClick={() => handleClick('files')}
-            icon={<PaperclipIcon className="h-4 w-4" />}
-          />*/}
-        </>
+        <Components.SideMenu.Button
+          className="bn-button"
+          icon={<ImageIcon className="h-4 w-4" />}
+          label="從媒體庫插入圖片"
+          onClick={() => handleClick("images")}
+        />
       ) : null}
       <DragHandleButton {...props} />
     </SideMenu>

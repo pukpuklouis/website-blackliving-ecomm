@@ -1,0 +1,16 @@
+{
+  "id": "snapshot_1764505627490_7ri4axeqk",
+  "approvalId": "approval_1764505627461_s480ln1ul",
+  "approvalTitle": "Logistic Settings Spec",
+  "version": 1,
+  "timestamp": "2025-11-30T12:27:07.490Z",
+  "trigger": "initial",
+  "status": "pending",
+  "content": "# Logistic Settings Specification\n\n## Goal\nEnable administrators to configure logistic fees and free shipping thresholds via the admin panel, replacing hardcoded values in the frontend.\n\n## Requirements\n\n### Database\n- Create a new `settings` table to store global application settings.\n- Schema:\n  - `id`: text (primary key)\n  - `key`: text (unique, e.g., 'logistic_settings')\n  - `value`: text (JSON string)\n  - `updatedAt`: timestamp\n\n### API (`apps/api`)\n- `GET /api/settings/:key`: Fetch a specific setting.\n- `PUT /api/settings/:key`: Update a specific setting (Admin only).\n- Initial settings to support:\n  - Key: `logistic_settings`\n  - Value structure: `{ shippingFee: number, freeShippingThreshold: number }`\n\n### Admin Panel (`apps/admin`)\n- Create a new settings page: `/dashboard/settings`.\n- Implement a form to edit:\n  - Shipping Fee (default: 1500)\n  - Free Shipping Threshold (default: 30000)\n- Fetch current settings on load and save changes via API.\n\n### Web App (`apps/web`)\n- Update `cartStore.ts`:\n  - Fetch `logistic_settings` from API on initialization.\n  - Store these values in the state.\n  - Update `calculateShippingFee` logic to use these dynamic values.\n  - Fallback to default values (1500/30000) if API fails or is loading.\n- Update `CheckoutForm.tsx` (and other relevant components) to ensure they react to store changes.\n\n## Design\n- **Settings Table:** Using a generic key-value structure allows for easy addition of future settings (e.g., site title, contact info) without schema migrations.\n- **Frontend Caching:** The web app should cache these settings (e.g., in `localStorage` via Zustand persist) to avoid blocking the UI, but re-fetch on session start to keep them fresh.\n\n## Verification\n- Admin can change the fee to 2000.\n- Web app reflects 2000 shipping fee immediately (after refresh/re-fetch).\n- Admin can change threshold to 50000.\n- Web app requires 50000 for free shipping.\n",
+  "fileStats": {
+    "size": 1925,
+    "lines": 47,
+    "lastModified": "2025-11-30T12:27:02.404Z"
+  },
+  "comments": []
+}

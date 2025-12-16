@@ -1,0 +1,14 @@
+{
+  "filePath": ".spec-workflow/specs/appointment-flow-simplification/design.md",
+  "currentVersion": 1,
+  "snapshots": [
+    {
+      "version": 1,
+      "filename": "snapshot-001.json",
+      "timestamp": "2025-11-30T13:39:21.168Z",
+      "trigger": "initial",
+      "approvalId": "approval_1764509961148_w9l9an1vj",
+      "approvalTitle": "Appointment Flow Simplification Design Document"
+    }
+  ]
+}

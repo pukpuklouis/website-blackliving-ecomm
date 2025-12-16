@@ -1,0 +1,14 @@
+{
+  "filePath": ".spec-workflow/specs/appointment-simplified-modification/design.md",
+  "currentVersion": 1,
+  "snapshots": [
+    {
+      "version": 1,
+      "filename": "snapshot-001.json",
+      "timestamp": "2025-11-30T13:27:38.652Z",
+      "trigger": "initial",
+      "approvalId": "approval_1764509258635_p205c5lav",
+      "approvalTitle": "Appointment Simplified Modification Design Document"
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "filePath": ".spec-workflow/specs/dynamic-page-cms/design.md",
+  "currentVersion": 1,
+  "snapshots": [
+    {
+      "version": 1,
+      "filename": "snapshot-001.json",
+      "timestamp": "2025-11-26T05:14:08.510Z",
+      "trigger": "initial",
+      "approvalId": "approval_1764134048489_5y5moyro5",
+      "approvalTitle": "Design Document - Dynamic Page CMS"
+    }
+  ]
+}

@@ -1,0 +1,158 @@
+[
+    {
+        "name": "Extra Firm(最硬)",
+        "price": 0,
+        "size": "Twin XL(96x200)"
+    },
+    {
+        "name": "Extra Firm(最硬)",
+        "price": 0,
+        "size": "Full(135x190)"
+    },
+    {
+        "name": "Extra Firm(最硬)",
+        "price": 0,
+        "size": "Queen(150x200)"
+    },
+    {
+        "name": "Extra Firm(最硬)",
+        "price": 0,
+        "size": "King(195x200)"
+    },
+    {
+        "name": "Firm(偏硬)",
+        "price": 0,
+        "size": "Cal King(180x210)"
+    },
+    {
+        "name": "Medium(中等)",
+        "price": 0,
+        "size": "Twin XL(96x200)"
+    },
+    {
+        "name": "Medium(中等)",
+        "price": 0,
+        "size": "Full(135x190)"
+    },
+    {
+        "name": "Medium(中等)",
+        "price": 0,
+        "size": "Queen(150x200)"
+    },
+    {
+        "name": "Medium(中等)",
+        "price": 0,
+        "size": "King(195x200)"
+    },
+    {
+        "name": "Medium(中等)",
+        "price": 0,
+        "size": "Cal King(180x210*)"
+    },
+    {
+        "name": "Plush(偏軟)",
+        "price": 0,
+        "size": "Twin XL(96x200)"
+    },
+    {
+        "name": "Plush(偏軟)",
+        "price": 0,
+        "size": "Full(135x190)"
+    },
+    {
+        "name": "Plush(偏軟)",
+        "price": 0,
+        "size": "Queen(150x200)"
+    },
+    {
+        "name": "Plush(偏軟)",
+        "price": 0,
+        "size": "King(195x200)"
+    },
+    {
+        "name": "Plush(偏軟)",
+        "price": 0,
+        "size": "Cal King(180x210*)"
+    }
+]
+
+
+
+
+[
+    {
+        "name": "Extra Firm(最硬)",
+        "price": 0,
+        "size": "Twin XL(96x200)"
+    },
+    {
+        "name": "Extra Firm(最硬)",
+        "price": 0,
+        "size": "Full(135x190)"
+    },
+    {
+        "name": "Extra Firm(最硬)",
+        "price": 0,
+        "size": "Queen(150x200)"
+    },
+    {
+        "name": "Extra Firm(最硬)",
+        "price": 0,
+        "size": "King(195x200)"
+    },
+    {
+        "name": "Extra Firm(最硬)",
+        "price": 0,
+        "size": "Cal King(180x210)"
+    },
+    {
+        "name": "Firm(偏硬)",
+        "price": 0,
+        "size": "Twin XL(96x200)"
+    },
+    {
+        "name": "Firm(偏硬)",
+        "price": 0,
+        "size": "Full(135x190)"
+    },
+    {
+        "name": "Firm(偏硬)",
+        "price": 0,
+        "size": "Queen(150x200)"
+    },
+    {
+        "name": "Firm(偏硬)",
+        "price": 0,
+        "size": "King(195x200)"
+    },
+    {
+        "name": "Firm(偏硬)",
+        "price": 0,
+        "size": "Cal King(180x210*)"
+    },
+    {
+        "name": "Medium(中等)",
+        "price": 0,
+        "size": "Twin XL(96x200)"
+    },
+    {
+        "name": "Medium(中等)",
+        "price": 0,
+        "size": "Full(135x190)"
+    },
+    {
+        "name": "Medium(中等)",
+        "price": 0,
+        "size": "Queen(150x200)"
+    },
+    {
+        "name": "Medium(中等)",
+        "price": 0,
+        "size": "King(195x200)"
+    },
+    {
+        "name": "Medium(中等)",
+        "price": 0,
+        "size": "Cal King(180x210*)"
+    }
+]

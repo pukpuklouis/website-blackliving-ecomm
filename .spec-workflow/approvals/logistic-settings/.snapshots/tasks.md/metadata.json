@@ -1,0 +1,14 @@
+{
+  "filePath": ".spec-workflow/specs/logistic-settings/tasks.md",
+  "currentVersion": 1,
+  "snapshots": [
+    {
+      "version": 1,
+      "filename": "snapshot-001.json",
+      "timestamp": "2025-11-30T12:39:34.772Z",
+      "trigger": "initial",
+      "approvalId": "approval_1764506374747_nurxptzfv",
+      "approvalTitle": "Logistic Settings Tasks"
+    }
+  ]
+}

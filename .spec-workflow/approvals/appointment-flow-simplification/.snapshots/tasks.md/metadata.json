@@ -1,0 +1,14 @@
+{
+  "filePath": ".spec-workflow/specs/appointment-flow-simplification/tasks.md",
+  "currentVersion": 1,
+  "snapshots": [
+    {
+      "version": 1,
+      "filename": "snapshot-001.json",
+      "timestamp": "2025-11-30T13:39:28.429Z",
+      "trigger": "initial",
+      "approvalId": "approval_1764509968420_dvwp5ol8x",
+      "approvalTitle": "Appointment Flow Simplification Tasks Breakdown"
+    }
+  ]
+}
