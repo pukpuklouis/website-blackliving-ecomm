@@ -1,6 +1,6 @@
+import { createDB } from "@blackliving/db";
 import { settings } from "@blackliving/db/schema";
 import { eq } from "drizzle-orm";
-import type { DrizzleD1Database } from "drizzle-orm/d1";
 import { z } from "zod";
 import type { Env } from "../index";
 
@@ -14,7 +14,7 @@ const logger = {
   },
 };
 
-type Database = DrizzleD1Database<typeof import("@blackliving/db/schema")>;
+type Database = ReturnType<typeof createDB>;
 
 const lineSettingsSchema = z.object({
   channelAccessToken: z.string().min(1, "Channel access token is required"),

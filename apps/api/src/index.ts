@@ -1,6 +1,7 @@
 import { createAuth } from "@blackliving/auth";
 import { createDB } from "@blackliving/db";
 import { users } from "@blackliving/db/schema";
+import type { Session, User } from "@blackliving/types";
 import type {
   D1Database,
   KVNamespace,
@@ -39,7 +40,7 @@ import searchKeys from "./routes/search-keys";
 import searchReindex from "./routes/search-reindex";
 import { LineNotificationService } from "./utils/line";
 
-export interface Env {
+export type Env = {
   DB: D1Database;
   R2: R2Bucket;
   CACHE: KVNamespace;
@@ -56,7 +57,7 @@ export interface Env {
   RESEND_API_KEY: string;
   RESEND_FROM_EMAIL: string;
   JWT_SECRET: string;
-}
+};
 
 const app = new Hono<{
   Bindings: Env;
@@ -67,8 +68,8 @@ const app = new Hono<{
     auth: ReturnType<typeof createAuth>;
     search: SearchModule;
     line: LineNotificationService;
-    user: any;
-    session: any;
+    user: User | null;
+    session: Session | null;
   };
 }>();
 
@@ -82,7 +83,7 @@ app.use(
     origin: (origin, c) => {
       // Get allowed origins from environment variable
       const allowedOrigins = c.env.ALLOWED_ORIGINS
-        ? c.env.ALLOWED_ORIGINS.split(",").map((o) => o.trim())
+        ? c.env.ALLOWED_ORIGINS.split(",").map((o: string) => o.trim())
         : [];
 
       // Add common allowed origins as fallback
@@ -96,6 +97,10 @@ app.use(
         "https://www.blackliving.com",
         "https://admin.blackliving.com",
         "https://api.blackliving.com",
+        // Staging origins
+        "https://staging.blackliving-web.pages.dev",
+        "https://staging.blackliving-admin.pages.dev",
+        "https://blackliving-admin-staging.pukpuk-tw.workers.dev",
       ];
 
       const allAllowedOrigins = [...allowedOrigins, ...fallbackOrigins];
@@ -146,13 +151,13 @@ app.use("*", async (c, next) => {
   c.set("storage", storage);
   c.set("auth", auth);
   c.set("search", new SearchModule(c));
-  c.set("line", new LineNotificationService(c.env, db as any));
+  c.set("line", new LineNotificationService(c.env, db));
 
   await next();
 });
 
 // Security Layer 5: Enhanced Better Auth session handling
-app.use("*", async (c, next) => {
+app.use("*", (c, next) => {
   const auth = c.get("auth");
   const enhancedAuthMiddleware = createEnhancedAuthMiddleware(auth);
   return enhancedAuthMiddleware(c, next);
@@ -180,8 +185,8 @@ app.get("/api/auth/test", (c) => c.json({ message: "Test route works" }));
 // Role assignment endpoint - for upgrading users to admin after OAuth
 app.post("/api/auth/assign-admin-role", async (c) => {
   try {
-    const user = c.get("user");
-    if (!user) {
+    const currentUser = c.get("user");
+    if (!currentUser) {
       return c.json({ error: "Authentication required" }, 401);
     }
 
@@ -194,7 +199,7 @@ app.post("/api/auth/assign-admin-role", async (c) => {
         role: "admin",
         updatedAt: new Date(),
       })
-      .where(eq(users.id, user.id))
+      .where(eq(users.id, currentUser.id))
       .returning();
 
     return c.json({
@@ -216,7 +221,7 @@ app.post("/api/auth/assign-admin-role", async (c) => {
 // Session endpoint removed - Better Auth handler provides this automatically
 
 // Debug endpoint to check environment variables
-app.get("/api/auth/debug/env", async (c) => {
+app.get("/api/auth/debug/env", (c) => {
   if (c.env.NODE_ENV !== "development") {
     return c.json({ error: "Only available in development" }, 403);
   }
@@ -233,7 +238,7 @@ app.get("/api/auth/debug/env", async (c) => {
 });
 
 // Debug endpoint to test Better Auth configuration
-app.get("/api/auth/debug/config", async (c) => {
+app.get("/api/auth/debug/config", (c) => {
   if (c.env.NODE_ENV !== "development") {
     return c.json({ error: "Only available in development" }, 403);
   }
@@ -250,9 +255,7 @@ app.get("/api/auth/debug/config", async (c) => {
       typeof auth.options?.baseURL === "string"
         ? auth.options.baseURL
         : "unknown";
-    const hasGoogleProvider = auth.options?.socialProviders?.google
-      ? true
-      : false;
+    const hasGoogleProvider = !!auth.options?.socialProviders?.google;
     const googleClientId = auth.options?.socialProviders?.google?.clientId;
 
     return c.json({
@@ -292,12 +295,19 @@ app.get("/api/auth/debug/db", async (c) => {
     const rawResult = await c.env.DB.prepare(rawQuery).all();
 
     // Test Drizzle ORM query
-    let drizzleResult;
+    let drizzleResult: unknown[] | { error: string } | undefined;
     try {
-      const { products } = await import("@blackliving/db");
-      drizzleResult = await db.select().from(products).limit(1);
+      const { products: productsTable } = await import(
+        "@blackliving/db/schema"
+      );
+      drizzleResult = await db.select().from(productsTable).limit(1);
     } catch (drizzleError) {
-      drizzleResult = { error: drizzleError.message };
+      drizzleResult = {
+        error:
+          drizzleError instanceof Error
+            ? drizzleError.message
+            : String(drizzleError),
+      };
     }
 
     return c.json({
@@ -358,21 +368,21 @@ app.post("/api/auth/debug/force-admin-login", async (c) => {
     const auth = c.get("auth");
 
     // Ensure user exists and is admin
-    let user = await db
+    let targetUser = await db
       .select()
       .from(users)
       .where(eq(users.email, email))
       .limit(1)
       .then((r) => r[0]);
 
-    if (user) {
+    if (targetUser) {
       // Update to admin
       const [updatedUser] = await db
         .update(users)
         .set({ role: "admin" })
-        .where(eq(users.id, user.id))
+        .where(eq(users.id, targetUser.id))
         .returning();
-      user = updatedUser;
+      targetUser = updatedUser;
     } else {
       const [newUser] = await db
         .insert(users)
@@ -383,7 +393,7 @@ app.post("/api/auth/debug/force-admin-login", async (c) => {
           emailVerified: true,
         })
         .returning();
-      user = newUser;
+      targetUser = newUser;
     }
 
     // Use Better Auth to create session
@@ -392,7 +402,10 @@ app.post("/api/auth/debug/force-admin-login", async (c) => {
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: user.email, password: "dev-login" }),
+        body: JSON.stringify({
+          email: targetUser.email,
+          password: "dev-login",
+        }),
       }
     );
 
@@ -409,7 +422,11 @@ app.post("/api/auth/debug/force-admin-login", async (c) => {
 
     return c.json({
       success: true,
-      user: { id: user.id, email: user.email, role: user.role },
+      user: {
+        id: targetUser.id,
+        email: targetUser.email,
+        role: targetUser.role,
+      },
     });
   } catch (error) {
     console.error("Force admin login error:", error);
@@ -426,9 +443,11 @@ app.get("/api/auth/debug/oauth-flow", async (c) => {
   try {
     const auth = c.get("auth");
     const db = c.get("db");
-    const { sessions, users, accounts } = await import(
-      "@blackliving/db/schema"
-    );
+    const {
+      sessions: sessionsTable,
+      users: usersTable,
+      accounts: accountsTable,
+    } = await import("@blackliving/db/schema");
 
     // Get current session info
     const currentSession = await auth.api.getSession({
@@ -438,18 +457,18 @@ app.get("/api/auth/debug/oauth-flow", async (c) => {
     // Get recent database entries
     const recentSessions = await db
       .select()
-      .from(sessions)
-      .orderBy(sessions.createdAt)
+      .from(sessionsTable)
+      .orderBy(sessionsTable.createdAt)
       .limit(10);
     const recentUsers = await db
       .select()
-      .from(users)
-      .orderBy(users.createdAt)
+      .from(usersTable)
+      .orderBy(usersTable.createdAt)
       .limit(10);
     const recentAccounts = await db
       .select()
-      .from(accounts)
-      .orderBy(accounts.createdAt)
+      .from(accountsTable)
+      .orderBy(accountsTable.createdAt)
       .limit(10);
 
     return c.json({
@@ -491,8 +510,8 @@ app.get("/api/auth/debug/oauth-flow", async (c) => {
         recentAccounts: recentAccounts.map((a) => ({
           id: a.id,
           userId: a.userId,
-          provider: a.provider,
-          providerAccountId: a.providerAccountId,
+          providerId: a.providerId,
+          accountId: a.accountId,
           createdAt: a.createdAt,
         })),
       },
@@ -526,7 +545,7 @@ app.all("/api/auth/*", async (c) => {
         cookie: c.req.header("cookie"),
         origin: c.req.header("origin"),
         referer: c.req.header("referer"),
-        userAgent: c.req.header("user-agent")?.substring(0, 50) + "...",
+        userAgent: `${c.req.header("user-agent")?.substring(0, 50)}...`,
       },
       timestamp: new Date().toISOString(),
     });
@@ -538,7 +557,9 @@ app.all("/api/auth/*", async (c) => {
     console.log("📤 Better Auth Response:", {
       status: response.status,
       statusText: response.statusText,
-      headers: Object.fromEntries(response.headers.entries()),
+      headers: Object.fromEntries(
+        Array.from(response.headers as unknown as Iterable<[string, string]>)
+      ),
       hasCookies: response.headers.has("set-cookie"),
       cookies: response.headers.get("set-cookie"),
     });
