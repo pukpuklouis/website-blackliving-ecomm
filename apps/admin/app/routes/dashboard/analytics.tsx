@@ -1,11 +1,17 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@blackliving/ui';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@blackliving/ui";
 
 export default function AnalyticsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">分析報表</h1>
-        <p className="text-gray-600 mt-2">深入分析銷售數據與營運績效</p>
+        <h1 className="font-bold text-3xl text-gray-900">分析報表</h1>
+        <p className="mt-2 text-gray-600">深入分析銷售數據與營運績效</p>
       </div>
 
       <Card>
@@ -15,17 +21,23 @@ export default function AnalyticsPage() {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            <div className="p-4 border rounded-lg bg-gray-50">
+            <div className="rounded-lg border bg-gray-50 p-4">
               <h3 className="font-semibold">銷售趨勢分析</h3>
-              <p className="text-sm text-gray-600 mt-1">月度、季度、年度銷售表現與趨勢預測</p>
+              <p className="mt-1 text-gray-600 text-sm">
+                月度、季度、年度銷售表現與趨勢預測
+              </p>
             </div>
-            <div className="p-4 border rounded-lg bg-gray-50">
+            <div className="rounded-lg border bg-gray-50 p-4">
               <h3 className="font-semibold">產品銷售排行</h3>
-              <p className="text-sm text-gray-600 mt-1">熱銷產品分析，幫助庫存與採購決策</p>
+              <p className="mt-1 text-gray-600 text-sm">
+                熱銷產品分析，幫助庫存與採購決策
+              </p>
             </div>
-            <div className="p-4 border rounded-lg bg-gray-50">
+            <div className="rounded-lg border bg-gray-50 p-4">
               <h3 className="font-semibold">門市績效比較</h3>
-              <p className="text-sm text-gray-600 mt-1">中和與中壢門市營運數據對比分析</p>
+              <p className="mt-1 text-gray-600 text-sm">
+                中和與中壢門市營運數據對比分析
+              </p>
             </div>
           </div>
         </CardContent>

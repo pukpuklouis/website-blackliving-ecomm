@@ -3,8 +3,10 @@
   "title": "Appointment Flow Simplification Tasks Breakdown",
   "filePath": ".spec-workflow/specs/appointment-flow-simplification/tasks.md",
   "type": "document",
-  "status": "pending",
+  "status": "rejected",
   "createdAt": "2025-11-30T13:39:28.420Z",
   "category": "spec",
-  "categoryName": "appointment-flow-simplification"
+  "categoryName": "appointment-flow-simplification",
+  "response": "已拒绝",
+  "respondedAt": "2025-12-16T08:50:50.646Z"
 }

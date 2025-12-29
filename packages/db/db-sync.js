@@ -12,60 +12,63 @@
  *   node db-sync.js migrate-remote
  */
 
-import { execSync } from 'child_process';
-import { existsSync, readFileSync } from 'fs';
-import { join } from 'path';
+import { execSync } from "child_process";
 
 const COMMANDS = {
-  'sync-from-remote': {
+  "sync-from-remote": {
     description:
-      'Sync schema from remote database to local migrations (only if remote has migrations)',
-    commands: ['drizzle-kit introspect', 'drizzle-kit generate'],
+      "Sync schema from remote database to local migrations (only if remote has migrations)",
+    commands: ["drizzle-kit introspect", "drizzle-kit generate"],
   },
-  'init-remote': {
-    description: 'Initialize remote database with local migrations (first time setup)',
+  "init-remote": {
+    description:
+      "Initialize remote database with local migrations (first time setup)",
     commands: [
-      'cd ../../apps/api && wrangler d1 migrations apply blackliving-db --remote',
-      'cd ../../apps/api && wrangler d1 execute blackliving-db --file=../../packages/db/seed-wrangler.sql --remote',
+      "cd ../../apps/api && wrangler d1 migrations apply blackliving-db --remote",
+      "cd ../../apps/api && wrangler d1 execute blackliving-db --file=../../packages/db/seed-wrangler.sql --remote",
     ],
   },
-  'sync-to-remote': {
-    description: 'Push local schema changes to remote database',
-    commands: ['drizzle-kit push'],
+  "sync-to-remote": {
+    description: "Push local schema changes to remote database",
+    commands: ["drizzle-kit push"],
   },
-  'migrate-local': {
-    description: 'Apply migrations to local database',
-    commands: ['cd ../../apps/api && wrangler d1 migrations apply blackliving-db --local'],
-  },
-  'migrate-remote': {
-    description: 'Apply migrations to remote database',
-    commands: ['cd ../../apps/api && wrangler d1 migrations apply blackliving-db --remote'],
-  },
-  'seed-local': {
-    description: 'Seed local database with sample data',
+  "migrate-local": {
+    description: "Apply migrations to local database",
     commands: [
-      'cd ../../apps/api && wrangler d1 execute blackliving-db --file=../../packages/db/seed-wrangler.sql --local',
+      "cd ../../apps/api && wrangler d1 migrations apply blackliving-db --local",
     ],
   },
-  'seed-remote': {
-    description: 'Seed remote database with sample data',
+  "migrate-remote": {
+    description: "Apply migrations to remote database",
     commands: [
-      'cd ../../apps/api && wrangler d1 execute blackliving-db --file=../../packages/db/seed-wrangler.sql --remote',
+      "cd ../../apps/api && wrangler d1 migrations apply blackliving-db --remote",
     ],
   },
-  'reset-local': {
-    description: 'Reset local database (delete and recreate)',
+  "seed-local": {
+    description: "Seed local database with sample data",
     commands: [
-      'rm -rf ../../apps/api/.wrangler/state/v3/d1/',
-      'cd ../../apps/api && wrangler d1 migrations apply blackliving-db --local',
-      'cd ../../apps/api && wrangler d1 execute blackliving-db --file=../../packages/db/seed-wrangler.sql --local',
+      "cd ../../apps/api && wrangler d1 execute blackliving-db --file=../../packages/db/seed-wrangler.sql --local",
+    ],
+  },
+  "seed-remote": {
+    description: "Seed remote database with sample data",
+    commands: [
+      "cd ../../apps/api && wrangler d1 execute blackliving-db --file=../../packages/db/seed-wrangler.sql --remote",
+    ],
+  },
+  "reset-local": {
+    description: "Reset local database (delete and recreate)",
+    commands: [
+      "rm -rf ../../apps/api/.wrangler/state/v3/d1/",
+      "cd ../../apps/api && wrangler d1 migrations apply blackliving-db --local",
+      "cd ../../apps/api && wrangler d1 execute blackliving-db --file=../../packages/db/seed-wrangler.sql --local",
     ],
   },
   status: {
-    description: 'Show database migration status',
+    description: "Show database migration status",
     commands: [
-      'cd ../../apps/api && wrangler d1 migrations list blackliving-db',
-      'cd ../../apps/api && wrangler d1 migrations list blackliving-db --local',
+      "cd ../../apps/api && wrangler d1 migrations list blackliving-db",
+      "cd ../../apps/api && wrangler d1 migrations list blackliving-db --local",
     ],
   },
 };
@@ -74,9 +77,9 @@ function executeCommand(cmd, description) {
   console.log(`\n🔄 ${description || cmd}`);
   try {
     const output = execSync(cmd, {
-      stdio: 'inherit',
+      stdio: "inherit",
       cwd: process.cwd(),
-      encoding: 'utf8',
+      encoding: "utf8",
     });
     console.log(`✅ Success: ${description || cmd}`);
     return true;
@@ -118,7 +121,7 @@ Examples:
 function main() {
   const command = process.argv[2];
 
-  if (!command || command === '--help' || command === '-h') {
+  if (!command || command === "--help" || command === "-h") {
     showHelp();
     return;
   }
@@ -126,7 +129,7 @@ function main() {
   const config = COMMANDS[command];
   if (!config) {
     console.error(`❌ Unknown command: ${command}`);
-    console.error('Use --help to see available commands');
+    console.error("Use --help to see available commands");
     process.exit(1);
   }
 

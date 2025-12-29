@@ -1,13 +1,4 @@
-import { useState, useMemo } from 'react';
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-  Button,
-  Badge,
-  Separator,
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -17,28 +8,32 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-  Checkbox,
+  Badge,
+  Button,
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  Input,
+  Label,
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-  Input,
-  Label,
-} from '@blackliving/ui';
+  Separator,
+} from "@blackliving/ui";
+import AlertTriangle from "@lucide/react/alert-triangle";
 // Tree-shakable Lucide imports
-import CheckSquare from '@lucide/react/check-square';
-import Square from '@lucide/react/square';
-import Archive from '@lucide/react/archive';
-import ArchiveRestore from '@lucide/react/archive-restore';
-import Trash2 from '@lucide/react/trash-2';
-import Edit from '@lucide/react/edit';
-import Download from '@lucide/react/download';
-import Upload from '@lucide/react/upload';
-import Settings from '@lucide/react/settings';
-import AlertTriangle from '@lucide/react/alert-triangle';
-import { toast } from 'sonner';
-import { useEnvironment } from '../contexts/EnvironmentContext';
+import CheckSquare from "@lucide/react/check-square";
+import Download from "@lucide/react/download";
+import Edit from "@lucide/react/edit";
+import Trash2 from "@lucide/react/trash-2";
+import Upload from "@lucide/react/upload";
+import { useState } from "react";
+import { toast } from "sonner";
+import { useEnvironment } from "../contexts/EnvironmentContext";
 
 interface Product {
   id: string;
@@ -57,7 +52,7 @@ interface BatchOperationsToolbarProps {
   onProductsUpdate: () => void;
   totalProducts: number;
   className?: string;
-  variant?: 'card' | 'compact';
+  variant?: "card" | "compact";
   categories?: { slug: string; title: string }[];
 }
 
@@ -67,7 +62,7 @@ export default function BatchOperationsToolbar({
   onProductsUpdate,
   totalProducts,
   className,
-  variant = 'card',
+  variant = "card",
   categories = [],
 }: BatchOperationsToolbarProps) {
   const { PUBLIC_API_URL } = useEnvironment();
@@ -76,10 +71,10 @@ export default function BatchOperationsToolbar({
   const [isProcessing, setIsProcessing] = useState(false);
   const [bulkEditDialogOpen, setBulkEditDialogOpen] = useState(false);
   const [bulkEditValues, setBulkEditValues] = useState({
-    category: '',
+    category: "",
     inStock: null as boolean | null,
     featured: null as boolean | null,
-    sortOrder: '',
+    sortOrder: "",
   });
 
   const selectedCount = selectedProducts.length;
@@ -87,20 +82,22 @@ export default function BatchOperationsToolbar({
 
   // Bulk operations
 
-
   const handleBulkDelete = async () => {
     if (!hasSelection) return;
 
     try {
       setIsProcessing(true);
-      const response = await fetch(`${API_BASE}/api/admin/products/batch/delete`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          ids: selectedProducts.map(p => p.id),
-        }),
-      });
+      const response = await fetch(
+        `${API_BASE}/api/admin/products/batch/delete`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({
+            ids: selectedProducts.map((p) => p.id),
+          }),
+        }
+      );
 
       if (response.ok) {
         toast.success(`成功刪除 ${selectedCount} 個產品`);
@@ -108,11 +105,11 @@ export default function BatchOperationsToolbar({
         onProductsUpdate();
       } else {
         const err = await response.json();
-        throw new Error(err?.error || err?.message || '批量刪除失敗');
+        throw new Error(err?.error || err?.message || "批量刪除失敗");
       }
     } catch (error) {
-      console.error('Bulk delete failed:', error);
-      toast.error(error instanceof Error ? error.message : '批量刪除失敗');
+      console.error("Bulk delete failed:", error);
+      toast.error(error instanceof Error ? error.message : "批量刪除失敗");
     } finally {
       setIsProcessing(false);
     }
@@ -125,44 +122,51 @@ export default function BatchOperationsToolbar({
       setIsProcessing(true);
       const updates: Record<string, any> = {};
 
-      if (bulkEditValues.category && bulkEditValues.category !== 'unchanged') updates.category = bulkEditValues.category;
-      if (bulkEditValues.inStock !== null) updates.inStock = bulkEditValues.inStock;
-      if (bulkEditValues.featured !== null) updates.featured = bulkEditValues.featured;
-      if (bulkEditValues.sortOrder) updates.sortOrder = Number(bulkEditValues.sortOrder);
+      if (bulkEditValues.category && bulkEditValues.category !== "unchanged")
+        updates.category = bulkEditValues.category;
+      if (bulkEditValues.inStock !== null)
+        updates.inStock = bulkEditValues.inStock;
+      if (bulkEditValues.featured !== null)
+        updates.featured = bulkEditValues.featured;
+      if (bulkEditValues.sortOrder)
+        updates.sortOrder = Number(bulkEditValues.sortOrder);
 
       if (Object.keys(updates).length === 0) {
-        toast.error('請至少選擇一個要更新的欄位');
+        toast.error("請至少選擇一個要更新的欄位");
         return;
       }
 
-      const response = await fetch(`${API_BASE}/api/admin/products/batch/update`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          ids: selectedProducts.map(p => p.id),
-          data: updates,
-        }),
-      });
+      const response = await fetch(
+        `${API_BASE}/api/admin/products/batch/update`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({
+            ids: selectedProducts.map((p) => p.id),
+            data: updates,
+          }),
+        }
+      );
 
       if (response.ok) {
         toast.success(`成功更新 ${selectedCount} 個產品`);
         setBulkEditDialogOpen(false);
         setBulkEditValues({
-          category: '',
+          category: "",
           inStock: null,
           featured: null,
-          sortOrder: '',
+          sortOrder: "",
         });
         onSelectionChange([]);
         onProductsUpdate();
       } else {
         const err = await response.json();
-        throw new Error(err?.error || err?.message || '批量更新失敗');
+        throw new Error(err?.error || err?.message || "批量更新失敗");
       }
     } catch (error) {
-      console.error('Bulk edit failed:', error);
-      toast.error(error instanceof Error ? error.message : '批量更新失敗');
+      console.error("Bulk edit failed:", error);
+      toast.error(error instanceof Error ? error.message : "批量更新失敗");
     } finally {
       setIsProcessing(false);
     }
@@ -171,34 +175,39 @@ export default function BatchOperationsToolbar({
   const handleExportCSV = async () => {
     try {
       setIsProcessing(true);
-      const productIds = hasSelection ? selectedProducts.map(p => p.id) : null;
+      const productIds = hasSelection
+        ? selectedProducts.map((p) => p.id)
+        : null;
 
-      const response = await fetch(`${API_BASE}/api/admin/products/export/csv`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ productIds }),
-      });
+      const response = await fetch(
+        `${API_BASE}/api/admin/products/export/csv`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ productIds }),
+        }
+      );
 
       if (response.ok) {
         const blob = await response.blob();
         const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
+        const a = document.createElement("a");
         a.href = url;
-        a.download = `products-export-${new Date().toISOString().split('T')[0]}.csv`;
+        a.download = `products-export-${new Date().toISOString().split("T")[0]}.csv`;
         document.body.appendChild(a);
         a.click();
         window.URL.revokeObjectURL(url);
         document.body.removeChild(a);
 
-        toast.success('CSV 匯出成功');
+        toast.success("CSV 匯出成功");
       } else {
         const err = await response.json();
-        throw new Error(err?.error || err?.message || 'CSV 匯出失敗');
+        throw new Error(err?.error || err?.message || "CSV 匯出失敗");
       }
     } catch (error) {
-      console.error('CSV export failed:', error);
-      toast.error(error instanceof Error ? error.message : 'CSV 匯出失敗');
+      console.error("CSV export failed:", error);
+      toast.error(error instanceof Error ? error.message : "CSV 匯出失敗");
     } finally {
       setIsProcessing(false);
     }
@@ -208,13 +217,16 @@ export default function BatchOperationsToolbar({
     try {
       setIsProcessing(true);
       const formData = new FormData();
-      formData.append('file', file);
+      formData.append("file", file);
 
-      const response = await fetch(`${API_BASE}/api/admin/products/import/csv`, {
-        method: 'POST',
-        credentials: 'include',
-        body: formData,
-      });
+      const response = await fetch(
+        `${API_BASE}/api/admin/products/import/csv`,
+        {
+          method: "POST",
+          credentials: "include",
+          body: formData,
+        }
+      );
 
       if (response.ok) {
         const result = await response.json();
@@ -222,11 +234,11 @@ export default function BatchOperationsToolbar({
         onProductsUpdate();
       } else {
         const err = await response.json();
-        throw new Error(err?.error || err?.message || 'CSV 匯入失敗');
+        throw new Error(err?.error || err?.message || "CSV 匯入失敗");
       }
     } catch (error) {
-      console.error('CSV import failed:', error);
-      toast.error(error instanceof Error ? error.message : 'CSV 匯入失敗');
+      console.error("CSV import failed:", error);
+      toast.error(error instanceof Error ? error.message : "CSV 匯入失敗");
     } finally {
       setIsProcessing(false);
     }
@@ -235,46 +247,54 @@ export default function BatchOperationsToolbar({
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      if (file.type !== 'text/csv' && !file.name.endsWith('.csv')) {
-        toast.error('請選擇 CSV 檔案');
+      if (file.type !== "text/csv" && !file.name.endsWith(".csv")) {
+        toast.error("請選擇 CSV 檔案");
         return;
       }
       handleImportCSV(file);
     }
     // Reset input
-    event.target.value = '';
+    event.target.value = "";
   };
 
   if (!hasSelection && totalProducts === 0) {
     return null;
   }
 
-  if (variant === 'compact') {
+  if (variant === "compact") {
     return (
       <div className={`flex items-center gap-2 ${className}`}>
         {hasSelection && (
           <>
-            <div className="flex items-center gap-2 mr-2">
-              <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">
+            <div className="mr-2 flex items-center gap-2">
+              <span className="whitespace-nowrap font-medium text-muted-foreground text-sm">
                 已選取 {selectedCount} 項
               </span>
               <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => onSelectionChange([])}
-                disabled={isProcessing}
                 className="h-8 px-2 text-muted-foreground hover:text-foreground"
+                disabled={isProcessing}
+                onClick={() => onSelectionChange([])}
+                size="sm"
+                variant="ghost"
               >
                 取消
               </Button>
             </div>
-            <Separator orientation="vertical" className="h-6" />
+            <Separator className="h-6" orientation="vertical" />
 
             {/* Bulk Edit */}
-            <AlertDialog open={bulkEditDialogOpen} onOpenChange={setBulkEditDialogOpen}>
+            <AlertDialog
+              onOpenChange={setBulkEditDialogOpen}
+              open={bulkEditDialogOpen}
+            >
               <AlertDialogTrigger asChild>
-                <Button variant="outline" size="sm" disabled={isProcessing} className="h-8">
-                  <Edit className="h-3.5 w-3.5 mr-1.5" />
+                <Button
+                  className="h-8"
+                  disabled={isProcessing}
+                  size="sm"
+                  variant="outline"
+                >
+                  <Edit className="mr-1.5 h-3.5 w-3.5" />
                   編輯
                 </Button>
               </AlertDialogTrigger>
@@ -291,8 +311,13 @@ export default function BatchOperationsToolbar({
                     <Label>分類</Label>
                     <Label>分類</Label>
                     <Select
+                      onValueChange={(value) =>
+                        setBulkEditValues((prev) => ({
+                          ...prev,
+                          category: value,
+                        }))
+                      }
                       value={bulkEditValues.category}
-                      onValueChange={(value) => setBulkEditValues(prev => ({ ...prev, category: value }))}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="選擇分類" />
@@ -311,11 +336,17 @@ export default function BatchOperationsToolbar({
                   <div className="space-y-2">
                     <Label>庫存狀態</Label>
                     <Select
-                      value={bulkEditValues.inStock === null ? '' : bulkEditValues.inStock.toString()}
-                      onValueChange={(value) => setBulkEditValues(prev => ({
-                        ...prev,
-                        inStock: value === '' ? null : value === 'true'
-                      }))}
+                      onValueChange={(value) =>
+                        setBulkEditValues((prev) => ({
+                          ...prev,
+                          inStock: value === "" ? null : value === "true",
+                        }))
+                      }
+                      value={
+                        bulkEditValues.inStock === null
+                          ? ""
+                          : bulkEditValues.inStock.toString()
+                      }
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="不變更" />
@@ -331,11 +362,17 @@ export default function BatchOperationsToolbar({
                   <div className="space-y-2">
                     <Label>精選產品</Label>
                     <Select
-                      value={bulkEditValues.featured === null ? '' : bulkEditValues.featured.toString()}
-                      onValueChange={(value) => setBulkEditValues(prev => ({
-                        ...prev,
-                        featured: value === '' ? null : value === 'true'
-                      }))}
+                      onValueChange={(value) =>
+                        setBulkEditValues((prev) => ({
+                          ...prev,
+                          featured: value === "" ? null : value === "true",
+                        }))
+                      }
+                      value={
+                        bulkEditValues.featured === null
+                          ? ""
+                          : bulkEditValues.featured.toString()
+                      }
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="不變更" />
@@ -351,35 +388,41 @@ export default function BatchOperationsToolbar({
                   <div className="space-y-2">
                     <Label>排序順序</Label>
                     <Input
-                      type="number"
+                      onChange={(e) =>
+                        setBulkEditValues((prev) => ({
+                          ...prev,
+                          sortOrder: e.target.value,
+                        }))
+                      }
                       placeholder="輸入數字"
+                      type="number"
                       value={bulkEditValues.sortOrder}
-                      onChange={(e) => setBulkEditValues(prev => ({ ...prev, sortOrder: e.target.value }))}
                     />
                   </div>
                 </div>
 
                 <AlertDialogFooter>
                   <AlertDialogCancel>取消</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleBulkEdit} disabled={isProcessing}>
-                    {isProcessing ? '處理中...' : '更新'}
+                  <AlertDialogAction
+                    disabled={isProcessing}
+                    onClick={handleBulkEdit}
+                  >
+                    {isProcessing ? "處理中..." : "更新"}
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
 
-
-
             {/* Delete */}
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <Button
-                  variant="destructive"
-                  size="sm"
-                  disabled={isProcessing}
                   className="h-8"
+                  disabled={isProcessing}
+                  size="sm"
+                  variant="destructive"
                 >
-                  <Trash2 className="h-3.5 w-3.5 mr-1.5" />
+                  <Trash2 className="mr-1.5 h-3.5 w-3.5" />
                   刪除
                 </Button>
               </AlertDialogTrigger>
@@ -396,48 +439,48 @@ export default function BatchOperationsToolbar({
                 <AlertDialogFooter>
                   <AlertDialogCancel>取消</AlertDialogCancel>
                   <AlertDialogAction
-                    onClick={handleBulkDelete}
-                    disabled={isProcessing}
                     className="bg-red-600 hover:bg-red-700"
+                    disabled={isProcessing}
+                    onClick={handleBulkDelete}
                   >
-                    {isProcessing ? '刪除中...' : '確認刪除'}
+                    {isProcessing ? "刪除中..." : "確認刪除"}
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
 
-            <Separator orientation="vertical" className="h-6" />
+            <Separator className="h-6" orientation="vertical" />
           </>
         )}
 
         {/* Export */}
         <Button
-          variant="outline"
-          size="sm"
-          onClick={handleExportCSV}
-          disabled={isProcessing}
           className="h-8"
+          disabled={isProcessing}
+          onClick={handleExportCSV}
+          size="sm"
+          variant="outline"
         >
-          <Download className="h-3.5 w-3.5 mr-1.5" />
-          {hasSelection ? '匯出選取' : '匯出'}
+          <Download className="mr-1.5 h-3.5 w-3.5" />
+          {hasSelection ? "匯出選取" : "匯出"}
         </Button>
 
         {/* Import */}
         <div className="relative">
           <input
-            type="file"
             accept=".csv"
-            onChange={handleFileUpload}
-            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+            className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
             disabled={isProcessing}
+            onChange={handleFileUpload}
+            type="file"
           />
           <Button
-            variant="outline"
-            size="sm"
-            disabled={isProcessing}
             className="pointer-events-none h-8"
+            disabled={isProcessing}
+            size="sm"
+            variant="outline"
           >
-            <Upload className="h-3.5 w-3.5 mr-1.5" />
+            <Upload className="mr-1.5 h-3.5 w-3.5" />
             匯入
           </Button>
         </div>
@@ -457,17 +500,16 @@ export default function BatchOperationsToolbar({
             <CardDescription>
               {hasSelection
                 ? `已選取 ${selectedCount} 個產品`
-                : `總共 ${totalProducts} 個產品`
-              }
+                : `總共 ${totalProducts} 個產品`}
             </CardDescription>
           </div>
 
           {hasSelection && (
             <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => onSelectionChange([])}
               disabled={isProcessing}
+              onClick={() => onSelectionChange([])}
+              size="sm"
+              variant="ghost"
             >
               取消選取
             </Button>
@@ -478,18 +520,22 @@ export default function BatchOperationsToolbar({
       <CardContent className="space-y-4">
         {/* Selection Summary */}
         {hasSelection && (
-          <div className="flex flex-wrap gap-2 p-3 bg-blue-50 rounded-lg">
-            <div className="flex items-center gap-2 text-sm text-blue-700">
+          <div className="flex flex-wrap gap-2 rounded-lg bg-blue-50 p-3">
+            <div className="flex items-center gap-2 text-blue-700 text-sm">
               <CheckSquare className="h-4 w-4" />
               <span className="font-medium">已選取產品：</span>
             </div>
             {selectedProducts.slice(0, 3).map((product) => (
-              <Badge key={product.id} variant="secondary" className="bg-blue-100 text-blue-800">
+              <Badge
+                className="bg-blue-100 text-blue-800"
+                key={product.id}
+                variant="secondary"
+              >
                 {product.name}
               </Badge>
             ))}
             {selectedCount > 3 && (
-              <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+              <Badge className="bg-blue-100 text-blue-800" variant="secondary">
                 +{selectedCount - 3} 個
               </Badge>
             )}
@@ -501,14 +547,17 @@ export default function BatchOperationsToolbar({
         {/* Action Buttons */}
         <div className="flex flex-wrap gap-2">
           {/* Bulk Edit */}
-          <AlertDialog open={bulkEditDialogOpen} onOpenChange={setBulkEditDialogOpen}>
+          <AlertDialog
+            onOpenChange={setBulkEditDialogOpen}
+            open={bulkEditDialogOpen}
+          >
             <AlertDialogTrigger asChild>
               <Button
-                variant="outline"
-                size="sm"
                 disabled={!hasSelection || isProcessing}
+                size="sm"
+                variant="outline"
               >
-                <Edit className="h-4 w-4 mr-2" />
+                <Edit className="mr-2 h-4 w-4" />
                 批量編輯
               </Button>
             </AlertDialogTrigger>
@@ -525,8 +574,13 @@ export default function BatchOperationsToolbar({
                   <Label>分類</Label>
                   <Label>分類</Label>
                   <Select
+                    onValueChange={(value) =>
+                      setBulkEditValues((prev) => ({
+                        ...prev,
+                        category: value,
+                      }))
+                    }
                     value={bulkEditValues.category}
-                    onValueChange={(value) => setBulkEditValues(prev => ({ ...prev, category: value }))}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="選擇分類" />
@@ -545,11 +599,17 @@ export default function BatchOperationsToolbar({
                 <div className="space-y-2">
                   <Label>庫存狀態</Label>
                   <Select
-                    value={bulkEditValues.inStock === null ? '' : bulkEditValues.inStock.toString()}
-                    onValueChange={(value) => setBulkEditValues(prev => ({
-                      ...prev,
-                      inStock: value === '' ? null : value === 'true'
-                    }))}
+                    onValueChange={(value) =>
+                      setBulkEditValues((prev) => ({
+                        ...prev,
+                        inStock: value === "" ? null : value === "true",
+                      }))
+                    }
+                    value={
+                      bulkEditValues.inStock === null
+                        ? ""
+                        : bulkEditValues.inStock.toString()
+                    }
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="不變更" />
@@ -565,11 +625,17 @@ export default function BatchOperationsToolbar({
                 <div className="space-y-2">
                   <Label>精選產品</Label>
                   <Select
-                    value={bulkEditValues.featured === null ? '' : bulkEditValues.featured.toString()}
-                    onValueChange={(value) => setBulkEditValues(prev => ({
-                      ...prev,
-                      featured: value === '' ? null : value === 'true'
-                    }))}
+                    onValueChange={(value) =>
+                      setBulkEditValues((prev) => ({
+                        ...prev,
+                        featured: value === "" ? null : value === "true",
+                      }))
+                    }
+                    value={
+                      bulkEditValues.featured === null
+                        ? ""
+                        : bulkEditValues.featured.toString()
+                    }
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="不變更" />
@@ -585,34 +651,40 @@ export default function BatchOperationsToolbar({
                 <div className="space-y-2">
                   <Label>排序順序</Label>
                   <Input
-                    type="number"
+                    onChange={(e) =>
+                      setBulkEditValues((prev) => ({
+                        ...prev,
+                        sortOrder: e.target.value,
+                      }))
+                    }
                     placeholder="輸入數字"
+                    type="number"
                     value={bulkEditValues.sortOrder}
-                    onChange={(e) => setBulkEditValues(prev => ({ ...prev, sortOrder: e.target.value }))}
                   />
                 </div>
               </div>
 
               <AlertDialogFooter>
                 <AlertDialogCancel>取消</AlertDialogCancel>
-                <AlertDialogAction onClick={handleBulkEdit} disabled={isProcessing}>
-                  {isProcessing ? '處理中...' : '更新'}
+                <AlertDialogAction
+                  disabled={isProcessing}
+                  onClick={handleBulkEdit}
+                >
+                  {isProcessing ? "處理中..." : "更新"}
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
 
-
-
           {/* Delete */}
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button
-                variant="destructive"
-                size="sm"
                 disabled={!hasSelection || isProcessing}
+                size="sm"
+                variant="destructive"
               >
-                <Trash2 className="h-4 w-4 mr-2" />
+                <Trash2 className="mr-2 h-4 w-4" />
                 刪除
               </Button>
             </AlertDialogTrigger>
@@ -629,45 +701,45 @@ export default function BatchOperationsToolbar({
               <AlertDialogFooter>
                 <AlertDialogCancel>取消</AlertDialogCancel>
                 <AlertDialogAction
-                  onClick={handleBulkDelete}
-                  disabled={isProcessing}
                   className="bg-red-600 hover:bg-red-700"
+                  disabled={isProcessing}
+                  onClick={handleBulkDelete}
                 >
-                  {isProcessing ? '刪除中...' : '確認刪除'}
+                  {isProcessing ? "刪除中..." : "確認刪除"}
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
 
-          <Separator orientation="vertical" className="h-8" />
+          <Separator className="h-8" orientation="vertical" />
 
           {/* Export */}
           <Button
-            variant="outline"
-            size="sm"
-            onClick={handleExportCSV}
             disabled={isProcessing}
+            onClick={handleExportCSV}
+            size="sm"
+            variant="outline"
           >
-            <Download className="h-4 w-4 mr-2" />
-            {hasSelection ? '匯出選取' : '匯出全部'}
+            <Download className="mr-2 h-4 w-4" />
+            {hasSelection ? "匯出選取" : "匯出全部"}
           </Button>
 
           {/* Import */}
           <div className="relative">
             <input
-              type="file"
               accept=".csv"
-              onChange={handleFileUpload}
-              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+              className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
               disabled={isProcessing}
+              onChange={handleFileUpload}
+              type="file"
             />
             <Button
-              variant="outline"
-              size="sm"
-              disabled={isProcessing}
               className="pointer-events-none"
+              disabled={isProcessing}
+              size="sm"
+              variant="outline"
             >
-              <Upload className="h-4 w-4 mr-2" />
+              <Upload className="mr-2 h-4 w-4" />
               匯入 CSV
             </Button>
           </div>
@@ -675,7 +747,7 @@ export default function BatchOperationsToolbar({
 
         {/* Warnings */}
         {hasSelection && (
-          <div className="text-sm text-muted-foreground">
+          <div className="text-muted-foreground text-sm">
             💡 提示：批量操作會影響所有選取的產品，請謹慎使用。
           </div>
         )}

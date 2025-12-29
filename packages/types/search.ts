@@ -1,4 +1,4 @@
-export type SearchResultType = 'product' | 'post' | 'page';
+export type SearchResultType = "product" | "post" | "page";
 
 export interface BaseSearchResult {
   id: string;
@@ -14,7 +14,7 @@ export interface BaseSearchResult {
 }
 
 export interface ProductSearchResult extends BaseSearchResult {
-  type: 'product';
+  type: "product";
   category: string;
   priceRange?: {
     min: number;
@@ -24,16 +24,19 @@ export interface ProductSearchResult extends BaseSearchResult {
 }
 
 export interface PostSearchResult extends BaseSearchResult {
-  type: 'post';
+  type: "post";
   publishedAt?: string | null;
   readingTime?: number | null;
 }
 
 export interface PageSearchResult extends BaseSearchResult {
-  type: 'page';
+  type: "page";
 }
 
-export type UnifiedSearchResult = ProductSearchResult | PostSearchResult | PageSearchResult;
+export type UnifiedSearchResult =
+  | ProductSearchResult
+  | PostSearchResult
+  | PageSearchResult;
 
 export interface SearchResultSections {
   products: ProductSearchResult[];

@@ -5,26 +5,25 @@
  * Run this in CI or pre-commit hook
  */
 
-import { readdirSync, existsSync } from 'fs';
-import { join } from 'path';
-import { fileURLToPath } from 'url';
-import { dirname } from 'path';
+import { readdirSync } from "fs";
+import { dirname, join } from "path";
+import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-const MIGRATIONS_DIR = join(__dirname, 'migrations');
-const META_DIR = join(MIGRATIONS_DIR, 'meta');
+const MIGRATIONS_DIR = join(__dirname, "migrations");
+const META_DIR = join(MIGRATIONS_DIR, "meta");
 
 function getMigrationFiles() {
   return readdirSync(MIGRATIONS_DIR)
-    .filter((file) => file.endsWith('.sql'))
+    .filter((file) => file.endsWith(".sql"))
     .sort();
 }
 
 function getSnapshotFiles() {
   return readdirSync(META_DIR)
-    .filter((file) => file.endsWith('_snapshot.json'))
+    .filter((file) => file.endsWith("_snapshot.json"))
     .sort();
 }
 
@@ -34,7 +33,7 @@ function extractMigrationNumber(filename) {
 }
 
 function validateMigrations() {
-  console.log('🔍 Validating migration integrity...\n');
+  console.log("🔍 Validating migration integrity...\n");
 
   const migrationFiles = getMigrationFiles();
   const snapshotFiles = getSnapshotFiles();
@@ -68,35 +67,48 @@ function validateMigrations() {
   }
 
   if (hasErrors) {
-    console.log('\n⚠️  Migration Integrity Issues Detected!\n');
-  console.log('Missing snapshots for migrations:', missingSnapshots.join(', '));
-  console.log('\n📝 Known Issue:');
-  console.log('   Migrations 0003-0005 and 0007 were created manually before Drizzle Kit snapshots were enforced.');
-  console.log('   This is acceptable because:');
-  console.log('   - Migration 0006 snapshot includes all prior schema changes');
-  console.log('   - Migration 0008 snapshot re-syncs the chain after 0007');
-  console.log('   - Future migrations will diff correctly from the latest snapshot\n');
-  console.log('✅ Solution: Always use `pnpm db:generate` for new migrations\n');
+    console.log("\n⚠️  Migration Integrity Issues Detected!\n");
+    console.log(
+      "Missing snapshots for migrations:",
+      missingSnapshots.join(", ")
+    );
+    console.log("\n📝 Known Issue:");
+    console.log(
+      "   Migrations 0003-0005 and 0007 were created manually before Drizzle Kit snapshots were enforced."
+    );
+    console.log("   This is acceptable because:");
+    console.log(
+      "   - Migration 0006 snapshot includes all prior schema changes"
+    );
+    console.log("   - Migration 0008 snapshot re-syncs the chain after 0007");
+    console.log(
+      "   - Future migrations will diff correctly from the latest snapshot\n"
+    );
+    console.log(
+      "✅ Solution: Always use `pnpm db:generate` for new migrations\n"
+    );
 
-    const allowedMissing = new Set(['0003', '0004', '0005', '0007']);
-    const problematicMissing = missingSnapshots.filter((num) => !allowedMissing.has(num));
+    const allowedMissing = new Set(["0003", "0004", "0005", "0007"]);
+    const problematicMissing = missingSnapshots.filter(
+      (num) => !allowedMissing.has(num)
+    );
     if (problematicMissing.length > 0) {
-      console.error('❌ CRITICAL: Missing snapshots after migration 0006!');
-      console.error('   This will break future migration generation.');
-      console.error('   Missing:', problematicMissing.join(', '));
+      console.error("❌ CRITICAL: Missing snapshots after migration 0006!");
+      console.error("   This will break future migration generation.");
+      console.error("   Missing:", problematicMissing.join(", "));
       process.exit(1);
     }
   } else {
-    console.log('\n✅ All migrations have corresponding snapshots!');
+    console.log("\n✅ All migrations have corresponding snapshots!");
   }
 
-  console.log('\n✨ Migration integrity check complete\n');
+  console.log("\n✨ Migration integrity check complete\n");
 }
 
 // Run validation
 try {
   validateMigrations();
 } catch (error) {
-  console.error('❌ Validation failed:', error.message);
+  console.error("❌ Validation failed:", error.message);
   process.exit(1);
 }

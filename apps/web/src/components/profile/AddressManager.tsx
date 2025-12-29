@@ -5,7 +5,6 @@
 
 import type {
   AddressCreateRequest,
-  AddressUpdateRequest,
   CustomerAddress,
 } from "@blackliving/types/profile";
 import {
@@ -44,13 +43,13 @@ import { useState } from "react";
 import { useAddresses } from "../../hooks/use-addresses";
 import { validateAddress } from "../../lib/validation";
 
-interface AddressManagerProps {
+type AddressManagerProps = {
   className?: string;
   onSuccess?: (message: string) => void;
   onError?: (error: string) => void;
-}
+};
 
-interface AddressFormData {
+type AddressFormData = {
   type: "shipping" | "billing" | "both";
   label: string;
   recipientName: string;
@@ -65,7 +64,7 @@ interface AddressFormData {
   deliveryInstructions: string;
   accessCode: string;
   isDefault: boolean;
-}
+};
 
 const initialFormData: AddressFormData = {
   type: "shipping",
@@ -109,6 +108,157 @@ const taiwanCities = [
   "連江縣",
 ];
 
+// Helper function to get address type label
+function getAddressTypeLabel(type: "shipping" | "billing" | "both"): string {
+  if (type === "shipping") {
+    return "收貨";
+  }
+  if (type === "billing") {
+    return "帳單";
+  }
+  return "收貨+帳單";
+}
+
+// Helper function to format full address
+function formatFullAddress(address: CustomerAddress): string {
+  const parts = [
+    address.city,
+    address.district,
+    address.street,
+    address.building ? ` ${address.building}` : "",
+    address.floor ? ` ${address.floor}` : "",
+    address.room ? ` ${address.room}` : "",
+  ];
+  return parts.filter(Boolean).join("");
+}
+
+// Helper function to prepare address data from form
+function prepareAddressData(formData: AddressFormData): AddressCreateRequest {
+  return {
+    type: formData.type,
+    label: formData.label || undefined,
+    recipientName: formData.recipientName,
+    recipientPhone: formData.recipientPhone,
+    city: formData.city,
+    district: formData.district,
+    postalCode: formData.postalCode,
+    street: formData.street,
+    building: formData.building || undefined,
+    floor: formData.floor || undefined,
+    room: formData.room || undefined,
+    deliveryInstructions: formData.deliveryInstructions || undefined,
+    accessCode: formData.accessCode || undefined,
+    isDefault: formData.isDefault,
+  };
+}
+
+// Helper function to convert address to form data
+function addressToFormData(address: CustomerAddress): AddressFormData {
+  return {
+    type: address.type,
+    label: address.label || "",
+    recipientName: address.recipientName,
+    recipientPhone: address.recipientPhone,
+    city: address.city,
+    district: address.district,
+    postalCode: address.postalCode,
+    street: address.street,
+    building: address.building || "",
+    floor: address.floor || "",
+    room: address.room || "",
+    deliveryInstructions: address.deliveryInstructions || "",
+    accessCode: address.accessCode || "",
+    isDefault: address.isDefault,
+  };
+}
+
+// Address Card Component
+type AddressCardProps = {
+  address: CustomerAddress;
+  onEdit: (address: CustomerAddress) => void;
+  onDelete: (addressId: string) => void;
+  onSetDefault: (addressId: string) => void;
+};
+
+function AddressCard({
+  address,
+  onEdit,
+  onDelete,
+  onSetDefault,
+}: AddressCardProps) {
+  return (
+    <Card className="relative">
+      <CardContent className="pt-4">
+        <div className="flex items-start justify-between">
+          <div className="flex-1">
+            <div className="mb-2 flex items-center gap-2">
+              {address.label ? (
+                <Badge variant="outline">{address.label}</Badge>
+              ) : null}
+              <Badge
+                variant={address.type === "both" ? "default" : "secondary"}
+              >
+                {getAddressTypeLabel(address.type)}
+              </Badge>
+              {address.isDefault ? (
+                <Badge variant="default">
+                  <Star className="mr-1 h-3 w-3" />
+                  預設
+                </Badge>
+              ) : null}
+            </div>
+
+            <p className="font-medium">{address.recipientName}</p>
+            <p className="text-gray-600 text-sm">{address.recipientPhone}</p>
+            <p className="mt-1 text-gray-700 text-sm">
+              {formatFullAddress(address)}
+            </p>
+
+            {address.deliveryInstructions ? (
+              <p className="mt-1 text-gray-500 text-xs">
+                配送備註：{address.deliveryInstructions}
+              </p>
+            ) : null}
+          </div>
+
+          <div className="flex items-center space-x-2">
+            {!address.isDefault && (
+              <Button
+                onClick={() => onSetDefault(address.id)}
+                size="sm"
+                title="設為預設"
+                variant="ghost"
+              >
+                <StarOff className="h-4 w-4" />
+              </Button>
+            )}
+
+            <Button
+              onClick={() => onEdit(address)}
+              size="sm"
+              title="編輯"
+              variant="ghost"
+            >
+              <Edit2 className="h-4 w-4" />
+            </Button>
+
+            <Button
+              className="text-red-600 hover:text-red-700"
+              onClick={() => onDelete(address.id)}
+              size="sm"
+              title="刪除"
+              variant="ghost"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Complex form management with multiple handlers
 export function AddressManager({
   className,
   onSuccess,
@@ -119,12 +269,10 @@ export function AddressManager({
     loading,
     error,
     isEmpty,
-    defaultAddress,
     createAddress,
     updateAddress,
     deleteAddress,
     setDefaultAddress,
-    refresh,
   } = useAddresses();
 
   const [showModal, setShowModal] = useState(false);
@@ -134,6 +282,7 @@ export function AddressManager({
   const [formData, setFormData] = useState<AddressFormData>(initialFormData);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
 
   // Handle form input changes
   const handleInputChange = (
@@ -159,22 +308,7 @@ export function AddressManager({
   // Open modal for editing address
   const handleEdit = (address: CustomerAddress) => {
     setEditingAddress(address);
-    setFormData({
-      type: address.type,
-      label: address.label || "",
-      recipientName: address.recipientName,
-      recipientPhone: address.recipientPhone,
-      city: address.city,
-      district: address.district,
-      postalCode: address.postalCode,
-      street: address.street,
-      building: address.building || "",
-      floor: address.floor || "",
-      room: address.room || "",
-      deliveryInstructions: address.deliveryInstructions || "",
-      accessCode: address.accessCode || "",
-      isDefault: address.isDefault,
-    });
+    setFormData(addressToFormData(address));
     setFormErrors({});
     setShowModal(true);
   };
@@ -201,24 +335,9 @@ export function AddressManager({
     setIsSubmitting(true);
 
     try {
-      const addressData: AddressCreateRequest | AddressUpdateRequest = {
-        type: formData.type,
-        label: formData.label || undefined,
-        recipientName: formData.recipientName,
-        recipientPhone: formData.recipientPhone,
-        city: formData.city,
-        district: formData.district,
-        postalCode: formData.postalCode,
-        street: formData.street,
-        building: formData.building || undefined,
-        floor: formData.floor || undefined,
-        room: formData.room || undefined,
-        deliveryInstructions: formData.deliveryInstructions || undefined,
-        accessCode: formData.accessCode || undefined,
-        isDefault: formData.isDefault,
-      };
+      const addressData = prepareAddressData(formData);
 
-      let result;
+      let result: { success: boolean; message?: string; error?: string };
       if (editingAddress) {
         result = await updateAddress(editingAddress.id, addressData);
       } else {
@@ -240,13 +359,18 @@ export function AddressManager({
   };
 
   // Handle address deletion
-  const handleDelete = async (addressId: string) => {
-    if (!confirm("確定要刪除這個地址嗎？")) {
+  const handleDelete = (addressId: string) => {
+    setDeleteConfirm(addressId);
+  };
+
+  // Confirm and execute deletion
+  const confirmDelete = async () => {
+    if (!deleteConfirm) {
       return;
     }
 
     try {
-      const result = await deleteAddress(addressId);
+      const result = await deleteAddress(deleteConfirm);
       if (result.success) {
         onSuccess?.(result.message || "地址刪除成功！");
       } else {
@@ -255,6 +379,8 @@ export function AddressManager({
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "刪除失敗";
       onError?.(errorMessage);
+    } finally {
+      setDeleteConfirm(null);
     }
   };
 
@@ -313,7 +439,10 @@ export function AddressManager({
                 <Label>地址類型 *</Label>
                 <Select
                   onValueChange={(value) =>
-                    handleInputChange("type", value as any)
+                    handleInputChange(
+                      "type",
+                      value as "shipping" | "billing" | "both"
+                    )
                   }
                   value={formData.type}
                 >
@@ -352,11 +481,11 @@ export function AddressManager({
                     required
                     value={formData.recipientName}
                   />
-                  {formErrors.recipientName && (
+                  {formErrors.recipientName ? (
                     <p className="text-red-500 text-sm">
                       {formErrors.recipientName}
                     </p>
-                  )}
+                  ) : null}
                 </div>
 
                 <div className="space-y-2">
@@ -373,11 +502,11 @@ export function AddressManager({
                     required
                     value={formData.recipientPhone}
                   />
-                  {formErrors.recipientPhone && (
+                  {formErrors.recipientPhone ? (
                     <p className="text-red-500 text-sm">
                       {formErrors.recipientPhone}
                     </p>
-                  )}
+                  ) : null}
                 </div>
               </div>
 
@@ -402,9 +531,9 @@ export function AddressManager({
                       ))}
                     </SelectContent>
                   </Select>
-                  {formErrors.city && (
+                  {formErrors.city ? (
                     <p className="text-red-500 text-sm">{formErrors.city}</p>
-                  )}
+                  ) : null}
                 </div>
 
                 <div className="space-y-2">
@@ -419,11 +548,11 @@ export function AddressManager({
                     required
                     value={formData.district}
                   />
-                  {formErrors.district && (
+                  {formErrors.district ? (
                     <p className="text-red-500 text-sm">
                       {formErrors.district}
                     </p>
-                  )}
+                  ) : null}
                 </div>
 
                 <div className="space-y-2">
@@ -438,11 +567,11 @@ export function AddressManager({
                     required
                     value={formData.postalCode}
                   />
-                  {formErrors.postalCode && (
+                  {formErrors.postalCode ? (
                     <p className="text-red-500 text-sm">
                       {formErrors.postalCode}
                     </p>
-                  )}
+                  ) : null}
                 </div>
               </div>
 
@@ -457,9 +586,9 @@ export function AddressManager({
                   required
                   value={formData.street}
                 />
-                {formErrors.street && (
+                {formErrors.street ? (
                   <p className="text-red-500 text-sm">{formErrors.street}</p>
-                )}
+                ) : null}
               </div>
 
               {/* Building Details */}
@@ -564,11 +693,11 @@ export function AddressManager({
       </CardHeader>
 
       <CardContent>
-        {error && (
+        {error ? (
           <Alert className="mb-4" variant="destructive">
             <AlertDescription>{error}</AlertDescription>
           </Alert>
-        )}
+        ) : null}
 
         {isEmpty ? (
           <div className="py-8 text-center">
@@ -581,91 +710,44 @@ export function AddressManager({
         ) : (
           <div className="space-y-4">
             {addresses.map((address) => (
-              <Card className="relative" key={address.id}>
-                <CardContent className="pt-4">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="mb-2 flex items-center gap-2">
-                        {address.label && (
-                          <Badge variant="outline">{address.label}</Badge>
-                        )}
-                        <Badge
-                          variant={
-                            address.type === "both" ? "default" : "secondary"
-                          }
-                        >
-                          {address.type === "shipping"
-                            ? "收貨"
-                            : address.type === "billing"
-                              ? "帳單"
-                              : "收貨+帳單"}
-                        </Badge>
-                        {address.isDefault && (
-                          <Badge variant="default">
-                            <Star className="mr-1 h-3 w-3" />
-                            預設
-                          </Badge>
-                        )}
-                      </div>
-
-                      <p className="font-medium">{address.recipientName}</p>
-                      <p className="text-gray-600 text-sm">
-                        {address.recipientPhone}
-                      </p>
-                      <p className="mt-1 text-gray-700 text-sm">
-                        {address.city}
-                        {address.district}
-                        {address.street}
-                        {address.building && ` ${address.building}`}
-                        {address.floor && ` ${address.floor}`}
-                        {address.room && ` ${address.room}`}
-                      </p>
-
-                      {address.deliveryInstructions && (
-                        <p className="mt-1 text-gray-500 text-xs">
-                          配送備註：{address.deliveryInstructions}
-                        </p>
-                      )}
-                    </div>
-
-                    <div className="flex items-center space-x-2">
-                      {!address.isDefault && (
-                        <Button
-                          onClick={() => handleSetDefault(address.id)}
-                          size="sm"
-                          title="設為預設"
-                          variant="ghost"
-                        >
-                          <StarOff className="h-4 w-4" />
-                        </Button>
-                      )}
-
-                      <Button
-                        onClick={() => handleEdit(address)}
-                        size="sm"
-                        title="編輯"
-                        variant="ghost"
-                      >
-                        <Edit2 className="h-4 w-4" />
-                      </Button>
-
-                      <Button
-                        className="text-red-600 hover:text-red-700"
-                        onClick={() => handleDelete(address.id)}
-                        size="sm"
-                        title="刪除"
-                        variant="ghost"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+              <AddressCard
+                address={address}
+                key={address.id}
+                onDelete={handleDelete}
+                onEdit={handleEdit}
+                onSetDefault={handleSetDefault}
+              />
             ))}
           </div>
         )}
       </CardContent>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog
+        onOpenChange={(open) => !open && setDeleteConfirm(null)}
+        open={!!deleteConfirm}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>確認刪除地址</DialogTitle>
+          </DialogHeader>
+          <p className="text-gray-600">
+            確定要刪除這個地址嗎？此操作無法復原。
+          </p>
+          <div className="flex justify-end space-x-2 pt-4">
+            <Button
+              onClick={() => setDeleteConfirm(null)}
+              type="button"
+              variant="outline"
+            >
+              取消
+            </Button>
+            <Button onClick={confirmDelete} type="button" variant="destructive">
+              刪除
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }

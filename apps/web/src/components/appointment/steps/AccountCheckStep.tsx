@@ -1,6 +1,7 @@
 import { Button } from "@blackliving/ui";
 import type React from "react";
 import { useState } from "react";
+import { getApiUrl } from "../../../lib/api";
 import { useAppointmentStore } from "../../../stores/appointmentStore";
 
 export default function AccountCheckStep() {
@@ -20,7 +21,7 @@ export default function AccountCheckStep() {
 
     try {
       // API call to check if email exists
-      const response = await fetch("/api/user/check-email", {
+      const response = await fetch(getApiUrl("/api/user/check-email"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),

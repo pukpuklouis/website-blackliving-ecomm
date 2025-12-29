@@ -1,6 +1,7 @@
 import type React from "react";
 import { useEffect, useState } from "react";
 import { z } from "zod";
+import { getApiUrl } from "../../../lib/api";
 import { useAppointmentStore } from "../../../stores/appointmentStore";
 import AuthModal from "../../auth/AuthModal";
 
@@ -95,7 +96,7 @@ export default function PersonalInfoStep() {
 
       setIsCheckingEmail(true);
       try {
-        const response = await fetch("/api/user/check-email", {
+        const response = await fetch(getApiUrl("/api/user/check-email"), {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email: formData.email }),

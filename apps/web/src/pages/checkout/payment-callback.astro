@@ -1,0 +1,156 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+
+const title = "付款結果 | Black Living";
+const description = "查看您的付款結果";
+
+// Get query params from URL
+// Handle both simplified format (?success=true) and GOMYPAY's raw format (?result=1)
+const url = new URL(Astro.request.url);
+const gomypayResult = url.searchParams.get("result");
+const simplifiedSuccess = url.searchParams.get("success");
+
+// GOMYPAY result=1 means success, result=0 or other means failure
+const success = simplifiedSuccess === "true" || gomypayResult === "1";
+
+// Handle both param formats for order number
+const orderNo =
+  url.searchParams.get("orderNo") || url.searchParams.get("e_orderno") || "";
+
+// Handle both param formats for authorization code
+const avCode =
+  url.searchParams.get("avCode") || url.searchParams.get("AvCode") || "";
+
+// Handle error messages
+const retMsg = url.searchParams.get("ret_msg");
+const error =
+  url.searchParams.get("error") || (retMsg ? decodeURIComponent(retMsg) : "");
+---
+
+<BaseLayout {title} {description}>
+  <div
+    class="bg-primary-foreground min-h-screen pt-20 pb-20 px-4 sm:px-6 lg:px-8 transition-colors duration-300"
+  >
+    <div
+      class="mx-auto w-full max-w-lg rounded-xl border border-border-light bg-white p-8 text-center shadow-card dark:border-zinc-700 dark:bg-zinc-800"
+    >
+      {
+        success ? (
+          <>
+            <div class="mb-6 flex justify-center">
+              <div class="flex h-20 w-20 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30">
+                <svg
+                  class="h-10 w-10 text-green-600 dark:text-green-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>
+              </div>
+            </div>
+            <h1 class="mb-2 font-bold text-2xl text-gray-900 dark:text-white">
+              付款成功！
+            </h1>
+            <p class="mb-6 text-gray-500 dark:text-gray-400">
+              感謝您的購買，您的訂單已確認付款。
+            </p>
+            <div class="mx-auto mb-8 max-w-sm space-y-2 rounded-lg bg-gray-50 p-4 text-left dark:bg-zinc-700/50">
+              <div class="flex justify-between">
+                <span class="text-gray-600 dark:text-gray-300">訂單編號</span>
+                <span class="font-mono font-medium text-gray-900 dark:text-white">
+                  {orderNo}
+                </span>
+              </div>
+              {avCode && (
+                <div class="flex justify-between">
+                  <span class="text-gray-600 dark:text-gray-300">授權碼</span>
+                  <span class="font-mono text-gray-900 dark:text-white">
+                    {avCode}
+                  </span>
+                </div>
+              )}
+            </div>
+          </>
+        ) : (
+          <>
+            <div class="mb-6 flex justify-center">
+              <div class="flex h-20 w-20 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30">
+                <svg
+                  class="h-10 w-10 text-red-600 dark:text-red-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </div>
+            </div>
+            <h1 class="mb-2 font-bold text-2xl text-gray-900 dark:text-white">
+              付款未完成
+            </h1>
+            <p class="mb-6 text-gray-500 dark:text-gray-400">
+              {error || "付款過程中發生問題，請重新嘗試或聯繫客服。"}
+            </p>
+            {orderNo && (
+              <div class="mx-auto mb-8 max-w-sm rounded-lg bg-gray-50 p-4 text-left dark:bg-zinc-700/50">
+                <div class="flex justify-between">
+                  <span class="text-gray-600 dark:text-gray-300">訂單編號</span>
+                  <span class="font-mono font-medium text-gray-900 dark:text-white">
+                    {orderNo}
+                  </span>
+                </div>
+              </div>
+            )}
+          </>
+        )
+      }
+
+      <div class="flex flex-col justify-center gap-4 sm:flex-row">
+        {
+          success ? (
+            <>
+              <a
+                class="rounded-lg bg-black px-8 py-3 font-semibold text-white shadow transition-colors hover:bg-gray-800"
+                href="/account/orders"
+              >
+                查看我的訂單
+              </a>
+              <a
+                class="rounded-lg border border-gray-200 bg-white px-8 py-3 font-semibold text-gray-700 transition-colors hover:bg-gray-50 dark:border-zinc-600 dark:bg-zinc-700 dark:text-gray-200 dark:hover:bg-zinc-600"
+                href="/"
+              >
+                返回首頁
+              </a>
+            </>
+          ) : (
+            <>
+              <a
+                class="rounded-lg bg-black px-8 py-3 font-semibold text-white shadow transition-colors hover:bg-gray-800"
+                href="/checkout"
+              >
+                重新付款
+              </a>
+              <a
+                class="rounded-lg border border-gray-200 bg-white px-8 py-3 font-semibold text-gray-700 transition-colors hover:bg-gray-50 dark:border-zinc-600 dark:bg-zinc-700 dark:text-gray-200 dark:hover:bg-zinc-600"
+                href="/contact"
+              >
+                聯繫客服
+              </a>
+            </>
+          )
+        }
+      </div>
+    </div>
+  </div>
+</BaseLayout>

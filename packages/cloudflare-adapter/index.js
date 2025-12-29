@@ -1,25 +1,29 @@
-import { createRequestHandler } from 'react-router';
+import { createRequestHandler } from "react-router";
 
 function isPagesContext(arg) {
   return (
-    typeof arg === 'object' &&
+    typeof arg === "object" &&
     arg !== null &&
-    typeof arg.request === 'object' &&
+    typeof arg.request === "object" &&
     arg.request instanceof Request &&
-    typeof arg.waitUntil === 'function'
+    typeof arg.waitUntil === "function"
   );
 }
 
 function createAssetNext(env) {
-  if (env && typeof env.ASSETS?.fetch === 'function') {
+  if (env && typeof env.ASSETS?.fetch === "function") {
     return (request) => env.ASSETS.fetch(request);
   }
   return null;
 }
 
-export function createPagesFunctionHandler({ build, getLoadContext, mode } = {}) {
+export function createPagesFunctionHandler({
+  build,
+  getLoadContext,
+  mode,
+} = {}) {
   if (!build) {
-    throw new TypeError('createPagesFunctionHandler requires a server build');
+    throw new TypeError("createPagesFunctionHandler requires a server build");
   }
 
   const handleRequest = createRequestHandler(build, mode);
@@ -36,7 +40,7 @@ export function createPagesFunctionHandler({ build, getLoadContext, mode } = {})
       return response;
     } catch (error) {
       console.error(error);
-      return new Response('Internal Server Error', { status: 500 });
+      return new Response("Internal Server Error", { status: 500 });
     }
   }
 
@@ -51,7 +55,9 @@ export function createPagesFunctionHandler({ build, getLoadContext, mode } = {})
             params: context.params ?? {},
           })
         : undefined;
-      const next = context.next ? () => context.next() : createAssetNext(context.env);
+      const next = context.next
+        ? () => context.next()
+        : createAssetNext(context.env);
       return handle(context.request, loadContext, next);
     }
 
@@ -59,7 +65,7 @@ export function createPagesFunctionHandler({ build, getLoadContext, mode } = {})
     const env = arg2 ?? {};
     const executionCtx = arg3 ?? {};
     const waitUntil =
-      typeof executionCtx.waitUntil === 'function'
+      typeof executionCtx.waitUntil === "function"
         ? executionCtx.waitUntil.bind(executionCtx)
         : () => {};
     const syntheticContext = {

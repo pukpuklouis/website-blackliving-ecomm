@@ -15,13 +15,12 @@ import {
 } from "@blackliving/ui";
 import { useEffect, useState } from "react";
 import { AddressManager } from "../profile/AddressManager";
-import MyAppointments from "../profile/MyAppointments";
 import { PasswordModal } from "../profile/PasswordModal";
 import { ProfileForm } from "../profile/ProfileForm";
 
-interface ProfileTabsProps {
+type ProfileTabsProps = {
   className?: string;
-}
+};
 
 function ProfileTabs({ className }: ProfileTabsProps) {
   const [mounted, setMounted] = useState(false);
@@ -53,28 +52,22 @@ function ProfileTabs({ className }: ProfileTabsProps) {
   return (
     <div className={`space-y-6 ${className || ""}`}>
       {/* Global Messages */}
-      {errorMessage && (
+      {errorMessage ? (
         <Alert variant="destructive">
           <AlertDescription>{errorMessage}</AlertDescription>
         </Alert>
-      )}
+      ) : null}
 
       <Tabs className="space-y-6" defaultValue="profile">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="profile">基本資料</TabsTrigger>
-          <TabsTrigger value="appointments">我的預約</TabsTrigger>
           <TabsTrigger value="addresses">地址管理</TabsTrigger>
-          <TabsTrigger value="analytics">購買分析</TabsTrigger>
           <TabsTrigger value="payment">付款方式</TabsTrigger>
           <TabsTrigger value="security">安全設定</TabsTrigger>
         </TabsList>
 
         <TabsContent value="profile">
           <ProfileForm onError={handleError} />
-        </TabsContent>
-
-        <TabsContent value="appointments">
-          <MyAppointments />
         </TabsContent>
 
         <TabsContent value="addresses">
@@ -97,6 +90,7 @@ function ProfileTabs({ className }: ProfileTabsProps) {
                   <div className="flex items-center space-x-4">
                     <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-green-500">
                       <svg
+                        aria-hidden="true"
                         className="h-6 w-6 text-white"
                         fill="currentColor"
                         viewBox="0 0 24 24"
@@ -123,6 +117,7 @@ function ProfileTabs({ className }: ProfileTabsProps) {
                       target="_blank"
                     >
                       <svg
+                        aria-hidden="true"
                         className="mr-2 h-4 w-4"
                         fill="currentColor"
                         viewBox="0 0 24 24"
@@ -136,6 +131,7 @@ function ProfileTabs({ className }: ProfileTabsProps) {
                 <div className="mt-4 grid grid-cols-1 gap-4 text-sm md:grid-cols-3">
                   <div className="flex items-center text-green-700">
                     <svg
+                      aria-hidden="true"
                       className="mr-2 h-4 w-4"
                       fill="none"
                       stroke="currentColor"
@@ -152,6 +148,7 @@ function ProfileTabs({ className }: ProfileTabsProps) {
                   </div>
                   <div className="flex items-center text-green-700">
                     <svg
+                      aria-hidden="true"
                       className="mr-2 h-4 w-4"
                       fill="none"
                       stroke="currentColor"
@@ -168,6 +165,7 @@ function ProfileTabs({ className }: ProfileTabsProps) {
                   </div>
                   <div className="flex items-center text-green-700">
                     <svg
+                      aria-hidden="true"
                       className="mr-2 h-4 w-4"
                       fill="none"
                       stroke="currentColor"
@@ -192,6 +190,7 @@ function ProfileTabs({ className }: ProfileTabsProps) {
                   <div className="flex items-center space-x-3 rounded-lg border p-4">
                     <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100">
                       <svg
+                        aria-hidden="true"
                         className="h-5 w-5 text-blue-600"
                         fill="none"
                         stroke="currentColor"
@@ -216,6 +215,7 @@ function ProfileTabs({ className }: ProfileTabsProps) {
                   <div className="flex items-center space-x-3 rounded-lg border p-4">
                     <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-100">
                       <svg
+                        aria-hidden="true"
                         className="h-5 w-5 text-green-600"
                         fill="none"
                         stroke="currentColor"
@@ -240,6 +240,7 @@ function ProfileTabs({ className }: ProfileTabsProps) {
                   <div className="flex items-center space-x-3 rounded-lg border p-4">
                     <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-orange-100">
                       <svg
+                        aria-hidden="true"
                         className="h-5 w-5 text-orange-600"
                         fill="none"
                         stroke="currentColor"
@@ -264,6 +265,7 @@ function ProfileTabs({ className }: ProfileTabsProps) {
                   <div className="flex items-center space-x-3 rounded-lg border p-4">
                     <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-100">
                       <svg
+                        aria-hidden="true"
                         className="h-5 w-5 text-purple-600"
                         fill="none"
                         stroke="currentColor"
@@ -292,6 +294,7 @@ function ProfileTabs({ className }: ProfileTabsProps) {
                 <div className="flex items-start space-x-3">
                   <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-amber-500">
                     <svg
+                      aria-hidden="true"
                       className="h-4 w-4 text-white"
                       fill="none"
                       stroke="currentColor"
@@ -346,7 +349,11 @@ function ProfileTabs({ className }: ProfileTabsProps) {
                 <div className="flex items-center justify-between rounded-lg border p-4">
                   <div className="flex items-center space-x-3">
                     <div className="flex h-8 w-8 items-center justify-center">
-                      <svg className="h-6 w-6" viewBox="0 0 24 24">
+                      <svg
+                        aria-hidden="true"
+                        className="h-6 w-6"
+                        viewBox="0 0 24 24"
+                      >
                         <path
                           d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
                           fill="#4285F4"
@@ -378,6 +385,7 @@ function ProfileTabs({ className }: ProfileTabsProps) {
                       variant="secondary"
                     >
                       <svg
+                        aria-hidden="true"
                         className="mr-1 h-3 w-3"
                         fill="currentColor"
                         viewBox="0 0 24 24"

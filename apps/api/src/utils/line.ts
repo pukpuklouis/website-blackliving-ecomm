@@ -1,4 +1,4 @@
-import { createDB } from "@blackliving/db";
+import type { createDB } from "@blackliving/db";
 import { settings } from "@blackliving/db/schema";
 import { eq } from "drizzle-orm";
 import { z } from "zod";

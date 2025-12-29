@@ -1,29 +1,35 @@
-import { Hono } from 'hono';
-import { zValidator } from '@hono/zod-validator';
-import { z } from 'zod';
-import { and, desc, eq, like, or } from 'drizzle-orm';
-import { posts, products, postCategories } from '@blackliving/db/schema';
-import type { UnifiedSearchResponse, SearchResultSections } from '@blackliving/types/search';
+import { postCategories, posts, products } from "@blackliving/db/schema";
+import type {
+  SearchResultSections,
+  UnifiedSearchResponse,
+} from "@blackliving/types/search";
+import { zValidator } from "@hono/zod-validator";
+import { and, desc, eq, like, or } from "drizzle-orm";
+import { Hono } from "hono";
+import { z } from "zod";
+import type { CacheManager } from "../lib/cache";
+import { SearchCache } from "../lib/search-cache";
 
-import { SearchCache } from '../lib/search-cache';
-import type { CacheManager } from '../lib/cache';
-
-const typeEnum = z.enum(['products', 'posts', 'pages']);
+const typeEnum = z.enum(["products", "posts", "pages"]);
 const categorySlugSchema = z.string().regex(/^[a-z0-9-]+$/);
 
 const searchQuerySchema = z.object({
-  q: z.string().trim().min(1, 'Search query is required').max(120, 'Search query is too long'),
+  q: z
+    .string()
+    .trim()
+    .min(1, "Search query is required")
+    .max(120, "Search query is too long"),
   types: z.preprocess((value) => {
-    if (typeof value === 'string') {
+    if (typeof value === "string") {
       return value
-        .split(',')
+        .split(",")
         .map((entry) => entry.trim())
         .filter(Boolean);
     }
     if (Array.isArray(value)) {
       return value.map(String);
     }
-    return undefined;
+    return;
   }, z.array(typeEnum).optional()),
   category: categorySlugSchema.optional(),
   limit: z.coerce.number().min(1).max(20).default(5),
@@ -32,46 +38,47 @@ const searchQuerySchema = z.object({
 
 const STATIC_PAGES = [
   {
-    title: 'About Black Living',
-    slug: 'about',
-    description: '探索 Black Living 的品牌故事與 Simmons Black Label 床墊理念。',
-    href: '/about',
+    title: "About Black Living",
+    slug: "about",
+    description:
+      "探索 Black Living 的品牌故事與 Simmons Black Label 床墊理念。",
+    href: "/about",
   },
   {
-    title: 'Simmons Black Label 系列',
-    slug: 'simmons-black',
-    description: '了解 Simmons Black Label 高端床墊系列的核心特色與技術。',
-    href: '/simmons-black',
+    title: "Simmons Black Label 系列",
+    slug: "simmons-black",
+    description: "了解 Simmons Black Label 高端床墊系列的核心特色與技術。",
+    href: "/simmons-black",
   },
   {
-    title: '美國進口寢具與配件',
-    slug: 'us-imports',
-    description: '精選美國進口寢具、床架與配件，打造頂級睡眠體驗。',
-    href: '/us-imports',
+    title: "美國進口寢具與配件",
+    slug: "us-imports",
+    description: "精選美國進口寢具、床架與配件，打造頂級睡眠體驗。",
+    href: "/us-imports",
   },
   {
-    title: '預約專人試躺',
-    slug: 'appointment',
-    description: '預約專業顧問，體驗 Simmons Black Label 床墊與門市服務。',
-    href: '/appointment',
+    title: "預約專人試躺",
+    slug: "appointment",
+    description: "預約專業顧問，體驗 Simmons Black Label 床墊與門市服務。",
+    href: "/appointment",
   },
 ];
 
 const normalizeCategorySlug = (input?: string | null): string => {
-  if (!input) return 'blog-post';
+  if (!input) return "blog-post";
   const value = input.trim().toLowerCase();
-  if (['customer-reviews', '部落格推薦'].includes(value)) {
-    return 'customer-reviews';
+  if (["customer-reviews", "部落格推薦"].includes(value)) {
+    return "customer-reviews";
   }
-  if (['blog-post', '好文分享', 'blog'].includes(value)) {
-    return 'blog-post';
+  if (["blog-post", "好文分享", "blog"].includes(value)) {
+    return "blog-post";
   }
-  if (value.startsWith('cat_')) {
+  if (value.startsWith("cat_")) {
     // Fallback mapping for known category ids
-    if (value === 'cat_002') return 'customer-reviews';
-    return 'blog-post';
+    if (value === "cat_002") return "customer-reviews";
+    return "blog-post";
   }
-  return value.replace(/\s+/g, '-');
+  return value.replace(/\s+/g, "-");
 };
 
 type Env = {
@@ -87,20 +94,20 @@ type Env = {
 
 const searchRouter = new Hono<Env>();
 
-searchRouter.get('/', zValidator('query', searchQuerySchema), async (c) => {
-  const db = c.get('db');
-  const cacheManager = c.get('cache');
-  const query = c.req.valid('query');
+searchRouter.get("/", zValidator("query", searchQuerySchema), async (c) => {
+  const db = c.get("db");
+  const cacheManager = c.get("cache");
+  const query = c.req.valid("query");
 
   if (!db) {
-    return c.json({ success: false, error: 'Database not initialised' }, 500);
+    return c.json({ success: false, error: "Database not initialised" }, 500);
   }
   if (!cacheManager) {
-    return c.json({ success: false, error: 'Cache not initialised' }, 500);
+    return c.json({ success: false, error: "Cache not initialised" }, 500);
   }
 
   const startedAt = Date.now();
-  const types = new Set(query.types ?? ['products', 'posts', 'pages']);
+  const types = new Set(query.types ?? ["products", "posts", "pages"]);
   const cacheFilters = {
     query: query.q,
     types: Array.from(types).sort(),
@@ -112,7 +119,11 @@ searchRouter.get('/', zValidator('query', searchQuerySchema), async (c) => {
   const searchCache = new SearchCache(cacheManager);
   const cached = await searchCache.get<UnifiedSearchResponse>(cacheFilters);
   if (cached) {
-    return c.json({ success: true, data: { ...cached, cached: true }, cached: true });
+    return c.json({
+      success: true,
+      data: { ...cached, cached: true },
+      cached: true,
+    });
   }
 
   const results: SearchResultSections = {
@@ -124,7 +135,7 @@ searchRouter.get('/', zValidator('query', searchQuerySchema), async (c) => {
   // Enhanced fuzzy search with improved query processing
   const { searchTerms, fullSearchTerm } = processSearchQuery(query.q);
 
-  if (types.has('products')) {
+  if (types.has("products")) {
     // Build fuzzy search conditions for products
     const searchConditions =
       searchTerms.length > 1
@@ -171,7 +182,7 @@ searchRouter.get('/', zValidator('query', searchQuerySchema), async (c) => {
       category: product.category,
       slug: product.slug,
       href: `/${product.category}/${product.slug}`,
-      type: 'product' as const,
+      type: "product" as const,
       thumbnail: extractFirstImage(product.images),
       metadata: {
         inStock: product.inStock,
@@ -179,7 +190,7 @@ searchRouter.get('/', zValidator('query', searchQuerySchema), async (c) => {
     }));
   }
 
-  if (types.has('posts')) {
+  if (types.has("posts")) {
     // Build fuzzy search conditions for posts
     const postSearchConditions =
       searchTerms.length > 1
@@ -200,10 +211,15 @@ searchRouter.get('/', zValidator('query', searchQuerySchema), async (c) => {
             like(posts.title, fullSearchTerm),
             like(posts.description, fullSearchTerm),
             like(posts.slug, fullSearchTerm),
-            ...(query.includeContent ? [like(posts.content, fullSearchTerm)] : [])
+            ...(query.includeContent
+              ? [like(posts.content, fullSearchTerm)]
+              : [])
           );
 
-    const postConditions = [postSearchConditions, eq(posts.status, 'published')];
+    const postConditions = [
+      postSearchConditions,
+      eq(posts.status, "published"),
+    ];
 
     const postRows = await db
       .select({
@@ -220,17 +236,23 @@ searchRouter.get('/', zValidator('query', searchQuerySchema), async (c) => {
       .from(posts)
       .leftJoin(postCategories, eq(posts.categoryId, postCategories.id))
       .where(and(...postConditions))
-      .orderBy(desc(posts.featured), desc(posts.publishedAt), desc(posts.createdAt))
+      .orderBy(
+        desc(posts.featured),
+        desc(posts.publishedAt),
+        desc(posts.createdAt)
+      )
       .limit(query.limit);
 
     results.posts = postRows.map((post) => {
-      const categorySlug = normalizeCategorySlug(post.categorySlug ?? post.category);
+      const categorySlug = normalizeCategorySlug(
+        post.categorySlug ?? post.category
+      );
       const categoryLabel =
         post.category ||
-        (categorySlug === 'customer-reviews'
-          ? '部落格推薦'
-          : categorySlug === 'blog-post'
-            ? '好文分享'
+        (categorySlug === "customer-reviews"
+          ? "部落格推薦"
+          : categorySlug === "blog-post"
+            ? "好文分享"
             : categorySlug);
 
       return {
@@ -240,7 +262,7 @@ searchRouter.get('/', zValidator('query', searchQuerySchema), async (c) => {
         category: categoryLabel,
         slug: post.slug,
         href: `/${categorySlug}/${post.slug}`,
-        type: 'post' as const,
+        type: "post" as const,
         thumbnail: post.featuredImage ?? null,
         metadata: {
           publishedAt:
@@ -253,7 +275,7 @@ searchRouter.get('/', zValidator('query', searchQuerySchema), async (c) => {
     });
   }
 
-  if (types.has('pages')) {
+  if (types.has("pages")) {
     // Enhanced fuzzy search for static pages
     results.pages = STATIC_PAGES.filter((page) => {
       const pageTitle = page.title.toLowerCase();
@@ -264,12 +286,14 @@ searchRouter.get('/', zValidator('query', searchQuerySchema), async (c) => {
       if (searchTerms.length > 1) {
         return searchTerms.every(
           (term) =>
-            pageTitle.includes(term) || pageDescription.includes(term) || pageSlug.includes(term)
+            pageTitle.includes(term) ||
+            pageDescription.includes(term) ||
+            pageSlug.includes(term)
         );
       }
 
       // For single term, match anywhere
-      const singleTerm = searchTerms[0] || '';
+      const singleTerm = searchTerms[0] || "";
       return (
         pageTitle.includes(singleTerm) ||
         pageDescription.includes(singleTerm) ||
@@ -284,12 +308,13 @@ searchRouter.get('/', zValidator('query', searchQuerySchema), async (c) => {
         category: null,
         slug: page.slug,
         href: page.href,
-        type: 'page' as const,
+        type: "page" as const,
         thumbnail: null,
       }));
   }
 
-  const total = results.products.length + results.posts.length + results.pages.length;
+  const total =
+    results.products.length + results.posts.length + results.pages.length;
 
   const response: UnifiedSearchResponse = {
     query: query.q,
@@ -303,21 +328,27 @@ searchRouter.get('/', zValidator('query', searchQuerySchema), async (c) => {
   return c.json({ success: true, data: response, cached: false });
 });
 
-function truncate(value: string | null | undefined, length: number): string | undefined {
-  if (!value) return undefined;
+function truncate(
+  value: string | null | undefined,
+  length: number
+): string | undefined {
+  if (!value) return;
   if (value.length <= length) return value;
   return `${value.slice(0, length - 1)}…`;
 }
 
-function processSearchQuery(query: string): { searchTerms: string[]; fullSearchTerm: string } {
+function processSearchQuery(query: string): {
+  searchTerms: string[];
+  fullSearchTerm: string;
+} {
   // Clean and normalize the query
   const cleanQuery = query
     .toLowerCase()
     .trim()
     // Remove special characters but keep spaces and basic punctuation
-    .replace(/[^\w\s\u4e00-\u9fff]/g, ' ')
+    .replace(/[^\w\s\u4e00-\u9fff]/g, " ")
     // Normalize multiple spaces
-    .replace(/\s+/g, ' ')
+    .replace(/\s+/g, " ")
     .trim();
 
   const searchTerms = cleanQuery.split(/\s+/).filter((term) => term.length > 0);
@@ -329,16 +360,20 @@ function processSearchQuery(query: string): { searchTerms: string[]; fullSearchT
 function extractFirstImage(images: unknown): string | null {
   if (!images) return null;
   if (Array.isArray(images) && images.length > 0) {
-    return typeof images[0] === 'string' ? images[0] : null;
+    return typeof images[0] === "string" ? images[0] : null;
   }
-  if (typeof images === 'string') {
+  if (typeof images === "string") {
     try {
       const parsed = JSON.parse(images);
-      if (Array.isArray(parsed) && parsed.length > 0 && typeof parsed[0] === 'string') {
+      if (
+        Array.isArray(parsed) &&
+        parsed.length > 0 &&
+        typeof parsed[0] === "string"
+      ) {
         return parsed[0];
       }
     } catch (error) {
-      console.warn('Failed to parse product images JSON for search result');
+      console.warn("Failed to parse product images JSON for search result");
     }
   }
   return null;

@@ -18,14 +18,16 @@ type CategoryMeta = {
   description: string;
   color: string;
   icon: string;
-}
+};
 
 const apiUrl = import.meta.env.PUBLIC_API_BASE_URL || "http://localhost:8787";
 
 // (No module-level fallbacks to avoid dev/build scope issues)
 
 function normalizeCategorySlug(raw?: string | null): string {
-  if (!raw) { return "blog-post"; }
+  if (!raw) {
+    return "blog-post";
+  }
   const input = raw.trim().toLowerCase();
   if (
     ["blogger-testimonial", "blogger testimonial", "部落格推薦"].includes(input)
@@ -47,10 +49,18 @@ function normalizeCategorySlug(raw?: string | null): string {
     return "simmons-knowledge";
   }
   if (input.startsWith("cat_")) {
-    if (input === "cat_001") { return "blog-post"; }
-    if (input === "cat_002") { return "blogger-testimonial"; }
-    if (input === "cat_003") { return "simmons-knowledge"; }
-    if (input === "cat_004") { return "customer-reviews"; }
+    if (input === "cat_001") {
+      return "blog-post";
+    }
+    if (input === "cat_002") {
+      return "blogger-testimonial";
+    }
+    if (input === "cat_003") {
+      return "simmons-knowledge";
+    }
+    if (input === "cat_004") {
+      return "customer-reviews";
+    }
 
     return input.slice(4);
   }
@@ -81,7 +91,9 @@ function resolveCategoryMeta(category: ApiPost["category"]): CategoryMeta {
     "simmons-knowledge": "席夢思小知識",
   };
 
-  const name = categoryNames[slug] || (typeof category === "string" ? category : "好文分享");
+  const name =
+    categoryNames[slug] ||
+    (typeof category === "string" ? category : "好文分享");
 
   return {
     id: slug,

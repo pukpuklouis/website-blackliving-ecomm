@@ -1,5 +1,5 @@
-import { useLoaderData } from 'react-router';
-import ProductEditPage from '../../components/ProductEditPage';
+import { useLoaderData } from "react-router";
+import ProductEditPage from "../../components/ProductEditPage";
 
 export const loader = async ({ request, context }: any) => {
   try {
@@ -8,18 +8,21 @@ export const loader = async ({ request, context }: any) => {
     const apiUrl =
       context?.cloudflare?.env?.PUBLIC_API_URL ||
       context?.env?.PUBLIC_API_URL ||
-      'http://localhost:8787';
+      "http://localhost:8787";
 
     let res;
     if (apiService) {
-      const apiRequest = new Request('http://internal/api/admin/products/categories', {
-        method: 'GET',
-      });
+      const apiRequest = new Request(
+        "http://internal/api/admin/products/categories",
+        {
+          method: "GET",
+        }
+      );
       res = await apiService.fetch(apiRequest);
     } else {
       res = await fetch(`${apiUrl}/api/admin/products/categories`, {
-        headers: { cookie: request.headers.get('cookie') ?? '' },
-        credentials: 'include',
+        headers: { cookie: request.headers.get("cookie") ?? "" },
+        credentials: "include",
       });
     }
 
@@ -30,7 +33,7 @@ export const loader = async ({ request, context }: any) => {
     const categories = data?.success ? (data?.data ?? []) : [];
     return Response.json({ categories });
   } catch (e) {
-    console.error('[ProductNew] Error loading categories:', e);
+    console.error("[ProductNew] Error loading categories:", e);
     return Response.json({ categories: [] });
   }
 };

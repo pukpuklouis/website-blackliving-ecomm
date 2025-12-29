@@ -4,42 +4,124 @@ import type {
   ProfileUpdateRequest,
 } from "@blackliving/types";
 import { useCallback, useEffect, useState } from "react";
+import { getApiUrl } from "../lib/api";
 
-interface UseProfileOptions {
+type UseProfileOptions = {
   autoRefresh?: boolean;
   refreshInterval?: number;
   cacheTimeout?: number;
-}
+};
 
-interface ProfileState {
+type ProfileState = {
   profile: FullUserProfile | null;
   loading: boolean;
   error: string | null;
   lastUpdated: Date | null;
-}
+};
 
-const API_BASE = "/api/customers/profile";
+const PROFILE_ENDPOINT = "/api/customers/profile";
 
-// Simple cache implementation
 const profileCache = new Map<
   string,
-  { data: any; timestamp: number; ttl: number }
+  { data: unknown; timestamp: number; ttl: number }
 >();
 
 function getCache<T>(key: string): T | null {
   const cached = profileCache.get(key);
-  if (!cached) return null;
+  if (!cached) {
+    return null;
+  }
 
   if (Date.now() - cached.timestamp > cached.ttl) {
     profileCache.delete(key);
     return null;
   }
 
-  return cached.data;
+  return cached.data as T;
 }
 
 function setCache<T>(key: string, data: T, ttl = 300_000): void {
   profileCache.set(key, { data, timestamp: Date.now(), ttl });
+}
+
+function transformApiResponseToProfile(data: {
+  id: string;
+  email: string;
+  name: string | null;
+  image: string | null;
+  phone: string | null;
+  birthday: string | null;
+  gender: string | null;
+  contactPreference: string | null;
+}): FullUserProfile {
+  const [firstName, ...lastName] = (data.name || "").split(" ");
+
+  return {
+    user: {
+      id: data.id,
+      email: data.email,
+      firstName,
+      lastName: lastName.join(" "),
+      createdAt: "", // Not available in the response
+      updatedAt: "", // Not available in the response
+    },
+    userProfile: {
+      userId: data.id,
+      avatarUrl: data.image ?? undefined,
+      bio: "", // Not available in the response
+      birthday: data.birthday ?? undefined,
+      gender:
+        (data.gender as "male" | "female" | "other" | "unspecified") ??
+        undefined,
+      contactPreference:
+        (data.contactPreference as "email" | "phone" | "sms") ?? undefined,
+    },
+    customerProfile: {
+      customerId: "", // Not available in the response
+      userId: data.id,
+      companyName: "", // Not available in the response
+      phone: data.phone ?? undefined,
+    },
+    addresses: [], // Not available in the response
+  };
+}
+
+async function fetchProfileFromApi(): Promise<{
+  id: string;
+  email: string;
+  name: string | null;
+  image: string | null;
+  phone: string | null;
+  birthday: string | null;
+  gender: string | null;
+  contactPreference: string | null;
+}> {
+  const response = await fetch(getApiUrl(PROFILE_ENDPOINT), {
+    method: "GET",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  const result: ApiResponse<{
+    id: string;
+    email: string;
+    name: string | null;
+    image: string | null;
+    phone: string | null;
+    birthday: string | null;
+    gender: string | null;
+    contactPreference: string | null;
+  }> = await response.json();
+
+  if (result.success && result.data) {
+    return result.data;
+  }
+
+  throw new Error(result.error || "Failed to load profile");
 }
 
 export function useProfile(options: UseProfileOptions = {}) {
@@ -78,58 +160,18 @@ export function useProfile(options: UseProfileOptions = {}) {
       setState((prev) => ({ ...prev, loading: true, error: null }));
 
       try {
-        const response = await fetch(API_BASE, {
-          method: "GET",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-        });
+        const apiData = await fetchProfileFromApi();
+        const transformedData = transformApiResponseToProfile(apiData);
 
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const result: ApiResponse<any> = await response.json();
-
-        if (result.success && result.data) {
-          // Transform the flat data structure to the nested FullUserProfile structure
-          const [firstName, ...lastName] = (result.data.name || "").split(" ");
-          const transformedData: FullUserProfile = {
-            user: {
-              id: result.data.id,
-              email: result.data.email,
-              firstName,
-              lastName: lastName.join(" "),
-              createdAt: "", // Not available in the response
-              updatedAt: "", // Not available in the response
-            },
-            userProfile: {
-              userId: result.data.id,
-              avatarUrl: result.data.image,
-              bio: "", // Not available in the response
-              birthday: result.data.birthday,
-              gender: result.data.gender,
-              contactPreference: result.data.contactPreference,
-            },
-            customerProfile: {
-              customerId: "", // Not available in the response
-              userId: result.data.id,
-              companyName: "", // Not available in the response
-              phone: result.data.phone,
-            },
-            addresses: [], // Not available in the response
-          };
-
-          setCache(cacheKey, transformedData, cacheTimeout);
-          setState((prev) => ({
-            ...prev,
-            profile: transformedData,
-            loading: false,
-            lastUpdated: new Date(),
-          }));
-          setOriginalData(transformedData);
-          return transformedData;
-        }
-        throw new Error(result.error || "Failed to load profile");
+        setCache(cacheKey, transformedData, cacheTimeout);
+        setState((prev) => ({
+          ...prev,
+          profile: transformedData,
+          loading: false,
+          lastUpdated: new Date(),
+        }));
+        setOriginalData(transformedData);
+        return transformedData;
       } catch (error) {
         const errorMessage =
           error instanceof Error ? error.message : "Unknown error";
@@ -146,22 +188,23 @@ export function useProfile(options: UseProfileOptions = {}) {
       setState((prev) => ({ ...prev, loading: true, error: null }));
 
       try {
-        const requestBody: Record<string, any> = {};
+        const allowedFields = [
+          "firstName",
+          "lastName",
+          "phone",
+          "birthday",
+          "gender",
+          "contactPreference",
+        ] as const;
 
-        if (updateData.firstName !== undefined)
-          requestBody.firstName = updateData.firstName;
-        if (updateData.lastName !== undefined)
-          requestBody.lastName = updateData.lastName;
-        if (updateData.phone !== undefined)
-          requestBody.phone = updateData.phone;
-        if (updateData.birthday !== undefined)
-          requestBody.birthday = updateData.birthday;
-        if (updateData.gender !== undefined)
-          requestBody.gender = updateData.gender;
-        if (updateData.contactPreference !== undefined)
-          requestBody.contactPreference = updateData.contactPreference;
+        const requestBody: Record<string, unknown> = {};
+        for (const field of allowedFields) {
+          if (updateData[field] !== undefined) {
+            requestBody[field] = updateData[field];
+          }
+        }
 
-        const response = await fetch(API_BASE, {
+        const response = await fetch(getApiUrl(PROFILE_ENDPOINT), {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(requestBody),
@@ -200,37 +243,57 @@ export function useProfile(options: UseProfileOptions = {}) {
     (currentData: Partial<ProfileUpdateRequest>) => {
       if (
         !(
-          originalData &&
-          originalData.user &&
+          originalData?.user &&
           originalData.userProfile &&
           originalData.customerProfile
         )
-      )
+      ) {
         return false;
+      }
 
-      const originalFirstName = originalData.user.firstName || "";
-      const originalLastName = originalData.user.lastName || "";
-      const originalPhone = originalData.customerProfile.phone || "";
-      const originalBirthday = originalData.userProfile.birthday || "";
-      const originalGender = originalData.userProfile.gender || "unspecified";
-      const originalContactPreference =
-        originalData.userProfile.contactPreference || "email";
+      const hasFieldChanged = <T>(
+        current: T | undefined,
+        original: T | null | undefined,
+        defaultValue: T
+      ): boolean => {
+        if (current === undefined) {
+          return false;
+        }
+        const normalizedOriginal = original ?? defaultValue;
+        // Handle empty string vs null equivalence
+        if (current === "" && original === null) {
+          return false;
+        }
+        return current !== normalizedOriginal;
+      };
 
       const dirty =
-        (currentData.firstName !== undefined &&
-          currentData.firstName !== originalFirstName) ||
-        (currentData.lastName !== undefined &&
-          currentData.lastName !== originalLastName) ||
-        (currentData.phone !== undefined &&
-          currentData.phone !== originalPhone &&
-          !(currentData.phone === "" && originalPhone === null)) ||
-        (currentData.birthday !== undefined &&
-          currentData.birthday !== originalBirthday &&
-          !(currentData.birthday === "" && originalBirthday === null)) ||
-        (currentData.gender !== undefined &&
-          currentData.gender !== originalGender) ||
-        (currentData.contactPreference !== undefined &&
-          currentData.contactPreference !== originalContactPreference);
+        hasFieldChanged(
+          currentData.firstName,
+          originalData.user.firstName,
+          ""
+        ) ||
+        hasFieldChanged(currentData.lastName, originalData.user.lastName, "") ||
+        hasFieldChanged(
+          currentData.phone,
+          originalData.customerProfile.phone,
+          ""
+        ) ||
+        hasFieldChanged(
+          currentData.birthday,
+          originalData.userProfile.birthday,
+          ""
+        ) ||
+        hasFieldChanged(
+          currentData.gender,
+          originalData.userProfile.gender,
+          "unspecified"
+        ) ||
+        hasFieldChanged(
+          currentData.contactPreference,
+          originalData.userProfile.contactPreference,
+          "email"
+        );
 
       setIsDirty(dirty);
       return dirty;
@@ -247,7 +310,7 @@ export function useProfile(options: UseProfileOptions = {}) {
   // Auto-refresh setup
   useEffect(() => {
     if (autoRefresh && refreshInterval > 0) {
-      const interval = setInterval(() => {
+      const interval = window.setInterval(() => {
         loadProfile(true);
       }, refreshInterval);
 

@@ -58,7 +58,7 @@ export default function ProductImageCarousel({
           <>
             <button
               aria-label="上一張圖片"
-              className="-translate-y-1/2 absolute top-1/2 left-2 rounded-full bg-white/80 p-2 text-gray-800 opacity-0 shadow-md transition-opacity hover:bg-white group-hover:opacity-100"
+              className="absolute top-1/2 left-2 -translate-y-1/2 rounded-full bg-white/80 p-2 text-gray-800 opacity-0 shadow-md transition-opacity hover:bg-white group-hover:opacity-100"
               onClick={handlePrevious}
             >
               <svg
@@ -77,7 +77,7 @@ export default function ProductImageCarousel({
             </button>
             <button
               aria-label="下一張圖片"
-              className="-translate-y-1/2 absolute top-1/2 right-2 rounded-full bg-white/80 p-2 text-gray-800 opacity-0 shadow-md transition-opacity hover:bg-white group-hover:opacity-100"
+              className="absolute top-1/2 right-2 -translate-y-1/2 rounded-full bg-white/80 p-2 text-gray-800 opacity-0 shadow-md transition-opacity hover:bg-white group-hover:opacity-100"
               onClick={handleNext}
             >
               <svg
@@ -134,7 +134,7 @@ export default function ProductImageCarousel({
           <div className="relative max-h-full max-w-4xl">
             <button
               aria-label="關閉放大檢視"
-              className="-top-12 absolute right-0 text-white text-xl hover:text-gray-300"
+              className="absolute -top-12 right-0 text-white text-xl hover:text-gray-300"
               onClick={handleCloseZoom}
             >
               <svg
@@ -162,7 +162,7 @@ export default function ProductImageCarousel({
               <>
                 <button
                   aria-label="上一張圖片"
-                  className="-translate-y-1/2 absolute top-1/2 left-4 rounded-full bg-white/20 p-3 text-white hover:bg-white/30"
+                  className="absolute top-1/2 left-4 -translate-y-1/2 rounded-full bg-white/20 p-3 text-white hover:bg-white/30"
                   onClick={handlePrevious}
                 >
                   <svg
@@ -181,7 +181,7 @@ export default function ProductImageCarousel({
                 </button>
                 <button
                   aria-label="下一張圖片"
-                  className="-translate-y-1/2 absolute top-1/2 right-4 rounded-full bg-white/20 p-3 text-white hover:bg-white/30"
+                  className="absolute top-1/2 right-4 -translate-y-1/2 rounded-full bg-white/20 p-3 text-white hover:bg-white/30"
                   onClick={handleNext}
                 >
                   <svg

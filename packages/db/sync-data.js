@@ -5,12 +5,12 @@
  * Syncs all table data from remote to local database with proper error handling
  */
 
-import { execSync } from 'child_process';
-import { writeFileSync, readFileSync } from 'fs';
-import { join } from 'path';
+import { execSync } from "child_process";
+import { writeFileSync } from "fs";
+import { join } from "path";
 
-const WRANGLER_CWD = '../../apps/api';
-const TEMP_DIR = './temp-sync';
+const WRANGLER_CWD = "../../apps/api";
+const TEMP_DIR = "./temp-sync";
 
 /**
  * Execute wrangler command safely
@@ -20,8 +20,8 @@ function executeWrangler(command, options = {}) {
   try {
     return execSync(fullCommand, {
       cwd: WRANGLER_CWD,
-      encoding: 'utf8',
-      stdio: options.silent ? 'pipe' : 'inherit',
+      encoding: "utf8",
+      stdio: options.silent ? "pipe" : "inherit",
       ...options,
     });
   } catch (error) {
@@ -33,7 +33,7 @@ function executeWrangler(command, options = {}) {
  * Get all table names from remote database
  */
 function getAllTables() {
-  console.log('🔍 Discovering tables in remote database...');
+  console.log("🔍 Discovering tables in remote database...");
 
   const result = executeWrangler(
     "--command \"SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name NOT LIKE '_cf_%' ORDER BY name;\" --remote",
@@ -44,13 +44,13 @@ function getAllTables() {
     // Parse JSON response properly
     const jsonMatch = result.match(/\[[\s\S]*\]/);
     if (!jsonMatch) {
-      throw new Error('No JSON data found in response');
+      throw new Error("No JSON data found in response");
     }
 
     const data = JSON.parse(jsonMatch[0]);
     const tables = data[0]?.results?.map((row) => row.name) || [];
 
-    console.log(`  Found ${tables.length} tables: ${tables.join(', ')}`);
+    console.log(`  Found ${tables.length} tables: ${tables.join(", ")}`);
     return tables;
   } catch (error) {
     throw new Error(`Failed to parse table list: ${error.message}`);
@@ -61,7 +61,7 @@ function getAllTables() {
  * Get record count for a table
  */
 function getTableCount(tableName, isRemote = true) {
-  const location = isRemote ? '--remote' : '--local';
+  const location = isRemote ? "--remote" : "--local";
   const result = executeWrangler(
     `--command "SELECT COUNT(*) as count FROM ${tableName};" ${location}`,
     { silent: true }
@@ -84,14 +84,17 @@ function getTableCount(tableName, isRemote = true) {
 function exportTableData(tableName) {
   console.log(`  📤 Exporting ${tableName} data...`);
 
-  const result = executeWrangler(`--command "SELECT * FROM ${tableName};" --remote`, {
-    silent: true,
-  });
+  const result = executeWrangler(
+    `--command "SELECT * FROM ${tableName};" --remote`,
+    {
+      silent: true,
+    }
+  );
 
   try {
     const jsonMatch = result.match(/\[[\s\S]*\]/);
     if (!jsonMatch) {
-      throw new Error('No JSON data found');
+      throw new Error("No JSON data found");
     }
 
     const data = JSON.parse(jsonMatch[0]);
@@ -106,18 +109,18 @@ function exportTableData(tableName) {
     const sqlStatements = records.map((record) => {
       const values = columns.map((col) => {
         const val = record[col];
-        if (val === null) return 'NULL';
-        if (typeof val === 'string') {
+        if (val === null) return "NULL";
+        if (typeof val === "string") {
           // Proper SQL string escaping
-          return `'${val.replace(/'/g, "''").replace(/\\/g, '\\\\')}'`;
+          return `'${val.replace(/'/g, "''").replace(/\\/g, "\\\\")}'`;
         }
         return String(val);
       });
 
-      return `INSERT INTO ${tableName} (${columns.map((c) => `"${c}"`).join(', ')}) VALUES (${values.join(', ')});`;
+      return `INSERT INTO ${tableName} (${columns.map((c) => `"${c}"`).join(", ")}) VALUES (${values.join(", ")});`;
     });
 
-    return sqlStatements.join('\n');
+    return sqlStatements.join("\n");
   } catch (error) {
     throw new Error(`Failed to export ${tableName}: ${error.message}`);
   }
@@ -129,26 +132,33 @@ function exportTableData(tableName) {
 function importTableData(sqlStatements) {
   // Create temp directory with absolute path
   const absoluteTempDir = join(process.cwd(), TEMP_DIR);
-  execSync(`mkdir -p ${absoluteTempDir}`, { stdio: 'pipe' });
+  execSync(`mkdir -p ${absoluteTempDir}`, { stdio: "pipe" });
 
   // Write SQL to temp file with absolute path
-  const tempFile = join(absoluteTempDir, 'import.sql');
-  writeFileSync(tempFile, sqlStatements, 'utf8');
+  const tempFile = join(absoluteTempDir, "import.sql");
+  writeFileSync(tempFile, sqlStatements, "utf8");
 
   // Get relative path from wrangler working directory
-  const relativeFromWrangler = join('../..', 'packages/db', TEMP_DIR, 'import.sql');
+  const relativeFromWrangler = join(
+    "../..",
+    "packages/db",
+    TEMP_DIR,
+    "import.sql"
+  );
 
   try {
     // Execute SQL file with correct relative path from wrangler's perspective
-    executeWrangler(`--file="${relativeFromWrangler}" --local`, { silent: true });
+    executeWrangler(`--file="${relativeFromWrangler}" --local`, {
+      silent: true,
+    });
 
     // Cleanup
-    execSync(`rm -rf ${absoluteTempDir}`, { stdio: 'pipe' });
+    execSync(`rm -rf ${absoluteTempDir}`, { stdio: "pipe" });
 
     return true;
   } catch (error) {
     // Cleanup on error
-    execSync(`rm -rf ${absoluteTempDir}`, { stdio: 'pipe' });
+    execSync(`rm -rf ${absoluteTempDir}`, { stdio: "pipe" });
     throw error;
   }
 }
@@ -164,7 +174,9 @@ function syncTable(tableName) {
     const remoteCount = getTableCount(tableName, true);
     const localCount = getTableCount(tableName, false);
 
-    console.log(`  Remote: ${remoteCount} records, Local: ${localCount} records`);
+    console.log(
+      `  Remote: ${remoteCount} records, Local: ${localCount} records`
+    );
 
     if (remoteCount === 0) {
       console.log(`  ℹ️  No data in remote ${tableName}`);
@@ -173,7 +185,9 @@ function syncTable(tableName) {
 
     // Clear local table
     console.log(`  🗑️  Clearing local ${tableName}...`);
-    executeWrangler(`--command "DELETE FROM ${tableName};" --local`, { silent: true });
+    executeWrangler(`--command "DELETE FROM ${tableName};" --local`, {
+      silent: true,
+    });
 
     // Export and import data
     const sqlStatements = exportTableData(tableName);
@@ -186,7 +200,9 @@ function syncTable(tableName) {
       if (newLocalCount === remoteCount) {
         console.log(`  ✅ Successfully synced ${newLocalCount} records`);
       } else {
-        console.log(`  ⚠️  Partial sync: ${newLocalCount}/${remoteCount} records`);
+        console.log(
+          `  ⚠️  Partial sync: ${newLocalCount}/${remoteCount} records`
+        );
       }
     }
   } catch (error) {
@@ -198,15 +214,15 @@ function syncTable(tableName) {
  * Main sync function
  */
 function main() {
-  console.log('🔄 Enhanced Data Sync: Remote → Local');
-  console.log('=====================================\n');
+  console.log("🔄 Enhanced Data Sync: Remote → Local");
+  console.log("=====================================\n");
 
   try {
     // Get all tables
     const tables = getAllTables();
 
     if (tables.length === 0) {
-      console.log('⚠️  No tables found in remote database');
+      console.log("⚠️  No tables found in remote database");
       return;
     }
 
@@ -225,18 +241,18 @@ function main() {
     }
 
     // Summary
-    console.log('\n=====================================');
-    console.log('📊 Sync Summary:');
+    console.log("\n=====================================");
+    console.log("📊 Sync Summary:");
     console.log(`  ✅ Successful: ${successCount} tables`);
     console.log(`  ❌ Failed: ${errorCount} tables`);
     console.log(`  📋 Total: ${tables.length} tables`);
 
     if (successCount > 0) {
-      console.log('\n💡 Next steps:');
-      console.log('  pnpm -F db db:studio:local  # View synced data');
+      console.log("\n💡 Next steps:");
+      console.log("  pnpm -F db db:studio:local  # View synced data");
     }
   } catch (error) {
-    console.error('❌ Sync failed:', error.message);
+    console.error("❌ Sync failed:", error.message);
     process.exit(1);
   }
 }

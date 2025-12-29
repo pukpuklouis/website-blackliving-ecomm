@@ -39,9 +39,13 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
       return;
     }
 
-    // Retry configuration - more aggressive for staging
-    const MAX_RETRIES = 3;
-    const RETRY_DELAY = 1500; // 1.5 seconds
+    // Retry configuration - add initial delay for cookie propagation
+    const MAX_RETRIES = 5;
+    const RETRY_DELAY = 2000; // 2 seconds
+    const INITIAL_DELAY = 1000; // Wait 1 second before first check
+
+    // Wait for cookie to propagate to browser
+    await new Promise((resolve) => setTimeout(resolve, INITIAL_DELAY));
 
     for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
       try {
@@ -58,12 +62,17 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
 
         if (response.ok) {
           const data = await response.json();
+
+          // Log the FULL response for debugging
+          console.log("[OAuth Callback] Full response data:", data);
+
           console.log("[OAuth Callback] Session data:", {
             hasUser: !!data?.user,
             hasSession: !!data?.session,
             userId: data?.user?.id,
           });
 
+          // Check if we have valid session - BetterAuth returns { session, user }
           if (data?.user && data?.session) {
             // Success! Clean up URL and redirect
             window.history.replaceState({}, "", "/account/callback");
@@ -71,6 +80,12 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
             window.location.href = "/account/profile";
             return;
           }
+
+          // Session check passed but no user/session in response
+          console.warn(
+            "[OAuth Callback] Response OK but missing user/session:",
+            data
+          );
         }
       } catch (fetchError) {
         console.error(

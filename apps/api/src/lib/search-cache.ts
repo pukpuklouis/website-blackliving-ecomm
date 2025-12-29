@@ -1,4 +1,4 @@
-import { CacheManager, CacheTTL } from './cache';
+import { type CacheManager, CacheTTL } from "./cache";
 
 export interface SearchCacheFilters {
   query: string;
@@ -13,8 +13,11 @@ export class SearchCache {
 
   private getCacheKey(filters: SearchCacheFilters): string {
     const json = JSON.stringify(filters);
-    const base64 = Buffer.from(json).toString('base64');
-    const safe = base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    const base64 = Buffer.from(json).toString("base64");
+    const safe = base64
+      .replace(/\+/g, "-")
+      .replace(/\//g, "_")
+      .replace(/=+$/, "");
     return `search:${safe}`;
   }
 
@@ -22,13 +25,17 @@ export class SearchCache {
     return this.cache.get<T>(this.getCacheKey(filters));
   }
 
-  async set<T>(filters: SearchCacheFilters, data: T, ttl = CacheTTL.SHORT): Promise<void> {
+  async set<T>(
+    filters: SearchCacheFilters,
+    data: T,
+    ttl = CacheTTL.SHORT
+  ): Promise<void> {
     await this.cache.set(this.getCacheKey(filters), data, ttl);
   }
 
   async invalidate(filters?: SearchCacheFilters): Promise<void> {
     if (!filters) {
-      await this.cache.deleteByPrefix('search:');
+      await this.cache.deleteByPrefix("search:");
       return;
     }
 

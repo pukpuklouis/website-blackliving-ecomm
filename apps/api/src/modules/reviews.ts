@@ -1,9 +1,9 @@
-import { Hono } from 'hono';
-import { zValidator } from '@hono/zod-validator';
-import { z } from 'zod';
-import { eq, desc, and, sql, count } from 'drizzle-orm';
-import { reviews, products } from '@blackliving/db';
-import { createId } from '@paralleldrive/cuid2';
+import { products, reviews } from "@blackliving/db";
+import { zValidator } from "@hono/zod-validator";
+import { createId } from "@paralleldrive/cuid2";
+import { and, count, desc, eq, sql } from "drizzle-orm";
+import { Hono } from "hono";
+import { z } from "zod";
 
 type Env = {
   Bindings: {
@@ -25,11 +25,13 @@ const app = new Hono<Env>();
 
 // Validation schemas
 const reviewCreateSchema = z.object({
-  customerName: z.string().min(2, 'Customer name must be at least 2 characters'),
+  customerName: z
+    .string()
+    .min(2, "Customer name must be at least 2 characters"),
   productId: z.string().optional(),
   rating: z.number().int().min(1).max(5),
-  content: z.string().min(10, 'Review content must be at least 10 characters'),
-  source: z.enum(['website', 'shopee', 'google']).default('website'),
+  content: z.string().min(10, "Review content must be at least 10 characters"),
+  source: z.enum(["website", "shopee", "google"]).default("website"),
 });
 
 const reviewUpdateSchema = z.object({
@@ -37,7 +39,7 @@ const reviewUpdateSchema = z.object({
   productId: z.string().optional(),
   rating: z.number().int().min(1).max(5).optional(),
   content: z.string().min(10).optional(),
-  source: z.enum(['website', 'shopee', 'google']).optional(),
+  source: z.enum(["website", "shopee", "google"]).optional(),
   verified: z.boolean().optional(),
   featured: z.boolean().optional(),
 });
@@ -53,13 +55,13 @@ const reviewQuerySchema = z.object({
 
 // Helper function to require admin role
 const requireAdmin = async (c: any, next: any) => {
-  const user = c.get('user');
-  if (!user || user.role !== 'admin') {
+  const user = c.get("user");
+  if (!user || user.role !== "admin") {
     return c.json(
       {
         success: false,
-        error: 'Unauthorized',
-        message: 'Admin access required',
+        error: "Unauthorized",
+        message: "Admin access required",
       },
       403
     );
@@ -68,11 +70,11 @@ const requireAdmin = async (c: any, next: any) => {
 };
 
 // GET /api/reviews - List reviews with filtering
-app.get('/', zValidator('query', reviewQuerySchema), async (c) => {
+app.get("/", zValidator("query", reviewQuerySchema), async (c) => {
   try {
-    const db = c.get('db');
-    const cache = c.get('cache');
-    const query = c.req.valid('query');
+    const db = c.get("db");
+    const cache = c.get("cache");
+    const query = c.req.valid("query");
 
     // Build cache key
     const cacheKey = `reviews:list:${JSON.stringify(query)}`;
@@ -91,11 +93,11 @@ app.get('/', zValidator('query', reviewQuerySchema), async (c) => {
     const conditions = [];
 
     if (query.featured) {
-      conditions.push(eq(reviews.featured, query.featured === 'true' ? 1 : 0));
+      conditions.push(eq(reviews.featured, query.featured === "true" ? 1 : 0));
     }
 
     if (query.rating) {
-      conditions.push(eq(reviews.rating, parseInt(query.rating)));
+      conditions.push(eq(reviews.rating, Number.parseInt(query.rating)));
     }
 
     if (query.platform) {
@@ -107,8 +109,8 @@ app.get('/', zValidator('query', reviewQuerySchema), async (c) => {
     }
 
     // Execute query with pagination
-    const limit = parseInt(query.limit || '20');
-    const offset = parseInt(query.offset || '0');
+    const limit = Number.parseInt(query.limit || "20");
+    const offset = Number.parseInt(query.offset || "0");
 
     const result = await db
       .select({
@@ -143,12 +145,12 @@ app.get('/', zValidator('query', reviewQuerySchema), async (c) => {
       },
     });
   } catch (error) {
-    console.error('Error fetching reviews:', error);
+    console.error("Error fetching reviews:", error);
     return c.json(
       {
         success: false,
-        error: 'Internal Server Error',
-        message: 'Failed to fetch reviews',
+        error: "Internal Server Error",
+        message: "Failed to fetch reviews",
       },
       500
     );
@@ -156,12 +158,12 @@ app.get('/', zValidator('query', reviewQuerySchema), async (c) => {
 });
 
 // GET /api/reviews/stats - Review statistics for homepage
-app.get('/stats', async (c) => {
+app.get("/stats", async (c) => {
   try {
-    const db = c.get('db');
-    const cache = c.get('cache');
+    const db = c.get("db");
+    const cache = c.get("cache");
 
-    const cacheKey = 'reviews:stats';
+    const cacheKey = "reviews:stats";
 
     // Try cache first
     const cached = await cache.get(cacheKey);
@@ -232,12 +234,12 @@ app.get('/stats', async (c) => {
       data: stats,
     });
   } catch (error) {
-    console.error('Error fetching review stats:', error);
+    console.error("Error fetching review stats:", error);
     return c.json(
       {
         success: false,
-        error: 'Internal Server Error',
-        message: 'Failed to fetch review statistics',
+        error: "Internal Server Error",
+        message: "Failed to fetch review statistics",
       },
       500
     );
@@ -245,10 +247,10 @@ app.get('/stats', async (c) => {
 });
 
 // GET /api/reviews/:id - Get single review
-app.get('/:id', async (c) => {
+app.get("/:id", async (c) => {
   try {
-    const db = c.get('db');
-    const id = c.req.param('id');
+    const db = c.get("db");
+    const id = c.req.param("id");
 
     const [review] = await db
       .select({
@@ -271,8 +273,8 @@ app.get('/:id', async (c) => {
       return c.json(
         {
           success: false,
-          error: 'Not Found',
-          message: 'Review not found',
+          error: "Not Found",
+          message: "Review not found",
         },
         404
       );
@@ -283,12 +285,12 @@ app.get('/:id', async (c) => {
       data: review,
     });
   } catch (error) {
-    console.error('Error fetching review:', error);
+    console.error("Error fetching review:", error);
     return c.json(
       {
         success: false,
-        error: 'Internal Server Error',
-        message: 'Failed to fetch review',
+        error: "Internal Server Error",
+        message: "Failed to fetch review",
       },
       500
     );
@@ -296,11 +298,11 @@ app.get('/:id', async (c) => {
 });
 
 // POST /api/reviews - Create new review (public)
-app.post('/', zValidator('json', reviewCreateSchema), async (c) => {
+app.post("/", zValidator("json", reviewCreateSchema), async (c) => {
   try {
-    const db = c.get('db');
-    const cache = c.get('cache');
-    const reviewData = c.req.valid('json');
+    const db = c.get("db");
+    const cache = c.get("cache");
+    const reviewData = c.req.valid("json");
 
     // Validate product exists if productId is provided
     if (reviewData.productId) {
@@ -313,8 +315,8 @@ app.post('/', zValidator('json', reviewCreateSchema), async (c) => {
         return c.json(
           {
             success: false,
-            error: 'Bad Request',
-            message: 'Product not found',
+            error: "Bad Request",
+            message: "Product not found",
           },
           400
         );
@@ -340,23 +342,23 @@ app.post('/', zValidator('json', reviewCreateSchema), async (c) => {
       .returning();
 
     // Clear relevant caches
-    await cache.delete('reviews:stats');
+    await cache.delete("reviews:stats");
 
     return c.json(
       {
         success: true,
         data: newReview,
-        message: 'Review created successfully',
+        message: "Review created successfully",
       },
       201
     );
   } catch (error) {
-    console.error('Error creating review:', error);
+    console.error("Error creating review:", error);
     return c.json(
       {
         success: false,
-        error: 'Internal Server Error',
-        message: 'Failed to create review',
+        error: "Internal Server Error",
+        message: "Failed to create review",
       },
       500
     );
@@ -364,86 +366,93 @@ app.post('/', zValidator('json', reviewCreateSchema), async (c) => {
 });
 
 // PUT /api/reviews/:id - Update review (admin only)
-app.put('/:id', requireAdmin, zValidator('json', reviewUpdateSchema), async (c) => {
-  try {
-    const db = c.get('db');
-    const cache = c.get('cache');
-    const id = c.req.param('id');
-    const updateData = c.req.valid('json');
+app.put(
+  "/:id",
+  requireAdmin,
+  zValidator("json", reviewUpdateSchema),
+  async (c) => {
+    try {
+      const db = c.get("db");
+      const cache = c.get("cache");
+      const id = c.req.param("id");
+      const updateData = c.req.valid("json");
 
-    // Check if review exists
-    const [existingReview] = await db
-      .select({ id: reviews.id })
-      .from(reviews)
-      .where(eq(reviews.id, id));
+      // Check if review exists
+      const [existingReview] = await db
+        .select({ id: reviews.id })
+        .from(reviews)
+        .where(eq(reviews.id, id));
 
-    if (!existingReview) {
-      return c.json(
-        {
-          success: false,
-          error: 'Not Found',
-          message: 'Review not found',
-        },
-        404
-      );
-    }
-
-    // Validate product exists if productId is being updated
-    if (updateData.productId) {
-      const [product] = await db
-        .select({ id: products.id })
-        .from(products)
-        .where(eq(products.id, updateData.productId));
-
-      if (!product) {
+      if (!existingReview) {
         return c.json(
           {
             success: false,
-            error: 'Bad Request',
-            message: 'Product not found',
+            error: "Not Found",
+            message: "Review not found",
           },
-          400
+          404
         );
       }
+
+      // Validate product exists if productId is being updated
+      if (updateData.productId) {
+        const [product] = await db
+          .select({ id: products.id })
+          .from(products)
+          .where(eq(products.id, updateData.productId));
+
+        if (!product) {
+          return c.json(
+            {
+              success: false,
+              error: "Bad Request",
+              message: "Product not found",
+            },
+            400
+          );
+        }
+      }
+
+      const [updatedReview] = await db
+        .update(reviews)
+        .set({
+          ...updateData,
+          verified:
+            updateData.verified !== undefined ? updateData.verified : undefined,
+          featured:
+            updateData.featured !== undefined ? updateData.featured : undefined,
+        })
+        .where(eq(reviews.id, id))
+        .returning();
+
+      // Clear relevant caches
+      await cache.delete("reviews:stats");
+
+      return c.json({
+        success: true,
+        data: updatedReview,
+        message: "Review updated successfully",
+      });
+    } catch (error) {
+      console.error("Error updating review:", error);
+      return c.json(
+        {
+          success: false,
+          error: "Internal Server Error",
+          message: "Failed to update review",
+        },
+        500
+      );
     }
-
-    const [updatedReview] = await db
-      .update(reviews)
-      .set({
-        ...updateData,
-        verified: updateData.verified !== undefined ? updateData.verified : undefined,
-        featured: updateData.featured !== undefined ? updateData.featured : undefined,
-      })
-      .where(eq(reviews.id, id))
-      .returning();
-
-    // Clear relevant caches
-    await cache.delete('reviews:stats');
-
-    return c.json({
-      success: true,
-      data: updatedReview,
-      message: 'Review updated successfully',
-    });
-  } catch (error) {
-    console.error('Error updating review:', error);
-    return c.json(
-      {
-        success: false,
-        error: 'Internal Server Error',
-        message: 'Failed to update review',
-      },
-      500
-    );
   }
-});
+);
 
 // DELETE /api/reviews/:id - Delete review (admin only)
-app.delete('/:id', requireAdmin, async (c) => {
+app.delete("/:id", requireAdmin, async (c) => {
   try {
-    const db = c.get('db');
-    const cache = c.get('cache');
-    const id = c.req.param('id');
+    const db = c.get("db");
+    const cache = c.get("cache");
+    const id = c.req.param("id");
 
     // Check if review exists
     const [existingReview] = await db
@@ -455,8 +464,8 @@ app.delete('/:id', requireAdmin, async (c) => {
       return c.json(
         {
           success: false,
-          error: 'Not Found',
-          message: 'Review not found',
+          error: "Not Found",
+          message: "Review not found",
         },
         404
       );
@@ -465,19 +474,19 @@ app.delete('/:id', requireAdmin, async (c) => {
     await db.delete(reviews).where(eq(reviews.id, id));
 
     // Clear relevant caches
-    await cache.delete('reviews:stats');
+    await cache.delete("reviews:stats");
 
     return c.json({
       success: true,
-      message: 'Review deleted successfully',
+      message: "Review deleted successfully",
     });
   } catch (error) {
-    console.error('Error deleting review:', error);
+    console.error("Error deleting review:", error);
     return c.json(
       {
         success: false,
-        error: 'Internal Server Error',
-        message: 'Failed to delete review',
+        error: "Internal Server Error",
+        message: "Failed to delete review",
       },
       500
     );

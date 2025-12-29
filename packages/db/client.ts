@@ -1,6 +1,6 @@
-import { drizzle } from 'drizzle-orm/d1';
-import type { D1Database } from '@cloudflare/workers-types';
-import * as schema from './schema';
+import type { D1Database } from "@cloudflare/workers-types";
+import { drizzle } from "drizzle-orm/d1";
+import * as schema from "./schema";
 
 // Create database client for Cloudflare D1
 export function createDB(d1Database: D1Database) {
@@ -10,11 +10,11 @@ export function createDB(d1Database: D1Database) {
 // For development/local testing with a local SQLite file
 export function createLocalDB() {
   // This will only be used in development
-  const { drizzle: drizzleLocal } = require('drizzle-orm/libsql');
-  const { createClient } = require('@libsql/client');
+  const { drizzle: drizzleLocal } = require("drizzle-orm/libsql");
+  const { createClient } = require("@libsql/client");
 
   const client = createClient({
-    url: process.env.DATABASE_URL || 'file:./dev.db',
+    url: process.env.DATABASE_URL || "file:./dev.db",
     authToken: process.env.TURSO_AUTH_TOKEN,
   });
 
@@ -22,7 +22,7 @@ export function createLocalDB() {
 }
 
 // Export all schema tables for convenience
-export * from './schema';
+export * from "./schema";
 
 // Export types
 export type Users = typeof schema.users.$inferSelect;
@@ -49,4 +49,24 @@ export type MediaAsset = typeof schema.mediaAssets.$inferSelect;
 export type NewMediaAsset = typeof schema.mediaAssets.$inferInsert;
 
 // Export Drizzle operators to ensure version compatibility across workspace
-export { eq, ne, gt, gte, lt, lte, and, or, not, like, ilike, inArray, notInArray, isNull, isNotNull, desc, asc, count, sql } from 'drizzle-orm';
+export {
+  and,
+  asc,
+  count,
+  desc,
+  eq,
+  gt,
+  gte,
+  ilike,
+  inArray,
+  isNotNull,
+  isNull,
+  like,
+  lt,
+  lte,
+  ne,
+  not,
+  notInArray,
+  or,
+  sql,
+} from "drizzle-orm";

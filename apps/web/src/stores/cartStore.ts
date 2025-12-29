@@ -65,7 +65,7 @@ const shippingAddressSchema = z.object({
   address: z.string().min(1, "請輸入詳細地址"),
   city: z.string().min(1, "請選擇城市"),
   district: z.string().min(1, "請選擇區域"),
-  postalCode: z.string().regex(/^\d{3,5}$/, "請輸入有效的郵遞區號"),
+  postalCode: z.string().optional().default(""),
 });
 
 export interface CartStore {
@@ -75,7 +75,13 @@ export interface CartStore {
   error: string | null;
   customerInfo: CustomerInfo | null;
   shippingAddress: ShippingAddress | null;
-  paymentMethod: "bank_transfer" | "credit_card" | "cash_on_delivery";
+  paymentMethod:
+    | "bank_transfer"
+    | "credit_card"
+    | "cash_on_delivery"
+    | "virtual_account"
+    | "apple_pay"
+    | "google_pay";
   notes: string;
   isSubmittingOrder: boolean;
   logisticSettings: LogisticSettings;
@@ -100,7 +106,13 @@ export interface CartStore {
   setCustomerInfo: (info: CustomerInfo) => void;
   setShippingAddress: (address: ShippingAddress) => void;
   setPaymentMethod: (
-    method: "bank_transfer" | "credit_card" | "cash_on_delivery"
+    method:
+      | "bank_transfer"
+      | "credit_card"
+      | "cash_on_delivery"
+      | "virtual_account"
+      | "apple_pay"
+      | "google_pay"
   ) => void;
   setNotes: (notes: string) => void;
 
@@ -114,6 +126,16 @@ export interface CartStore {
   createOrder: () => Promise<{
     success: boolean;
     orderNumber?: string;
+    error?: string;
+  }>;
+
+  // GOMYPAY payment initiation
+  initiateGomypayPayment: () => Promise<{
+    success: boolean;
+    type?: "form" | "redirect";
+    submitUrl?: string;
+    formData?: Record<string, string>;
+    redirectUrl?: string;
     error?: string;
   }>;
 
@@ -247,7 +269,13 @@ const createOrder = async (
     const result = await response.json();
 
     if (!response.ok) {
-      throw new Error(result.error || "訂單建立失敗");
+      const errorMessage =
+        typeof result.error === "string"
+          ? result.error
+          : result.error?.message ||
+            JSON.stringify(result.error) ||
+            "訂單建立失敗";
+      throw new Error(errorMessage);
     }
 
     return {
@@ -415,7 +443,6 @@ export const useCartStore = create<CartStore>()(
           set({ error: validation.errors[0] });
           return { success: false, error: validation.errors[0] };
         }
-
         set({ isSubmittingOrder: true, error: null });
 
         try {
@@ -438,6 +465,103 @@ export const useCartStore = create<CartStore>()(
           }
 
           return result;
+        } finally {
+          set({ isSubmittingOrder: false });
+        }
+      },
+
+      initiateGomypayPayment: async () => {
+        const state = get();
+
+        // Validate cart first
+        const validation = state.validateCart();
+        if (!validation.isValid) {
+          return { success: false, error: validation.errors[0] };
+        }
+
+        if (!state.customerInfo) {
+          return { success: false, error: "請填寫客戶資料" };
+        }
+
+        // Check if payment method uses GOMYPAY
+        const gomypayMethods = [
+          "credit_card",
+          "virtual_account",
+          "apple_pay",
+          "google_pay",
+        ];
+        if (!gomypayMethods.includes(state.paymentMethod)) {
+          return { success: false, error: "此付款方式不支援線上付款" };
+        }
+
+        set({ isSubmittingOrder: true, error: null });
+
+        try {
+          // First create the order
+          const orderResult = await createOrder(
+            state.items,
+            state.customerInfo,
+            state.shippingAddress,
+            state.paymentMethod,
+            state.notes,
+            state.getSubtotal(),
+            state.getShippingFee(),
+            state.getTotal()
+          );
+
+          if (!orderResult.success || !orderResult.orderNumber) {
+            return {
+              success: false,
+              error: orderResult.error || "訂單建立失敗",
+            };
+          }
+
+          // Then initiate GOMYPAY payment
+          const apiUrl = getApiUrl();
+          const paymentEndpoint = apiUrl
+            ? `${apiUrl}/api/payment/initiate`
+            : "/api/payment/initiate";
+
+          const paymentResponse = await fetch(paymentEndpoint, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              orderNo: orderResult.orderNumber,
+              amount: Math.round(state.getTotal() * 1.05), // Include tax
+              buyerName: state.customerInfo.name,
+              buyerPhone: state.customerInfo.phone,
+              buyerEmail: state.customerInfo.email,
+              buyerMemo: `訂單 ${orderResult.orderNumber}`,
+              paymentType: state.paymentMethod,
+            }),
+          });
+
+          const paymentResult = await paymentResponse.json();
+
+          if (!paymentResult.success) {
+            return {
+              success: false,
+              error: paymentResult.error || "付款初始化失敗",
+            };
+          }
+
+          // Clear cart on successful payment initiation
+          get().clearCart();
+
+          // Return the result for frontend to handle (redirect or form submission)
+          return {
+            success: true,
+            type: paymentResult.data.type,
+            submitUrl: paymentResult.data.submitUrl,
+            formData: paymentResult.data.formData,
+            redirectUrl: paymentResult.data.redirectUrl,
+          };
+        } catch (error) {
+          console.error("GOMYPAY payment initiation error:", error);
+          return {
+            success: false,
+            error: "付款初始化失敗，請稍後再試",
+          };
         } finally {
           set({ isSubmittingOrder: false });
         }

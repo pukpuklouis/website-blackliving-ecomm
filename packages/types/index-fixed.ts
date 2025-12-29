@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from "zod";
 
 const slugRegex = /^[a-z0-9-]+$/;
 
@@ -23,7 +23,7 @@ export const ProductSchema = z.object({
   variants: z.array(ProductVariantSchema),
   features: z.array(z.string()),
   featuresMarkdown: z.string().optional(), // Accessory-specific field
-  accessoryType: z.enum(['standalone', 'accessory', 'bundle']).optional(), // Accessory-specific field
+  accessoryType: z.enum(["standalone", "accessory", "bundle"]).optional(), // Accessory-specific field
   parentProductId: z.string().optional(), // Accessory-specific field
   specifications: z.record(z.string()),
   inStock: z.boolean().default(true),
@@ -82,8 +82,15 @@ export const OrderSchema = z.object({
   customerInfo: CustomerInfoSchema,
   items: z.array(OrderItemSchema),
   totalAmount: z.number().positive(),
-  paymentMethod: z.enum(['bank_transfer']).default('bank_transfer'),
-  status: z.enum(['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled']),
+  paymentMethod: z.enum(["bank_transfer"]).default("bank_transfer"),
+  status: z.enum([
+    "pending",
+    "confirmed",
+    "processing",
+    "shipped",
+    "delivered",
+    "cancelled",
+  ]),
   notes: z.string().optional(),
   trackingNumber: z.string().optional(),
   createdAt: z.date(),
@@ -104,19 +111,21 @@ export const AppointmentCustomerInfoSchema = z.object({
 export const AppointmentSchema = z.object({
   id: z.string(),
   customerInfo: AppointmentCustomerInfoSchema,
-  storeLocation: z.enum(['中和', '中壢']),
+  storeLocation: z.enum(["中和", "中壢"]),
   preferredDate: z.string(),
-  preferredTime: z.enum(['上午', '下午', '晚上']),
+  preferredTime: z.enum(["上午", "下午", "晚上"]),
   confirmedDateTime: z.string().optional(),
   productInterest: z.array(z.string()).optional(),
-  status: z.enum(['pending', 'confirmed', 'completed', 'cancelled']),
+  status: z.enum(["pending", "confirmed", "completed", "cancelled"]),
   notes: z.string().optional(),
   createdAt: z.date(),
   updatedAt: z.date(),
 });
 
 export type Appointment = z.infer<typeof AppointmentSchema>;
-export type AppointmentCustomerInfo = z.infer<typeof AppointmentCustomerInfoSchema>;
+export type AppointmentCustomerInfo = z.infer<
+  typeof AppointmentCustomerInfoSchema
+>;
 
 // Blog Post Types
 export const PostSchema = z.object({
@@ -127,7 +136,7 @@ export const PostSchema = z.object({
   content: z.string(),
   authorId: z.string().optional(),
   authorName: z.string().optional(),
-  status: z.enum(['draft', 'published', 'archived']),
+  status: z.enum(["draft", "published", "archived"]),
   featured: z.boolean().default(false),
   category: z.string().optional(),
   categoryId: z.string().optional(),
@@ -147,7 +156,7 @@ export const PostSchema = z.object({
 export type Post = z.infer<typeof PostSchema>;
 
 // User Types
-export const UserRoleSchema = z.enum(['customer', 'admin']);
+export const UserRoleSchema = z.enum(["customer", "admin"]);
 
 export const UserSchema = z.object({
   id: z.string(),
@@ -156,7 +165,7 @@ export const UserSchema = z.object({
   emailVerified: z.boolean().default(false),
   image: z.string().optional(),
   phone: z.string().optional(),
-  role: UserRoleSchema.default('customer'),
+  role: UserRoleSchema.default("customer"),
   preferences: z.record(z.any()).default({}),
   createdAt: z.date(),
   updatedAt: z.date(),
@@ -196,7 +205,7 @@ export const SEODataSchema = z.object({
   description: z.string(),
   image: z.string().optional(),
   url: z.string().optional(),
-  type: z.enum(['website', 'article', 'product']).default('website'),
+  type: z.enum(["website", "article", "product"]).default("website"),
   publishDate: z.date().optional(),
   author: z.string().optional(),
   price: z.string().optional(),
@@ -225,7 +234,7 @@ export const ReviewSchema = z.object({
   productId: z.string().optional(),
   rating: z.number().min(1).max(5),
   content: z.string(),
-  source: z.enum(['website', 'shopee', 'google']).default('website'),
+  source: z.enum(["website", "shopee", "google"]).default("website"),
   verified: z.boolean().default(false),
   featured: z.boolean().default(false),
   createdAt: z.date(),
@@ -234,4 +243,4 @@ export const ReviewSchema = z.object({
 export type Review = z.infer<typeof ReviewSchema>;
 
 // Export all API types
-export * from './api';
+export * from "./api";

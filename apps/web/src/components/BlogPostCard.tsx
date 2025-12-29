@@ -171,7 +171,7 @@ export const BlogPostCard = memo(function BlogPostCard({
           </a>
         </h2>
         {post.publishedAt ? (
-          <p className="-mt-1 md:-mt-3 text-gray-500 text-sm md:text-lg">
+          <p className="-mt-1 text-gray-500 text-sm md:-mt-3 md:text-lg">
             {formatPublishedAt(post.publishedAt)}
           </p>
         ) : null}

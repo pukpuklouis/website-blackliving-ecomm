@@ -1,7 +1,7 @@
-import { createMiddleware } from 'hono/factory';
-import { HTTPException } from 'hono/http-exception';
-import { Context, Next } from 'hono';
-import { AuthInstance } from '@blackliving/auth';
+import type { AuthInstance } from "@blackliving/auth";
+import type { Context, Next } from "hono";
+import { createMiddleware } from "hono/factory";
+import { HTTPException } from "hono/http-exception";
 
 /**
  * Enhanced Better Auth middleware with security logging
@@ -11,12 +11,12 @@ export function createEnhancedAuthMiddleware(auth: AuthInstance) {
     try {
       // FIXED: More comprehensive IP address extraction for Cloudflare Workers
       const ip =
-        c.req.header('cf-connecting-ip') ||
-        c.req.header('x-forwarded-for')?.split(',')[0]?.trim() ||
-        c.req.header('x-real-ip') ||
-        '0.0.0.0'; // Fallback IP instead of 'unknown'
+        c.req.header("cf-connecting-ip") ||
+        c.req.header("x-forwarded-for")?.split(",")[0]?.trim() ||
+        c.req.header("x-real-ip") ||
+        "0.0.0.0"; // Fallback IP instead of 'unknown'
 
-      console.log('Auth middleware - IP detected:', ip);
+      console.log("Auth middleware - IP detected:", ip);
 
       // Get session using Better Auth's built-in method
       // FIXED: Don't pass ipAddress parameter to avoid validation issues
@@ -24,7 +24,7 @@ export function createEnhancedAuthMiddleware(auth: AuthInstance) {
         headers: c.req.raw.headers,
       });
 
-      console.log('Auth middleware - Session result:', {
+      console.log("Auth middleware - Session result:", {
         hasSession: !!session?.session,
         hasUser: !!session?.user,
         userId: session?.user?.id,
@@ -33,8 +33,8 @@ export function createEnhancedAuthMiddleware(auth: AuthInstance) {
       });
 
       // Set user and session in context
-      c.set('user', session?.user || null);
-      c.set('session', session?.session || null);
+      c.set("user", session?.user || null);
+      c.set("session", session?.session || null);
 
       // Log authentication events for security monitoring
       if (session?.user) {
@@ -45,13 +45,13 @@ export function createEnhancedAuthMiddleware(auth: AuthInstance) {
         console.log(`Unauthenticated request: ip=${ip}, path=${c.req.path}`);
       }
     } catch (error) {
-      console.error('Enhanced auth middleware error:', {
-        message: error instanceof Error ? error.message : 'Unknown error',
+      console.error("Enhanced auth middleware error:", {
+        message: error instanceof Error ? error.message : "Unknown error",
         stack: error instanceof Error ? error.stack : undefined,
         error: JSON.stringify(error, null, 2),
       });
-      c.set('user', null);
-      c.set('session', null);
+      c.set("user", null);
+      c.set("session", null);
     }
 
     await next();
@@ -61,120 +61,135 @@ export function createEnhancedAuthMiddleware(auth: AuthInstance) {
 /**
  * Middleware to require authentication with enhanced security logging
  */
-export const requireAuth = () => {
-  return createMiddleware(async (c, next) => {
-    const user = c.get('user');
+export const requireAuth = () =>
+  createMiddleware(async (c, next) => {
+    const user = c.get("user");
     const ip =
-      c.req.header('cf-connecting-ip') ||
-      c.req.header('x-forwarded-for')?.split(',')[0] ||
-      'unknown';
+      c.req.header("cf-connecting-ip") ||
+      c.req.header("x-forwarded-for")?.split(",")[0] ||
+      "unknown";
 
     if (!user) {
-      console.warn(`Unauthorized access attempt from IP: ${ip}, path: ${c.req.path}`);
+      console.warn(
+        `Unauthorized access attempt from IP: ${ip}, path: ${c.req.path}`
+      );
       throw new HTTPException(401, {
-        message: 'Authentication required',
+        message: "Authentication required",
       });
     }
 
     await next();
   });
-};
 
 /**
  * Enhanced admin role guard with security logging
  */
-export const requireAdmin = () => {
-  return createMiddleware(async (c, next) => {
-    const user = c.get('user');
+export const requireAdmin = () =>
+  createMiddleware(async (c, next) => {
+    const user = c.get("user");
     const ip =
-      c.req.header('cf-connecting-ip') ||
-      c.req.header('x-forwarded-for')?.split(',')[0] ||
-      'unknown';
+      c.req.header("cf-connecting-ip") ||
+      c.req.header("x-forwarded-for")?.split(",")[0] ||
+      "unknown";
 
     if (!user) {
-      console.warn(`Unauthorized admin access attempt from IP: ${ip}, path: ${c.req.path}`);
+      console.warn(
+        `Unauthorized admin access attempt from IP: ${ip}, path: ${c.req.path}`
+      );
       throw new HTTPException(401, {
-        message: 'Authentication required',
+        message: "Authentication required",
       });
     }
 
-    if (user.role !== 'admin') {
+    if (user.role !== "admin") {
       console.warn(
         `Forbidden admin access attempt: user=${user.id}, role=${user.role}, ip=${ip}, path=${c.req.path}`
       );
       throw new HTTPException(403, {
-        message: 'Admin access required',
+        message: "Admin access required",
       });
     }
 
-    console.log(`Admin access granted: user=${user.id}, ip=${ip}, path=${c.req.path}`);
+    console.log(
+      `Admin access granted: user=${user.id}, ip=${ip}, path=${c.req.path}`
+    );
     await next();
   });
-};
 
 /**
  * Middleware to require customer role (or admin) with security logging
  */
-export const requireCustomer = () => {
-  return createMiddleware(async (c, next) => {
-    const user = c.get('user');
+export const requireCustomer = () =>
+  createMiddleware(async (c, next) => {
+    const user = c.get("user");
     const ip =
-      c.req.header('cf-connecting-ip') ||
-      c.req.header('x-forwarded-for')?.split(',')[0] ||
-      'unknown';
+      c.req.header("cf-connecting-ip") ||
+      c.req.header("x-forwarded-for")?.split(",")[0] ||
+      "unknown";
 
     if (!user) {
-      console.warn(`Unauthorized customer access attempt from IP: ${ip}, path: ${c.req.path}`);
+      console.warn(
+        `Unauthorized customer access attempt from IP: ${ip}, path: ${c.req.path}`
+      );
       throw new HTTPException(401, {
-        message: 'Authentication required',
+        message: "Authentication required",
       });
     }
 
-    if (user.role !== 'customer' && user.role !== 'admin') {
+    if (user.role !== "customer" && user.role !== "admin") {
       console.warn(
         `Forbidden customer access attempt: user=${user.id}, role=${user.role}, ip=${ip}, path=${c.req.path}`
       );
       throw new HTTPException(403, {
-        message: 'Customer access required',
+        message: "Customer access required",
       });
     }
 
     await next();
   });
-};
 
 /**
  * Role-based access control middleware
  */
 export function requireRole(requiredRole: string | string[]) {
   return createMiddleware(async (c, next) => {
-    const user = c.get('user');
+    const user = c.get("user");
     const ip =
-      c.req.header('cf-connecting-ip') ||
-      c.req.header('x-forwarded-for')?.split(',')[0] ||
-      'unknown';
+      c.req.header("cf-connecting-ip") ||
+      c.req.header("x-forwarded-for")?.split(",")[0] ||
+      "unknown";
 
     // Debug logging
-    console.log('DEBUG requireRole - user object:', JSON.stringify(user, null, 2));
-    console.log('DEBUG requireRole - required roles:', requiredRole);
+    console.log(
+      "DEBUG requireRole - user object:",
+      JSON.stringify(user, null, 2)
+    );
+    console.log("DEBUG requireRole - required roles:", requiredRole);
 
     if (!user) {
-      console.warn(`Unauthorized role access attempt from IP: ${ip}, path: ${c.req.path}`);
+      console.warn(
+        `Unauthorized role access attempt from IP: ${ip}, path: ${c.req.path}`
+      );
       throw new HTTPException(401, {
-        message: 'Authentication required',
+        message: "Authentication required",
       });
     }
 
     const roles = Array.isArray(requiredRole) ? requiredRole : [requiredRole];
 
-    console.log('DEBUG requireRole - user.role:', user.role, 'required:', roles);
+    console.log(
+      "DEBUG requireRole - user.role:",
+      user.role,
+      "required:",
+      roles
+    );
 
     if (!roles.includes(user.role)) {
       console.warn(
-        `Insufficient role access attempt: user=${user.id}, role=${user.role}, required=${roles.join('|')}, ip=${ip}, path=${c.req.path}`
+        `Insufficient role access attempt: user=${user.id}, role=${user.role}, required=${roles.join("|")}, ip=${ip}, path=${c.req.path}`
       );
       throw new HTTPException(403, {
-        message: `Access denied. Required role: ${roles.join(' or ')}`,
+        message: `Access denied. Required role: ${roles.join(" or ")}`,
       });
     }
 
@@ -185,23 +200,23 @@ export function requireRole(requiredRole: string | string[]) {
 /**
  * User ownership guard - ensures user can only access their own resources
  */
-export function requireOwnership(userIdParam: string = 'userId') {
+export function requireOwnership(userIdParam = "userId") {
   return createMiddleware(async (c, next) => {
-    const user = c.get('user');
+    const user = c.get("user");
     const resourceUserId = c.req.param(userIdParam);
     const ip =
-      c.req.header('cf-connecting-ip') ||
-      c.req.header('x-forwarded-for')?.split(',')[0] ||
-      'unknown';
+      c.req.header("cf-connecting-ip") ||
+      c.req.header("x-forwarded-for")?.split(",")[0] ||
+      "unknown";
 
     if (!user) {
       throw new HTTPException(401, {
-        message: 'Authentication required',
+        message: "Authentication required",
       });
     }
 
     // Admin users can access any resource
-    if (user.role === 'admin') {
+    if (user.role === "admin") {
       await next();
       return;
     }
@@ -212,7 +227,7 @@ export function requireOwnership(userIdParam: string = 'userId') {
         `Ownership violation attempt: user=${user.id}, attempted_access=${resourceUserId}, ip=${ip}, path=${c.req.path}`
       );
       throw new HTTPException(403, {
-        message: 'Access denied. You can only access your own resources.',
+        message: "Access denied. You can only access your own resources.",
       });
     }
 
@@ -223,14 +238,14 @@ export function requireOwnership(userIdParam: string = 'userId') {
 /**
  * Session freshness guard - requires recent authentication for sensitive operations
  */
-export function requireFreshSession(maxAgeMinutes: number = 30) {
+export function requireFreshSession(maxAgeMinutes = 30) {
   return createMiddleware(async (c, next) => {
-    const session = c.get('session');
-    const user = c.get('user');
+    const session = c.get("session");
+    const user = c.get("user");
 
-    if (!user || !session) {
+    if (!(user && session)) {
       throw new HTTPException(401, {
-        message: 'Authentication required',
+        message: "Authentication required",
       });
     }
 
@@ -240,10 +255,10 @@ export function requireFreshSession(maxAgeMinutes: number = 30) {
 
     if (sessionAge > maxAge) {
       console.warn(
-        `Stale session access attempt: user=${user.id}, session_age=${Math.round(sessionAge / 60000)}min`
+        `Stale session access attempt: user=${user.id}, session_age=${Math.round(sessionAge / 60_000)}min`
       );
       throw new HTTPException(403, {
-        message: 'Session too old. Please re-authenticate for this operation.',
+        message: "Session too old. Please re-authenticate for this operation.",
       });
     }
 
@@ -256,9 +271,9 @@ export function requireFreshSession(maxAgeMinutes: number = 30) {
  */
 export function developmentOnly() {
   return createMiddleware(async (c, next) => {
-    if (c.env.NODE_ENV !== 'development') {
+    if (c.env.NODE_ENV !== "development") {
       throw new HTTPException(404, {
-        message: 'Not found',
+        message: "Not found",
       });
     }
 
@@ -271,24 +286,24 @@ export function developmentOnly() {
  */
 export function auditLog(operation: string) {
   return createMiddleware(async (c, next) => {
-    const user = c.get('user');
+    const user = c.get("user");
     const ip =
-      c.req.header('cf-connecting-ip') ||
-      c.req.header('x-forwarded-for')?.split(',')[0] ||
-      'unknown';
+      c.req.header("cf-connecting-ip") ||
+      c.req.header("x-forwarded-for")?.split(",")[0] ||
+      "unknown";
 
     const auditData = {
       operation,
-      userId: user?.id || 'anonymous',
-      userRole: user?.role || 'none',
+      userId: user?.id || "anonymous",
+      userRole: user?.role || "none",
       ip,
       path: c.req.path,
       method: c.req.method,
       timestamp: new Date().toISOString(),
-      userAgent: c.req.header('user-agent'),
+      userAgent: c.req.header("user-agent"),
     };
 
-    console.log('AUDIT:', JSON.stringify(auditData));
+    console.log("AUDIT:", JSON.stringify(auditData));
 
     // TODO: Store audit logs in database or external service
     // await storeAuditLog(auditData);

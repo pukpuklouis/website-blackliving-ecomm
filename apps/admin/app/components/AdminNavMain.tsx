@@ -1,13 +1,12 @@
-import { type LucideIcon } from 'lucide-react';
-import { Link, useLocation } from 'react-router';
-
 import {
   SidebarGroup,
   SidebarGroupContent,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from '@blackliving/ui';
+} from "@blackliving/ui";
+import type { LucideIcon } from "lucide-react";
+import { Link, useLocation } from "react-router";
 
 export function AdminNavMain({
   items,
@@ -28,7 +27,11 @@ export function AdminNavMain({
             const isActive = location.pathname === item.url;
             return (
               <SidebarMenuItem key={item.title}>
-                <SidebarMenuButton tooltip={item.title} asChild isActive={isActive}>
+                <SidebarMenuButton
+                  asChild
+                  isActive={isActive}
+                  tooltip={item.title}
+                >
                   <Link to={item.url}>
                     {item.icon && <item.icon />}
                     <span>{item.title}</span>

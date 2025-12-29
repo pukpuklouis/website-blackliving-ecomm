@@ -1,26 +1,4 @@
-import { useState, useEffect } from 'react';
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-  Button,
-  Input,
-  Label,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  Badge,
-  Textarea,
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -29,117 +7,60 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from '@blackliving/ui';
+  Badge,
+  Button,
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+  Input,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@blackliving/ui";
+import CheckCircle from "@lucide/react/check-circle";
+import Clock from "@lucide/react/clock";
+import DollarSign from "@lucide/react/dollar-sign";
+import Eye from "@lucide/react/eye";
+import Filter from "@lucide/react/filter";
+import MoreHorizontal from "@lucide/react/more-horizontal";
+import Package from "@lucide/react/package";
+import Pencil from "@lucide/react/pencil";
 // Tree-shakable Lucide imports
-import Search from '@lucide/react/search';
-import Eye from '@lucide/react/eye';
-import Edit from '@lucide/react/edit';
-import Package from '@lucide/react/package';
-import Truck from '@lucide/react/truck';
-import CheckCircle from '@lucide/react/check-circle';
-import XCircle from '@lucide/react/x-circle';
-import Clock from '@lucide/react/clock';
-import Filter from '@lucide/react/filter';
-import DollarSign from '@lucide/react/dollar-sign';
-import FileImage from '@lucide/react/file-image';
+import Search from "@lucide/react/search";
+import Trash2 from "@lucide/react/trash-2";
+import Truck from "@lucide/react/truck";
 import {
-  useReactTable,
+  type ColumnFiltersState,
   createColumnHelper,
+  flexRender,
   getCoreRowModel,
   getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
-  flexRender,
   type SortingState,
-  type ColumnFiltersState,
-} from '@tanstack/react-table';
-import { toast } from 'sonner';
-import { useApiUrl } from '../../contexts/EnvironmentContext';
-
-interface OrderItem {
-  productId: string;
-  variantId?: string;
-  quantity: number;
-  price: number;
-  name: string;
-  size?: string;
-}
-
-interface CustomerInfo {
-  name: string;
-  email: string;
-  phone: string;
-}
-
-interface ShippingAddress {
-  name: string;
-  phone: string;
-  address: string;
-  city: string;
-  district: string;
-  postalCode: string;
-}
-
-interface Order {
-  id: string;
-  orderNumber: string;
-  userId?: string;
-  customerInfo: CustomerInfo;
-  items: OrderItem[];
-  subtotalAmount: number;
-  shippingFee: number;
-  totalAmount: number;
-  paymentMethod: 'bank_transfer' | 'credit_card' | 'cash_on_delivery';
-  status: 'pending_payment' | 'paid' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
-  paymentStatus: 'unpaid' | 'paid' | 'refunded';
-  paymentProof?: string;
-  paymentVerifiedAt?: Date;
-  paymentVerifiedBy?: string;
-  notes: string;
-  adminNotes: string;
-  shippingAddress?: ShippingAddress;
-  trackingNumber?: string;
-  shippingCompany?: string;
-  shippedAt?: Date;
-  deliveredAt?: Date;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-const statusLabels = {
-  pending_payment: '待付款',
-  paid: '已付款',
-  processing: '處理中',
-  shipped: '配送中',
-  delivered: '已完成',
-  cancelled: '已取消',
-};
-
-const statusColors = {
-  pending_payment: 'bg-yellow-500',
-  paid: 'bg-blue-500',
-  processing: 'bg-purple-500',
-  shipped: 'bg-orange-500',
-  delivered: 'bg-green-500',
-  cancelled: 'bg-gray-500',
-};
-
-const paymentStatusLabels = {
-  unpaid: '未付款',
-  paid: '已付款',
-  refunded: '已退款',
-};
-
-const paymentMethodLabels = {
-  bank_transfer: '銀行轉帳',
-  credit_card: '信用卡',
-  cash_on_delivery: '貨到付款',
-};
+  useReactTable,
+} from "@tanstack/react-table";
+import { useCallback, useEffect, useState } from "react";
+import { toast } from "sonner";
+import { useApiUrl } from "../../contexts/EnvironmentContext";
+import {
+  type Order,
+  OrderDetailsDialog,
+  paymentMethodLabels,
+  paymentStatusLabels,
+  statusColors,
+  statusLabels,
+} from "./order-details-dialog";
+import { type OrderEditData, OrderEditDialog } from "./order-edit-dialog";
 
 export default function OrdersPage() {
   const apiUrl = useApiUrl();
@@ -147,115 +68,132 @@ export default function OrdersPage() {
   const [loading, setLoading] = useState(true);
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
-  const [globalFilter, setGlobalFilter] = useState('');
+  const [globalFilter, setGlobalFilter] = useState("");
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [editFormData, setEditFormData] = useState<Partial<Order>>({});
+  const [orderToEdit, setOrderToEdit] = useState<Order | null>(null);
+  const [orderToDelete, setOrderToDelete] = useState<Order | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   const columnHelper = createColumnHelper<Order>();
 
   const columns = [
-    columnHelper.accessor('orderNumber', {
-      header: '訂單編號',
-      cell: (info) => <div className="font-mono text-sm font-medium">{info.getValue()}</div>,
+    columnHelper.accessor("orderNumber", {
+      header: "訂單編號",
+      cell: (info) => (
+        <div className="font-medium font-mono text-sm">{info.getValue()}</div>
+      ),
     }),
-    columnHelper.accessor('customerInfo', {
-      header: '客戶資訊',
+    columnHelper.accessor("customerInfo", {
+      header: "客戶資訊",
       cell: (info) => {
         const customer = info.getValue();
         return (
           <div>
             <div className="font-medium">{customer.name}</div>
-            <div className="text-sm text-gray-600">{customer.email}</div>
-            <div className="text-sm text-gray-600">{customer.phone}</div>
+            <div className="text-gray-600 text-sm">{customer.email}</div>
+            <div className="text-gray-600 text-sm">{customer.phone}</div>
           </div>
         );
       },
     }),
-    columnHelper.accessor('totalAmount', {
-      header: '總金額',
-      cell: (info) => <div className="font-medium">NT${info.getValue().toLocaleString()}</div>,
+    columnHelper.accessor("totalAmount", {
+      header: "總金額",
+      cell: (info) => (
+        <div className="font-medium">NT${info.getValue().toLocaleString()}</div>
+      ),
     }),
-    columnHelper.accessor('paymentMethod', {
-      header: '付款方式',
-      cell: (info) => <Badge variant="outline">{paymentMethodLabels[info.getValue()]}</Badge>,
+    columnHelper.accessor("paymentMethod", {
+      header: "付款方式",
+      cell: (info) => (
+        <Badge variant="outline">{paymentMethodLabels[info.getValue()]}</Badge>
+      ),
     }),
-    columnHelper.accessor('status', {
-      header: '訂單狀態',
+    columnHelper.accessor("status", {
+      header: "訂單狀態",
       cell: (info) => (
         <Badge className={`text-white ${statusColors[info.getValue()]}`}>
           {statusLabels[info.getValue()]}
         </Badge>
       ),
-      filterFn: 'equals',
+      filterFn: "equals",
     }),
-    columnHelper.accessor('paymentStatus', {
-      header: '付款狀態',
+    columnHelper.accessor("paymentStatus", {
+      header: "付款狀態",
       cell: (info) => (
         <Badge
-          variant={info.getValue() === 'paid' ? 'default' : 'secondary'}
           className={
-            info.getValue() === 'paid' ? 'bg-green-500 text-white hover:bg-green-500/90' : ''
+            info.getValue() === "paid"
+              ? "bg-green-500 text-white hover:bg-green-500/90"
+              : ""
           }
+          variant={info.getValue() === "paid" ? "default" : "secondary"}
         >
           {paymentStatusLabels[info.getValue()]}
         </Badge>
       ),
     }),
-    columnHelper.accessor('createdAt', {
-      header: '建立時間',
+    columnHelper.accessor("createdAt", {
+      header: "建立時間",
       cell: (info) =>
-        new Date(info.getValue()).toLocaleDateString('zh-TW', {
-          year: 'numeric',
-          month: '2-digit',
-          day: '2-digit',
-          hour: '2-digit',
-          minute: '2-digit',
+        new Date(info.getValue()).toLocaleDateString("zh-TW", {
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit",
         }),
     }),
     columnHelper.display({
-      id: 'actions',
-      header: '操作',
+      id: "actions",
+      header: "操作",
       cell: ({ row }) => (
-        <div className="flex gap-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => handleViewDetails(row.original)}
-            title="查看詳情"
-          >
-            <Eye className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => handleEdit(row.original)}
-            title="編輯訂單"
-          >
-            <Edit className="h-4 w-4" />
-          </Button>
-          {row.original.status === 'paid' && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => handleUpdateStatus(row.original.id, 'processing')}
-              title="標記為處理中"
-            >
-              <Package className="h-4 w-4" />
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button size="icon" variant="ghost">
+              <MoreHorizontal className="h-4 w-4" />
             </Button>
-          )}
-          {row.original.status === 'processing' && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => handleUpdateStatus(row.original.id, 'shipped')}
-              title="標記為已出貨"
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-40">
+            <DropdownMenuItem onClick={() => handleViewDetails(row.original)}>
+              <Eye className="mr-2 h-4 w-4" />
+              查看詳情
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => handleOpenEditDialog(row.original)}
             >
-              <Truck className="h-4 w-4" />
-            </Button>
-          )}
-        </div>
+              <Pencil className="mr-2 h-4 w-4" />
+              編輯訂單
+            </DropdownMenuItem>
+            {row.original.status === "paid" && (
+              <DropdownMenuItem
+                onClick={() =>
+                  handleUpdateStatus(row.original.id, "processing")
+                }
+              >
+                <Package className="mr-2 h-4 w-4" />
+                標記為處理中
+              </DropdownMenuItem>
+            )}
+            {row.original.status === "processing" && (
+              <DropdownMenuItem
+                onClick={() => handleUpdateStatus(row.original.id, "shipped")}
+              >
+                <Truck className="mr-2 h-4 w-4" />
+                標記為已出貨
+              </DropdownMenuItem>
+            )}
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              className="text-red-600 focus:bg-red-50 focus:text-red-700"
+              onClick={() => handleOpenDeleteDialog(row.original)}
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              刪除訂單
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       ),
     }),
   ];
@@ -277,93 +215,153 @@ export default function OrdersPage() {
     getSortedRowModel: getSortedRowModel(),
   });
 
-  useEffect(() => {
-    loadOrders();
-  }, []);
-
-  const loadOrders = async () => {
+  const loadOrders = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${apiUrl}/api/orders`);
+      const response = await fetch(`${apiUrl}/api/orders`, {
+        credentials: "include",
+      });
       if (response.ok) {
         const result = await response.json();
         setOrders(result.success ? result.data.orders : []);
       }
     } catch (error) {
-      console.error('Failed to load orders:', error);
-      toast.error('載入訂單失敗');
+      console.error("Failed to load orders:", error);
+      toast.error("載入訂單失敗");
     } finally {
       setLoading(false);
     }
-  };
+  }, [apiUrl]);
+
+  useEffect(() => {
+    loadOrders();
+  }, [loadOrders]);
 
   const handleViewDetails = (order: Order) => {
     setSelectedOrder(order);
     setIsDetailDialogOpen(true);
   };
 
-  const handleEdit = (order: Order) => {
-    setSelectedOrder(order);
-    setEditFormData(order);
-    setIsEditDialogOpen(true);
-  };
-
-  const handleUpdateStatus = async (orderId: string, newStatus: Order['status']) => {
+  const handleUpdateStatus = async (
+    orderId: string,
+    newStatus: Order["status"]
+  ) => {
     try {
       const response = await fetch(`${apiUrl}/api/orders/${orderId}/status`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ status: newStatus }),
       });
 
       if (response.ok) {
         setOrders((prev) =>
           prev.map((order) =>
-            order.id === orderId ? { ...order, status: newStatus, updatedAt: new Date() } : order
+            order.id === orderId
+              ? { ...order, status: newStatus, updatedAt: new Date() }
+              : order
           )
         );
-        toast.success('訂單狀態更新成功');
+        toast.success("訂單狀態更新成功");
       } else {
-        throw new Error('Failed to update order status');
+        throw new Error("Failed to update order status");
       }
     } catch (error) {
-      console.error('Update status failed:', error);
-      toast.error('更新訂單狀態失敗');
+      console.error("Update status failed:", error);
+      toast.error("更新訂單狀態失敗");
     }
   };
 
   const handleConfirmPayment = async (orderId: string) => {
     try {
-      const response = await fetch(`${apiUrl}/api/orders/${orderId}/confirm-payment`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          paymentStatus: 'paid',
-          status: 'paid',
-          paymentVerifiedAt: new Date(),
-          paymentVerifiedBy: 'admin', // This should be from auth context
-        }),
-      });
+      const response = await fetch(
+        `${apiUrl}/api/orders/${orderId}/confirm-payment`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({
+            paymentStatus: "paid",
+            status: "paid",
+            paymentVerifiedAt: new Date(),
+            paymentVerifiedBy: "admin", // This should be from auth context
+          }),
+        }
+      );
 
       if (response.ok) {
         await loadOrders(); // Reload to get updated data
-        toast.success('付款確認成功');
+        toast.success("付款確認成功");
       } else {
-        throw new Error('Failed to confirm payment');
+        throw new Error("Failed to confirm payment");
       }
     } catch (error) {
-      console.error('Confirm payment failed:', error);
-      toast.error('確認付款失敗');
+      console.error("Confirm payment failed:", error);
+      toast.error("確認付款失敗");
+    }
+  };
+
+  const handleOpenEditDialog = (order: Order) => {
+    setOrderToEdit(order);
+    setIsEditDialogOpen(true);
+  };
+
+  const handleOpenDeleteDialog = (order: Order) => {
+    setOrderToDelete(order);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleEditOrder = async (orderId: string, data: OrderEditData) => {
+    try {
+      const response = await fetch(`${apiUrl}/api/orders/${orderId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(data),
+      });
+
+      if (response.ok) {
+        await loadOrders();
+        toast.success("訂單更新成功");
+      } else {
+        throw new Error("Failed to update order");
+      }
+    } catch (error) {
+      console.error("Edit order failed:", error);
+      toast.error("更新訂單失敗");
+    }
+  };
+
+  const handleDeleteOrder = async () => {
+    if (!orderToDelete) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`${apiUrl}/api/orders/${orderToDelete.id}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+
+      if (response.ok) {
+        setOrders((prev) => prev.filter((o) => o.id !== orderToDelete.id));
+        toast.success("訂單已刪除");
+        setIsDeleteDialogOpen(false);
+        setOrderToDelete(null);
+      } else {
+        throw new Error("Failed to delete order");
+      }
+    } catch (error) {
+      console.error("Delete order failed:", error);
+      toast.error("刪除訂單失敗");
     }
   };
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
+      <div className="flex h-64 items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
+          <div className="mx-auto h-8 w-8 animate-spin rounded-full border-gray-900 border-b-2" />
           <p className="mt-2 text-gray-600">載入中...</p>
         </div>
       </div>
@@ -374,20 +372,20 @@ export default function OrdersPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">訂單管理</h1>
-        <p className="text-gray-600 mt-2">處理客戶訂單與出貨狀態</p>
+        <h1 className="font-bold text-3xl text-gray-900">訂單管理</h1>
+        <p className="mt-2 text-gray-600">處理客戶訂單與出貨狀態</p>
       </div>
 
       {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center">
               <Clock className="h-8 w-8 text-yellow-500" />
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">待付款</p>
-                <p className="text-2xl font-bold">
-                  {orders.filter((o) => o.status === 'pending_payment').length}
+                <p className="font-medium text-gray-600 text-sm">待付款</p>
+                <p className="font-bold text-2xl">
+                  {orders.filter((o) => o.status === "pending_payment").length}
                 </p>
               </div>
             </div>
@@ -398,9 +396,9 @@ export default function OrdersPage() {
             <div className="flex items-center">
               <DollarSign className="h-8 w-8 text-blue-500" />
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">已付款</p>
-                <p className="text-2xl font-bold">
-                  {orders.filter((o) => o.status === 'paid').length}
+                <p className="font-medium text-gray-600 text-sm">已付款</p>
+                <p className="font-bold text-2xl">
+                  {orders.filter((o) => o.status === "paid").length}
                 </p>
               </div>
             </div>
@@ -411,9 +409,9 @@ export default function OrdersPage() {
             <div className="flex items-center">
               <Truck className="h-8 w-8 text-orange-500" />
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">配送中</p>
-                <p className="text-2xl font-bold">
-                  {orders.filter((o) => o.status === 'shipped').length}
+                <p className="font-medium text-gray-600 text-sm">配送中</p>
+                <p className="font-bold text-2xl">
+                  {orders.filter((o) => o.status === "shipped").length}
                 </p>
               </div>
             </div>
@@ -424,9 +422,9 @@ export default function OrdersPage() {
             <div className="flex items-center">
               <CheckCircle className="h-8 w-8 text-green-500" />
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">已完成</p>
-                <p className="text-2xl font-bold">
-                  {orders.filter((o) => o.status === 'delivered').length}
+                <p className="font-medium text-gray-600 text-sm">已完成</p>
+                <p className="font-bold text-2xl">
+                  {orders.filter((o) => o.status === "delivered").length}
                 </p>
               </div>
             </div>
@@ -446,19 +444,23 @@ export default function OrdersPage() {
           <div className="flex gap-4">
             <div className="flex-1">
               <div className="relative">
-                <Search className="h-4 w-4 absolute left-3 top-3 text-gray-400" />
+                <Search className="absolute top-3 left-3 h-4 w-4 text-gray-400" />
                 <Input
+                  className="pl-10"
+                  onChange={(e) => setGlobalFilter(e.target.value)}
                   placeholder="搜尋訂單編號、客戶姓名、電話..."
                   value={globalFilter}
-                  onChange={(e) => setGlobalFilter(e.target.value)}
-                  className="pl-10"
                 />
               </div>
             </div>
             <Select
-              value={(table.getColumn('status')?.getFilterValue() as string) ?? ''}
-              onValueChange={(value) =>
-                table.getColumn('status')?.setFilterValue(value === 'all' ? '' : value)
+              onValueChange={(value) => {
+                table
+                  .getColumn("status")
+                  ?.setFilterValue(value === "all" ? "" : value);
+              }}
+              value={
+                (table.getColumn("status")?.getFilterValue() as string) ?? ""
               }
             >
               <SelectTrigger className="w-48">
@@ -482,19 +484,27 @@ export default function OrdersPage() {
       <Card>
         <CardHeader>
           <CardTitle>訂單列表</CardTitle>
-          <CardDescription>共 {table.getFilteredRowModel().rows.length} 筆訂單</CardDescription>
+          <CardDescription>
+            共 {table.getFilteredRowModel().rows.length} 筆訂單
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="rounded-md border">
             <table className="w-full">
               <thead>
                 {table.getHeaderGroups().map((headerGroup) => (
-                  <tr key={headerGroup.id} className="border-b bg-gray-50/50">
+                  <tr className="border-b bg-gray-50/50" key={headerGroup.id}>
                     {headerGroup.headers.map((header) => (
-                      <th key={header.id} className="px-4 py-3 text-left font-medium text-gray-900">
+                      <th
+                        className="px-4 py-3 text-left font-medium text-gray-900"
+                        key={header.id}
+                      >
                         {header.isPlaceholder
                           ? null
-                          : flexRender(header.column.columnDef.header, header.getContext())}
+                          : flexRender(
+                              header.column.columnDef.header,
+                              header.getContext()
+                            )}
                       </th>
                     ))}
                   </tr>
@@ -502,10 +512,13 @@ export default function OrdersPage() {
               </thead>
               <tbody>
                 {table.getRowModel().rows.map((row) => (
-                  <tr key={row.id} className="border-b hover:bg-gray-50/50">
+                  <tr className="border-b hover:bg-gray-50/50" key={row.id}>
                     {row.getVisibleCells().map((cell) => (
-                      <td key={cell.id} className="px-4 py-3">
-                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      <td className="px-4 py-3" key={cell.id}>
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext()
+                        )}
                       </td>
                     ))}
                   </tr>
@@ -516,29 +529,33 @@ export default function OrdersPage() {
 
           {/* Pagination */}
           <div className="flex items-center justify-between px-2 py-4">
-            <div className="text-sm text-gray-700">
-              顯示{' '}
-              {table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1} 到{' '}
+            <div className="text-gray-700 text-sm">
+              顯示{" "}
+              {table.getState().pagination.pageIndex *
+                table.getState().pagination.pageSize +
+                1}{" "}
+              到{" "}
               {Math.min(
-                (table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize,
+                (table.getState().pagination.pageIndex + 1) *
+                  table.getState().pagination.pageSize,
                 table.getFilteredRowModel().rows.length
-              )}{' '}
+              )}{" "}
               項，共 {table.getFilteredRowModel().rows.length} 項
             </div>
             <div className="flex items-center space-x-2">
               <Button
-                variant="outline"
-                size="sm"
-                onClick={() => table.previousPage()}
                 disabled={!table.getCanPreviousPage()}
+                onClick={() => table.previousPage()}
+                size="sm"
+                variant="outline"
               >
                 上一頁
               </Button>
               <Button
-                variant="outline"
-                size="sm"
-                onClick={() => table.nextPage()}
                 disabled={!table.getCanNextPage()}
+                onClick={() => table.nextPage()}
+                size="sm"
+                variant="outline"
               >
                 下一頁
               </Button>
@@ -548,234 +565,44 @@ export default function OrdersPage() {
       </Card>
 
       {/* Order Details Dialog */}
-      <Dialog open={isDetailDialogOpen} onOpenChange={setIsDetailDialogOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>訂單詳情 - {selectedOrder?.orderNumber}</DialogTitle>
-            <DialogDescription>查看完整的訂單資訊與處理狀態</DialogDescription>
-          </DialogHeader>
+      <OrderDetailsDialog
+        isOpen={isDetailDialogOpen}
+        onConfirmPayment={handleConfirmPayment}
+        onOpenChange={setIsDetailDialogOpen}
+        selectedOrder={selectedOrder}
+      />
 
-          {selectedOrder && (
-            <Tabs defaultValue="details" className="w-full">
-              <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="details">訂單資訊</TabsTrigger>
-                <TabsTrigger value="payment">付款資訊</TabsTrigger>
-                <TabsTrigger value="shipping">物流資訊</TabsTrigger>
-              </TabsList>
+      {/* Order Edit Dialog */}
+      <OrderEditDialog
+        onOpenChange={setIsEditDialogOpen}
+        onSave={handleEditOrder}
+        open={isEditDialogOpen}
+        order={orderToEdit}
+      />
 
-              <TabsContent value="details" className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <h4 className="font-medium mb-2">客戶資訊</h4>
-                    <div className="space-y-1 text-sm">
-                      <p>
-                        <span className="text-gray-600">姓名：</span>
-                        {selectedOrder.customerInfo.name}
-                      </p>
-                      <p>
-                        <span className="text-gray-600">電話：</span>
-                        {selectedOrder.customerInfo.phone}
-                      </p>
-                      <p>
-                        <span className="text-gray-600">Email：</span>
-                        {selectedOrder.customerInfo.email}
-                      </p>
-                    </div>
-                  </div>
-                  <div>
-                    <h4 className="font-medium mb-2">訂單狀態</h4>
-                    <div className="space-y-2">
-                      <Badge className={`text-white ${statusColors[selectedOrder.status]}`}>
-                        {statusLabels[selectedOrder.status]}
-                      </Badge>
-                      <Badge
-                        variant={selectedOrder.paymentStatus === 'paid' ? 'default' : 'secondary'}
-                        className={
-                          selectedOrder.paymentStatus === 'paid' ? 'bg-green-500 text-white' : ''
-                        }
-                      >
-                        {paymentStatusLabels[selectedOrder.paymentStatus]}
-                      </Badge>
-                    </div>
-                  </div>
-                </div>
-
-                <div>
-                  <h4 className="font-medium mb-2">訂單商品</h4>
-                  <div className="border rounded-lg">
-                    {selectedOrder.items.map((item, index) => (
-                      <div
-                        key={index}
-                        className="flex justify-between items-center p-3 border-b last:border-b-0"
-                      >
-                        <div>
-                          <p className="font-medium">{item.name}</p>
-                          {item.size && <p className="text-sm text-gray-600">規格：{item.size}</p>}
-                          <p className="text-sm text-gray-600">數量：{item.quantity}</p>
-                        </div>
-                        <p className="font-medium">
-                          NT${(item.price * item.quantity).toLocaleString()}
-                        </p>
-                      </div>
-                    ))}
-                    <div className="p-3 bg-gray-50">
-                      <div className="flex justify-between text-sm">
-                        <span>小計</span>
-                        <span>NT${selectedOrder.subtotalAmount.toLocaleString()}</span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span>運費</span>
-                        <span>NT${selectedOrder.shippingFee.toLocaleString()}</span>
-                      </div>
-                      <div className="flex justify-between font-medium text-lg border-t pt-2 mt-2">
-                        <span>總計</span>
-                        <span>NT${selectedOrder.totalAmount.toLocaleString()}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {selectedOrder.notes && (
-                  <div>
-                    <h4 className="font-medium mb-2">客戶備註</h4>
-                    <p className="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg">
-                      {selectedOrder.notes}
-                    </p>
-                  </div>
-                )}
-
-                {selectedOrder.adminNotes && (
-                  <div>
-                    <h4 className="font-medium mb-2">管理員備註</h4>
-                    <p className="text-sm text-gray-600 bg-blue-50 p-3 rounded-lg">
-                      {selectedOrder.adminNotes}
-                    </p>
-                  </div>
-                )}
-              </TabsContent>
-
-              <TabsContent value="payment" className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <h4 className="font-medium mb-2">付款方式</h4>
-                    <Badge variant="outline">
-                      {paymentMethodLabels[selectedOrder.paymentMethod]}
-                    </Badge>
-                  </div>
-                  <div>
-                    <h4 className="font-medium mb-2">付款狀態</h4>
-                    <Badge
-                      variant={selectedOrder.paymentStatus === 'paid' ? 'default' : 'secondary'}
-                      className={
-                        selectedOrder.paymentStatus === 'paid' ? 'bg-green-500 text-white' : ''
-                      }
-                    >
-                      {paymentStatusLabels[selectedOrder.paymentStatus]}
-                    </Badge>
-                  </div>
-                </div>
-
-                {selectedOrder.paymentProof && (
-                  <div>
-                    <h4 className="font-medium mb-2">付款證明</h4>
-                    <div className="border rounded-lg p-4">
-                      <img
-                        src={selectedOrder.paymentProof}
-                        alt="付款證明"
-                        className="max-w-full h-auto max-h-64 rounded"
-                      />
-                    </div>
-                  </div>
-                )}
-
-                {selectedOrder.paymentStatus === 'unpaid' &&
-                  selectedOrder.paymentMethod === 'bank_transfer' && (
-                    <div className="flex justify-end">
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button>確認收到付款</Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>確認付款</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              確定已收到客戶的銀行轉帳付款嗎？此操作會將訂單狀態更新為「已付款」。
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>取消</AlertDialogCancel>
-                            <AlertDialogAction
-                              onClick={() => handleConfirmPayment(selectedOrder.id)}
-                            >
-                              確認付款
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    </div>
-                  )}
-              </TabsContent>
-
-              <TabsContent value="shipping" className="space-y-4">
-                {selectedOrder.shippingAddress && (
-                  <div>
-                    <h4 className="font-medium mb-2">配送地址</h4>
-                    <div className="bg-gray-50 p-3 rounded-lg text-sm">
-                      <p>
-                        <span className="text-gray-600">收件人：</span>
-                        {selectedOrder.shippingAddress.name}
-                      </p>
-                      <p>
-                        <span className="text-gray-600">電話：</span>
-                        {selectedOrder.shippingAddress.phone}
-                      </p>
-                      <p>
-                        <span className="text-gray-600">地址：</span>
-                        {selectedOrder.shippingAddress.postalCode}{' '}
-                        {selectedOrder.shippingAddress.city}
-                        {selectedOrder.shippingAddress.district}{' '}
-                        {selectedOrder.shippingAddress.address}
-                      </p>
-                    </div>
-                  </div>
-                )}
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <h4 className="font-medium mb-2">物流公司</h4>
-                    <p className="text-sm">{selectedOrder.shippingCompany || '尚未設定'}</p>
-                  </div>
-                  <div>
-                    <h4 className="font-medium mb-2">追蹤號碼</h4>
-                    <p className="text-sm font-mono">
-                      {selectedOrder.trackingNumber || '尚未設定'}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <h4 className="font-medium mb-2">出貨時間</h4>
-                    <p className="text-sm">
-                      {selectedOrder.shippedAt
-                        ? new Date(selectedOrder.shippedAt).toLocaleString('zh-TW')
-                        : '尚未出貨'}
-                    </p>
-                  </div>
-                  <div>
-                    <h4 className="font-medium mb-2">送達時間</h4>
-                    <p className="text-sm">
-                      {selectedOrder.deliveredAt
-                        ? new Date(selectedOrder.deliveredAt).toLocaleString('zh-TW')
-                        : '尚未送達'}
-                    </p>
-                  </div>
-                </div>
-              </TabsContent>
-            </Tabs>
-          )}
-        </DialogContent>
-      </Dialog>
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog
+        onOpenChange={setIsDeleteDialogOpen}
+        open={isDeleteDialogOpen}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>確認刪除訂單</AlertDialogTitle>
+            <AlertDialogDescription>
+              確定要刪除訂單 {orderToDelete?.orderNumber} 嗎？此操作無法復原。
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>取消</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 hover:bg-red-700"
+              onClick={handleDeleteOrder}
+            >
+              確認刪除
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

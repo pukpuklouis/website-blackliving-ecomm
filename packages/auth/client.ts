@@ -1,58 +1,69 @@
-import { createAuthClient } from 'better-auth/react';
+import type { User as BetterAuthUser, Session } from "better-auth";
+import { createAuthClient } from "better-auth/react";
 
+// Regex for trailing slash removal
+const TRAILING_SLASH_REGEX = /\/$/;
+
+// Extended User type with role for this application
+type User = BetterAuthUser & {
+  role?: string;
+};
+
+// Get base URL with enhanced security validation
 // Get base URL with enhanced security validation
 const getBaseURL = () => {
   // Priority 1: Use environment variable if available (most flexible)
-  if (typeof import.meta !== 'undefined' && import.meta.env?.PUBLIC_API_URL) {
+  if (typeof import.meta !== "undefined" && import.meta.env?.PUBLIC_API_URL) {
     return import.meta.env.PUBLIC_API_URL;
   }
 
-  if (typeof window !== 'undefined') {
+  if (typeof window !== "undefined") {
     // Browser environment with security checks
     const hostname = window.location.hostname;
 
     // Validate hostname to prevent subdomain attacks
     const allowedHosts = [
-      'localhost',
-      'blackliving-web.pages.dev',
-      'blackliving-admin.pages.dev',
-      'staging.blackliving-web.pages.dev',
-      'staging.blackliving-admin.pages.dev',
-      'blackliving-admin-staging.pukpuk-tw.workers.dev',
-      'blackliving.com',
-      'admin.blackliving.com',
+      "localhost",
+      "blackliving-web.pages.dev",
+      "staging.blackliving-web.pages.dev",
+      "blackliving-admin-staging.pukpuk-tw.workers.dev",
+      "blackliving.com",
+      "admin.blackliving.com",
     ];
 
     const isValidHost = allowedHosts.some(
-      (allowed) => hostname === allowed || hostname.endsWith('.' + allowed)
+      (allowed) => hostname === allowed || hostname.endsWith(`.${allowed}`)
     );
 
     if (!isValidHost) {
-      console.error('Invalid hostname detected:', hostname);
-      throw new Error('Unauthorized domain access');
+      console.error("Invalid hostname detected:", hostname);
+      throw new Error("Unauthorized domain access");
     }
 
     // Environment detection based on hostname (fallback)
-    if (hostname === 'localhost') {
-      return 'http://localhost:8787'; // Local API server
+    if (hostname === "localhost") {
+      return "http://localhost:8787"; // Local API server
     }
 
-    if (hostname.includes('staging')) {
-      return 'https://blackliving-api-staging.pukpuk-tw.workers.dev'; // Staging API
+    if (hostname.includes("staging")) {
+      return "https://blackliving-api-staging.pukpuk-tw.workers.dev"; // Staging API
     }
 
-    if (hostname.includes('pages.dev') || hostname.includes('blackliving.com')) {
-      return 'https://blackliving-api.pukpuk-tw.workers.dev'; // Production API
+    if (
+      hostname.includes("pages.dev") ||
+      hostname.includes("blackliving.com")
+    ) {
+      return "https://blackliving-api.pukpuk-tw.workers.dev"; // Production API
     }
 
     // Fallback to production for custom domains
-    return 'https://blackliving-api.pukpuk-tw.workers.dev';
+    return "https://blackliving-api.pukpuk-tw.workers.dev";
   }
 
   // Server-side environment
-  return process.env.NODE_ENV === 'production'
-    ? 'https://blackliving-api.pukpuk-tw.workers.dev'
-    : 'http://localhost:8787';
+  return process.env.NODE_ENV === "production"
+    ? "https://blackliving-api.pukpuk-tw.workers.dev"
+    : "http://localhost:8787";
 };
 
 // Production-ready Better Auth React client with enhanced security
@@ -61,10 +72,10 @@ export const authClient = createAuthClient({
 
   // Enhanced fetch options for security
   fetchOptions: {
-    credentials: 'include' as const,
+    credentials: "include" as const,
     headers: {
-      'Content-Type': 'application/json',
-      'X-Requested-With': 'XMLHttpRequest', // CSRF protection
+      "Content-Type": "application/json",
+      "X-Requested-With": "XMLHttpRequest", // CSRF protection
     },
   },
 
@@ -78,16 +89,13 @@ export const authClient = createAuthClient({
 
   // Enable debug logging in development only
   logger:
-    typeof window !== 'undefined' && window.location.hostname === 'localhost' ? console : undefined,
+    typeof window !== "undefined" && window.location.hostname === "localhost"
+      ? console
+      : undefined,
 });
 
 // Export the main auth methods
-export const {
-  signIn,
-  signOut,
-  signUp,
-  useSession,
-} = authClient;
+export const { signIn, signOut, signUp, useSession } = authClient;
 
 // Helper functions for OAuth flows
 
@@ -99,28 +107,28 @@ export const signInWithGoogleAdmin = async () => {
     const baseURL = getBaseURL();
 
     const getAdminCallbackURL = () => {
-      if (typeof window !== 'undefined') {
-        return new URL('/auth/callback', window.location.origin).toString();
+      if (typeof window !== "undefined") {
+        return new URL("/auth/callback", window.location.origin).toString();
       }
 
-      if (typeof process !== 'undefined' && process.env.PUBLIC_SITE_URL) {
-        return `${process.env.PUBLIC_SITE_URL.replace(/\/$/, '')}/auth/callback`;
+      if (typeof process !== "undefined" && process.env.PUBLIC_SITE_URL) {
+        return `${process.env.PUBLIC_SITE_URL.replace(TRAILING_SLASH_REGEX, "")}/auth/callback`;
       }
 
-      return 'https://blackliving-admin-staging.pukpuk-tw.workers.dev/auth/callback';
+      return "https://blackliving-admin-staging.pukpuk-tw.workers.dev/auth/callback";
     };
 
     const adminCallbackURL = getAdminCallbackURL();
 
     // Use the same direct API approach that works for customers
     const response = await fetch(`${baseURL}/api/auth/sign-in/social`, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
-      credentials: 'include',
+      credentials: "include",
       body: JSON.stringify({
-        provider: 'google',
+        provider: "google",
         callbackURL: adminCallbackURL,
       }),
     });
@@ -131,16 +139,19 @@ export const signInWithGoogleAdmin = async () => {
         // Redirect to Google OAuth
         window.location.href = data.url;
         return { success: true };
-      } else {
-        return { success: false, error: 'No OAuth URL returned' };
       }
-    } else {
-      const errorData = await response.json().catch(() => ({}));
-      return { success: false, error: errorData.message || 'OAuth request failed' };
+
+      return { success: false, error: "No OAuth URL returned" };
     }
+
+    const errorData = await response.json().catch(() => ({}));
+    return {
+      success: false,
+      error: errorData.message || "OAuth request failed",
+    };
   } catch (error) {
-    console.error('Admin Google login error:', error);
-    return { success: false, error: 'Network error during admin Google login' };
+    console.error("Admin Google login error:", error);
+    return { success: false, error: "Network error during admin Google login" };
   }
 };
 
@@ -150,43 +161,46 @@ export const signInWithGoogleAdmin = async () => {
 export const signInWithGoogleCustomer = async () => {
   try {
     const getCustomerCallbackURL = () => {
-      if (typeof window !== 'undefined') {
+      if (typeof window !== "undefined") {
         const hostname = window.location.hostname;
 
-        if (hostname === 'localhost') {
-          return 'http://localhost:4321/account/profile';
+        if (hostname === "localhost") {
+          return "http://localhost:4321/account/profile";
         }
 
-        if (hostname.includes('staging')) {
-          return 'https://staging.blackliving-web.pages.dev/account/profile';
+        if (hostname.includes("staging")) {
+          return "https://staging.blackliving-web.pages.dev/account/profile";
         }
 
-        if (hostname.includes('blackliving-web.pages.dev')) {
-          return 'https://blackliving-web.pages.dev/account/profile';
+        if (hostname.includes("blackliving-web.pages.dev")) {
+          return "https://blackliving-web.pages.dev/account/profile";
         }
 
         // Future custom domain
-        if (hostname.includes('blackliving.com')) {
-          return 'https://blackliving.com/account/profile';
+        if (hostname.includes("blackliving.com")) {
+          return "https://blackliving.com/account/profile";
         }
       }
 
       // Default fallback
-      return 'https://blackliving-web.pages.dev/account/profile';
+      return "https://blackliving-web.pages.dev/account/profile";
     };
 
     // Use Better Auth's built-in social sign-in with customer callback
     const customerCallbackURL = getCustomerCallbackURL();
 
     await signIn.social({
-      provider: 'google',
+      provider: "google",
       callbackURL: customerCallbackURL,
     });
 
     return { success: true };
   } catch (error) {
-    console.error('Customer Google login error:', error);
-    return { success: false, error: 'Network error during customer Google login' };
+    console.error("Customer Google login error:", error);
+    return {
+      success: false,
+      error: "Network error during customer Google login",
+    };
   }
 };
 
@@ -195,43 +209,44 @@ export const signInWithGoogleCustomer = async () => {
  */
 
 // Session storage key for additional security metadata
-const SESSION_METADATA_KEY = 'auth_session_metadata';
+const SESSION_METADATA_KEY = "auth_session_metadata";
 
-interface SessionMetadata {
+type SessionMetadata = {
   fingerprint: string;
   lastActivity: number;
   ipAddress?: string;
   userAgent: string;
-}
+};
 
 /**
  * Generate browser fingerprint for session security
  */
 function generateBrowserFingerprint(): string {
-  if (typeof window === 'undefined') return 'server';
+  if (typeof window === "undefined") {
+    return "server";
+  }
 
-  const canvas = document.createElement('canvas');
-  const ctx = canvas.getContext('2d');
+  const canvas = document.createElement("canvas");
+  const ctx = canvas.getContext("2d");
   if (ctx) {
-    ctx.textBaseline = 'top';
-    ctx.font = '14px Arial';
-    ctx.fillText('Browser fingerprint', 2, 2);
+    ctx.textBaseline = "top";
+    ctx.font = "14px Arial";
+    ctx.fillText("Browser fingerprint", 2, 2);
   }
 
   const fingerprint = [
     navigator.userAgent,
     navigator.language,
-    screen.width + 'x' + screen.height,
+    `${screen.width}x${screen.height}`,
     Intl.DateTimeFormat().resolvedOptions().timeZone,
     canvas.toDataURL(),
-  ].join('|');
+  ].join("|");
 
   // Simple hash function
   let hash = 0;
   for (let i = 0; i < fingerprint.length; i++) {
     const char = fingerprint.charCodeAt(i);
-    hash = (hash << 5) - hash + char;
-    hash = hash & hash; // Convert to 32-bit integer
+    hash = hash * 31 + char;
   }
 
   return Math.abs(hash).toString(36);
@@ -246,7 +261,7 @@ export async function validateSession() {
 
     if (!session.data) {
       clearSessionMetadata();
-      return { valid: false, reason: 'no_session' };
+      return { valid: false, reason: "no_session" };
     }
 
     // Check browser fingerprint consistency
@@ -254,10 +269,10 @@ export async function validateSession() {
     const currentFingerprint = generateBrowserFingerprint();
 
     if (storedMetadata && storedMetadata.fingerprint !== currentFingerprint) {
-      console.warn('Session fingerprint mismatch detected');
+      console.warn("Session fingerprint mismatch detected");
       await authClient.signOut();
       clearSessionMetadata();
-      return { valid: false, reason: 'fingerprint_mismatch' };
+      return { valid: false, reason: "fingerprint_mismatch" };
     }
 
     // Update last activity
@@ -273,9 +288,9 @@ export async function validateSession() {
       user: session.data.user,
     };
   } catch (error) {
-    console.error('Session validation error:', error);
+    console.error("Session validation error:", error);
     clearSessionMetadata();
-    return { valid: false, reason: 'validation_error' };
+    return { valid: false, reason: "validation_error" };
   }
 }
 
@@ -283,8 +298,8 @@ export async function validateSession() {
  * Check current session status (uses Better Auth client)
  */
 export const checkSession = async (): Promise<{
-  user: any;
-  session: any;
+  user: User | null;
+  session: Session | null;
   authenticated: boolean;
 }> => {
   try {
@@ -305,12 +320,11 @@ export const checkSession = async (): Promise<{
         session: sessionData.data.session,
         authenticated: !!sessionData.data.user,
       };
-    } else {
-      clearSessionMetadata();
-      return { user: null, session: null, authenticated: false };
     }
+    clearSessionMetadata();
+    return { user: null, session: null, authenticated: false };
   } catch (error) {
-    console.error('Session check failed:', error);
+    console.error("Session check failed:", error);
     clearSessionMetadata();
     return { user: null, session: null, authenticated: false };
   }
@@ -325,20 +339,24 @@ export async function secureSignOut() {
     clearSessionMetadata();
 
     // Clear any additional client-side data
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       // Only clear auth-related data, not all localStorage
       const authKeys = Object.keys(localStorage).filter(
         (key) =>
-          key.startsWith('auth_') || key.startsWith('session_') || key.includes('better-auth')
+          key.startsWith("auth_") ||
+          key.startsWith("session_") ||
+          key.includes("better-auth")
       );
 
-      authKeys.forEach((key) => localStorage.removeItem(key));
+      for (const key of authKeys) {
+        localStorage.removeItem(key);
+      }
       sessionStorage.clear();
     }
 
     return { success: true };
   } catch (error) {
-    console.error('Sign out error:', error);
+    console.error("Sign out error:", error);
     clearSessionMetadata();
     return { success: true }; // Always succeed for security
   }
@@ -348,7 +366,9 @@ export async function secureSignOut() {
  * Session metadata management
  */
 function getSessionMetadata(): SessionMetadata | null {
-  if (typeof window === 'undefined') return null;
+  if (typeof window === "undefined") {
+    return null;
+  }
 
   try {
     const stored = localStorage.getItem(SESSION_METADATA_KEY);
@@ -359,7 +379,9 @@ function getSessionMetadata(): SessionMetadata | null {
 }
 
 function updateSessionMetadata(metadata: Partial<SessionMetadata>) {
-  if (typeof window === 'undefined') return;
+  if (typeof window === "undefined") {
+    return;
+  }
 
   const current = getSessionMetadata() || ({} as SessionMetadata);
   const updated = { ...current, ...metadata };
@@ -367,43 +389,52 @@ function updateSessionMetadata(metadata: Partial<SessionMetadata>) {
   try {
     localStorage.setItem(SESSION_METADATA_KEY, JSON.stringify(updated));
   } catch (error) {
-    console.warn('Failed to store session metadata:', error);
+    console.warn("Failed to store session metadata:", error);
   }
 }
 
 function clearSessionMetadata() {
-  if (typeof window === 'undefined') return;
+  if (typeof window === "undefined") {
+    return;
+  }
 
   try {
     localStorage.removeItem(SESSION_METADATA_KEY);
   } catch (error) {
-    console.warn('Failed to clear session metadata:', error);
+    console.warn("Failed to clear session metadata:", error);
   }
 }
 
 /**
  * Role-based access control utilities
  */
-export function hasRole(user: any, requiredRole: string | string[]): boolean {
-  if (!user?.role) return false;
+export function hasRole(
+  user: User | null,
+  requiredRole: string | string[]
+): boolean {
+  if (!user?.role) {
+    return false;
+  }
 
   const roles = Array.isArray(requiredRole) ? requiredRole : [requiredRole];
   return roles.includes(user.role);
 }
 
-export function isAdmin(user: any): boolean {
-  return hasRole(user, 'admin');
+export function isAdmin(user: User | null): boolean {
+  return hasRole(user, "admin");
 }
 
-export function isCustomer(user: any): boolean {
-  return hasRole(user, ['customer', 'admin']);
+export function isCustomer(user: User | null): boolean {
+  return hasRole(user, ["customer", "admin"]);
 }
 
 /**
  * Auto-refresh session in the background
  */
 export function startSessionRefresh() {
-  if (typeof window === 'undefined') return;
+  if (typeof window === "undefined") {
+    return;
+  }
 
   // Refresh session every 5 minutes
   const refreshInterval = 5 * 60 * 1000;
@@ -412,7 +443,7 @@ export function startSessionRefresh() {
     try {
       await validateSession();
     } catch (error) {
-      console.warn('Background session refresh failed:', error);
+      console.warn("Background session refresh failed:", error);
     }
   }, refreshInterval);
 

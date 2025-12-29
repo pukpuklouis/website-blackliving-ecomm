@@ -1,4 +1,4 @@
-import type { R2Bucket } from '@cloudflare/workers-types';
+import type { R2Bucket } from "@cloudflare/workers-types";
 
 type UploadedFileResult = {
   key: string;
@@ -15,20 +15,23 @@ type UploadOptions = {
 
 export class StorageManager {
   private publicUrl: string;
-  private static readonly DEFAULT_CACHE_CONTROL = 'public, max-age=31536000, immutable';
+  private static readonly DEFAULT_CACHE_CONTROL =
+    "public, max-age=31536000, immutable";
 
   constructor(
     private r2: R2Bucket,
     publicUrl: string
   ) {
     if (!publicUrl) {
-      throw new Error('R2 public URL is not configured. Set R2_PUBLIC_URL in your environment.');
+      throw new Error(
+        "R2 public URL is not configured. Set R2_PUBLIC_URL in your environment."
+      );
     }
     this.publicUrl = StorageManager.normalizeBase(publicUrl);
   }
 
   private static normalizeBase(url: string): string {
-    return url.replace(/\/+$/, '');
+    return url.replace(/\/+$/, "");
   }
 
   getPublicUrl(): string {
@@ -63,12 +66,13 @@ export class StorageManager {
         size = new TextEncoder().encode(file).length;
       }
 
-      const resolvedContentType = contentType || 'application/octet-stream';
+      const resolvedContentType = contentType || "application/octet-stream";
 
       await this.r2.put(key, body, {
         httpMetadata: {
           contentType: resolvedContentType,
-          cacheControl: options.cacheControl || StorageManager.DEFAULT_CACHE_CONTROL,
+          cacheControl:
+            options.cacheControl || StorageManager.DEFAULT_CACHE_CONTROL,
         },
         customMetadata: options.metadata,
       });
@@ -77,8 +81,8 @@ export class StorageManager {
 
       return { key, url, size, contentType: resolvedContentType };
     } catch (error) {
-      console.error('Storage upload error:', error);
-      throw new Error('Failed to upload file');
+      console.error("Storage upload error:", error);
+      throw new Error("Failed to upload file");
     }
   }
 
@@ -106,8 +110,8 @@ export class StorageManager {
     try {
       await this.r2.delete(key);
     } catch (error) {
-      console.error('Storage delete error:', error);
-      throw new Error('Failed to delete file');
+      console.error("Storage delete error:", error);
+      throw new Error("Failed to delete file");
     }
   }
 
@@ -136,12 +140,13 @@ export class StorageManager {
       return {
         key,
         size: object.size,
-        contentType: object.httpMetadata?.contentType || 'application/octet-stream',
+        contentType:
+          object.httpMetadata?.contentType || "application/octet-stream",
         lastModified: object.uploaded,
         metadata: object.customMetadata,
       };
     } catch (error) {
-      console.error('Storage get file info error:', error);
+      console.error("Storage get file info error:", error);
       return null;
     }
   }
@@ -188,7 +193,7 @@ export class StorageManager {
         cursor: result.cursor,
       };
     } catch (error) {
-      console.error('Storage list files error:', error);
+      console.error("Storage list files error:", error);
       return {
         items: [],
         truncated: false,
@@ -199,12 +204,12 @@ export class StorageManager {
   /**
    * Generate a unique file key with timestamp and random suffix
    */
-  static generateFileKey(originalName: string, folder = 'uploads'): string {
+  static generateFileKey(originalName: string, folder = "uploads"): string {
     const timestamp = Date.now();
     const randomSuffix = Math.random().toString(36).substring(2, 8);
-    const extension = originalName.split('.').pop();
-    const nameWithoutExt = originalName.replace(/\.[^/.]+$/, '');
-    const sanitizedName = nameWithoutExt.replace(/[^a-zA-Z0-9-_]/g, '-');
+    const extension = originalName.split(".").pop();
+    const nameWithoutExt = originalName.replace(/\.[^/.]+$/, "");
+    const sanitizedName = nameWithoutExt.replace(/[^a-zA-Z0-9-_]/g, "-");
 
     return `${folder}/${timestamp}-${sanitizedName}-${randomSuffix}.${extension}`;
   }
@@ -214,13 +219,13 @@ export class StorageManager {
    */
   static validateFile(
     file: File,
-    allowedTypes: string[] = ['image/jpeg', 'image/png', 'image/webp'],
+    allowedTypes: string[] = ["image/jpeg", "image/png", "image/webp"],
     maxSize = 5 * 1024 * 1024 // 5MB
   ): { valid: boolean; error?: string } {
     if (!allowedTypes.includes(file.type)) {
       return {
         valid: false,
-        error: `File type ${file.type} is not allowed. Allowed types: ${allowedTypes.join(', ')}`,
+        error: `File type ${file.type} is not allowed. Allowed types: ${allowedTypes.join(", ")}`,
       };
     }
 
@@ -251,27 +256,39 @@ export class StorageManager {
     }
     try {
       const parsed = new URL(url);
-      return StorageManager.stripDeliveryPrefix(parsed.pathname.replace(/^\/+/, ''));
+      return StorageManager.stripDeliveryPrefix(
+        parsed.pathname.replace(/^\/+/, "")
+      );
     } catch {
-      return StorageManager.stripDeliveryPrefix(url.replace(/^\/+/, ''));
+      return StorageManager.stripDeliveryPrefix(url.replace(/^\/+/, ""));
     }
   }
 
   private static stripDeliveryPrefix(key: string): string {
-    return key.startsWith('media/') ? key.slice('media/'.length) : key;
+    return key.startsWith("media/") ? key.slice("media/".length) : key;
   }
 }
 
 // Helper function to create storage manager instance
-export function createStorageManager(r2: R2Bucket, publicUrl: string): StorageManager {
+export function createStorageManager(
+  r2: R2Bucket,
+  publicUrl: string
+): StorageManager {
   return new StorageManager(r2, publicUrl);
 }
 
 // File type constants
 export const FileTypes = {
-  IMAGES: ['image/jpeg', 'image/png', 'image/webp', 'image/gif'],
-  DOCUMENTS: ['application/pdf', 'text/plain', 'application/msword'],
-  ALL: ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'application/pdf', 'text/plain'],
+  IMAGES: ["image/jpeg", "image/png", "image/webp", "image/gif"],
+  DOCUMENTS: ["application/pdf", "text/plain", "application/msword"],
+  ALL: [
+    "image/jpeg",
+    "image/png",
+    "image/webp",
+    "image/gif",
+    "application/pdf",
+    "text/plain",
+  ],
 } as const;
 
 // File size constants (in bytes)

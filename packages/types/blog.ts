@@ -21,7 +21,7 @@ export interface BlogPost {
   publishedAt: string;
   viewCount: number;
   readingTime: number;
-  status: 'draft' | 'published' | 'archived';
+  status: "draft" | "published" | "archived";
   featured: boolean;
   seoTitle?: string;
   seoDescription?: string;
@@ -47,7 +47,12 @@ export interface BlogPostSummary {
   overlaySettings?: {
     enabled?: boolean;
     title?: string;
-    placement?: 'bottom-left' | 'bottom-right' | 'bottom-center' | 'top-left' | 'center';
+    placement?:
+      | "bottom-left"
+      | "bottom-right"
+      | "bottom-center"
+      | "top-left"
+      | "center";
     gradientDirection?: string;
   };
 }
@@ -72,7 +77,7 @@ export interface PostCategory {
  * Props for BlogBreadcrumb component
  */
 export interface BlogBreadcrumbProps {
-  post: Pick<BlogPost, 'title'>;
+  post: Pick<BlogPost, "title">;
   category?: PostCategory | null;
 }
 
@@ -82,7 +87,12 @@ export interface BlogBreadcrumbProps {
 export interface BlogHeaderProps {
   post: Pick<
     BlogPost,
-    'title' | 'authorName' | 'publishedAt' | 'readingTime' | 'viewCount' | 'featuredImage'
+    | "title"
+    | "authorName"
+    | "publishedAt"
+    | "readingTime"
+    | "viewCount"
+    | "featuredImage"
   >;
   category?: PostCategory | null;
 }
@@ -105,7 +115,7 @@ export interface BlogTagsProps {
  * Props for BlogShare component
  */
 export interface BlogShareProps {
-  post: Pick<BlogPost, 'title'>;
+  post: Pick<BlogPost, "title">;
   url: string;
 }
 
@@ -137,7 +147,7 @@ export interface PostLayoutProps {
  */
 export interface BlogPostCardProps {
   post: BlogPostSummary;
-  variant?: 'vertical' | 'horizontal';
+  variant?: "vertical" | "horizontal";
   className?: string;
 }
 
@@ -154,7 +164,7 @@ export interface BlogPostCreateRequest {
   excerpt: string;
   content: string;
   categoryId: string;
-  status: 'draft' | 'published' | 'archived';
+  status: "draft" | "published" | "archived";
   featured: boolean;
   tags: string[];
   featuredImage?: string;

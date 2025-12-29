@@ -1,7 +1,8 @@
-import { betterAuth } from 'better-auth';
-import { drizzleAdapter } from 'better-auth/adapters/drizzle';
-import { createDB } from '@blackliving/db';
-import { users, sessions, accounts, verifications } from '@blackliving/db/schema';
+import type { createDB } from "@blackliving/db";
+import { accounts, sessions, users, verifications } from "@blackliving/db";
+import { betterAuth } from "better-auth";
+import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import type { Context, Next } from "hono";
 
 /**
  * Creates Better Auth instance with proper Cloudflare Workers integration
@@ -18,67 +19,66 @@ export const createAuth = (
     WEB_BASE_URL?: string;
     ADMIN_BASE_URL?: string;
   }
-) => {
+): ReturnType<typeof betterAuth> => {
   return betterAuth({
     database: drizzleAdapter(db, {
-      provider: 'sqlite', // Cloudflare D1 uses SQLite
+      provider: "sqlite", // Cloudflare D1 uses SQLite
       usePlural: true,
       schema: {
-        users: users,
-        sessions: sessions,
-        accounts: accounts,
-        verifications: verifications,
+        users,
+        sessions,
+        accounts,
+        verifications,
       },
     }),
 
-    secret: env.BETTER_AUTH_SECRET || 'dev-secret-key-change-in-production',
+    secret: env.BETTER_AUTH_SECRET || "dev-secret-key-change-in-production",
 
     // API base URL where Better Auth endpoints are mounted
     baseURL:
       env.API_BASE_URL ||
       (() => {
         switch (env.NODE_ENV) {
-          case 'development':
-            return 'http://localhost:8787';
-          case 'staging':
-            return 'https://blackliving-api-staging.pukpuk-tw.workers.dev';
-          case 'production':
+          case "development":
+            return "http://localhost:8787";
+          case "staging":
+            return "https://blackliving-api-staging.pukpuk-tw.workers.dev";
           default:
-            return 'https://blackliving-api.pukpuk-tw.workers.dev';
+            return "https://blackliving-api.pukpuk-tw.workers.dev";
         }
       })(),
 
     trustedOrigins: [
       // Development
-      'http://localhost:4321', // Web app
-      'http://localhost:5173', // Admin app
-      'http://localhost:8787', // API server
+      "http://localhost:4321", // Web app
+      "http://localhost:5173", // Admin app
+      "http://localhost:8787", // API server
 
       // Staging
-      'https://staging.blackliving-web.pages.dev',
-      'https://staging.blackliving-admin.pages.dev',
-      'https://blackliving-admin-staging.pukpuk-tw.workers.dev',
-      'https://blackliving-api-staging.pukpuk-tw.workers.dev',
+      "https://staging.blackliving-web.pages.dev",
+      "https://staging.blackliving-admin.pages.dev",
+      "https://blackliving-admin-staging.pukpuk-tw.workers.dev",
+      "https://blackliving-api-staging.pukpuk-tw.workers.dev",
 
       // Production (current deployment URLs)
-      'https://blackliving-web.pages.dev',
-      'https://blackliving-admin.pages.dev',
-      'https://blackliving-api.pukpuk-tw.workers.dev',
+      "https://blackliving-web.pages.dev",
+      "https://blackliving-admin.pages.dev",
+      "https://blackliving-api.pukpuk-tw.workers.dev",
 
       // Future custom domains (forward compatibility)
-      'https://blackliving.com',
-      'https://www.blackliving.com',
-      'https://admin.blackliving.com',
-      'https://api.blackliving.com',
+      "https://blackliving.com",
+      "https://www.blackliving.com",
+      "https://admin.blackliving.com",
+      "https://api.blackliving.com",
     ],
 
     // Use Better Auth's built-in Google provider
     socialProviders: {
       google: {
-        clientId: env.GOOGLE_CLIENT_ID || '',
-        clientSecret: env.GOOGLE_CLIENT_SECRET || '',
+        clientId: env.GOOGLE_CLIENT_ID || "",
+        clientSecret: env.GOOGLE_CLIENT_SECRET || "",
         // Use correct 'scope' instead of 'scopes'
-        scope: ['openid', 'email', 'profile'],
+        scope: ["openid", "email", "profile"],
       },
     },
 
@@ -87,28 +87,20 @@ export const createAuth = (
       updateAge: 60 * 60 * 24, // 1 day
     },
 
-    // FIXED: Proper cross-origin cookie settings for .pages.dev <-> .workers.dev
-    cookieOptions: {
-      httpOnly: true,
-      secure: env.NODE_ENV === 'production', // Must be true for sameSite: 'none'
-      sameSite: env.NODE_ENV === 'development' ? 'lax' : 'none', // 'none' required for cross-origin
-      // No domain specified - let browser handle per-origin cookies
-    },
-
     user: {
       additionalFields: {
         role: {
-          type: 'string',
-          defaultValue: 'customer',
+          type: "string",
+          defaultValue: "customer",
           required: false,
         },
         phone: {
-          type: 'string',
+          type: "string",
           required: false,
         },
         preferences: {
-          type: 'string', // Changed from "object" to "string" to store JSON
-          defaultValue: '{}',
+          type: "string", // Changed from "object" to "string" to store JSON
+          defaultValue: "{}",
         },
       },
     },
@@ -116,16 +108,20 @@ export const createAuth = (
     account: {
       accountLinking: {
         enabled: true,
-        trustedProviders: ['google'],
+        trustedProviders: ["google"],
       },
     },
 
     emailAndPassword: {
       enabled: true,
       requireEmailVerification: false, // Disable for development
-      sendResetPassword: async ({ user, url }) => {
+      sendResetPassword: async ({ user, url, token }) => {
         // TODO: Implement email sending logic with Cloudflare Email Workers or Resend
-        console.log(`Send password reset email to ${user.email}: ${url}`);
+        console.log(
+          `Send password reset email to ${user.email}: ${url} (token: ${token})`
+        );
+        // Placeholder for async email sending - remove when implemented
+        await Promise.resolve();
       },
       // Remove sendVerificationEmail as it's not supported in this version
     },
@@ -134,16 +130,26 @@ export const createAuth = (
     // Role-based access control handled through user.role field
 
     advanced: {
-      // FIXED: Disable cross-subdomain cookies entirely for production
-      // Web app (.pages.dev) and API (.workers.dev) are incompatible domains
+      // CRITICAL: Cross-origin cookie configuration for .pages.dev <-> .workers.dev
+      // BetterAuth requires defaultCookieAttributes inside advanced, not top-level cookieOptions
+      defaultCookieAttributes: {
+        // CRITICAL: sameSite must be 'none' for cross-origin cookies
+        // pages.dev -> workers.dev is cross-origin, so Lax/Strict won't work
+        sameSite: env.NODE_ENV === "development" ? "lax" : "none",
+        // CRITICAL: secure must be true for SameSite=None (production/staging)
+        secure: env.NODE_ENV !== "development",
+        httpOnly: true,
+        path: "/",
+        // Do NOT set domain - let browser handle it (workers.dev is on PSL)
+      },
+      // Disable cross-subdomain cookies (PSL prevents .workers.dev domain)
       crossSubDomainCookies: {
-        enabled: env.NODE_ENV === 'development', // Only enable for localhost development
-        domain: env.NODE_ENV === 'development' ? 'localhost' : undefined,
+        enabled: false,
       },
     },
 
     logger: {
-      level: env.NODE_ENV === 'development' ? 'debug' : 'error',
+      level: env.NODE_ENV === "development" ? "debug" : "error",
     },
   });
 };
@@ -156,7 +162,7 @@ export type AuthInstance = ReturnType<typeof createAuth>;
  * Uses Better Auth's built-in session validation
  */
 export function createBetterAuthMiddleware(auth: AuthInstance) {
-  return async (c: any, next: any) => {
+  return async (c: Context, next: Next) => {
     try {
       // Use Better Auth's built-in session validation
       const session = await auth.api.getSession({
@@ -164,12 +170,12 @@ export function createBetterAuthMiddleware(auth: AuthInstance) {
       });
 
       // Set user and session in Hono context
-      c.set('user', session?.user || null);
-      c.set('session', session?.session || null);
+      c.set("user", session?.user || null);
+      c.set("session", session?.session || null);
     } catch (error) {
-      console.error('Better Auth middleware error:', error);
-      c.set('user', null);
-      c.set('session', null);
+      console.error("Better Auth middleware error:", error);
+      c.set("user", null);
+      c.set("session", null);
     }
 
     await next();
@@ -181,11 +187,11 @@ export function createBetterAuthMiddleware(auth: AuthInstance) {
  * Uses user.role from Better Auth session
  */
 export function requireAdmin() {
-  return async (c: any, next: any) => {
-    const user = c.get('user');
+  return async (c: Context, next: Next) => {
+    const user = c.get("user");
 
-    if (!user || user.role !== 'admin') {
-      return c.json({ error: 'Admin access required' }, 403);
+    if (!user || user.role !== "admin") {
+      return c.json({ error: "Admin access required" }, 403);
     }
 
     await next();
@@ -197,11 +203,11 @@ export function requireAdmin() {
  * Requires valid session
  */
 export function requireAuth() {
-  return async (c: any, next: any) => {
-    const user = c.get('user');
+  return async (c: Context, next: Next) => {
+    const user = c.get("user");
 
     if (!user) {
-      return c.json({ error: 'Authentication required' }, 401);
+      return c.json({ error: "Authentication required" }, 401);
     }
 
     await next();
@@ -212,11 +218,14 @@ export function requireAuth() {
  * Utility to get current session from Better Auth
  * For use in API routes that need session info
  */
-export async function getSessionFromRequest(auth: AuthInstance, request: Request) {
+export async function getSessionFromRequest(
+  auth: AuthInstance,
+  request: Request
+) {
   try {
     return await auth.api.getSession({ headers: request.headers });
   } catch (error) {
-    console.error('Failed to get session:', error);
+    console.error("Failed to get session:", error);
     return { user: null, session: null };
   }
 }

@@ -33,7 +33,7 @@ const CartTrigger: FC<CartTriggerProps> = ({ className }) => {
         <CartIcon />
         {/** biome-ignore lint/nursery/noLeakedRender: itemCount is guaranteed to be a number after Number() conversion */}
         {isHydrated && itemCount > 0 ? (
-          <span className="-top-2 -right-2 absolute flex h-[18px] min-w-[18px] items-center justify-center rounded-full border-2 border-white bg-red-500 px-1.5 py-0.5 font-bold text-[10px] text-white">
+          <span className="absolute -top-2 -right-2 flex h-[18px] min-w-[18px] items-center justify-center rounded-full border-2 border-white bg-red-500 px-1.5 py-0.5 font-bold text-[10px] text-white">
             {itemCount > 99 ? "99+" : String(itemCount)}
           </span>
         ) : null}

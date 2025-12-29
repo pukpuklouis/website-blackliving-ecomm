@@ -1,1 +1,1 @@
-export { default, onRequest } from '../worker';
+export { default, onRequest } from "../worker";

@@ -3,9 +3,11 @@
 const hasSession = Astro.cookies.has("better-auth.session_token");
 
 if (hasSession) {
-  return Astro.redirect('/account/profile');
+  // biome-ignore parse: Astro frontmatter allows return statements
+  return Astro.redirect("/account/profile");
 }
 // Redirect to login page if no session
-return Astro.redirect('/login?redirect=/account/profile');
+// biome-ignore parse: Astro frontmatter allows return statements
+return Astro.redirect("/login?redirect=/account/profile");
 ---
 

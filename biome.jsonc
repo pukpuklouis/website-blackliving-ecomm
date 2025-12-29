@@ -24,27 +24,12 @@
   },
   "overrides": [
     {
-      "includes": ["**/use*.ts", "**/use*.tsx"],
-      "linter": {
-        "rules": {
-          "style": {
-            "useFilenamingConvention": "off"
-          }
-        }
-      }
-    },
-    {
-      "includes": ["apps/admin/**/*.tsx"],
-      "linter": {
-        "rules": {
-          "style": {
-            "useFilenamingConvention": "off"
-          }
-        }
-      }
-    },
-    {
-      "includes": ["**/*.astro"],
+      "includes": [
+        "**/use*.ts",
+        "**/use*.tsx",
+        "apps/admin/**/*.tsx",
+        "**/*.astro"
+      ],
       "linter": {
         "rules": {
           "style": {

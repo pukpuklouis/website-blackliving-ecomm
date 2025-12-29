@@ -33,12 +33,12 @@
     "db:sync-data": "node sync-data.js"
   },
   "dependencies": {
-    "@libsql/client": "^0.15.10",
+    "@libsql/client": "^0.15.15",
     "@paralleldrive/cuid2": "^2.2.2",
     "drizzle-orm": "^0.44.7"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20251126.0",
+    "@cloudflare/workers-types": "^4.20251213.0",
     "@types/better-sqlite3": "^7.6.13",
     "better-sqlite3": "^12.2.0",
     "drizzle-kit": "^0.31.4",

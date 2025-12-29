@@ -7,14 +7,25 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 const { slug } = Astro.params;
 const apiUrl = import.meta.env.PUBLIC_API_URL || "http://localhost:8787";
 
-let page = null;
-let error = null;
+type PageData = {
+  title: string;
+  content: unknown[] | null;
+  contentMarkdown: string | null;
+  seoTitle: string | null;
+  seoDescription: string | null;
+  featuredImage: string | null;
+  publishedAt: string | null;
+};
+
+let page: PageData | null = null;
+let error: Error | null = null;
 
 try {
   const response = await fetch(`${apiUrl}/api/pages/${slug}`);
   if (!response.ok) {
     if (response.status === 404) {
-      return Astro.redirect('/404');
+      // biome-ignore parse: Astro frontmatter allows return statements
+      return Astro.redirect("/404");
     }
     throw new Error("Failed to fetch page");
   }
@@ -24,11 +35,12 @@ try {
   }
 } catch (e) {
   console.error("Error fetching page:", e);
-  error = e;
+  error = e instanceof Error ? e : new Error(String(e));
 }
 
 if (!page) {
-  return Astro.redirect('/404');
+  // biome-ignore parse: Astro frontmatter allows return statements
+  return Astro.redirect("/404");
 }
 
 const {
@@ -45,9 +57,9 @@ const {
 <BaseLayout
   title={seoTitle || title}
   description={seoDescription || ''}
-  image={featuredImage}
+  image={featuredImage ?? undefined}
   type="article"
-  publishedTime={publishedAt}
+  publishedTime={publishedAt ?? undefined}
 >
   {
     featuredImage && (

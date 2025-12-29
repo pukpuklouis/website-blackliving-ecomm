@@ -1,6 +1,6 @@
-import { safeParseJSON } from '../lib/http';
+import { safeParseJSON } from "../lib/http";
 
-export type MediaLibraryCategory = 'images' | 'files' | 'all';
+export type MediaLibraryCategory = "images" | "files" | "all";
 
 export type MediaLibraryItem = {
   key: string;
@@ -39,62 +39,72 @@ export type FetchMediaLibraryParams = {
   type?: MediaLibraryCategory;
   search?: string;
   prefix?: string;
-  sort?: 'recent' | 'name';
+  sort?: "recent" | "name";
 };
 
 export async function fetchMediaLibrary(
   params: FetchMediaLibraryParams = {},
   apiBase?: string
 ): Promise<MediaLibraryResponse> {
-  const apiUrl = apiBase || (import.meta.env.PUBLIC_API_URL as string | undefined)?.trim();
+  const apiUrl =
+    apiBase || (import.meta.env.PUBLIC_API_URL as string | undefined)?.trim();
 
   if (!apiUrl) {
-    throw new Error('PUBLIC_API_URL is not configured.');
+    throw new Error("PUBLIC_API_URL is not configured.");
   }
 
   const query = new URLSearchParams();
 
-  const { cursor, limit, type = 'all', search, prefix, sort = 'recent' } = params;
+  const {
+    cursor,
+    limit,
+    type = "all",
+    search,
+    prefix,
+    sort = "recent",
+  } = params;
 
   if (cursor) {
-    query.set('cursor', cursor);
+    query.set("cursor", cursor);
   }
   if (limit) {
-    query.set('limit', String(limit));
+    query.set("limit", String(limit));
   }
-  if (type && type !== 'all') {
-    query.set('type', type);
+  if (type && type !== "all") {
+    query.set("type", type);
   }
   if (search) {
-    query.set('search', search);
+    query.set("search", search);
   }
   if (prefix) {
-    query.set('prefix', prefix);
+    query.set("prefix", prefix);
   }
   if (sort) {
-    query.set('sort', sort);
+    query.set("sort", sort);
   }
 
-  const url = `${apiUrl.replace(/\/$/, '')}/api/admin/media/library${
-    query.size ? `?${query.toString()}` : ''
+  const url = `${apiUrl.replace(/\/$/, "")}/api/admin/media/library${
+    query.size ? `?${query.toString()}` : ""
   }`;
 
   const response = await fetch(url, {
-    credentials: 'include',
+    credentials: "include",
   });
 
-  const payload = (await safeParseJSON(response)) as MediaLibraryApiResponse | null;
+  const payload = (await safeParseJSON(
+    response
+  )) as MediaLibraryApiResponse | null;
 
   if (!response.ok) {
     const message =
-      (payload && 'error' in payload && typeof payload.error === 'string'
+      (payload && "error" in payload && typeof payload.error === "string"
         ? payload.error
-        : undefined) || 'Failed to fetch media library';
+        : undefined) || "Failed to fetch media library";
     throw new Error(message);
   }
 
   if (!payload || payload.success !== true || !payload.data) {
-    throw new Error('Malformed response from media library endpoint');
+    throw new Error("Malformed response from media library endpoint");
   }
 
   const { items, pageInfo } = payload.data;
@@ -103,7 +113,7 @@ export async function fetchMediaLibrary(
     items: Array.isArray(items) ? items : [],
     pageInfo: {
       nextCursor:
-        pageInfo && typeof pageInfo.nextCursor === 'string'
+        pageInfo && typeof pageInfo.nextCursor === "string"
           ? pageInfo.nextCursor
           : (pageInfo?.nextCursor ?? null),
       hasMore: Boolean(pageInfo?.hasMore),

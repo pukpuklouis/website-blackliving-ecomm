@@ -1,18 +1,18 @@
-import { eq, sql, and, desc, asc } from 'drizzle-orm';
-import { createId } from '@paralleldrive/cuid2';
-import type { D1Database } from '@cloudflare/workers-types';
+import type { D1Database } from "@cloudflare/workers-types";
+import { createId } from "@paralleldrive/cuid2";
+import { and, eq, sql } from "drizzle-orm";
+import { createDB } from "./client";
 import {
-  users,
-  customerProfiles,
   customerAddresses,
-  customerPaymentMethods,
-  customerWishlists,
-  customerReviews,
   customerNotificationPreferences,
-  userSecurity,
+  customerPaymentMethods,
+  customerProfiles,
   customerRecentlyViewed,
-} from './schema';
-import { createDB } from './client';
+  customerReviews,
+  customerWishlists,
+  userSecurity,
+  users,
+} from "./schema";
 
 // Types for customer profile operations
 export interface BasicProfileData {
@@ -113,8 +113,8 @@ export class CustomerProfileService {
 
       return result[0] || null;
     } catch (error) {
-      console.error('Error fetching basic profile:', error);
-      throw new Error('Failed to fetch basic profile');
+      console.error("Error fetching basic profile:", error);
+      throw new Error("Failed to fetch basic profile");
     }
   }
 
@@ -184,8 +184,8 @@ export class CustomerProfileService {
           : undefined,
       };
     } catch (error) {
-      console.error('Error fetching full profile:', error);
-      throw new Error('Failed to fetch full profile');
+      console.error("Error fetching full profile:", error);
+      throw new Error("Failed to fetch full profile");
     }
   }
 
@@ -219,8 +219,8 @@ export class CustomerProfileService {
         firstPurchaseAt: result[0].firstPurchaseAt || undefined,
       };
     } catch (error) {
-      console.error('Error fetching profile analytics:', error);
-      throw new Error('Failed to fetch profile analytics');
+      console.error("Error fetching profile analytics:", error);
+      throw new Error("Failed to fetch profile analytics");
     }
   }
 
@@ -238,7 +238,7 @@ export class CustomerProfileService {
 
       return result.length > 0;
     } catch (error) {
-      console.error('Error checking extended profile:', error);
+      console.error("Error checking extended profile:", error);
       return false;
     }
   }
@@ -290,15 +290,15 @@ export class CustomerProfileService {
 
           this.db.insert(customerProfiles).values({
             id: customerProfileId,
-            userId: userId,
+            userId,
             customerNumber,
             name: userData.name,
             email: userData.email,
-            phone: userData.phone || '',
+            phone: userData.phone || "",
             birthday: userData.birthday,
             gender: userData.gender,
-            source: userData.source || 'website',
-            contactPreference: 'email',
+            source: userData.source || "website",
+            contactPreference: "email",
             createdAt: new Date(),
             updatedAt: new Date(),
           }),
@@ -311,91 +311,90 @@ export class CustomerProfileService {
           customerProfileId,
           customerNumber,
         };
-      } else {
-        // Step 2b: Create new user and profile with batch operation
-        const newUserId = createId();
-        const customerNumber = await this.generateCustomerNumber();
-        const customerProfileId = createId();
-
-        const batchOperations = [
-          this.db.insert(users).values({
-            id: newUserId,
-            name: userData.name,
-            email: userData.email,
-            phone: userData.phone,
-            role: 'customer',
-            preferences: userData.preferences || {},
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          }),
-
-          this.db.insert(customerProfiles).values({
-            id: customerProfileId,
-            userId: newUserId,
-            customerNumber,
-            name: userData.name,
-            email: userData.email,
-            phone: userData.phone || '',
-            birthday: userData.birthday,
-            gender: userData.gender,
-            source: userData.source || 'website',
-            segment: 'new',
-            totalSpent: 0,
-            orderCount: 0,
-            avgOrderValue: 0,
-            lifetimeValue: 0,
-            churnRisk: 'low',
-            contactPreference: 'email',
-            notes: '',
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          }),
-
-          this.db.insert(customerNotificationPreferences).values({
-            id: createId(),
-            userId: newUserId,
-            emailOrderUpdates: true,
-            emailAppointmentReminders: true,
-            emailNewsletters: true,
-            emailPromotions: false,
-            emailPriceAlerts: false,
-            emailProductRecommendations: false,
-            smsOrderUpdates: false,
-            smsAppointmentReminders: true,
-            smsPromotions: false,
-            smsDeliveryUpdates: true,
-            emailFrequency: 'immediate',
-            smsFrequency: 'important_only',
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          }),
-
-          this.db.insert(userSecurity).values({
-            id: createId(),
-            userId: newUserId,
-            loginCount: 0,
-            twoFactorEnabled: false,
-            isLocked: false,
-            failedLoginAttempts: 0,
-            allowDataCollection: true,
-            allowMarketing: true,
-            allowSmsMarketing: false,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          }),
-        ];
-
-        await this.db.batch(batchOperations);
-
-        return {
-          userId: newUserId,
-          customerProfileId,
-          customerNumber,
-        };
       }
+      // Step 2b: Create new user and profile with batch operation
+      const newUserId = createId();
+      const customerNumber = await this.generateCustomerNumber();
+      const customerProfileId = createId();
+
+      const batchOperations = [
+        this.db.insert(users).values({
+          id: newUserId,
+          name: userData.name,
+          email: userData.email,
+          phone: userData.phone,
+          role: "customer",
+          preferences: userData.preferences || {},
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        }),
+
+        this.db.insert(customerProfiles).values({
+          id: customerProfileId,
+          userId: newUserId,
+          customerNumber,
+          name: userData.name,
+          email: userData.email,
+          phone: userData.phone || "",
+          birthday: userData.birthday,
+          gender: userData.gender,
+          source: userData.source || "website",
+          segment: "new",
+          totalSpent: 0,
+          orderCount: 0,
+          avgOrderValue: 0,
+          lifetimeValue: 0,
+          churnRisk: "low",
+          contactPreference: "email",
+          notes: "",
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        }),
+
+        this.db.insert(customerNotificationPreferences).values({
+          id: createId(),
+          userId: newUserId,
+          emailOrderUpdates: true,
+          emailAppointmentReminders: true,
+          emailNewsletters: true,
+          emailPromotions: false,
+          emailPriceAlerts: false,
+          emailProductRecommendations: false,
+          smsOrderUpdates: false,
+          smsAppointmentReminders: true,
+          smsPromotions: false,
+          smsDeliveryUpdates: true,
+          emailFrequency: "immediate",
+          smsFrequency: "important_only",
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        }),
+
+        this.db.insert(userSecurity).values({
+          id: createId(),
+          userId: newUserId,
+          loginCount: 0,
+          twoFactorEnabled: false,
+          isLocked: false,
+          failedLoginAttempts: 0,
+          allowDataCollection: true,
+          allowMarketing: true,
+          allowSmsMarketing: false,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        }),
+      ];
+
+      await this.db.batch(batchOperations);
+
+      return {
+        userId: newUserId,
+        customerProfileId,
+        customerNumber,
+      };
     } catch (error) {
-      console.error('Error creating customer profile:', error);
-      throw new Error('Failed to create customer profile');
+      console.error("Error creating customer profile:", error);
+      throw new Error("Failed to create customer profile");
     }
   }
 
@@ -416,7 +415,9 @@ export class CustomerProfileService {
       if (data.name !== undefined) userUpdate.name = data.name;
       if (data.phone !== undefined) userUpdate.phone = data.phone;
       if (Object.keys(userUpdate).length > 1) {
-        batchOperations.push(this.db.update(users).set(userUpdate).where(eq(users.id, userId)));
+        batchOperations.push(
+          this.db.update(users).set(userUpdate).where(eq(users.id, userId))
+        );
       }
 
       // Prepare customer profile upsert
@@ -444,7 +445,7 @@ export class CustomerProfileService {
         if (user[0]) {
           const newProfile = {
             id: createId(),
-            userId: userId,
+            userId,
             customerNumber: await this.generateCustomerNumber(),
             email: user[0].email,
             name: data.name || user[0].name,
@@ -453,12 +454,14 @@ export class CustomerProfileService {
             gender: data.gender,
             contactPreference: data.contactPreference,
             notes: data.notes,
-            source: 'existing_user',
-            segment: 'customer',
+            source: "existing_user",
+            segment: "customer",
             createdAt: new Date(),
             updatedAt: new Date(),
           };
-          batchOperations.push(this.db.insert(customerProfiles).values(newProfile));
+          batchOperations.push(
+            this.db.insert(customerProfiles).values(newProfile)
+          );
         }
       }
 
@@ -468,8 +471,8 @@ export class CustomerProfileService {
 
       return { success: true, userId };
     } catch (error) {
-      console.error('Error updating basic info:', error);
-      throw new Error('Failed to update basic info');
+      console.error("Error updating basic info:", error);
+      throw new Error("Failed to update basic info");
     }
   }
 
@@ -495,14 +498,16 @@ export class CustomerProfileService {
           avgOrderValue: sql`(${customerProfiles.totalSpent} + ${orderData.amount}) / (${customerProfiles.orderCount} + 1)`,
           lastOrderAt: now,
           lastPurchaseAt: now,
-          firstPurchaseAt: orderData.isFirstPurchase ? now : customerProfiles.firstPurchaseAt,
+          firstPurchaseAt: orderData.isFirstPurchase
+            ? now
+            : customerProfiles.firstPurchaseAt,
           lastContactAt: now,
           updatedAt: now,
         })
         .where(eq(customerProfiles.userId, userId));
     } catch (error) {
-      console.error('Error updating analytics:', error);
-      throw new Error('Failed to update analytics');
+      console.error("Error updating analytics:", error);
+      throw new Error("Failed to update analytics");
     }
   }
 
@@ -515,27 +520,30 @@ export class CustomerProfileService {
       const analytics = await this.getProfileAnalytics(userId);
       if (!analytics) return;
 
-      let segment = 'new';
-      let churnRisk = 'low';
+      let segment = "new";
+      let churnRisk = "low";
 
       // Segmentation logic
-      if (analytics.totalSpent >= 200000) {
-        segment = 'vip';
+      if (analytics.totalSpent >= 200_000) {
+        segment = "vip";
       } else if (analytics.orderCount >= 3) {
-        segment = 'regular';
+        segment = "regular";
       } else if (analytics.orderCount >= 1) {
-        segment = 'customer';
+        segment = "customer";
       }
 
       // Churn risk calculation
       const daysSinceLastOrder = analytics.lastOrderAt
-        ? Math.floor((Date.now() - analytics.lastOrderAt.getTime()) / (1000 * 60 * 60 * 24))
+        ? Math.floor(
+            (Date.now() - analytics.lastOrderAt.getTime()) /
+              (1000 * 60 * 60 * 24)
+          )
         : 0;
 
       if (daysSinceLastOrder > 180) {
-        churnRisk = 'high';
+        churnRisk = "high";
       } else if (daysSinceLastOrder > 90) {
-        churnRisk = 'medium';
+        churnRisk = "medium";
       }
 
       return await this.db
@@ -548,8 +556,8 @@ export class CustomerProfileService {
         })
         .where(eq(customerProfiles.userId, userId));
     } catch (error) {
-      console.error('Error updating segment:', error);
-      throw new Error('Failed to update segment');
+      console.error("Error updating segment:", error);
+      throw new Error("Failed to update segment");
     }
   }
 
@@ -562,13 +570,13 @@ export class CustomerProfileService {
       return await this.db
         .update(users)
         .set({
-          preferences: preferences,
+          preferences,
           updatedAt: new Date(),
         })
         .where(eq(users.id, userId));
     } catch (error) {
-      console.error('Error updating preferences:', error);
-      throw new Error('Failed to update preferences');
+      console.error("Error updating preferences:", error);
+      throw new Error("Failed to update preferences");
     }
   }
 
@@ -605,12 +613,12 @@ export class CustomerProfileService {
           .set({
             name: `Deleted User ${timestamp}`,
             email: `deleted_${timestamp}@blackliving.deleted`,
-            phone: '',
+            phone: "",
             birthday: null,
             gender: null,
-            notes: '',
-            segment: 'inactive',
-            contactPreference: 'email',
+            notes: "",
+            segment: "inactive",
+            contactPreference: "email",
             updatedAt: new Date(),
           })
           .where(eq(customerProfiles.userId, userId)),
@@ -621,8 +629,8 @@ export class CustomerProfileService {
 
       return { success: true, anonymized: true };
     } catch (error) {
-      console.error('Error soft deleting profile:', error);
-      throw new Error('Failed to soft delete profile');
+      console.error("Error soft deleting profile:", error);
+      throw new Error("Failed to soft delete profile");
     }
   }
 
@@ -634,16 +642,28 @@ export class CustomerProfileService {
     try {
       // Prepare batch operations in order to respect foreign key constraints
       const batchOperations = [
-        this.db.delete(customerRecentlyViewed).where(eq(customerRecentlyViewed.userId, userId)),
-        this.db.delete(customerWishlists).where(eq(customerWishlists.userId, userId)),
-        this.db.delete(customerReviews).where(eq(customerReviews.userId, userId)),
+        this.db
+          .delete(customerRecentlyViewed)
+          .where(eq(customerRecentlyViewed.userId, userId)),
+        this.db
+          .delete(customerWishlists)
+          .where(eq(customerWishlists.userId, userId)),
+        this.db
+          .delete(customerReviews)
+          .where(eq(customerReviews.userId, userId)),
         this.db
           .delete(customerNotificationPreferences)
           .where(eq(customerNotificationPreferences.userId, userId)),
-        this.db.delete(customerPaymentMethods).where(eq(customerPaymentMethods.userId, userId)),
-        this.db.delete(customerAddresses).where(eq(customerAddresses.userId, userId)),
+        this.db
+          .delete(customerPaymentMethods)
+          .where(eq(customerPaymentMethods.userId, userId)),
+        this.db
+          .delete(customerAddresses)
+          .where(eq(customerAddresses.userId, userId)),
         this.db.delete(userSecurity).where(eq(userSecurity.userId, userId)),
-        this.db.delete(customerProfiles).where(eq(customerProfiles.userId, userId)),
+        this.db
+          .delete(customerProfiles)
+          .where(eq(customerProfiles.userId, userId)),
         this.db.delete(users).where(eq(users.id, userId)),
       ];
 
@@ -652,8 +672,8 @@ export class CustomerProfileService {
 
       return { success: true, deleted: true };
     } catch (error) {
-      console.error('Error hard deleting profile:', error);
-      throw new Error('Failed to hard delete profile');
+      console.error("Error hard deleting profile:", error);
+      throw new Error("Failed to hard delete profile");
     }
   }
 
@@ -668,7 +688,7 @@ export class CustomerProfileService {
   async generateCustomerNumber(): Promise<string> {
     const now = new Date();
     const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const month = String(now.getMonth() + 1).padStart(2, "0");
 
     // Get the count of customers created this month
     const startOfMonth = new Date(year, now.getMonth(), 1);
@@ -684,7 +704,7 @@ export class CustomerProfileService {
         )
       );
 
-    const sequence = String((count[0]?.count || 0) + 1).padStart(4, '0');
+    const sequence = String((count[0]?.count || 0) + 1).padStart(4, "0");
 
     return `CU${year}${month}${sequence}`;
   }
@@ -693,7 +713,9 @@ export class CustomerProfileService {
    * Batch update profiles for admin operations
    * Optimized for bulk operations
    */
-  async batchUpdateProfiles(updates: Array<{ userId: string; data: ProfileUpdate }>) {
+  async batchUpdateProfiles(
+    updates: Array<{ userId: string; data: ProfileUpdate }>
+  ) {
     try {
       const chunks = this.chunkArray(updates, 50); // Process in chunks of 50
 
@@ -707,8 +729,8 @@ export class CustomerProfileService {
 
       return { success: true, updated: updates.length };
     } catch (error) {
-      console.error('Error batch updating profiles:', error);
-      throw new Error('Failed to batch update profiles');
+      console.error("Error batch updating profiles:", error);
+      throw new Error("Failed to batch update profiles");
     }
   }
 

@@ -73,8 +73,8 @@ export default function HeroCarousel({
           </CarouselItem>
         ))}
       </CarouselContent>
-      <CarouselPrevious className="-translate-y-1/2 absolute top-1/2 left-4 z-20 border-white/30 bg-white/20 text-white hover:bg-white/30" />
-      <CarouselNext className="-translate-y-1/2 absolute top-1/2 right-4 z-20 border-white/30 bg-white/20 text-white hover:bg-white/30" />
+      <CarouselPrevious className="absolute top-1/2 left-4 z-20 -translate-y-1/2 border-white/30 bg-white/20 text-white hover:bg-white/30" />
+      <CarouselNext className="absolute top-1/2 right-4 z-20 -translate-y-1/2 border-white/30 bg-white/20 text-white hover:bg-white/30" />
     </Carousel>
   );
 }

@@ -32,9 +32,9 @@ export function estimateReadingTimeMinutes(
   };
 
   const sanitized = markdown
-    .replace(/```[\s\S]*?```/g, '')
-    .replace(/`[^`]*`/g, '')
-    .replace(/[#>*_\-\[\]()!]/g, '')
+    .replace(/```[\s\S]*?```/g, "")
+    .replace(/`[^`]*`/g, "")
+    .replace(/[#>*_\-[\]()!]/g, "")
     .trim();
 
   if (sanitized.length === 0) {

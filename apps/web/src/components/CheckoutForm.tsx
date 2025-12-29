@@ -1,14 +1,31 @@
+import { CheckCircle2 } from "lucide-react";
 import type { FC } from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   type CustomerInfo,
   type ShippingAddress,
   useCartStore,
 } from "../stores/cartStore";
+import AuthModal from "./auth/AuthModal";
+import {
+  ALL_FIELDS_TOUCHED,
+  checkEmailStatus,
+  EMAIL_REGEX,
+  type EmailStatus,
+  GOMYPAY_METHODS,
+  handlePaymentResult,
+  performEmailCheck,
+  validateField,
+  validateFormFields,
+} from "./checkout/checkout-form-utils";
+import CustomerInfoSection from "./checkout/customer-info-section";
+import OrderSummarySection from "./checkout/order-summary-section";
+import PaymentMethodSection from "./checkout/payment-method-section";
+import ShippingAddressSection from "./checkout/shipping-address-section";
 
-interface CheckoutFormProps {
+type CheckoutFormProps = {
   onSuccess: () => void;
-}
+};
 
 const CheckoutForm: FC<CheckoutFormProps> = ({ onSuccess }) => {
   const {
@@ -16,26 +33,24 @@ const CheckoutForm: FC<CheckoutFormProps> = ({ onSuccess }) => {
     customerInfo,
     shippingAddress,
     paymentMethod,
-    notes,
     setCustomerInfo,
     setShippingAddress,
     setPaymentMethod,
     setNotes,
     createOrder,
-    error,
+    initiateGomypayPayment,
     isSubmittingOrder,
     validateCart,
+    notes,
   } = useCartStore();
 
-  // Use selectors for computed values
   const subtotal = useCartStore((state) => state.getSubtotal());
-  const shippingFee = useCartStore((state) => state.getShippingFee());
   const total = useCartStore((state) => state.getTotal());
 
-  const [currentStep, setCurrentStep] = useState(1);
   const [localCustomerInfo, setLocalCustomerInfo] = useState<CustomerInfo>(
     customerInfo || { name: "", email: "", phone: "" }
   );
+
   const [localShippingAddress, setLocalShippingAddress] =
     useState<ShippingAddress>(
       shippingAddress || {
@@ -47,524 +62,310 @@ const CheckoutForm: FC<CheckoutFormProps> = ({ onSuccess }) => {
         postalCode: "",
       }
     );
+
   const [localNotes, setLocalNotes] = useState(notes);
   const [orderSuccess, setOrderSuccess] = useState<{
     success: boolean;
     orderNumber?: string;
   } | null>(null);
 
-  const cities = [
-    "台北市",
-    "新北市",
-    "桃園市",
-    "台中市",
-    "台南市",
-    "高雄市",
-    "新竹縣",
-    "新竹市",
-    "苗栗縣",
-    "彰化縣",
-    "南投縣",
-    "雲林縣",
-    "嘉義縣",
-    "嘉義市",
-    "屏東縣",
-    "宜蘭縣",
-    "花蓮縣",
-    "台東縣",
-    "澎湖縣",
-    "金門縣",
-    "連江縣",
-  ];
+  // Form validation errors
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  const [formTouched, setFormTouched] = useState<Record<string, boolean>>({});
 
-  const handleCustomerInfoSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setCustomerInfo(localCustomerInfo);
-    if (!error) {
-      setCurrentStep(2);
-    }
-  };
+  // Email verification state
+  const [emailStatus, setEmailStatus] = useState<EmailStatus>("idle");
+  const [isCheckingEmail, setIsCheckingEmail] = useState(false);
 
-  const handleShippingAddressSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setShippingAddress(localShippingAddress);
-    if (!error) {
-      setCurrentStep(3);
-    }
-  };
+  // Auth modal state
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
-  const handleFinalSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setNotes(localNotes);
+  // Enabled payment methods (fetched from API)
+  const [enabledMethods, setEnabledMethods] = useState<{
+    enableApplePay: boolean;
+    enableGooglePay: boolean;
+    enableVirtualAccount: boolean;
+  }>({
+    enableApplePay: false,
+    enableGooglePay: false,
+    enableVirtualAccount: false,
+  });
 
-    const validation = validateCart();
-    if (!validation.isValid) {
+  // Fetch enabled payment methods on mount
+  useEffect(() => {
+    const fetchEnabledMethods = async () => {
+      try {
+        const apiUrl = import.meta.env.PUBLIC_API_URL || "";
+        const response = await fetch(`${apiUrl}/api/payment/methods`);
+        if (response.ok) {
+          const result = await response.json();
+          if (result.success && result.data) {
+            setEnabledMethods(result.data);
+          }
+        }
+      } catch (error) {
+        console.error("Failed to fetch payment methods:", error);
+      }
+    };
+    fetchEnabledMethods();
+  }, []);
+
+  // Debounced email check
+  useEffect(() => {
+    if (!EMAIL_REGEX.test(localCustomerInfo.email)) {
       return;
     }
 
-    const result = await createOrder();
-    if (result.success) {
-      setOrderSuccess(result);
-      // Don't call onSuccess immediately, let user see the success message
+    const timer = setTimeout(async () => {
+      setIsCheckingEmail(true);
+      setEmailStatus("checking");
+
+      const result = await performEmailCheck(localCustomerInfo.email);
+      setEmailStatus(result.status);
+      setIsAuthModalOpen(result.shouldOpenModal);
+      setIsCheckingEmail(false);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [localCustomerInfo.email]);
+
+  const handleFieldBlur = (field: string, value: string) => {
+    setFormTouched((prev) => ({ ...prev, [field]: true }));
+    const error = validateField(field, value);
+    setFormErrors((prev) => ({ ...prev, [field]: error }));
+  };
+
+  const handleCustomerInfoChange = (
+    field: keyof CustomerInfo,
+    value: string
+  ) => {
+    const updated = { ...localCustomerInfo, [field]: value };
+    setLocalCustomerInfo(updated);
+    setCustomerInfo(updated);
+    if (formTouched[field]) {
+      const error = validateField(field, value);
+      setFormErrors((prev) => ({ ...prev, [field]: error }));
+    }
+  };
+
+  const handleShippingAddressChange = (
+    field: keyof ShippingAddress,
+    value: string
+  ) => {
+    const updated = { ...localShippingAddress, [field]: value };
+    setLocalShippingAddress(updated);
+    setShippingAddress(updated);
+    const fieldKey = `shipping-${field}`;
+    if (formTouched[fieldKey]) {
+      const error = validateField(fieldKey, value);
+      setFormErrors((prev) => ({ ...prev, [fieldKey]: error }));
+    }
+  };
+
+  const validateAllFields = (): boolean => {
+    const errors = validateFormFields(localCustomerInfo, localShippingAddress);
+    setFormErrors(errors);
+    setFormTouched(ALL_FIELDS_TOUCHED);
+    return !Object.values(errors).some((e) => e !== "");
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setNotes(localNotes);
+
+    // Pre-submission validations
+    const isFormValid = validateAllFields();
+    const validation = validateCart();
+    const emailCheck = checkEmailStatus(emailStatus);
+
+    if (!isFormValid) {
+      return;
+    }
+
+    if (!validation.isValid) {
+      setFormErrors((prev) => ({
+        ...prev,
+        form: validation.errors[0] || "請檢查資料是否完整",
+      }));
+      return;
+    }
+
+    if (emailCheck.error) {
+      setFormErrors((prev) => ({ ...prev, email: emailCheck.error || "" }));
+      setIsAuthModalOpen(emailCheck.shouldOpenAuthModal);
+      return;
+    }
+
+    const isGomypayMethod = GOMYPAY_METHODS.includes(
+      paymentMethod as (typeof GOMYPAY_METHODS)[number]
+    );
+
+    if (!isGomypayMethod) {
+      // Traditional order flow (bank_transfer, cash_on_delivery)
+      const result = await createOrder();
+      if (result.success) {
+        setOrderSuccess(result);
+      }
+      return;
+    }
+
+    // GOMYPAY payment flow - sync local form data to store first
+    setCustomerInfo(localCustomerInfo);
+    setShippingAddress(localShippingAddress);
+
+    const result = await initiateGomypayPayment();
+    const paymentError = handlePaymentResult(result);
+    if (paymentError) {
+      setFormErrors((prev) => ({ ...prev, form: paymentError }));
     }
   };
 
   const handleBackToCart = () => {
     if (orderSuccess?.success) {
-      // Reset order success state and go back to main cart
       setOrderSuccess(null);
-      onSuccess();
-    } else {
-      onSuccess();
     }
+    onSuccess();
   };
 
+  // Order success view
   if (orderSuccess?.success) {
     return (
-      <div className="mx-auto max-w-2xl py-12 text-center">
-        <div className="mb-8 rounded-lg border border-green-200 bg-green-50 p-8">
-          <div className="mb-4 text-6xl text-green-600">✓</div>
-          <h2 className="mb-4 font-semibold text-2xl text-green-800">
-            訂單建立成功！
-          </h2>
-          <p className="mb-2 text-green-700">您的訂單編號：</p>
-          <p className="mb-4 font-bold font-mono text-green-800 text-xl">
+      <div className="mx-auto w-full max-w-3xl rounded-xl border border-border-light bg-white p-8 text-center shadow-card dark:border-zinc-700 dark:bg-zinc-800">
+        <div className="mb-6 flex justify-center">
+          <div className="flex h-20 w-20 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30">
+            <CheckCircle2 className="h-10 w-10 text-green-600 dark:text-green-400" />
+          </div>
+        </div>
+        <h2 className="mb-2 font-bold text-2xl text-gray-900 dark:text-white">
+          訂單建立成功！
+        </h2>
+        <p className="mb-8 text-gray-500 dark:text-gray-400">
+          感謝您的購買，您的訂單編號為：
+          <span className="ml-2 font-bold font-mono text-gray-900 text-lg dark:text-white">
             {orderSuccess.orderNumber}
-          </p>
-          <div className="rounded bg-green-100 p-3 text-green-600 text-sm">
-            <p>📧 訂單確認信已發送至您的電子郵件</p>
-            <p>💰 請依照信中指示完成付款程序</p>
-            <p>📞 如有問題請聯繫客服：02-2345-6789</p>
+          </span>
+        </p>
+
+        <div className="mx-auto mb-8 max-w-md space-y-3 rounded-lg bg-gray-50 p-6 text-left dark:bg-zinc-700/50">
+          <div className="flex items-start gap-3">
+            <div className="mt-1">📧</div>
+            <div className="text-gray-600 text-sm dark:text-gray-300">
+              <p className="font-medium">訂單確認信已發送</p>
+              <p className="text-gray-500 text-xs">請查看您的電子信箱</p>
+            </div>
+          </div>
+          <div className="flex items-start gap-3">
+            <div className="mt-1">💰</div>
+            <div className="text-gray-600 text-sm dark:text-gray-300">
+              {(() => {
+                if (paymentMethod === "cash_on_delivery") {
+                  return (
+                    <>
+                      <p className="font-medium">貨到付款</p>
+                      <p className="text-gray-500 text-xs">
+                        請於商品送達時準備好現金交給配送人員
+                      </p>
+                    </>
+                  );
+                }
+                if (
+                  paymentMethod === "bank_transfer" ||
+                  paymentMethod === "virtual_account"
+                ) {
+                  return (
+                    <>
+                      <p className="font-medium">請完成付款</p>
+                      <p className="text-gray-500 text-xs">
+                        依照信中指示之帳號進行轉帳程序
+                      </p>
+                    </>
+                  );
+                }
+                return (
+                  <>
+                    <p className="font-medium">付款已完成</p>
+                    <p className="text-gray-500 text-xs">
+                      我們已收到您的款項，將儘速為您安排出貨
+                    </p>
+                  </>
+                );
+              })()}
+            </div>
           </div>
         </div>
 
-        <div className="space-y-4">
+        <div className="flex flex-col justify-center gap-4 sm:flex-row">
           <button
-            className="rounded-lg bg-black px-8 py-3 text-white transition-colors hover:bg-gray-800"
+            className="rounded-lg bg-black px-8 py-3 font-semibold text-white shadow transition-colors hover:bg-gray-800"
             onClick={handleBackToCart}
+            type="button"
           >
             繼續購物
           </button>
-          <div>
-            <a className="text-gray-600 hover:underline" href="/account/orders">
-              查看我的訂單
-            </a>
-          </div>
+          <a
+            className="rounded-lg border border-gray-200 bg-white px-8 py-3 font-semibold text-gray-700 transition-colors hover:bg-gray-50 dark:border-zinc-600 dark:bg-zinc-700 dark:text-gray-200 dark:hover:bg-zinc-600"
+            href="/account/orders"
+          >
+            查看我的訂單
+          </a>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="mx-auto max-w-4xl">
-      {/* Progress Steps */}
-      <div className="mb-8">
-        <div className="flex items-center justify-center space-x-4">
-          {[1, 2, 3].map((step) => (
-            <div className="flex items-center" key={step}>
-              <div
-                className={`flex h-8 w-8 items-center justify-center rounded-full font-semibold text-sm ${
-                  step <= currentStep
-                    ? "bg-black text-white"
-                    : "bg-gray-200 text-gray-600"
-                }`}
-              >
-                {step}
-              </div>
-              {step < 3 && (
-                <div
-                  className={`h-1 w-12 ${step < currentStep ? "bg-black" : "bg-gray-200"}`}
-                />
-              )}
-            </div>
-          ))}
-        </div>
-        <div className="mt-2 flex justify-center space-x-8 text-sm">
-          <span
-            className={
-              currentStep >= 1 ? "font-semibold text-black" : "text-gray-500"
-            }
-          >
-            客戶資料
-          </span>
-          <span
-            className={
-              currentStep >= 2 ? "font-semibold text-black" : "text-gray-500"
-            }
-          >
-            配送地址
-          </span>
-          <span
-            className={
-              currentStep >= 3 ? "font-semibold text-black" : "text-gray-500"
-            }
-          >
-            確認訂單
-          </span>
-        </div>
-      </div>
+    <>
+      <form
+        className="mx-auto grid w-full max-w-7xl grid-cols-1 gap-8 lg:grid-cols-12"
+        onSubmit={handleSubmit}
+      >
+        <div className="space-y-8 lg:col-span-7">
+          <CustomerInfoSection
+            customerInfo={localCustomerInfo}
+            emailStatus={emailStatus}
+            formErrors={formErrors}
+            formTouched={formTouched}
+            isCheckingEmail={isCheckingEmail}
+            onFieldBlur={handleFieldBlur}
+            onFieldChange={handleCustomerInfoChange}
+          />
 
-      {error && (
-        <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4">
-          <p className="text-red-600">{error}</p>
-        </div>
-      )}
+          <ShippingAddressSection
+            formErrors={formErrors}
+            onFieldBlur={handleFieldBlur}
+            onFieldChange={handleShippingAddressChange}
+            shippingAddress={localShippingAddress}
+          />
 
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
-        <div className="lg:col-span-2">
-          {/* Step 1: Customer Information */}
-          {currentStep === 1 && (
-            <div className="rounded-lg bg-white p-6 shadow-md">
-              <h2 className="mb-6 font-semibold text-xl">客戶資料</h2>
-              <form className="space-y-4" onSubmit={handleCustomerInfoSubmit}>
-                <div>
-                  <label className="mb-1 block font-medium text-gray-700 text-sm">
-                    姓名 *
-                  </label>
-                  <input
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-black"
-                    onChange={(e) =>
-                      setLocalCustomerInfo((prev) => ({
-                        ...prev,
-                        name: e.target.value,
-                      }))
-                    }
-                    required
-                    type="text"
-                    value={localCustomerInfo.name}
-                  />
-                </div>
-
-                <div>
-                  <label className="mb-1 block font-medium text-gray-700 text-sm">
-                    電子郵件 *
-                  </label>
-                  <input
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-black"
-                    onChange={(e) =>
-                      setLocalCustomerInfo((prev) => ({
-                        ...prev,
-                        email: e.target.value,
-                      }))
-                    }
-                    required
-                    type="email"
-                    value={localCustomerInfo.email}
-                  />
-                </div>
-
-                <div>
-                  <label className="mb-1 block font-medium text-gray-700 text-sm">
-                    電話號碼 *
-                  </label>
-                  <input
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-black"
-                    onChange={(e) =>
-                      setLocalCustomerInfo((prev) => ({
-                        ...prev,
-                        phone: e.target.value,
-                      }))
-                    }
-                    placeholder="例：0912345678"
-                    required
-                    type="tel"
-                    value={localCustomerInfo.phone}
-                  />
-                </div>
-
-                <button
-                  className="w-full rounded-lg bg-black py-3 text-white transition-colors hover:bg-gray-800"
-                  type="submit"
-                >
-                  下一步
-                </button>
-              </form>
-            </div>
-          )}
-
-          {/* Step 2: Shipping Address */}
-          {currentStep === 2 && (
-            <div className="rounded-lg bg-white p-6 shadow-md">
-              <div className="mb-6 flex items-center justify-between">
-                <h2 className="font-semibold text-xl">配送地址</h2>
-                <button
-                  className="text-gray-600 hover:text-gray-800"
-                  onClick={() => setCurrentStep(1)}
-                >
-                  ← 返回
-                </button>
-              </div>
-
-              <form
-                className="space-y-4"
-                onSubmit={handleShippingAddressSubmit}
-              >
-                <div>
-                  <label className="mb-1 block font-medium text-gray-700 text-sm">
-                    收件人姓名 *
-                  </label>
-                  <input
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-black"
-                    onChange={(e) =>
-                      setLocalShippingAddress((prev) => ({
-                        ...prev,
-                        name: e.target.value,
-                      }))
-                    }
-                    required
-                    type="text"
-                    value={localShippingAddress.name}
-                  />
-                </div>
-
-                <div>
-                  <label className="mb-1 block font-medium text-gray-700 text-sm">
-                    收件人電話 *
-                  </label>
-                  <input
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-black"
-                    onChange={(e) =>
-                      setLocalShippingAddress((prev) => ({
-                        ...prev,
-                        phone: e.target.value,
-                      }))
-                    }
-                    required
-                    type="tel"
-                    value={localShippingAddress.phone}
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="mb-1 block font-medium text-gray-700 text-sm">
-                      城市 *
-                    </label>
-                    <select
-                      className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-black"
-                      onChange={(e) =>
-                        setLocalShippingAddress((prev) => ({
-                          ...prev,
-                          city: e.target.value,
-                        }))
-                      }
-                      required
-                      value={localShippingAddress.city}
-                    >
-                      <option value="">請選擇城市</option>
-                      {cities.map((city) => (
-                        <option key={city} value={city}>
-                          {city}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="mb-1 block font-medium text-gray-700 text-sm">
-                      區域 *
-                    </label>
-                    <input
-                      className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-black"
-                      onChange={(e) =>
-                        setLocalShippingAddress((prev) => ({
-                          ...prev,
-                          district: e.target.value,
-                        }))
-                      }
-                      placeholder="例：信義區"
-                      required
-                      type="text"
-                      value={localShippingAddress.district}
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="mb-1 block font-medium text-gray-700 text-sm">
-                    詳細地址 *
-                  </label>
-                  <input
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-black"
-                    onChange={(e) =>
-                      setLocalShippingAddress((prev) => ({
-                        ...prev,
-                        address: e.target.value,
-                      }))
-                    }
-                    placeholder="例：忠孝東路四段123號5樓"
-                    required
-                    type="text"
-                    value={localShippingAddress.address}
-                  />
-                </div>
-
-                <div>
-                  <label className="mb-1 block font-medium text-gray-700 text-sm">
-                    郵遞區號 *
-                  </label>
-                  <input
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-black"
-                    onChange={(e) =>
-                      setLocalShippingAddress((prev) => ({
-                        ...prev,
-                        postalCode: e.target.value,
-                      }))
-                    }
-                    placeholder="例：110"
-                    required
-                    type="text"
-                    value={localShippingAddress.postalCode}
-                  />
-                </div>
-
-                <button
-                  className="w-full rounded-lg bg-black py-3 text-white transition-colors hover:bg-gray-800"
-                  type="submit"
-                >
-                  下一步
-                </button>
-              </form>
-            </div>
-          )}
-
-          {/* Step 3: Order Confirmation */}
-          {currentStep === 3 && (
-            <div className="space-y-6">
-              <div className="rounded-lg bg-white p-6 shadow-md">
-                <div className="mb-6 flex items-center justify-between">
-                  <h2 className="font-semibold text-xl">確認訂單</h2>
-                  <button
-                    className="text-gray-600 hover:text-gray-800"
-                    onClick={() => setCurrentStep(2)}
-                  >
-                    ← 返回
-                  </button>
-                </div>
-
-                <form className="space-y-6" onSubmit={handleFinalSubmit}>
-                  <div>
-                    <h3 className="mb-2 font-semibold">付款方式</h3>
-                    <div className="space-y-2">
-                      <label className="flex items-center">
-                        <input
-                          checked={paymentMethod === "bank_transfer"}
-                          className="mr-2"
-                          name="paymentMethod"
-                          onChange={(e) =>
-                            setPaymentMethod(e.target.value as any)
-                          }
-                          type="radio"
-                          value="bank_transfer"
-                        />
-                        銀行轉帳
-                      </label>
-                      <label className="flex items-center">
-                        <input
-                          checked={paymentMethod === "credit_card"}
-                          className="mr-2"
-                          name="paymentMethod"
-                          onChange={(e) =>
-                            setPaymentMethod(e.target.value as any)
-                          }
-                          type="radio"
-                          value="credit_card"
-                        />
-                        信用卡付款
-                      </label>
-                      <label className="flex items-center">
-                        <input
-                          checked={paymentMethod === "cash_on_delivery"}
-                          className="mr-2"
-                          name="paymentMethod"
-                          onChange={(e) =>
-                            setPaymentMethod(e.target.value as any)
-                          }
-                          type="radio"
-                          value="cash_on_delivery"
-                        />
-                        貨到付款
-                      </label>
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="mb-1 block font-medium text-gray-700 text-sm">
-                      備註
-                    </label>
-                    <textarea
-                      className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-black"
-                      onChange={(e) => setLocalNotes(e.target.value)}
-                      placeholder="如有特殊需求請註明..."
-                      rows={3}
-                      value={localNotes}
-                    />
-                  </div>
-
-                  <button
-                    className="w-full rounded-lg bg-black py-3 text-white transition-colors hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
-                    disabled={isSubmittingOrder}
-                    type="submit"
-                  >
-                    {isSubmittingOrder ? "建立訂單中..." : "確認下單"}
-                  </button>
-                </form>
-              </div>
-            </div>
-          )}
+          <PaymentMethodSection
+            enabledMethods={enabledMethods}
+            isSubmittingOrder={isSubmittingOrder}
+            onPaymentMethodChange={setPaymentMethod}
+            paymentMethod={paymentMethod}
+          />
         </div>
 
-        {/* Order Summary Sidebar */}
-        <div className="lg:col-span-1">
-          <div className="sticky top-4 rounded-lg bg-white p-6 shadow-md">
-            <h3 className="mb-4 font-semibold text-lg">訂單摘要</h3>
-
-            <div className="mb-4 space-y-3">
-              {items.map((item) => {
-                const itemKey = item.variantId
-                  ? `${item.productId}-${item.variantId}`
-                  : item.productId;
-                return (
-                  <div className="flex justify-between text-sm" key={itemKey}>
-                    <div className="flex-1">
-                      <p className="font-medium">{item.name}</p>
-                      {item.variant && (
-                        <p className="text-gray-500">{item.variant}</p>
-                      )}
-                      <p className="text-gray-500">數量: {item.quantity}</p>
-                    </div>
-                    <p className="font-medium">
-                      NT$ {(item.price * item.quantity).toLocaleString()}
-                    </p>
-                  </div>
-                );
-              })}
-            </div>
-
-            <div className="space-y-2 border-t pt-4">
-              <div className="flex justify-between">
-                <span>小計</span>
-                <span>NT$ {subtotal.toLocaleString()}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>運費</span>
-                <span>
-                  {shippingFee === 0 ? (
-                    <span className="text-green-600">免運費</span>
-                  ) : (
-                    `NT$ ${shippingFee.toLocaleString()}`
-                  )}
-                </span>
-              </div>
-              <div className="flex justify-between border-t pt-2 font-semibold text-lg">
-                <span>總計</span>
-                <span>NT$ {total.toLocaleString()}</span>
-              </div>
-            </div>
-          </div>
+        <div className="lg:col-span-5">
+          <OrderSummarySection
+            items={items}
+            subtotal={subtotal}
+            total={total}
+          />
         </div>
-      </div>
-    </div>
+      </form>
+
+      {/* Auth Modal for login/signup */}
+      <AuthModal
+        defaultEmail={localCustomerInfo.email}
+        initialTab="register"
+        onAuthenticated={() => {
+          setEmailStatus("exists");
+          setIsAuthModalOpen(false);
+        }}
+        onClose={() => setIsAuthModalOpen(false)}
+        open={isAuthModalOpen}
+      />
+    </>
   );
 };
 

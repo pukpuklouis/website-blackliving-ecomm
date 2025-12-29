@@ -172,7 +172,7 @@ export function PasswordModal({ onSuccess, onError }: PasswordModalProps) {
                 value={formData.currentPassword}
               />
               <Button
-                className="-translate-y-1/2 absolute top-1/2 right-2 h-auto p-1"
+                className="absolute top-1/2 right-2 h-auto -translate-y-1/2 p-1"
                 onClick={() => togglePasswordVisibility("current")}
                 size="sm"
                 type="button"
@@ -208,7 +208,7 @@ export function PasswordModal({ onSuccess, onError }: PasswordModalProps) {
                 value={formData.newPassword}
               />
               <Button
-                className="-translate-y-1/2 absolute top-1/2 right-2 h-auto p-1"
+                className="absolute top-1/2 right-2 h-auto -translate-y-1/2 p-1"
                 onClick={() => togglePasswordVisibility("new")}
                 size="sm"
                 type="button"
@@ -247,7 +247,7 @@ export function PasswordModal({ onSuccess, onError }: PasswordModalProps) {
                 value={formData.confirmPassword}
               />
               <Button
-                className="-translate-y-1/2 absolute top-1/2 right-2 h-auto p-1"
+                className="absolute top-1/2 right-2 h-auto -translate-y-1/2 p-1"
                 onClick={() => togglePasswordVisibility("confirm")}
                 size="sm"
                 type="button"

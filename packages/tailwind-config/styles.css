@@ -1,16 +1,16 @@
 /* packages/tailwind-config/styles.css */
 @config "./tailwind.config.js";
-@import 'tailwindcss';
-@import './theme.css';
-@import 'tw-animate-css';
+@import "tailwindcss";
+@import "./theme.css";
+@import "tw-animate-css";
 @plugin "@blackliving/tailwindcss-typography";
 
 @custom-variant dark (&:is(.dark *));
 
-@source '../../packages/ui/src/**/*.{ts,tsx}';
-@source '../../packages/ui/components/**/*.{ts,tsx}';
-@source '../../apps/web/src/**/*.{astro,html,js,jsx,md,mdx,svelte,ts,tsx,vue}';
-@source '../../apps/admin/src/**/*.{ts,tsx}';
+@source "../../packages/ui/src/**/*.{ts,tsx}";
+@source "../../packages/ui/components/**/*.{ts,tsx}";
+@source "../../apps/web/src/**/*.{astro,html,js,jsx,md,mdx,svelte,ts,tsx,vue}";
+@source "../../apps/admin/src/**/*.{ts,tsx}";
 
 :root {
   --sidebar: hsl(0 0% 98%);

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { getApiUrl } from "../../../lib/api";
 import {
   type Store,
   useAppointmentStore,
@@ -64,7 +65,7 @@ export default function ReviewStep() {
       headers.Authorization = `Bearer ${token}`;
     }
 
-    const response = await fetch("/api/reservations/create", {
+    const response = await fetch(getApiUrl("/api/reservations/create"), {
       method: "POST",
       headers,
       credentials: "include", // Important: Send cookies!
@@ -140,7 +141,7 @@ export default function ReviewStep() {
     return (
       <div className="py-8 text-center">
         <div className="mb-6">
-          <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100 text-green-500">
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100 text-green-500">
             <svg
               aria-hidden="true"
               className="h-8 w-8"

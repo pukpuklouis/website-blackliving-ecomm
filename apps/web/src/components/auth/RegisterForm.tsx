@@ -123,13 +123,13 @@ export default function RegisterForm({
       <form className="space-y-6" onSubmit={handleSubmit}>
         <div>
           <label
-            className="block font-medium text-gray-700 text-sm"
+            className="flex font-medium text-gray-700 text-sm"
             htmlFor="register-email"
           >
             電子郵件 *
           </label>
           <input
-            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-black focus:outline-none focus:ring-black"
+            className="mt-1 flex w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-black focus:outline-none focus:ring-black"
             defaultValue={defaultEmail}
             id="register-email"
             name="email"
@@ -141,13 +141,13 @@ export default function RegisterForm({
 
         <div>
           <label
-            className="block font-medium text-gray-700 text-sm"
+            className="flex font-medium text-gray-700 text-sm"
             htmlFor="register-password"
           >
             密碼 *
           </label>
           <input
-            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-black focus:outline-none focus:ring-black"
+            className="mt-1 flex w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-black focus:outline-none focus:ring-black"
             id="register-password"
             minLength={6}
             name="password"
@@ -159,13 +159,13 @@ export default function RegisterForm({
 
         <div>
           <label
-            className="block font-medium text-gray-700 text-sm"
+            className="flex font-medium text-gray-700 text-sm"
             htmlFor="register-name"
           >
             姓名
           </label>
           <input
-            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-black focus:outline-none focus:ring-black"
+            className="mt-1 flex w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-black focus:outline-none focus:ring-black"
             id="register-name"
             name="name"
             placeholder="您的姓名"
@@ -175,7 +175,7 @@ export default function RegisterForm({
 
         <div>
           <label
-            className="block font-medium text-gray-700 text-sm"
+            className="flex font-medium text-gray-700 text-sm"
             htmlFor="register-phone"
           >
             手機號碼

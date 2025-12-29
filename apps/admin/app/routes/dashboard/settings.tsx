@@ -15,6 +15,7 @@ import {
   TabsTrigger,
 } from "@blackliving/ui";
 import {
+  CreditCard,
   Loader2,
   MessageSquare,
   RefreshCw,
@@ -24,6 +25,7 @@ import {
   Truck,
 } from "lucide-react";
 import { useEffect, useState } from "react";
+import GomypaySettings from "../../components/GomypaySettings";
 import LineSettings from "../../components/LineSettings";
 import LogisticSettings from "../../components/LogisticSettings";
 import { useEnvironment } from "../../contexts/EnvironmentContext";
@@ -75,8 +77,10 @@ export default function SettingsPage() {
 
   const handleSaveConfig = async () => {
     if (
-      !searchConfig.host ||
-      !(searchConfig.masterKey || searchConfig.hasMasterKey)
+      !(
+        searchConfig.host &&
+        (searchConfig.masterKey || searchConfig.hasMasterKey)
+      )
     ) {
       setMessage({
         type: "error",
@@ -153,6 +157,10 @@ export default function SettingsPage() {
           >
             <MessageSquare className="h-4 w-4" />
             LINE 通知
+          </TabsTrigger>
+          <TabsTrigger className="flex items-center gap-2" value="payment">
+            <CreditCard className="h-4 w-4" />
+            金流設定
           </TabsTrigger>
           <TabsTrigger
             className="flex items-center gap-2"
@@ -308,6 +316,11 @@ export default function SettingsPage() {
         {/* Line Notification Settings Tab */}
         <TabsContent className="space-y-6" value="line-notification">
           <LineSettings />
+        </TabsContent>
+
+        {/* Payment Settings Tab */}
+        <TabsContent className="space-y-6" value="payment">
+          <GomypaySettings />
         </TabsContent>
 
         {/* System Settings Tab */}

@@ -1,7 +1,7 @@
-import { defineConfig, devices } from '@playwright/test';
+import { defineConfig, devices } from "@playwright/test";
 
 export default defineConfig({
-  testDir: './tests',
+  testDir: "./tests",
 
   // Run tests in files in parallel
   fullyParallel: true,
@@ -16,22 +16,22 @@ export default defineConfig({
   workers: process.env.CI ? 1 : undefined,
 
   // Reporter to use
-  reporter: 'html',
+  reporter: "html",
 
   use: {
     // Base URL for API tests
-    baseURL: 'http://localhost:8787',
+    baseURL: "http://localhost:8787",
 
     // Collect trace when retrying the failed test
-    trace: 'on-first-retry',
+    trace: "on-first-retry",
 
     // Global test timeout
-    actionTimeout: 30000,
+    actionTimeout: 30_000,
 
     // Specify Chromium execution path if needed
     launchOptions: {
       executablePath:
-        '/Users/pukpuk/Library/Caches/ms-playwright/chromium_headless_shell-1182/chrome-mac/headless_shell',
+        "/Users/pukpuk/Library/Caches/ms-playwright/chromium_headless_shell-1182/chrome-mac/headless_shell",
     },
   },
 
@@ -39,7 +39,7 @@ export default defineConfig({
   projects: [
     // API tests (no browser needed)
     {
-      name: 'api-tests',
+      name: "api-tests",
       testMatch: /.*\.api\.spec\.ts/,
       use: {
         // API tests don't need a browser
@@ -49,32 +49,32 @@ export default defineConfig({
 
     // UI tests with Chromium
     {
-      name: 'chromium',
-      dependencies: ['api-tests'],
+      name: "chromium",
+      dependencies: ["api-tests"],
       use: {
-        ...devices['Desktop Chrome'],
-        baseURL: 'http://localhost:5173', // Admin app URL for UI tests
+        ...devices["Desktop Chrome"],
+        baseURL: "http://localhost:5173", // Admin app URL for UI tests
       },
       testMatch: /.*\.ui\.spec\.ts/, // Separate UI tests from API tests
     },
   ],
 
   // Run setup files before other tests
-  globalSetup: './tests/setup.ts',
+  globalSetup: "./tests/setup.ts",
 
   // Web Server for testing (optional - can be started manually)
   webServer: [
     {
-      command: 'pnpm dev',
+      command: "pnpm dev",
       port: 5173,
       reuseExistingServer: !process.env.CI,
-      cwd: '../admin', // Admin app
+      cwd: "../admin", // Admin app
     },
     {
-      command: 'pnpm dev',
+      command: "pnpm dev",
       port: 8787,
       reuseExistingServer: !process.env.CI,
-      cwd: '../api', // API server
+      cwd: "../api", // API server
     },
   ],
 });

@@ -1,5 +1,5 @@
-import PageForm from '../../components/PageForm';
+import PageForm from "../../components/PageForm";
 
 export default function NewPage() {
-    return <PageForm />;
+  return <PageForm />;
 }

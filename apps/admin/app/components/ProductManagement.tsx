@@ -1,29 +1,5 @@
-import { useState, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router';
+import type { ProductCategory as ProductCategoryDTO } from "@blackliving/types";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-  Button,
-  Input,
-  Label,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  Badge,
-  Separator,
-  Textarea,
-  Switch,
-  Skeleton,
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -33,42 +9,64 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
+  Badge,
+  Button,
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  Input,
+  Label,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+  Skeleton,
+  Switch,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
-  Table,
-  TableHeader,
-  TableBody,
-  TableRow,
-  TableHead,
-  TableCell,
-} from '@blackliving/ui';
+  Textarea,
+} from "@blackliving/ui";
+import Edit from "@lucide/react/edit";
+import Filter from "@lucide/react/filter";
 // Tree-shakable Lucide imports
-import Plus from '@lucide/react/plus';
-import Search from '@lucide/react/search';
-import Edit from '@lucide/react/edit';
-import Trash2 from '@lucide/react/trash-2';
-import Filter from '@lucide/react/filter';
+import Plus from "@lucide/react/plus";
+import Search from "@lucide/react/search";
+import Trash2 from "@lucide/react/trash-2";
 import {
-  useReactTable,
+  type ColumnFiltersState,
   createColumnHelper,
+  flexRender,
   getCoreRowModel,
   getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
-  flexRender,
   type SortingState,
-  type ColumnFiltersState,
-} from '@tanstack/react-table';
-import { z, type ZodIssue } from 'zod';
-import { toast } from 'sonner';
-import { safeParseJSON } from '../lib/http';
-import { useEnvironment } from '../contexts/EnvironmentContext';
-import { resolveAssetUrl, extractAssetKey } from '../lib/assets';
-import type { ProductCategory as ProductCategoryDTO } from '@blackliving/types';
-import BatchOperationsToolbar from './BatchOperationsToolbar';
-import ProductEditPage from './ProductEditPage';
+  useReactTable,
+} from "@tanstack/react-table";
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router";
+import { toast } from "sonner";
+import { type ZodIssue, z } from "zod";
+import { useEnvironment } from "../contexts/EnvironmentContext";
+import { extractAssetKey, resolveAssetUrl } from "../lib/assets";
+import { safeParseJSON } from "../lib/http";
+import BatchOperationsToolbar from "./BatchOperationsToolbar";
 
 // Product types based on database schema
 export interface Product {
@@ -101,14 +99,17 @@ export interface Product {
 export const slugRegex = /^[a-z0-9-]+$/;
 
 export const productSchema = z.object({
-  name: z.string().min(1, '產品名稱為必填'),
-  slug: z.string().min(1, 'URL slug 為必填').regex(slugRegex, '只能包含小寫字母、數字和連字符'),
-  description: z.string().min(10, '產品描述至少需要 10 個字元'),
+  name: z.string().min(1, "產品名稱為必填"),
+  slug: z
+    .string()
+    .min(1, "URL slug 為必填")
+    .regex(slugRegex, "只能包含小寫字母、數字和連字符"),
+  description: z.string().min(10, "產品描述至少需要 10 個字元"),
   category: z
     .string()
-    .min(1, '請輸入產品分類 slug')
-    .regex(slugRegex, '分類 slug 只能包含小寫字母、數字和連字符'),
-  images: z.array(z.string().url()).min(1, '至少需要一張產品圖片'),
+    .min(1, "請輸入產品分類 slug")
+    .regex(slugRegex, "分類 slug 只能包含小寫字母、數字和連字符"),
+  images: z.array(z.string().url()).min(1, "至少需要一張產品圖片"),
   variants: z
     .array(
       z.object({
@@ -119,7 +120,7 @@ export const productSchema = z.object({
         firmness: z.string().optional(),
       })
     )
-    .min(1, '至少需要一個產品變體'),
+    .min(1, "至少需要一個產品變體"),
   features: z.array(z.string()).default([]),
   specifications: z.record(z.string(), z.string()).default({}),
   inStock: z.boolean().default(true),
@@ -147,19 +148,23 @@ interface ProductCategoryFormState {
 }
 
 const initialCategoryForm: ProductCategoryFormState = {
-  slug: '',
-  title: '',
-  description: '',
-  series: '',
-  brand: '',
-  featuresRaw: '',
-  seoKeywords: '',
-  urlPath: '',
+  slug: "",
+  title: "",
+  description: "",
+  series: "",
+  brand: "",
+  featuresRaw: "",
+  seoKeywords: "",
+  urlPath: "",
   isActive: true,
   sortOrder: 0,
 };
 
-export default function ProductManagement({ initialProducts }: { initialProducts?: Product[] }) {
+export default function ProductManagement({
+  initialProducts,
+}: {
+  initialProducts?: Product[];
+}) {
   const { PUBLIC_API_URL, PUBLIC_IMAGE_CDN_URL } = useEnvironment();
   const API_BASE = PUBLIC_API_URL;
   const cdnBase = PUBLIC_IMAGE_CDN_URL?.trim();
@@ -170,15 +175,26 @@ export default function ProductManagement({ initialProducts }: { initialProducts
   const [loading, setLoading] = useState(true);
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
-  const [globalFilter, setGlobalFilter] = useState('');
-  const [selectedProducts, setSelectedProducts] = useState<Set<string>>(new Set());
+  const [globalFilter, setGlobalFilter] = useState("");
+  const [selectedProducts, setSelectedProducts] = useState<Set<string>>(
+    new Set()
+  );
   const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
-  const [categoryDialogMode, setCategoryDialogMode] = useState<'create' | 'edit'>('create');
-  const [categoryEditingSlug, setCategoryEditingSlug] = useState<string | null>(null);
-  const [categoryForm, setCategoryForm] = useState<ProductCategoryFormState>(initialCategoryForm);
-  const [categoryFormErrors, setCategoryFormErrors] = useState<Record<string, string>>({});
+  const [categoryDialogMode, setCategoryDialogMode] = useState<
+    "create" | "edit"
+  >("create");
+  const [categoryEditingSlug, setCategoryEditingSlug] = useState<string | null>(
+    null
+  );
+  const [categoryForm, setCategoryForm] =
+    useState<ProductCategoryFormState>(initialCategoryForm);
+  const [categoryFormErrors, setCategoryFormErrors] = useState<
+    Record<string, string>
+  >({});
   const [isCategorySubmitting, setIsCategorySubmitting] = useState(false);
-  const [deletingCategorySlug, setDeletingCategorySlug] = useState<string | null>(null);
+  const [deletingCategorySlug, setDeletingCategorySlug] = useState<
+    string | null
+  >(null);
 
   // Form state removed - now using dedicated pages
   const [formData, setFormData] = useState<Partial<ProductFormData>>({});
@@ -187,7 +203,7 @@ export default function ProductManagement({ initialProducts }: { initialProducts
   const [specOrder, setSpecOrder] = useState<string[]>([]);
 
   const fallbackAssetBase = useMemo(
-    () => (typeof window !== 'undefined' ? window.location.origin : undefined),
+    () => (typeof window !== "undefined" ? window.location.origin : undefined),
     []
   );
 
@@ -198,59 +214,60 @@ export default function ProductManagement({ initialProducts }: { initialProducts
     });
     return map;
   }, [categories]);
-  const sortedCategories = useMemo(() => {
-    return [...categories].sort(compareCategories);
-  }, [categories]);
+  const sortedCategories = useMemo(
+    () => [...categories].sort(compareCategories),
+    [categories]
+  );
 
   const columnHelper = createColumnHelper<Product>();
 
   const columns = [
     columnHelper.display({
-      id: 'select',
+      id: "select",
       header: ({ table }) => (
         <input
-          type="checkbox"
           checked={table.getIsAllRowsSelected()}
-          onChange={table.getToggleAllRowsSelectedHandler()}
           className="rounded border-gray-300"
+          onChange={table.getToggleAllRowsSelectedHandler()}
+          type="checkbox"
         />
       ),
       cell: ({ row }) => (
         <input
-          type="checkbox"
           checked={row.getIsSelected()}
-          onChange={row.getToggleSelectedHandler()}
           className="rounded border-gray-300"
+          onChange={row.getToggleSelectedHandler()}
+          type="checkbox"
         />
       ),
     }),
-    columnHelper.accessor('name', {
-      header: '產品名稱',
+    columnHelper.accessor("name", {
+      header: "產品名稱",
       cell: (info) => (
         <div className="font-medium">
           {info.getValue()}
           {info.row.original.featured && (
-            <Badge variant="secondary" className="ml-2">
+            <Badge className="ml-2" variant="secondary">
               精選
             </Badge>
           )}
         </div>
       ),
     }),
-    columnHelper.accessor('category', {
-      header: '分類',
+    columnHelper.accessor("category", {
+      header: "分類",
       cell: (info) => {
         const slug = info.getValue();
         const label = categoryLabelMap[slug] || slug;
         return <Badge variant="outline">{label}</Badge>;
       },
-      filterFn: 'equals',
+      filterFn: "equals",
     }),
-    columnHelper.accessor('variants', {
-      header: '價格範圍',
+    columnHelper.accessor("variants", {
+      header: "價格範圍",
       cell: (info) => {
         const variants = info.getValue();
-        if (variants.length === 0) return '未設定';
+        if (variants.length === 0) return "未設定";
         const prices = variants.map((v) => v.price);
         const min = Math.min(...prices);
         const max = Math.max(...prices);
@@ -259,32 +276,40 @@ export default function ProductManagement({ initialProducts }: { initialProducts
           : `NT$${min.toLocaleString()} - NT$${max.toLocaleString()}`;
       },
     }),
-    columnHelper.accessor('inStock', {
-      header: '庫存狀態',
+    columnHelper.accessor("inStock", {
+      header: "庫存狀態",
       cell: (info) => (
         <Badge
-          variant={info.getValue() ? 'secondary' : 'destructive'}
-          className={info.getValue() ? 'bg-green-500 text-white hover:bg-green-500/90' : ''}
+          className={
+            info.getValue()
+              ? "bg-green-500 text-white hover:bg-green-500/90"
+              : ""
+          }
+          variant={info.getValue() ? "secondary" : "destructive"}
         >
-          {info.getValue() ? '有庫存' : '缺貨'}
+          {info.getValue() ? "有庫存" : "缺貨"}
         </Badge>
       ),
     }),
-    columnHelper.accessor('updatedAt', {
-      header: '最後更新',
-      cell: (info) => new Date(info.getValue()).toLocaleDateString('zh-TW'),
+    columnHelper.accessor("updatedAt", {
+      header: "最後更新",
+      cell: (info) => new Date(info.getValue()).toLocaleDateString("zh-TW"),
     }),
     columnHelper.display({
-      id: 'actions',
-      header: '操作',
+      id: "actions",
+      header: "操作",
       cell: ({ row }) => (
         <div className="flex gap-2">
-          <Button variant="ghost" size="sm" onClick={() => handleEdit(row.original)}>
+          <Button
+            onClick={() => handleEdit(row.original)}
+            size="sm"
+            variant="ghost"
+          >
             <Edit className="h-4 w-4" />
           </Button>
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button variant="ghost" size="sm">
+              <Button size="sm" variant="ghost">
                 <Trash2 className="h-4 w-4" />
               </Button>
             </AlertDialogTrigger>
@@ -297,7 +322,9 @@ export default function ProductManagement({ initialProducts }: { initialProducts
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel>取消</AlertDialogCancel>
-                <AlertDialogAction onClick={() => handleDelete(row.original.id)}>
+                <AlertDialogAction
+                  onClick={() => handleDelete(row.original.id)}
+                >
                   刪除
                 </AlertDialogAction>
               </AlertDialogFooter>
@@ -316,16 +343,24 @@ export default function ProductManagement({ initialProducts }: { initialProducts
       columnFilters,
       globalFilter,
       rowSelection: Object.fromEntries(
-        Array.from(selectedProducts).map(id => [products.findIndex(p => p.id === id), true])
+        Array.from(selectedProducts).map((id) => [
+          products.findIndex((p) => p.id === id),
+          true,
+        ])
       ),
     },
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onGlobalFilterChange: setGlobalFilter,
     onRowSelectionChange: (updater) => {
-      const newSelection = typeof updater === 'function' ? updater(table.getState().rowSelection) : updater;
+      const newSelection =
+        typeof updater === "function"
+          ? updater(table.getState().rowSelection)
+          : updater;
       const selectedIds = new Set(
-        Object.keys(newSelection).filter(key => newSelection[key]).map(key => products[parseInt(key)].id)
+        Object.keys(newSelection)
+          .filter((key) => newSelection[key])
+          .map((key) => products[Number.parseInt(key)].id)
       );
       setSelectedProducts(selectedIds);
     },
@@ -338,9 +373,12 @@ export default function ProductManagement({ initialProducts }: { initialProducts
   const loadCategories = async () => {
     try {
       setCategoriesLoading(true);
-      const response = await fetch(`${API_BASE}/api/admin/products/categories`, {
-        credentials: 'include',
-      });
+      const response = await fetch(
+        `${API_BASE}/api/admin/products/categories`,
+        {
+          credentials: "include",
+        }
+      );
 
       if (response.ok) {
         const result = await response.json();
@@ -351,11 +389,15 @@ export default function ProductManagement({ initialProducts }: { initialProducts
         setCategories(normalized);
       } else {
         const err = await safeParseJSON(response);
-        throw new Error((err as any)?.error || (err as any)?.message || 'Failed to load categories');
+        throw new Error(
+          (err as any)?.error ||
+            (err as any)?.message ||
+            "Failed to load categories"
+        );
       }
     } catch (error) {
-      console.error('Failed to load categories:', error);
-      toast.error('載入產品分類失敗');
+      console.error("Failed to load categories:", error);
+      toast.error("載入產品分類失敗");
       setCategories([]);
     } finally {
       setCategoriesLoading(false);
@@ -381,23 +423,30 @@ export default function ProductManagement({ initialProducts }: { initialProducts
   }, []);
 
   useEffect(() => {
-    const categoryColumn = table.getColumn('category');
+    const categoryColumn = table.getColumn("category");
     if (!categoryColumn) return;
     const currentFilter = categoryColumn.getFilterValue() as string | undefined;
-    if (currentFilter && !categories.some((category) => category.slug === currentFilter)) {
-      categoryColumn.setFilterValue('');
+    if (
+      currentFilter &&
+      !categories.some((category) => category.slug === currentFilter)
+    ) {
+      categoryColumn.setFilterValue("");
     }
   }, [categories, table]);
 
   const loadProducts = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${API_BASE}/api/products`, { credentials: 'include' });
+      const response = await fetch(`${API_BASE}/api/products`, {
+        credentials: "include",
+      });
       if (response.ok) {
         const result = await response.json();
         // /api/products returns { success, data: { products, pagination } }
         if (result.success) {
-          const fetchedProducts = Array.isArray(result.data?.products) ? result.data.products : [];
+          const fetchedProducts = Array.isArray(result.data?.products)
+            ? result.data.products
+            : [];
           setProducts(
             fetchedProducts.map((product: Product) =>
               sanitizeProduct(product, cdnBase, fallbackAssetBase)
@@ -408,8 +457,8 @@ export default function ProductManagement({ initialProducts }: { initialProducts
         }
       }
     } catch (error) {
-      console.error('Failed to load products:', error);
-      toast.error('載入產品失敗');
+      console.error("Failed to load products:", error);
+      toast.error("載入產品失敗");
     } finally {
       setLoading(false);
     }
@@ -417,11 +466,11 @@ export default function ProductManagement({ initialProducts }: { initialProducts
 
   const handleCreate = () => {
     if (categories.length === 0) {
-      toast.error('請先建立至少一個產品分類');
+      toast.error("請先建立至少一個產品分類");
       return;
     }
     // Navigate to new product page instead of opening dialog
-    navigate('/dashboard/products/new');
+    navigate("/dashboard/products/new");
   };
 
   const handleEdit = (product: Product) => {
@@ -432,19 +481,23 @@ export default function ProductManagement({ initialProducts }: { initialProducts
   const handleDelete = async (id: string) => {
     try {
       const response = await fetch(`${API_BASE}/api/admin/products/${id}`, {
-        method: 'DELETE',
-        credentials: 'include',
+        method: "DELETE",
+        credentials: "include",
       });
       if (response.ok) {
         setProducts((prev) => prev.filter((p) => p.id !== id));
-        toast.success('產品刪除成功');
+        toast.success("產品刪除成功");
       } else {
         const err = await safeParseJSON(response);
-        throw new Error((err as any)?.error || (err as any)?.message || 'Failed to delete product');
+        throw new Error(
+          (err as any)?.error ||
+            (err as any)?.message ||
+            "Failed to delete product"
+        );
       }
     } catch (error) {
-      console.error('Delete failed:', error);
-      toast.error(error instanceof Error ? error.message : '刪除產品失敗');
+      console.error("Delete failed:", error);
+      toast.error(error instanceof Error ? error.message : "刪除產品失敗");
     }
   };
 
@@ -458,7 +511,7 @@ export default function ProductManagement({ initialProducts }: { initialProducts
       (max, category) => Math.max(max, category.sortOrder ?? 0),
       0
     );
-    setCategoryDialogMode('create');
+    setCategoryDialogMode("create");
     setCategoryEditingSlug(null);
     setCategoryForm({
       ...initialCategoryForm,
@@ -469,7 +522,7 @@ export default function ProductManagement({ initialProducts }: { initialProducts
   };
 
   const openEditCategoryDialog = (category: ProductCategoryRecord) => {
-    setCategoryDialogMode('edit');
+    setCategoryDialogMode("edit");
     setCategoryEditingSlug(category.slug);
     setCategoryForm({
       slug: category.slug,
@@ -477,9 +530,9 @@ export default function ProductManagement({ initialProducts }: { initialProducts
       description: category.description,
       series: category.series,
       brand: category.brand,
-      featuresRaw: category.features.join('\n'),
-      seoKeywords: category.seoKeywords ?? '',
-      urlPath: category.urlPath ?? '',
+      featuresRaw: category.features.join("\n"),
+      seoKeywords: category.seoKeywords ?? "",
+      urlPath: category.urlPath ?? "",
       isActive: category.isActive,
       sortOrder: category.sortOrder ?? 0,
     });
@@ -489,7 +542,7 @@ export default function ProductManagement({ initialProducts }: { initialProducts
 
   const closeCategoryDialog = () => {
     setCategoryDialogOpen(false);
-    setCategoryDialogMode('create');
+    setCategoryDialogMode("create");
     setCategoryEditingSlug(null);
     resetCategoryForm();
     setIsCategorySubmitting(false);
@@ -518,39 +571,43 @@ export default function ProductManagement({ initialProducts }: { initialProducts
     const urlPath = categoryForm.urlPath.trim();
 
     if (!slug) {
-      errors.slug = '請輸入分類 slug';
+      errors.slug = "請輸入分類 slug";
     } else if (!slugRegex.test(slug)) {
-      errors.slug = 'slug 僅能包含小寫字母、數字與連字符';
+      errors.slug = "slug 僅能包含小寫字母、數字與連字符";
     } else if (
-      categories.some((category) => category.slug === slug && category.slug !== editingSlug)
+      categories.some(
+        (category) => category.slug === slug && category.slug !== editingSlug
+      )
     ) {
-      errors.slug = '此 slug 已存在';
+      errors.slug = "此 slug 已存在";
     }
 
     if (!title) {
-      errors.title = '請輸入分類標題';
+      errors.title = "請輸入分類標題";
     }
     if (!description) {
-      errors.description = '請輸入分類描述';
+      errors.description = "請輸入分類描述";
     }
     if (!series) {
-      errors.series = '請輸入系列名稱';
+      errors.series = "請輸入系列名稱";
     }
     if (!brand) {
-      errors.brand = '請輸入品牌名稱';
+      errors.brand = "請輸入品牌名稱";
     }
-    if (urlPath && !urlPath.startsWith('/')) {
-      errors.urlPath = 'URL Path 需以 / 開頭';
+    if (urlPath && !urlPath.startsWith("/")) {
+      errors.urlPath = "URL Path 需以 / 開頭";
     }
 
     return errors;
   };
 
   const handleCategorySubmit = async () => {
-    const errors = validateCategoryForm(categoryDialogMode === 'edit' ? categoryEditingSlug : null);
+    const errors = validateCategoryForm(
+      categoryDialogMode === "edit" ? categoryEditingSlug : null
+    );
     if (Object.keys(errors).length > 0) {
       setCategoryFormErrors(errors);
-      toast.error('請確認分類欄位填寫正確');
+      toast.error("請確認分類欄位填寫正確");
       return;
     }
 
@@ -574,26 +631,30 @@ export default function ProductManagement({ initialProducts }: { initialProducts
 
       if (!requestBody.urlPath) {
         requestBody.urlPath = `/${slug}`;
-      } else if (!requestBody.urlPath.startsWith('/')) {
+      } else if (!requestBody.urlPath.startsWith("/")) {
         requestBody.urlPath = `/${requestBody.urlPath}`;
       }
 
-      if (categoryDialogMode === 'edit' && categoryEditingSlug) {
+      if (categoryDialogMode === "edit" && categoryEditingSlug) {
         const response = await fetch(
           `${API_BASE}/api/admin/products/categories/${categoryEditingSlug}`,
           {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
             body: JSON.stringify(requestBody),
           }
         );
 
         if (response.ok) {
           const result = await response.json();
-          const updatedCategory = normalizeCategory(result.data as ProductCategoryDTO);
+          const updatedCategory = normalizeCategory(
+            result.data as ProductCategoryDTO
+          );
           const previousSlug = categoryEditingSlug;
-          setCategories((prev) => normalizeCategoryInsert(prev, updatedCategory));
+          setCategories((prev) =>
+            normalizeCategoryInsert(prev, updatedCategory)
+          );
 
           if (previousSlug !== updatedCategory.slug) {
             setProducts((prev) =>
@@ -603,34 +664,49 @@ export default function ProductManagement({ initialProducts }: { initialProducts
                   : product
               )
             );
-            const column = table.getColumn('category');
-            if ((column?.getFilterValue() as string | undefined) === previousSlug) {
+            const column = table.getColumn("category");
+            if (
+              (column?.getFilterValue() as string | undefined) === previousSlug
+            ) {
               column?.setFilterValue(updatedCategory.slug);
             }
             setFormData((prev) =>
-              prev.category === previousSlug ? { ...prev, category: updatedCategory.slug } : prev
+              prev.category === previousSlug
+                ? { ...prev, category: updatedCategory.slug }
+                : prev
             );
           }
 
-          toast.success('分類更新成功');
+          toast.success("分類更新成功");
           closeCategoryDialog();
         } else {
           const err = await safeParseJSON(response);
-          throw new Error((err as any)?.error || (err as any)?.message || 'Failed to update category');
+          throw new Error(
+            (err as any)?.error ||
+              (err as any)?.message ||
+              "Failed to update category"
+          );
         }
       } else {
-        const response = await fetch(`${API_BASE}/api/admin/products/categories`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify(requestBody),
-        });
+        const response = await fetch(
+          `${API_BASE}/api/admin/products/categories`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify(requestBody),
+          }
+        );
 
         if (response.ok) {
           const result = await response.json();
-          const createdCategory = normalizeCategory(result.data as ProductCategoryDTO);
-          setCategories((prev) => normalizeCategoryInsert(prev, createdCategory));
-          toast.success('分類建立成功');
+          const createdCategory = normalizeCategory(
+            result.data as ProductCategoryDTO
+          );
+          setCategories((prev) =>
+            normalizeCategoryInsert(prev, createdCategory)
+          );
+          toast.success("分類建立成功");
           closeCategoryDialog();
 
           // Update product form if no category selected yet
@@ -642,12 +718,16 @@ export default function ProductManagement({ initialProducts }: { initialProducts
           });
         } else {
           const err = await safeParseJSON(response);
-          throw new Error((err as any)?.error || (err as any)?.message || 'Failed to create category');
+          throw new Error(
+            (err as any)?.error ||
+              (err as any)?.message ||
+              "Failed to create category"
+          );
         }
       }
     } catch (error) {
-      console.error('Create category failed:', error);
-      toast.error(error instanceof Error ? error.message : '建立分類失敗');
+      console.error("Create category failed:", error);
+      toast.error(error instanceof Error ? error.message : "建立分類失敗");
     } finally {
       setIsCategorySubmitting(false);
     }
@@ -656,30 +736,41 @@ export default function ProductManagement({ initialProducts }: { initialProducts
   const handleDeleteCategory = async (slug: string) => {
     try {
       setDeletingCategorySlug(slug);
-      const response = await fetch(`${API_BASE}/api/admin/products/categories/${slug}`, {
-        method: 'DELETE',
-        credentials: 'include',
-      });
+      const response = await fetch(
+        `${API_BASE}/api/admin/products/categories/${slug}`,
+        {
+          method: "DELETE",
+          credentials: "include",
+        }
+      );
 
       if (response.ok) {
-        toast.success('分類刪除成功');
-        setCategories((prev) => prev.filter((category) => category.slug !== slug));
-        if ((table.getColumn('category')?.getFilterValue() as string) === slug) {
-          table.getColumn('category')?.setFilterValue('');
+        toast.success("分類刪除成功");
+        setCategories((prev) =>
+          prev.filter((category) => category.slug !== slug)
+        );
+        if (
+          (table.getColumn("category")?.getFilterValue() as string) === slug
+        ) {
+          table.getColumn("category")?.setFilterValue("");
         }
         setFormData((prev) => {
           if (prev.category === slug) {
-            return { ...prev, category: '' };
+            return { ...prev, category: "" };
           }
           return prev;
         });
       } else {
         const err = await safeParseJSON(response);
-        throw new Error((err as any)?.error || (err as any)?.message || 'Failed to delete category');
+        throw new Error(
+          (err as any)?.error ||
+            (err as any)?.message ||
+            "Failed to delete category"
+        );
       }
     } catch (error) {
-      console.error('Delete category failed:', error);
-      toast.error(error instanceof Error ? error.message : '刪除分類失敗');
+      console.error("Delete category failed:", error);
+      toast.error(error instanceof Error ? error.message : "刪除分類失敗");
     } finally {
       setDeletingCategorySlug(null);
     }
@@ -692,7 +783,7 @@ export default function ProductManagement({ initialProducts }: { initialProducts
   if (loading) {
     return (
       <div className="space-y-6">
-        <div className="flex justify-between items-center">
+        <div className="flex items-center justify-between">
           <div>
             <div className="h-7 w-40 bg-transparent" />
           </div>
@@ -709,24 +800,24 @@ export default function ProductManagement({ initialProducts }: { initialProducts
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">產品管理</h1>
-          <p className="text-foreground/60 mt-2">管理席夢思床墊與相關產品</p>
+          <h1 className="font-bold text-3xl text-foreground">產品管理</h1>
+          <p className="mt-2 text-foreground/60">管理席夢思床墊與相關產品</p>
         </div>
         <Button onClick={handleCreate}>
-          <Plus className="h-4 w-4 mr-2" />
+          <Plus className="mr-2 h-4 w-4" />
           新增產品
         </Button>
       </div>
 
-      <Tabs defaultValue="products" className="w-full">
+      <Tabs className="w-full" defaultValue="products">
         <TabsList>
           <TabsTrigger value="products">產品列表</TabsTrigger>
           <TabsTrigger value="categories">分類管理</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="products" className="space-y-6 mt-6">
+        <TabsContent className="mt-6 space-y-6" value="products">
           {/* Filters */}
           <Card>
             <CardHeader>
@@ -739,24 +830,31 @@ export default function ProductManagement({ initialProducts }: { initialProducts
               <div className="flex gap-4">
                 <div className="flex-1">
                   <div className="relative">
-                    <Search className="h-4 w-4 absolute left-3 top-3 text-gray-400" />
+                    <Search className="absolute top-3 left-3 h-4 w-4 text-gray-400" />
                     <Input
+                      className="pl-10"
+                      onChange={(e) => setGlobalFilter(e.target.value)}
                       placeholder="搜尋產品名稱、描述..."
                       value={globalFilter}
-                      onChange={(e) => setGlobalFilter(e.target.value)}
-                      className="pl-10"
                     />
                   </div>
                 </div>
                 <Select
-                  value={(table.getColumn('category')?.getFilterValue() as string) ?? ''}
                   onValueChange={(value) =>
-                    table.getColumn('category')?.setFilterValue(value === 'all' ? '' : value)
+                    table
+                      .getColumn("category")
+                      ?.setFilterValue(value === "all" ? "" : value)
+                  }
+                  value={
+                    (table.getColumn("category")?.getFilterValue() as string) ??
+                    ""
                   }
                 >
                   <SelectTrigger
                     className="w-48"
-                    disabled={categoriesLoading || sortedCategories.length === 0}
+                    disabled={
+                      categoriesLoading || sortedCategories.length === 0
+                    }
                   >
                     <SelectValue placeholder="篩選分類" />
                   </SelectTrigger>
@@ -778,20 +876,26 @@ export default function ProductManagement({ initialProducts }: { initialProducts
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
               <div className="space-y-1">
                 <CardTitle>產品列表</CardTitle>
-                <CardDescription>共 {table.getFilteredRowModel().rows.length} 個產品</CardDescription>
+                <CardDescription>
+                  共 {table.getFilteredRowModel().rows.length} 個產品
+                </CardDescription>
               </div>
               <BatchOperationsToolbar
-                selectedProducts={Array.from(selectedProducts).map(id => products.find(p => p.id === id)!).filter(Boolean)}
-                onSelectionChange={(newSelection) => {
-                  setSelectedProducts(new Set(newSelection.map((p: any) => p.id)));
-                }}
+                categories={categories}
                 onProductsUpdate={() => {
                   // Refresh products list
                   loadProducts();
                 }}
+                onSelectionChange={(newSelection) => {
+                  setSelectedProducts(
+                    new Set(newSelection.map((p: any) => p.id))
+                  );
+                }}
+                selectedProducts={Array.from(selectedProducts)
+                  .map((id) => products.find((p) => p.id === id)!)
+                  .filter(Boolean)}
                 totalProducts={products.length}
                 variant="compact"
-                categories={categories}
               />
             </CardHeader>
             <CardContent>
@@ -799,12 +903,18 @@ export default function ProductManagement({ initialProducts }: { initialProducts
                 <Table>
                   <TableHeader>
                     {table.getHeaderGroups().map((headerGroup) => (
-                      <TableRow key={headerGroup.id} className="bg-gray-50/50">
+                      <TableRow className="bg-gray-50/50" key={headerGroup.id}>
                         {headerGroup.headers.map((header) => (
-                          <TableHead key={header.id} className="font-medium text-gray-900">
+                          <TableHead
+                            className="font-medium text-gray-900"
+                            key={header.id}
+                          >
                             {header.isPlaceholder
                               ? null
-                              : flexRender(header.column.columnDef.header, header.getContext())}
+                              : flexRender(
+                                  header.column.columnDef.header,
+                                  header.getContext()
+                                )}
                           </TableHead>
                         ))}
                       </TableRow>
@@ -813,17 +923,23 @@ export default function ProductManagement({ initialProducts }: { initialProducts
                   <TableBody>
                     {table.getRowModel().rows.length > 0 ? (
                       table.getRowModel().rows.map((row) => (
-                        <TableRow key={row.id} className="hover:bg-gray-50/50">
+                        <TableRow className="hover:bg-gray-50/50" key={row.id}>
                           {row.getVisibleCells().map((cell) => (
                             <TableCell key={cell.id}>
-                              {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                              {flexRender(
+                                cell.column.columnDef.cell,
+                                cell.getContext()
+                              )}
                             </TableCell>
                           ))}
                         </TableRow>
                       ))
                     ) : (
                       <TableRow>
-                        <TableCell colSpan={columns.length} className="h-24 text-center">
+                        <TableCell
+                          className="h-24 text-center"
+                          colSpan={columns.length}
+                        >
                           沒有找到產品
                         </TableCell>
                       </TableRow>
@@ -834,29 +950,33 @@ export default function ProductManagement({ initialProducts }: { initialProducts
 
               {/* Pagination */}
               <div className="flex items-center justify-between px-2 py-4">
-                <div className="text-sm text-gray-700">
-                  顯示{' '}
-                  {table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1} 到{' '}
+                <div className="text-gray-700 text-sm">
+                  顯示{" "}
+                  {table.getState().pagination.pageIndex *
+                    table.getState().pagination.pageSize +
+                    1}{" "}
+                  到{" "}
                   {Math.min(
-                    (table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize,
+                    (table.getState().pagination.pageIndex + 1) *
+                      table.getState().pagination.pageSize,
                     table.getFilteredRowModel().rows.length
-                  )}{' '}
+                  )}{" "}
                   項，共 {table.getFilteredRowModel().rows.length} 項
                 </div>
                 <div className="flex items-center space-x-2">
                   <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => table.previousPage()}
                     disabled={!table.getCanPreviousPage()}
+                    onClick={() => table.previousPage()}
+                    size="sm"
+                    variant="outline"
                   >
                     上一頁
                   </Button>
                   <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => table.nextPage()}
                     disabled={!table.getCanNextPage()}
+                    onClick={() => table.nextPage()}
+                    size="sm"
+                    variant="outline"
                   >
                     下一頁
                   </Button>
@@ -866,17 +986,19 @@ export default function ProductManagement({ initialProducts }: { initialProducts
           </Card>
         </TabsContent>
 
-        <TabsContent value="categories" className="mt-6">
+        <TabsContent className="mt-6" value="categories">
           {/* Category Management */}
           <Card>
             <CardHeader className="gap-4 md:flex md:flex-row md:items-center md:justify-between">
               <div className="space-y-1">
                 <CardTitle>產品分類</CardTitle>
-                <CardDescription>建立或移除產品分類，供前台與商品維護使用。</CardDescription>
+                <CardDescription>
+                  建立或移除產品分類，供前台與商品維護使用。
+                </CardDescription>
               </div>
               <div className="flex items-center gap-2">
                 <Button onClick={openCreateCategoryDialog}>
-                  <Plus className="h-4 w-4 mr-2" />
+                  <Plus className="mr-2 h-4 w-4" />
                   新增分類
                 </Button>
               </div>
@@ -888,7 +1010,7 @@ export default function ProductManagement({ initialProducts }: { initialProducts
                   <Skeleton className="h-20 w-full" />
                 </div>
               ) : categories.length === 0 ? (
-                <div className="rounded-md border border-dashed p-6 text-center text-sm text-muted-foreground">
+                <div className="rounded-md border border-dashed p-6 text-center text-muted-foreground text-sm">
                   尚未建立任何產品分類，請先新增分類以供產品使用。
                 </div>
               ) : (
@@ -898,78 +1020,100 @@ export default function ProductManagement({ initialProducts }: { initialProducts
                     const inUse = productCount > 0;
                     return (
                       <div
+                        className="flex flex-col gap-4 rounded-lg border p-4 md:flex-row md:items-start md:justify-between"
                         key={category.id}
-                        className="rounded-lg border p-4 flex flex-col gap-4 md:flex-row md:items-start md:justify-between"
                       >
                         <div className="space-y-3">
                           <div className="flex flex-wrap items-center gap-2">
-                            <h3 className="text-lg font-semibold text-foreground">{category.title}</h3>
+                            <h3 className="font-semibold text-foreground text-lg">
+                              {category.title}
+                            </h3>
                             <Badge variant="secondary">{category.slug}</Badge>
                             {!category.isActive && (
-                              <Badge variant="outline" className="text-amber-600 border-amber-300">
+                              <Badge
+                                className="border-amber-300 text-amber-600"
+                                variant="outline"
+                              >
                                 已停用
                               </Badge>
                             )}
                           </div>
-                          <p className="text-sm text-muted-foreground max-w-2xl">
+                          <p className="max-w-2xl text-muted-foreground text-sm">
                             {category.description}
                           </p>
                           <div className="flex flex-wrap gap-2 text-sm">
-                            <Badge variant="outline">系列：{category.series}</Badge>
-                            <Badge variant="outline">品牌：{category.brand}</Badge>
-                            <Badge variant="outline">URL：{category.urlPath}</Badge>
+                            <Badge variant="outline">
+                              系列：{category.series}
+                            </Badge>
+                            <Badge variant="outline">
+                              品牌：{category.brand}
+                            </Badge>
+                            <Badge variant="outline">
+                              URL：{category.urlPath}
+                            </Badge>
                           </div>
                           {category.features.length > 0 && (
                             <div className="flex flex-wrap gap-2">
                               {category.features.map((feature) => (
                                 <Badge
+                                  className="bg-gray-100 text-gray-700"
                                   key={feature}
                                   variant="secondary"
-                                  className="bg-gray-100 text-gray-700"
                                 >
                                   {feature}
                                 </Badge>
                               ))}
                             </div>
                           )}
-                          <div className="text-xs text-muted-foreground">
-                            產品數：{productCount}（有庫存 {category.stats?.inStockCount ?? 0}）
+                          <div className="text-muted-foreground text-xs">
+                            產品數：{productCount}（有庫存{" "}
+                            {category.stats?.inStockCount ?? 0}）
                           </div>
                         </div>
                         <div className="flex flex-col gap-2 md:items-end">
                           <Button
-                            variant="ghost"
                             className="self-start"
                             onClick={() => openEditCategoryDialog(category)}
+                            variant="ghost"
                           >
-                            <Edit className="h-4 w-4 mr-2" />
+                            <Edit className="mr-2 h-4 w-4" />
                             編輯
                           </Button>
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
                               <Button
-                                variant="ghost"
                                 className="self-start"
-                                disabled={inUse || deletingCategorySlug === category.slug}
+                                disabled={
+                                  inUse ||
+                                  deletingCategorySlug === category.slug
+                                }
+                                variant="ghost"
                               >
-                                <Trash2 className="h-4 w-4 mr-2" />
+                                <Trash2 className="mr-2 h-4 w-4" />
                                 刪除
                               </Button>
                             </AlertDialogTrigger>
                             <AlertDialogContent>
                               <AlertDialogHeader>
-                                <AlertDialogTitle>確認刪除分類</AlertDialogTitle>
+                                <AlertDialogTitle>
+                                  確認刪除分類
+                                </AlertDialogTitle>
                                 <AlertDialogDescription>
                                   {inUse
-                                    ? '此分類仍有產品使用，請先調整產品後再刪除。'
+                                    ? "此分類仍有產品使用，請先調整產品後再刪除。"
                                     : `確定要刪除分類「${category.title}」嗎？此操作無法復原。`}
                                 </AlertDialogDescription>
                               </AlertDialogHeader>
                               <AlertDialogFooter>
                                 <AlertDialogCancel>取消</AlertDialogCancel>
                                 <AlertDialogAction
-                                  onClick={() => handleDeleteCategory(category.slug)}
-                                  disabled={inUse || deletingCategorySlug === category.slug}
+                                  disabled={
+                                    inUse ||
+                                    deletingCategorySlug === category.slug
+                                  }
+                                  onClick={() =>
+                                    handleDeleteCategory(category.slug)
+                                  }
                                 >
                                   刪除
                                 </AlertDialogAction>
@@ -988,159 +1132,201 @@ export default function ProductManagement({ initialProducts }: { initialProducts
       </Tabs>
 
       <Dialog
-        open={categoryDialogOpen}
         onOpenChange={(open) => {
           if (!open) {
             closeCategoryDialog();
           }
         }}
+        open={categoryDialogOpen}
       >
         <DialogContent className="max-w-xl">
           <DialogHeader>
             <DialogTitle>
-              {categoryDialogMode === 'edit' ? '編輯產品分類' : '新增產品分類'}
+              {categoryDialogMode === "edit" ? "編輯產品分類" : "新增產品分類"}
             </DialogTitle>
             <DialogDescription>
-              {categoryDialogMode === 'edit'
-                ? '更新分類資訊，相關產品將同步套用新的屬性。'
-                : '設定分類 slug 與顯示資訊，供產品與前台使用。'}
+              {categoryDialogMode === "edit"
+                ? "更新分類資訊，相關產品將同步套用新的屬性。"
+                : "設定分類 slug 與顯示資訊，供產品與前台使用。"}
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div className="flex flex-col gap-2">
                 <Label htmlFor="category-slug">分類 Slug *</Label>
                 <Input
+                  className={categoryFormErrors.slug ? "border-red-500" : ""}
                   id="category-slug"
-                  value={categoryForm.slug}
-                  onChange={(e) => handleCategoryFieldChange('slug', e.target.value)}
-                  className={categoryFormErrors.slug ? 'border-red-500' : ''}
+                  onChange={(e) =>
+                    handleCategoryFieldChange("slug", e.target.value)
+                  }
                   placeholder="例如 simmons-black"
+                  value={categoryForm.slug}
                 />
                 {categoryFormErrors.slug && (
-                  <p className="text-sm text-red-500">{categoryFormErrors.slug}</p>
+                  <p className="text-red-500 text-sm">
+                    {categoryFormErrors.slug}
+                  </p>
                 )}
               </div>
               <div className="flex flex-col gap-2">
                 <Label htmlFor="category-sort">排序</Label>
                 <Input
                   id="category-sort"
+                  min={0}
+                  onChange={(e) =>
+                    handleCategoryFieldChange(
+                      "sortOrder",
+                      Number(e.target.value || 0)
+                    )
+                  }
                   type="number"
                   value={categoryForm.sortOrder.toString()}
-                  onChange={(e) =>
-                    handleCategoryFieldChange('sortOrder', Number(e.target.value || 0))
-                  }
-                  min={0}
                 />
               </div>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div className="flex flex-col gap-2">
                 <Label htmlFor="category-title">顯示名稱 *</Label>
                 <Input
+                  className={categoryFormErrors.title ? "border-red-500" : ""}
                   id="category-title"
+                  onChange={(e) =>
+                    handleCategoryFieldChange("title", e.target.value)
+                  }
                   value={categoryForm.title}
-                  onChange={(e) => handleCategoryFieldChange('title', e.target.value)}
-                  className={categoryFormErrors.title ? 'border-red-500' : ''}
                 />
                 {categoryFormErrors.title && (
-                  <p className="text-sm text-red-500">{categoryFormErrors.title}</p>
+                  <p className="text-red-500 text-sm">
+                    {categoryFormErrors.title}
+                  </p>
                 )}
               </div>
               <div className="flex flex-col gap-2">
                 <Label htmlFor="category-series">系列名稱 *</Label>
                 <Input
+                  className={categoryFormErrors.series ? "border-red-500" : ""}
                   id="category-series"
+                  onChange={(e) =>
+                    handleCategoryFieldChange("series", e.target.value)
+                  }
                   value={categoryForm.series}
-                  onChange={(e) => handleCategoryFieldChange('series', e.target.value)}
-                  className={categoryFormErrors.series ? 'border-red-500' : ''}
                 />
                 {categoryFormErrors.series && (
-                  <p className="text-sm text-red-500">{categoryFormErrors.series}</p>
+                  <p className="text-red-500 text-sm">
+                    {categoryFormErrors.series}
+                  </p>
                 )}
               </div>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div className="flex flex-col gap-2">
                 <Label htmlFor="category-brand">品牌 *</Label>
                 <Input
+                  className={categoryFormErrors.brand ? "border-red-500" : ""}
                   id="category-brand"
+                  onChange={(e) =>
+                    handleCategoryFieldChange("brand", e.target.value)
+                  }
                   value={categoryForm.brand}
-                  onChange={(e) => handleCategoryFieldChange('brand', e.target.value)}
-                  className={categoryFormErrors.brand ? 'border-red-500' : ''}
                 />
                 {categoryFormErrors.brand && (
-                  <p className="text-sm text-red-500">{categoryFormErrors.brand}</p>
+                  <p className="text-red-500 text-sm">
+                    {categoryFormErrors.brand}
+                  </p>
                 )}
               </div>
               <div className="flex flex-col gap-2">
                 <Label htmlFor="category-url">URL Path</Label>
                 <Input
+                  className={categoryFormErrors.urlPath ? "border-red-500" : ""}
                   id="category-url"
-                  value={categoryForm.urlPath}
-                  onChange={(e) => handleCategoryFieldChange('urlPath', e.target.value)}
-                  className={categoryFormErrors.urlPath ? 'border-red-500' : ''}
+                  onChange={(e) =>
+                    handleCategoryFieldChange("urlPath", e.target.value)
+                  }
                   placeholder="預設為 /slug"
+                  value={categoryForm.urlPath}
                 />
                 {categoryFormErrors.urlPath && (
-                  <p className="text-sm text-red-500">{categoryFormErrors.urlPath}</p>
+                  <p className="text-red-500 text-sm">
+                    {categoryFormErrors.urlPath}
+                  </p>
                 )}
               </div>
             </div>
             <div className="flex flex-col gap-2">
               <Label htmlFor="category-description">分類描述 *</Label>
               <Textarea
+                className={
+                  categoryFormErrors.description ? "border-red-500" : ""
+                }
                 id="category-description"
-                value={categoryForm.description}
-                onChange={(e) => handleCategoryFieldChange('description', e.target.value)}
+                onChange={(e) =>
+                  handleCategoryFieldChange("description", e.target.value)
+                }
                 rows={3}
-                className={categoryFormErrors.description ? 'border-red-500' : ''}
+                value={categoryForm.description}
               />
               {categoryFormErrors.description && (
-                <p className="text-sm text-red-500">{categoryFormErrors.description}</p>
+                <p className="text-red-500 text-sm">
+                  {categoryFormErrors.description}
+                </p>
               )}
             </div>
             <div className="flex flex-col gap-2">
-              <Label htmlFor="category-features">特色（每行或以逗號分隔）</Label>
+              <Label htmlFor="category-features">
+                特色（每行或以逗號分隔）
+              </Label>
               <Textarea
                 id="category-features"
-                value={categoryForm.featuresRaw}
-                onChange={(e) => handleCategoryFieldChange('featuresRaw', e.target.value)}
+                onChange={(e) =>
+                  handleCategoryFieldChange("featuresRaw", e.target.value)
+                }
                 rows={3}
+                value={categoryForm.featuresRaw}
               />
             </div>
             <div className="flex flex-col gap-2">
               <Label htmlFor="category-seo">SEO 關鍵字</Label>
               <Input
                 id="category-seo"
-                value={categoryForm.seoKeywords}
-                onChange={(e) => handleCategoryFieldChange('seoKeywords', e.target.value)}
+                onChange={(e) =>
+                  handleCategoryFieldChange("seoKeywords", e.target.value)
+                }
                 placeholder="以逗號分隔"
+                value={categoryForm.seoKeywords}
               />
             </div>
             <div className="flex items-center justify-between rounded-md border px-3 py-2">
               <div>
                 <Label className="font-medium">啟用分類</Label>
-                <p className="text-sm text-muted-foreground">停用後前台不會顯示此分類。</p>
+                <p className="text-muted-foreground text-sm">
+                  停用後前台不會顯示此分類。
+                </p>
               </div>
               <Switch
                 checked={categoryForm.isActive}
-                onCheckedChange={(checked) => handleCategoryFieldChange('isActive', checked)}
+                onCheckedChange={(checked) =>
+                  handleCategoryFieldChange("isActive", checked)
+                }
               />
             </div>
           </div>
           <div className="flex justify-end gap-2">
-            <Button variant="ghost" onClick={closeCategoryDialog}>
+            <Button onClick={closeCategoryDialog} variant="ghost">
               取消
             </Button>
-            <Button onClick={handleCategorySubmit} disabled={isCategorySubmitting}>
+            <Button
+              disabled={isCategorySubmitting}
+              onClick={handleCategorySubmit}
+            >
               {isCategorySubmitting
-                ? categoryDialogMode === 'edit'
-                  ? '更新中…'
-                  : '建立中…'
-                : categoryDialogMode === 'edit'
-                  ? '更新分類'
-                  : '建立分類'}
+                ? categoryDialogMode === "edit"
+                  ? "更新中…"
+                  : "建立中…"
+                : categoryDialogMode === "edit"
+                  ? "更新分類"
+                  : "建立分類"}
             </Button>
           </div>
         </DialogContent>
@@ -1149,37 +1335,39 @@ export default function ProductManagement({ initialProducts }: { initialProducts
   );
 }
 
-
-
 export function normalizeFormData(
   fd: Partial<ProductFormData>,
   specOrder: string[] = []
 ): ProductFormData {
   const variants = Array.isArray(fd.variants)
     ? fd.variants.map((variant) => ({
-      name: (variant?.name ?? '').toString().trim(),
-      price:
-        typeof variant?.price === 'number'
-          ? variant.price
-          : Number((variant?.price as unknown as string) ?? 0) || 0,
-      sku: variant?.sku ? variant.sku.toString().trim() : undefined,
-      size: variant?.size ? variant.size.toString().trim() : undefined,
-      firmness: variant?.firmness ? variant.firmness.toString().trim() : undefined,
-    }))
+        name: (variant?.name ?? "").toString().trim(),
+        price:
+          typeof variant?.price === "number"
+            ? variant.price
+            : Number((variant?.price as unknown as string) ?? 0) || 0,
+        sku: variant?.sku ? variant.sku.toString().trim() : undefined,
+        size: variant?.size ? variant.size.toString().trim() : undefined,
+        firmness: variant?.firmness
+          ? variant.firmness.toString().trim()
+          : undefined,
+      }))
     : [];
 
   const images = Array.isArray(fd.images)
-    ? fd.images.map((img) => (typeof img === 'string' ? img.trim() : '')).filter(Boolean)
+    ? fd.images
+        .map((img) => (typeof img === "string" ? img.trim() : ""))
+        .filter(Boolean)
     : [];
 
   const features = Array.isArray(fd.features)
     ? fd.features
-      .map((feature) => (typeof feature === 'string' ? feature.trim() : ''))
-      .filter(Boolean)
+        .map((feature) => (typeof feature === "string" ? feature.trim() : ""))
+        .filter(Boolean)
     : [];
 
   const rawSpecifications =
-    fd.specifications && typeof fd.specifications === 'object'
+    fd.specifications && typeof fd.specifications === "object"
       ? (fd.specifications as Record<string, unknown>)
       : {};
 
@@ -1187,17 +1375,19 @@ export function normalizeFormData(
     .map(([key, value]) => {
       const trimmedKey = key.trim();
       const strValue =
-        typeof value === 'string'
+        typeof value === "string"
           ? value.trim()
           : value !== undefined && value !== null
             ? String(value).trim()
-            : '';
+            : "";
       return [trimmedKey, strValue] as [string, string];
     })
     .filter(([key, value]) => key.length > 0 && value.length > 0);
 
   const orderedKeys = specOrder.length
-    ? specOrder.filter((orderKey) => specificationEntries.some(([key]) => key === orderKey))
+    ? specOrder.filter((orderKey) =>
+        specificationEntries.some(([key]) => key === orderKey)
+      )
     : specificationEntries.map(([key]) => key);
 
   const specifications: Record<string, string> = {};
@@ -1215,10 +1405,10 @@ export function normalizeFormData(
   });
 
   return {
-    name: fd.name?.trim() ?? '',
-    slug: fd.slug?.trim() ?? '',
-    description: fd.description?.trim() ?? '',
-    category: typeof fd.category === 'string' ? fd.category.trim() : '',
+    name: fd.name?.trim() ?? "",
+    slug: fd.slug?.trim() ?? "",
+    description: fd.description?.trim() ?? "",
+    category: typeof fd.category === "string" ? fd.category.trim() : "",
     images,
     variants,
     features,
@@ -1226,7 +1416,7 @@ export function normalizeFormData(
     inStock: fd.inStock ?? true,
     featured: fd.featured ?? false,
     sortOrder:
-      typeof fd.sortOrder === 'number'
+      typeof fd.sortOrder === "number"
         ? fd.sortOrder
         : Number((fd.sortOrder as unknown as string) ?? 0) || 0,
     seoTitle: fd.seoTitle?.trim() || undefined,
@@ -1240,7 +1430,9 @@ interface ValidationResult {
   errors?: Record<string, string>;
 }
 
-export function validateProductWithFallback(data: ProductFormData): ValidationResult {
+export function validateProductWithFallback(
+  data: ProductFormData
+): ValidationResult {
   try {
     const result = productSchema.safeParse(data);
     if (result.success) {
@@ -1252,7 +1444,10 @@ export function validateProductWithFallback(data: ProductFormData): ValidationRe
     };
   } catch (error) {
     if (isZodInternalError(error)) {
-      console.warn('Zod validation failed internally, using manual validation fallback.', error);
+      console.warn(
+        "Zod validation failed internally, using manual validation fallback.",
+        error
+      );
       return manualValidateProduct(data);
     }
     throw error;
@@ -1262,7 +1457,7 @@ export function validateProductWithFallback(data: ProductFormData): ValidationRe
 function mapZodIssues(issues: ZodIssue[]): Record<string, string> {
   const mapped: Record<string, string> = {};
   issues.forEach((issue) => {
-    const key = issue.path.length > 0 ? issue.path.join('.') : 'form';
+    const key = issue.path.length > 0 ? issue.path.join(".") : "form";
     mapped[key] = issue.message;
   });
   return mapped;
@@ -1272,37 +1467,41 @@ function manualValidateProduct(data: ProductFormData): ValidationResult {
   const errors: Record<string, string> = {};
 
   if (!data.name || data.name.trim().length === 0) {
-    errors.name = '產品名稱為必填';
+    errors.name = "產品名稱為必填";
   }
 
-  const slug = data.slug?.trim() ?? '';
+  const slug = data.slug?.trim() ?? "";
   if (!slug) {
-    errors.slug = 'URL slug 為必填';
+    errors.slug = "URL slug 為必填";
   } else if (!slugRegex.test(slug)) {
-    errors.slug = '只能包含小寫字母、數字和連字符';
+    errors.slug = "只能包含小寫字母、數字和連字符";
   }
 
   if (!data.description || data.description.trim().length < 10) {
-    errors.description = '產品描述至少需要 10 個字元';
+    errors.description = "產品描述至少需要 10 個字元";
   }
 
-  if (!data.category || !slugRegex.test(data.category)) {
-    errors.category = '請選擇產品分類';
+  if (!(data.category && slugRegex.test(data.category))) {
+    errors.category = "請選擇產品分類";
   }
 
   if (!Array.isArray(data.images) || data.images.length === 0) {
-    errors.images = '至少需要一張產品圖片';
+    errors.images = "至少需要一張產品圖片";
   }
 
   if (!Array.isArray(data.variants) || data.variants.length === 0) {
-    errors['variants'] = '至少需要一個產品變體';
+    errors["variants"] = "至少需要一個產品變體";
   } else {
     data.variants.forEach((variant, index) => {
       if (!variant.name || variant.name.trim().length === 0) {
-        errors[`variants.${index}.name`] = '變體名稱為必填';
+        errors[`variants.${index}.name`] = "變體名稱為必填";
       }
-      if (typeof variant.price !== 'number' || Number.isNaN(variant.price) || variant.price < 0) {
-        errors[`variants.${index}.price`] = '價格需為不小於 0 的數字';
+      if (
+        typeof variant.price !== "number" ||
+        Number.isNaN(variant.price) ||
+        variant.price < 0
+      ) {
+        errors[`variants.${index}.price`] = "價格需為不小於 0 的數字";
       }
     });
   }
@@ -1317,8 +1516,8 @@ function manualValidateProduct(data: ProductFormData): ValidationResult {
 function isZodInternalError(error: unknown): boolean {
   return (
     error instanceof TypeError &&
-    typeof error.message === 'string' &&
-    error.message.includes('_zod')
+    typeof error.message === "string" &&
+    error.message.includes("_zod")
   );
 }
 
@@ -1331,10 +1530,10 @@ export function sanitizeProduct(
 
   const images = Array.isArray(safeProduct.images)
     ? safeProduct.images.filter(Boolean).map((image) => {
-      const imgString = String(image);
-      const key = extractAssetKey(imgString);
-      return resolveAssetUrl({ key, url: imgString }, cdnUrl, fallbackBase);
-    })
+        const imgString = String(image);
+        const key = extractAssetKey(imgString);
+        return resolveAssetUrl({ key, url: imgString }, cdnUrl, fallbackBase);
+      })
     : [];
 
   return {
@@ -1349,16 +1548,20 @@ export function sanitizeProduct(
 export function parseFeatureList(value: unknown): string[] {
   if (Array.isArray(value)) {
     return value
-      .map((item) => (typeof item === 'string' ? item.trim() : String(item ?? '').trim()))
+      .map((item) =>
+        typeof item === "string" ? item.trim() : String(item ?? "").trim()
+      )
       .filter((item) => item.length > 0);
   }
 
-  if (typeof value === 'string') {
+  if (typeof value === "string") {
     try {
       const parsed = JSON.parse(value);
       if (Array.isArray(parsed)) {
         return parsed
-          .map((item) => (typeof item === 'string' ? item.trim() : String(item ?? '').trim()))
+          .map((item) =>
+            typeof item === "string" ? item.trim() : String(item ?? "").trim()
+          )
           .filter((item) => item.length > 0);
       }
     } catch {
@@ -1378,10 +1581,10 @@ function toIsoString(value: unknown): string {
   if (value instanceof Date) {
     return value.toISOString();
   }
-  if (typeof value === 'number') {
+  if (typeof value === "number") {
     return new Date(value).toISOString();
   }
-  if (typeof value === 'string') {
+  if (typeof value === "string") {
     const trimmed = value.trim();
     if (trimmed.length === 0) {
       return new Date(0).toISOString();
@@ -1400,22 +1603,26 @@ function toIsoString(value: unknown): string {
   return new Date().toISOString();
 }
 
-export function normalizeCategory(category: ProductCategoryDTO): ProductCategoryRecord {
+export function normalizeCategory(
+  category: ProductCategoryDTO
+): ProductCategoryRecord {
   const features = parseFeatureList((category as any).features);
   const seoKeywords =
-    typeof (category as any).seoKeywords === 'string'
+    typeof (category as any).seoKeywords === "string"
       ? (category as any).seoKeywords.trim()
       : undefined;
   const stats = category.stats
     ? {
-      productCount: Number(category.stats.productCount ?? 0),
-      inStockCount: Number(category.stats.inStockCount ?? 0),
-    }
+        productCount: Number(category.stats.productCount ?? 0),
+        inStockCount: Number(category.stats.inStockCount ?? 0),
+      }
     : undefined;
 
   const urlPathRaw =
-    typeof (category as any).urlPath === 'string' ? (category as any).urlPath.trim() : '';
-  const ensuredUrlPath = urlPathRaw.startsWith('/')
+    typeof (category as any).urlPath === "string"
+      ? (category as any).urlPath.trim()
+      : "";
+  const ensuredUrlPath = urlPathRaw.startsWith("/")
     ? urlPathRaw
     : urlPathRaw.length > 0
       ? `/${urlPathRaw}`
@@ -1427,7 +1634,7 @@ export function normalizeCategory(category: ProductCategoryDTO): ProductCategory
     seoKeywords,
     urlPath: ensuredUrlPath,
     isActive:
-      typeof (category as any).isActive === 'boolean'
+      typeof (category as any).isActive === "boolean"
         ? (category as any).isActive
         : Boolean((category as any).isActive),
     sortOrder: Number((category as any).sortOrder ?? 0),
@@ -1437,12 +1644,15 @@ export function normalizeCategory(category: ProductCategoryDTO): ProductCategory
   };
 }
 
-export function compareCategories(a: ProductCategoryRecord, b: ProductCategoryRecord) {
+export function compareCategories(
+  a: ProductCategoryRecord,
+  b: ProductCategoryRecord
+) {
   const orderDiff = (a.sortOrder ?? 0) - (b.sortOrder ?? 0);
   if (orderDiff !== 0) {
     return orderDiff;
   }
-  return (a.title || a.slug).localeCompare(b.title || b.slug, 'zh-TW');
+  return (a.title || a.slug).localeCompare(b.title || b.slug, "zh-TW");
 }
 
 export function normalizeCategoryInsert(

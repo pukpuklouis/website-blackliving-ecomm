@@ -387,7 +387,7 @@ const AddToCartSection: FC<AddToCartSectionProps> = ({
             className={cn(
               "h-14 w-full font-semibold text-lg transition-all duration-200",
               isAvailable
-                ? "hover:-translate-y-0.5 transform bg-black text-white shadow-lg hover:bg-gray-800 hover:shadow-xl"
+                ? "transform bg-black text-white shadow-lg hover:-translate-y-0.5 hover:bg-gray-800 hover:shadow-xl"
                 : "cursor-not-allowed bg-gray-200 text-gray-500"
             )}
             disabled={!isAvailable || isAdding}

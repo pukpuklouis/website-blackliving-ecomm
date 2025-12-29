@@ -1,9 +1,9 @@
-import type { AppLoadContext, EntryContext } from 'react-router';
-import { ServerRouter } from 'react-router';
-import { isbot } from 'isbot';
-import { renderToReadableStream } from 'react-dom/server.edge';
+import { isbot } from "isbot";
+import { renderToReadableStream } from "react-dom/server.edge";
+import type { AppLoadContext, EntryContext } from "react-router";
+import { ServerRouter } from "react-router";
 
-export const streamTimeout = 5_000;
+export const streamTimeout = 5000;
 
 export default async function handleRequest(
   request: Request,
@@ -23,15 +23,18 @@ export default async function handleRequest(
     }
   );
 
-  const userAgent = request.headers.get('user-agent');
-  if ((routerContext.isSpaMode || (userAgent && isbot(userAgent))) && body.allReady) {
+  const userAgent = request.headers.get("user-agent");
+  if (
+    (routerContext.isSpaMode || (userAgent && isbot(userAgent))) &&
+    body.allReady
+  ) {
     await Promise.race([
       body.allReady,
       new Promise((resolve) => setTimeout(resolve, streamTimeout)),
     ]);
   }
 
-  responseHeaders.set('Content-Type', 'text/html');
+  responseHeaders.set("Content-Type", "text/html");
 
   return new Response(body, {
     headers: responseHeaders,

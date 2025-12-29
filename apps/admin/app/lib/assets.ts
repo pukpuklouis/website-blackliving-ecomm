@@ -20,26 +20,26 @@ export function resolveAssetUrl(
     return joinUrlSegments(fallbackBase, key);
   }
 
-  return key || providedUrl || '';
+  return key || providedUrl || "";
 }
 
 export function joinUrlSegments(base: string, key: string): string {
-  const normalizedBase = base.replace(/\/+$/, '');
-  const normalizedKey = key.replace(/^\/+/, '');
+  const normalizedBase = base.replace(/\/+$/, "");
+  const normalizedKey = key.replace(/^\/+/, "");
   return `${normalizedBase}/${normalizedKey}`;
 }
 
 export function extractAssetKey(value: string | undefined): string | undefined {
-  if (!value) return undefined;
+  if (!value) return;
   try {
     const parsed = new URL(value);
-    if (parsed.protocol === 'data:') return value;
-    return stripMediaPrefix(parsed.pathname.replace(/^\//, ''));
+    if (parsed.protocol === "data:") return value;
+    return stripMediaPrefix(parsed.pathname.replace(/^\//, ""));
   } catch (error) {
-    return stripMediaPrefix(value.replace(/^\//, ''));
+    return stripMediaPrefix(value.replace(/^\//, ""));
   }
 }
 
 function stripMediaPrefix(v: string): string {
-  return v.startsWith('media/') ? v.slice('media/'.length) : v;
+  return v.startsWith("media/") ? v.slice("media/".length) : v;
 }

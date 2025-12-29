@@ -21,6 +21,7 @@ import appointments from "./modules/appointments";
 import businessCooperation from "./modules/business-cooperation";
 import contact from "./modules/contact";
 import customers from "./modules/customers";
+import gomypay from "./modules/gomypay";
 import newsletter from "./modules/newsletter";
 import orders from "./modules/orders";
 import pages from "./modules/pages";
@@ -581,6 +582,7 @@ app.all("/api/auth/*", async (c) => {
 // API Routes
 app.route("/api/products", products);
 app.route("/api/orders", orders);
+app.route("/api/payment", gomypay);
 app.route("/api/appointments", appointments);
 app.route("/api/customers", customers);
 app.route("/api/admin", admin);

@@ -1,11 +1,22 @@
-import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import { signOut, signInWithGoogleAdmin, checkSession } from '@blackliving/auth/client';
-import { useApiUrl } from './EnvironmentContext';
+import {
+  checkSession,
+  signInWithGoogleAdmin,
+  signOut,
+} from "@blackliving/auth/client";
+import type React from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
+import { useApiUrl } from "./EnvironmentContext";
 
 interface User {
   id: string;
   email: string;
-  role: 'admin' | 'customer';
+  role: "admin" | "customer";
   name?: string;
 }
 
@@ -23,7 +34,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 }
@@ -41,13 +52,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
     try {
       const data = await checkSession();
 
-      if (data.user && data.user.role === 'admin') {
+      if (data.user && data.user.role === "admin") {
         setUser(data.user);
       } else {
         setUser(null);
       }
     } catch (error) {
-      console.error('Auth check failed:', error);
+      console.error("Auth check failed:", error);
       setUser(null);
     } finally {
       setLoading(false);
@@ -57,11 +68,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
       const response = await fetch(`${apiUrl}/api/auth/sign-in/email`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
-        credentials: 'include',
+        credentials: "include",
         body: JSON.stringify({ email, password }),
       });
 
@@ -73,7 +84,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
       return false;
     } catch (error) {
-      console.error('Login failed:', error);
+      console.error("Login failed:", error);
       return false;
     }
   };
@@ -83,13 +94,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const result = await signInWithGoogleAdmin();
 
       if (!result.success) {
-        console.error('Google login failed:', result.error);
+        console.error("Google login failed:", result.error);
         return false;
       }
 
       return true;
     } catch (error) {
-      console.error('Google login failed:', error);
+      console.error("Google login failed:", error);
       return false;
     }
   };
@@ -100,24 +111,24 @@ export function AuthProvider({ children }: AuthProviderProps) {
       await signOut({
         fetchOptions: {
           onSuccess: () => {
-            console.log('Better Auth logout successful');
+            console.log("Better Auth logout successful");
           },
           onError: (error) => {
-            console.warn('Better Auth logout error:', error);
+            console.warn("Better Auth logout error:", error);
           },
         },
       });
 
       // Clear any local storage
-      if (typeof Storage !== 'undefined') {
+      if (typeof Storage !== "undefined") {
         localStorage.clear();
         sessionStorage.clear();
       }
     } catch (error) {
-      console.error('Logout failed:', error);
+      console.error("Logout failed:", error);
       // Fallback: clear session cookies manually
       document.cookie =
-        'better-auth.session_token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+        "better-auth.session_token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;";
     } finally {
       // Always clear user state locally
       setUser(null);

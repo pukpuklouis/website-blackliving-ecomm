@@ -3,8 +3,10 @@
   "title": "Appointment Simplified Modification Requirements Document",
   "filePath": ".spec-workflow/specs/appointment-simplified-modification/requirements.md",
   "type": "document",
-  "status": "pending",
+  "status": "rejected",
   "createdAt": "2025-11-30T13:32:25.541Z",
   "category": "spec",
-  "categoryName": "appointment-simplified-modification"
+  "categoryName": "appointment-simplified-modification",
+  "response": "已拒绝",
+  "respondedAt": "2025-12-16T08:50:47.020Z"
 }

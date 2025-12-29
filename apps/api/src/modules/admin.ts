@@ -1,31 +1,38 @@
-import { Hono } from 'hono';
-import { zValidator } from '@hono/zod-validator';
-import { z } from 'zod';
-import { eq, desc, asc, and, like, count, sql, or, lt, gt, inArray, type SQL } from 'drizzle-orm';
-import { requireAdmin, auditLog, requireFreshSession } from '../middleware/auth';
 import {
-  products,
-  posts,
-  orders,
   appointments,
-  reviews,
-  productCategories,
   mediaAssets,
-} from '@blackliving/db';
-import type {
-  CreateProductRequest,
-  UpdateProductRequest,
-  CreatePostRequest,
-  UpdatePostRequest,
-  UpdateOrderRequest,
-  UpdateAppointmentRequest,
-  DashboardStats,
-  SalesAnalytics,
-  ProductCategory,
-} from '@blackliving/types';
-import { CacheTTL } from '../lib/cache';
-import { FileTypes, FileSizes, StorageManager } from '../lib/storage';
-import { createId } from '@paralleldrive/cuid2';
+  orders,
+  posts,
+  productCategories,
+  products,
+} from "@blackliving/db";
+import type { DashboardStats, ProductCategory } from "@blackliving/types";
+import { zValidator } from "@hono/zod-validator";
+import { createId } from "@paralleldrive/cuid2";
+import {
+  and,
+  asc,
+  count,
+  desc,
+  eq,
+  gt,
+  inArray,
+  like,
+  lt,
+  or,
+  type SQL,
+  sql,
+} from "drizzle-orm";
+import { Hono } from "hono";
+import { z } from "zod";
+import { CacheTTL } from "../lib/cache";
+import { FileSizes, FileTypes, StorageManager } from "../lib/storage";
+import {
+  auditLog,
+  requireAdmin,
+  requireFreshSession,
+} from "../middleware/auth";
+
 // TODO: Import SKU generator and product templates when package structure is resolved
 // import { generateBulkSKUs, generateUniqueSKU } from '@blackliving/admin/lib/sku-generator';
 // import { getProductTypeTemplate, generateDefaultVariants } from '@blackliving/admin/lib/product-templates';
@@ -41,8 +48,8 @@ const productCategoryBodySchema = z.object({
   series: z.string().min(1),
   brand: z.string().min(1),
   features: z.array(z.string()).default([]),
-  seoKeywords: z.string().optional().default(''),
-  urlPath: z.string().optional().default(''),
+  seoKeywords: z.string().optional().default(""),
+  urlPath: z.string().optional().default(""),
   isActive: z.boolean().optional().default(true),
   sortOrder: z.number().int().min(0).optional().default(0),
 });
@@ -61,20 +68,22 @@ const productCategoryUpdateSchema = z.object({
 });
 
 // Apply comprehensive admin authentication to all routes
-admin.use('*', requireAdmin());
-admin.use('*', auditLog('admin-access'));
+admin.use("*", requireAdmin());
+admin.use("*", auditLog("admin-access"));
 
 // Dashboard Analytics
-admin.get('/dashboard/stats', async (c) => {
-  const db = c.get('db');
-  const cache = c.get('cache');
+admin.get("/dashboard/stats", async (c) => {
+  const db = c.get("db");
+  const cache = c.get("cache");
 
   try {
     const stats = await cache.getOrSet(
-      'admin:dashboard:stats',
+      "admin:dashboard:stats",
       async (): Promise<DashboardStats> => {
         // Get total orders count
-        const [totalOrdersResult] = await db.select({ count: count() }).from(orders);
+        const [totalOrdersResult] = await db
+          .select({ count: count() })
+          .from(orders);
         const totalOrders = totalOrdersResult.count;
 
         // Get total revenue
@@ -83,21 +92,21 @@ admin.get('/dashboard/stats', async (c) => {
             total: sql<number>`sum(${orders.totalAmount})`,
           })
           .from(orders)
-          .where(eq(orders.status, 'delivered'));
+          .where(eq(orders.status, "delivered"));
         const totalRevenue = totalRevenueResult.total || 0;
 
         // Get pending appointments count
         const [pendingAppointmentsResult] = await db
           .select({ count: count() })
           .from(appointments)
-          .where(eq(appointments.status, 'pending'));
+          .where(eq(appointments.status, "pending"));
         const pendingAppointments = pendingAppointmentsResult.count;
 
         // Get published posts count
         const [publishedPostsResult] = await db
           .select({ count: count() })
           .from(posts)
-          .where(eq(posts.status, 'published'));
+          .where(eq(posts.status, "published"));
         const publishedPosts = publishedPostsResult.count;
 
         // Get recent orders
@@ -134,11 +143,11 @@ admin.get('/dashboard/stats', async (c) => {
           publishedPosts,
           recentOrders: recentOrders.map((order) => ({
             ...order,
-            createdAt: order.createdAt?.toISOString() || '',
+            createdAt: order.createdAt?.toISOString() || "",
           })),
           recentAppointments: recentAppointments.map((appointment) => ({
             ...appointment,
-            createdAt: appointment.createdAt?.toISOString() || '',
+            createdAt: appointment.createdAt?.toISOString() || "",
           })),
         };
       },
@@ -147,13 +156,16 @@ admin.get('/dashboard/stats', async (c) => {
 
     return c.json({ success: true, data: stats });
   } catch (error) {
-    console.error('Dashboard stats error:', error);
-    return c.json({ success: false, error: 'Failed to fetch dashboard stats' }, 500);
+    console.error("Dashboard stats error:", error);
+    return c.json(
+      { success: false, error: "Failed to fetch dashboard stats" },
+      500
+    );
   }
 });
 
-admin.get('/products/categories', async (c) => {
-  const db = c.get('db');
+admin.get("/products/categories", async (c) => {
+  const db = c.get("db");
 
   try {
     const categories = await db
@@ -181,20 +193,23 @@ admin.get('/products/categories', async (c) => {
 
     return c.json({ success: true, data: payload });
   } catch (error) {
-    console.error('Fetch product categories error:', error);
-    return c.json({ success: false, error: 'Failed to fetch product categories' }, 500);
+    console.error("Fetch product categories error:", error);
+    return c.json(
+      { success: false, error: "Failed to fetch product categories" },
+      500
+    );
   }
 });
 
 admin.post(
-  '/products/categories',
+  "/products/categories",
   requireFreshSession(15),
-  auditLog('product-category-create'),
-  zValidator('json', productCategoryBodySchema),
+  auditLog("product-category-create"),
+  zValidator("json", productCategoryBodySchema),
   async (c) => {
-    const db = c.get('db');
-    const cache = c.get('cache');
-    const body = c.req.valid('json');
+    const db = c.get("db");
+    const cache = c.get("cache");
+    const body = c.req.valid("json");
 
     try {
       const slug = body.slug.trim();
@@ -209,8 +224,8 @@ admin.post(
         return c.json(
           {
             success: false,
-            error: 'Category already exists',
-            message: '分類 slug 已存在，請使用其他名稱',
+            error: "Category already exists",
+            message: "分類 slug 已存在，請使用其他名稱",
           },
           409
         );
@@ -229,7 +244,9 @@ admin.post(
           series: body.series.trim(),
           brand: body.brand.trim(),
           features,
-          seoKeywords: body.seoKeywords?.trim() ? body.seoKeywords.trim() : null,
+          seoKeywords: body.seoKeywords?.trim()
+            ? body.seoKeywords.trim()
+            : null,
           urlPath: normalizeCategoryUrlPath(body.urlPath, slug),
           isActive: body.isActive ?? true,
           sortOrder: body.sortOrder ?? 0,
@@ -238,42 +255,48 @@ admin.post(
         })
         .returning();
 
-      await cache.delete('products:categories');
-      await cache.deleteByPrefix('products:category:');
-      await cache.deleteByPrefix('products:list:');
-      await cache.deleteByPrefix('admin:products');
+      await cache.delete("products:categories");
+      await cache.deleteByPrefix("products:category:");
+      await cache.deleteByPrefix("products:list:");
+      await cache.deleteByPrefix("admin:products");
 
       return c.json(
         {
           success: true,
-          data: normalizeCategoryRecord(inserted, { productCount: 0, inStockCount: 0 }),
+          data: normalizeCategoryRecord(inserted, {
+            productCount: 0,
+            inStockCount: 0,
+          }),
         },
         201
       );
     } catch (error) {
-      console.error('Create product category error:', error);
-      return c.json({ success: false, error: 'Failed to create product category' }, 500);
+      console.error("Create product category error:", error);
+      return c.json(
+        { success: false, error: "Failed to create product category" },
+        500
+      );
     }
   }
 );
 
 admin.put(
-  '/products/categories/:slug',
+  "/products/categories/:slug",
   requireFreshSession(15),
-  auditLog('product-category-update'),
-  zValidator('json', productCategoryUpdateSchema),
+  auditLog("product-category-update"),
+  zValidator("json", productCategoryUpdateSchema),
   async (c) => {
-    const db = c.get('db');
-    const cache = c.get('cache');
-    const slugParam = c.req.param('slug');
-    const body = c.req.valid('json');
+    const db = c.get("db");
+    const cache = c.get("cache");
+    const slugParam = c.req.param("slug");
+    const body = c.req.valid("json");
 
     if (!body || Object.keys(body).length === 0) {
       return c.json(
         {
           success: false,
-          error: 'No fields provided',
-          message: '請提供至少一個需要更新的欄位',
+          error: "No fields provided",
+          message: "請提供至少一個需要更新的欄位",
         },
         400
       );
@@ -287,7 +310,7 @@ admin.put(
         .limit(1);
 
       if (!existing) {
-        return c.json({ success: false, error: 'Category not found' }, 404);
+        return c.json({ success: false, error: "Category not found" }, 404);
       }
 
       const now = new Date();
@@ -304,8 +327,8 @@ admin.put(
           return c.json(
             {
               success: false,
-              error: 'Category already exists',
-              message: '新的分類 slug 已存在，請使用其他名稱',
+              error: "Category already exists",
+              message: "新的分類 slug 已存在，請使用其他名稱",
             },
             409
           );
@@ -355,7 +378,10 @@ admin.put(
         .returning();
 
       if (!updatedCategory) {
-        return c.json({ success: false, error: 'Failed to update category' }, 500);
+        return c.json(
+          { success: false, error: "Failed to update category" },
+          500
+        );
       }
 
       if (nextSlug !== slugParam) {
@@ -373,30 +399,33 @@ admin.put(
         .from(products)
         .where(eq(products.category, nextSlug));
 
-      await cache.delete('products:categories');
-      await cache.deleteByPrefix('products:category:');
-      await cache.deleteByPrefix('products:list:');
-      await cache.deleteByPrefix('admin:products');
+      await cache.delete("products:categories");
+      await cache.deleteByPrefix("products:category:");
+      await cache.deleteByPrefix("products:list:");
+      await cache.deleteByPrefix("admin:products");
 
       return c.json({
         success: true,
         data: normalizeCategoryRecord(updatedCategory, stats),
       });
     } catch (error) {
-      console.error('Update product category error:', error);
-      return c.json({ success: false, error: 'Failed to update product category' }, 500);
+      console.error("Update product category error:", error);
+      return c.json(
+        { success: false, error: "Failed to update product category" },
+        500
+      );
     }
   }
 );
 
 admin.delete(
-  '/products/categories/:slug',
+  "/products/categories/:slug",
   requireFreshSession(15),
-  auditLog('product-category-delete'),
+  auditLog("product-category-delete"),
   async (c) => {
-    const db = c.get('db');
-    const cache = c.get('cache');
-    const slug = c.req.param('slug');
+    const db = c.get("db");
+    const cache = c.get("cache");
+    const slug = c.req.param("slug");
 
     try {
       const [category] = await db
@@ -406,7 +435,7 @@ admin.delete(
         .limit(1);
 
       if (!category) {
-        return c.json({ success: false, error: 'Category not found' }, 404);
+        return c.json({ success: false, error: "Category not found" }, 404);
       }
 
       const [usage] = await db
@@ -418,33 +447,41 @@ admin.delete(
         return c.json(
           {
             success: false,
-            error: 'Category in use',
-            message: '無法刪除仍有產品使用的分類',
+            error: "Category in use",
+            message: "無法刪除仍有產品使用的分類",
           },
           409
         );
       }
 
-      await db.delete(productCategories).where(eq(productCategories.slug, slug));
+      await db
+        .delete(productCategories)
+        .where(eq(productCategories.slug, slug));
 
-      await cache.delete('products:categories');
-      await cache.deleteByPrefix('products:category:');
-      await cache.deleteByPrefix('products:list:');
-      await cache.deleteByPrefix('admin:products');
+      await cache.delete("products:categories");
+      await cache.deleteByPrefix("products:category:");
+      await cache.deleteByPrefix("products:list:");
+      await cache.deleteByPrefix("admin:products");
 
-      return c.json({ success: true, message: 'Category deleted successfully' });
+      return c.json({
+        success: true,
+        message: "Category deleted successfully",
+      });
     } catch (error) {
-      console.error('Delete product category error:', error);
-      return c.json({ success: false, error: 'Failed to delete product category' }, 500);
+      console.error("Delete product category error:", error);
+      return c.json(
+        { success: false, error: "Failed to delete product category" },
+        500
+      );
     }
   }
 );
 
 // Batch Operations
 admin.post(
-  '/products/batch/update',
+  "/products/batch/update",
   zValidator(
-    'json',
+    "json",
     z.object({
       ids: z.array(z.string()),
       data: z.object({
@@ -456,12 +493,12 @@ admin.post(
     })
   ),
   async (c) => {
-    const db = c.get('db');
-    const cache = c.get('cache');
-    const { ids, data } = c.req.valid('json');
+    const db = c.get("db");
+    const cache = c.get("cache");
+    const { ids, data } = c.req.valid("json");
 
     if (ids.length === 0) {
-      return c.json({ success: false, error: 'No products selected' }, 400);
+      return c.json({ success: false, error: "No products selected" }, 400);
     }
 
     try {
@@ -471,11 +508,14 @@ admin.post(
       if (data.featured !== undefined) updateData.featured = data.featured;
       if (data.sortOrder !== undefined) updateData.sortOrder = data.sortOrder;
 
-      await db.update(products).set(updateData).where(inArray(products.id, ids));
+      await db
+        .update(products)
+        .set(updateData)
+        .where(inArray(products.id, ids));
 
       // Invalidate cache
-      await cache.deleteByPrefix('admin:products');
-      await cache.deleteByPrefix('products');
+      await cache.deleteByPrefix("admin:products");
+      await cache.deleteByPrefix("products");
       // We should ideally delete specific product caches, but for batch, prefix is safer/easier
 
       return c.json({
@@ -483,28 +523,31 @@ admin.post(
         message: `Successfully updated ${ids.length} products`,
       });
     } catch (error) {
-      console.error('Batch update error:', error);
-      return c.json({ success: false, error: 'Failed to update products' }, 500);
+      console.error("Batch update error:", error);
+      return c.json(
+        { success: false, error: "Failed to update products" },
+        500
+      );
     }
   }
 );
 
 admin.post(
-  '/products/batch/delete',
+  "/products/batch/delete",
   zValidator(
-    'json',
+    "json",
     z.object({
       ids: z.array(z.string()),
     })
   ),
   async (c) => {
-    const db = c.get('db');
-    const cache = c.get('cache');
-    const storage = c.get('storage');
-    const { ids } = c.req.valid('json');
+    const db = c.get("db");
+    const cache = c.get("cache");
+    const storage = c.get("storage");
+    const { ids } = c.req.valid("json");
 
     if (ids.length === 0) {
-      return c.json({ success: false, error: 'No products selected' }, 400);
+      return c.json({ success: false, error: "No products selected" }, 400);
     }
 
     try {
@@ -532,44 +575,47 @@ admin.post(
       await db.delete(products).where(inArray(products.id, ids));
 
       // Invalidate cache
-      await cache.deleteByPrefix('admin:products');
-      await cache.deleteByPrefix('products');
+      await cache.deleteByPrefix("admin:products");
+      await cache.deleteByPrefix("products");
 
       return c.json({
         success: true,
         message: `Successfully deleted ${ids.length} products`,
       });
     } catch (error) {
-      console.error('Batch delete error:', error);
-      return c.json({ success: false, error: 'Failed to delete products' }, 500);
+      console.error("Batch delete error:", error);
+      return c.json(
+        { success: false, error: "Failed to delete products" },
+        500
+      );
     }
   }
 );
 
 // Product Management APIs
 admin.get(
-  '/products',
+  "/products",
   zValidator(
-    'query',
+    "query",
     z.object({
-      page: z.string().optional().default('1'),
-      limit: z.string().optional().default('20'),
+      page: z.string().optional().default("1"),
+      limit: z.string().optional().default("20"),
       category: z.string().optional(),
       search: z.string().optional(),
       featured: z.string().optional(),
     })
   ),
   async (c) => {
-    const db = c.get('db');
-    const cache = c.get('cache');
-    const { page, limit, category, search, featured } = c.req.valid('query');
+    const db = c.get("db");
+    const cache = c.get("cache");
+    const { page, limit, category, search, featured } = c.req.valid("query");
 
-    const pageNum = parseInt(page);
-    const limitNum = parseInt(limit);
+    const pageNum = Number.parseInt(page);
+    const limitNum = Number.parseInt(limit);
     const offset = (pageNum - 1) * limitNum;
 
     try {
-      const cacheKey = `admin:products:${page}:${limit}:${category || 'all'}:${search || 'none'}:${featured || 'all'}`;
+      const cacheKey = `admin:products:${page}:${limit}:${category || "all"}:${search || "none"}:${featured || "all"}`;
 
       const result = await cache.getOrSet(
         cacheKey,
@@ -585,18 +631,22 @@ admin.get(
           if (search) {
             conditions.push(like(products.name, `%${search}%`));
           }
-          if (featured === 'true') {
+          if (featured === "true") {
             conditions.push(eq(products.featured, true));
           }
 
           if (conditions.length > 0) {
-            const whereClause = conditions.length === 1 ? conditions[0] : and(...conditions);
+            const whereClause =
+              conditions.length === 1 ? conditions[0] : and(...conditions);
             query = query.where(whereClause);
             countQuery = countQuery.where(whereClause);
           }
 
           const [productList, totalResult] = await Promise.all([
-            query.orderBy(desc(products.updatedAt)).limit(limitNum).offset(offset),
+            query
+              .orderBy(desc(products.updatedAt))
+              .limit(limitNum)
+              .offset(offset),
             countQuery,
           ]);
 
@@ -616,18 +666,22 @@ admin.get(
         CacheTTL.SHORT
       );
 
-      return c.json({ success: true, data: result.products, pagination: result.pagination });
+      return c.json({
+        success: true,
+        data: result.products,
+        pagination: result.pagination,
+      });
     } catch (error) {
-      console.error('Get products error:', error);
-      return c.json({ success: false, error: 'Failed to fetch products' }, 500);
+      console.error("Get products error:", error);
+      return c.json({ success: false, error: "Failed to fetch products" }, 500);
     }
   }
 );
 
 admin.post(
-  '/products',
+  "/products",
   zValidator(
-    'json',
+    "json",
     z.object({
       name: z.string().min(1),
       slug: z.string().min(1),
@@ -637,8 +691,11 @@ admin.post(
       images: z.array(z.string()).default([]),
       variants: z.array(z.any()).default([]),
       features: z.array(z.string()).default([]),
-      featuresMarkdown: z.string().optional().default(''),
-      accessoryType: z.enum(['standalone', 'accessory', 'bundle']).optional().default('standalone'),
+      featuresMarkdown: z.string().optional().default(""),
+      accessoryType: z
+        .enum(["standalone", "accessory", "bundle"])
+        .optional()
+        .default("standalone"),
       parentProductId: z.string().optional(),
       specifications: z.record(z.any()).default({}),
       inStock: z.boolean().default(true),
@@ -649,29 +706,32 @@ admin.post(
     })
   ),
   async (c) => {
-    const db = c.get('db');
-    const cache = c.get('cache');
-    const productData = c.req.valid('json');
+    const db = c.get("db");
+    const cache = c.get("cache");
+    const productData = c.req.valid("json");
 
     try {
-      const [newProduct] = await db.insert(products).values(productData).returning();
+      const [newProduct] = await db
+        .insert(products)
+        .values(productData)
+        .returning();
 
       // Invalidate cache
-      await cache.deleteByPrefix('admin:products');
-      await cache.deleteByPrefix('products');
+      await cache.deleteByPrefix("admin:products");
+      await cache.deleteByPrefix("products");
 
       return c.json({ success: true, data: newProduct }, 201);
     } catch (error) {
-      console.error('Create product error:', error);
-      return c.json({ success: false, error: 'Failed to create product' }, 500);
+      console.error("Create product error:", error);
+      return c.json({ success: false, error: "Failed to create product" }, 500);
     }
   }
 );
 
 admin.put(
-  '/products/:id',
+  "/products/:id",
   zValidator(
-    'json',
+    "json",
     z.object({
       name: z.string().optional(),
       slug: z.string().optional(),
@@ -682,7 +742,7 @@ admin.put(
       variants: z.array(z.any()).optional(),
       features: z.array(z.string()).optional(),
       featuresMarkdown: z.string().optional(),
-      accessoryType: z.enum(['standalone', 'accessory', 'bundle']).optional(),
+      accessoryType: z.enum(["standalone", "accessory", "bundle"]).optional(),
       parentProductId: z.string().optional(),
       specifications: z.record(z.any()).optional(),
       inStock: z.boolean().optional(),
@@ -693,10 +753,10 @@ admin.put(
     })
   ),
   async (c) => {
-    const db = c.get('db');
-    const cache = c.get('cache');
-    const productId = c.req.param('id');
-    const updateData = c.req.valid('json');
+    const db = c.get("db");
+    const cache = c.get("cache");
+    const productId = c.req.param("id");
+    const updateData = c.req.valid("json");
 
     try {
       const [updatedProduct] = await db
@@ -706,79 +766,92 @@ admin.put(
         .returning();
 
       if (!updatedProduct) {
-        return c.json({ success: false, error: 'Product not found' }, 404);
+        return c.json({ success: false, error: "Product not found" }, 404);
       }
 
       // Invalidate cache
-      await cache.deleteByPrefix('admin:products');
-      await cache.deleteByPrefix('products');
+      await cache.deleteByPrefix("admin:products");
+      await cache.deleteByPrefix("products");
       await cache.delete(`products:detail:${productId}`);
 
       return c.json({ success: true, data: updatedProduct });
     } catch (error) {
-      console.error('Update product error:', error);
-      return c.json({ success: false, error: 'Failed to update product' }, 500);
+      console.error("Update product error:", error);
+      return c.json({ success: false, error: "Failed to update product" }, 500);
     }
   }
 );
 
 // Sensitive operations require fresh session
-admin.delete('/products/:id', requireFreshSession(15), auditLog('product-delete'), async (c) => {
-  const db = c.get('db');
-  const cache = c.get('cache');
-  const storage = c.get('storage');
-  const productId = c.req.param('id');
+admin.delete(
+  "/products/:id",
+  requireFreshSession(15),
+  auditLog("product-delete"),
+  async (c) => {
+    const db = c.get("db");
+    const cache = c.get("cache");
+    const storage = c.get("storage");
+    const productId = c.req.param("id");
 
-  try {
-    // Get product to delete associated images
-    const [product] = await db.select().from(products).where(eq(products.id, productId));
+    try {
+      // Get product to delete associated images
+      const [product] = await db
+        .select()
+        .from(products)
+        .where(eq(products.id, productId));
 
-    if (!product) {
-      return c.json({ success: false, error: 'Product not found' }, 404);
+      if (!product) {
+        return c.json({ success: false, error: "Product not found" }, 404);
+      }
+
+      // Delete product images from R2
+      if (product.images && Array.isArray(product.images)) {
+        const imageKeys = product.images.map((url: string) =>
+          storage.getKeyFromUrl(url)
+        );
+        await storage.deleteFiles(imageKeys);
+      }
+
+      // Delete product from database
+      await db.delete(products).where(eq(products.id, productId));
+
+      // Invalidate cache
+      await cache.deleteByPrefix("admin:products");
+      await cache.deleteByPrefix("products");
+      await cache.delete(`products:detail:${productId}`);
+
+      return c.json({ success: true, message: "Product deleted successfully" });
+    } catch (error) {
+      console.error("Delete product error:", error);
+      return c.json({ success: false, error: "Failed to delete product" }, 500);
     }
-
-    // Delete product images from R2
-    if (product.images && Array.isArray(product.images)) {
-      const imageKeys = product.images.map((url: string) => storage.getKeyFromUrl(url));
-      await storage.deleteFiles(imageKeys);
-    }
-
-    // Delete product from database
-    await db.delete(products).where(eq(products.id, productId));
-
-    // Invalidate cache
-    await cache.deleteByPrefix('admin:products');
-    await cache.deleteByPrefix('products');
-    await cache.delete(`products:detail:${productId}`);
-
-    return c.json({ success: true, message: 'Product deleted successfully' });
-  } catch (error) {
-    console.error('Delete product error:', error);
-    return c.json({ success: false, error: 'Failed to delete product' }, 500);
   }
-});
+);
 
 // POST /api/admin/products/{id}/variants:generate - Generate variants with exclusions
 admin.post(
-  '/products/:id/variants:generate',
+  "/products/:id/variants:generate",
   zValidator(
-    'json',
+    "json",
     z.object({
       exclude: z.array(z.string()).optional(), // Array of variant IDs to exclude
     })
   ),
   async (c) => {
-    const db = c.get('db');
-    const cache = c.get('cache');
-    const productId = c.req.param('id');
-    const { exclude = [] } = c.req.valid('json');
+    const db = c.get("db");
+    const cache = c.get("cache");
+    const productId = c.req.param("id");
+    const { exclude = [] } = c.req.valid("json");
 
     try {
       // Get product
-      const [product] = await db.select().from(products).where(eq(products.id, productId));
+      const [product] = await db
+        .select()
+        .from(products)
+        .where(eq(products.id, productId));
 
       if (!product) {
-        return c.json({ success: false, error: 'Product not found' }, 404);
+        return c.json({ success: false, error: "Product not found" }, 404);
       }
 
       // TODO: Implement variant generation logic using product templates
@@ -786,29 +859,34 @@ admin.post(
       const generatedVariants = [];
 
       // Invalidate cache
-      await cache.deleteByPrefix('admin:products');
-      await cache.deleteByPrefix('products');
+      await cache.deleteByPrefix("admin:products");
+      await cache.deleteByPrefix("products");
       await cache.delete(`products:detail:${productId}`);
 
       return c.json({
         success: true,
         data: { generatedVariants, excluded: exclude },
-        message: 'Variant generation completed',
+        message: "Variant generation completed",
       });
     } catch (error) {
-      console.error('Variant generation error:', error);
-      return c.json({ success: false, error: 'Failed to generate variants' }, 500);
+      console.error("Variant generation error:", error);
+      return c.json(
+        { success: false, error: "Failed to generate variants" },
+        500
+      );
     }
   }
 );
 
 // PUT /api/admin/variants/batch - Batch update variants
 admin.put(
-  '/variants/batch',
+  "/variants/batch",
   zValidator(
-    'json',
+    "json",
     z.object({
-      mode: z.enum(['overwrite', 'fill-empty', 'increment']).default('overwrite'),
+      mode: z
+        .enum(["overwrite", "fill-empty", "increment"])
+        .default("overwrite"),
       updates: z.array(
         z.object({
           id: z.string(),
@@ -820,9 +898,9 @@ admin.put(
     })
   ),
   async (c) => {
-    const db = c.get('db');
-    const cache = c.get('cache');
-    const { mode, updates } = c.req.valid('json');
+    const db = c.get("db");
+    const cache = c.get("cache");
+    const { mode, updates } = c.req.valid("json");
 
     try {
       // TODO: Implement batch variant update logic
@@ -830,67 +908,73 @@ admin.put(
       const updatedCount = updates.length;
 
       // Invalidate cache
-      await cache.deleteByPrefix('admin:products');
-      await cache.deleteByPrefix('products');
+      await cache.deleteByPrefix("admin:products");
+      await cache.deleteByPrefix("products");
 
       return c.json({
         success: true,
         data: { updatedCount, mode },
-        message: 'Batch variant update completed',
+        message: "Batch variant update completed",
       });
     } catch (error) {
-      console.error('Batch variant update error:', error);
-      return c.json({ success: false, error: 'Failed to update variants' }, 500);
+      console.error("Batch variant update error:", error);
+      return c.json(
+        { success: false, error: "Failed to update variants" },
+        500
+      );
     }
   }
 );
 
 // POST /api/admin/products/{id}:archive - Archive product
-admin.post('/products/:id:archive', async (c) => {
-  const db = c.get('db');
-  const cache = c.get('cache');
-  const productId = c.req.param('id');
+admin.post("/products/:id:archive", async (c) => {
+  const db = c.get("db");
+  const cache = c.get("cache");
+  const productId = c.req.param("id");
 
   try {
     // Get product
-    const [product] = await db.select().from(products).where(eq(products.id, productId));
+    const [product] = await db
+      .select()
+      .from(products)
+      .where(eq(products.id, productId));
 
     if (!product) {
-      return c.json({ success: false, error: 'Product not found' }, 404);
+      return c.json({ success: false, error: "Product not found" }, 404);
     }
 
     // TODO: Implement archiving logic (set status, move to archive table, etc.)
     // For now, return placeholder response
 
     // Invalidate cache
-    await cache.deleteByPrefix('admin:products');
-    await cache.deleteByPrefix('products');
+    await cache.deleteByPrefix("admin:products");
+    await cache.deleteByPrefix("products");
     await cache.delete(`products:detail:${productId}`);
 
     return c.json({
       success: true,
-      message: 'Product archived successfully',
+      message: "Product archived successfully",
     });
   } catch (error) {
-    console.error('Product archive error:', error);
-    return c.json({ success: false, error: 'Failed to archive product' }, 500);
+    console.error("Product archive error:", error);
+    return c.json({ success: false, error: "Failed to archive product" }, 500);
   }
 });
 
 // GET /api/admin/products/export - Export products to CSV
 admin.get(
-  '/products/export',
+  "/products/export",
   zValidator(
-    'query',
+    "query",
     z.object({
       category: z.string().optional(),
       inStock: z.string().optional(),
-      format: z.enum(['csv', 'json']).default('csv'),
+      format: z.enum(["csv", "json"]).default("csv"),
     })
   ),
   async (c) => {
-    const db = c.get('db');
-    const { category, inStock, format } = c.req.valid('query');
+    const db = c.get("db");
+    const { category, inStock, format } = c.req.valid("query");
 
     try {
       // Build query
@@ -902,7 +986,7 @@ admin.get(
       }
 
       if (inStock) {
-        conditions.push(eq(products.inStock, inStock === 'true'));
+        conditions.push(eq(products.inStock, inStock === "true"));
       }
 
       if (conditions.length > 0) {
@@ -911,7 +995,7 @@ admin.get(
 
       const productsData = await query;
 
-      if (format === 'json') {
+      if (format === "json") {
         return c.json({ success: true, data: productsData });
       }
 
@@ -919,65 +1003,72 @@ admin.get(
       // For now, return placeholder response
       return c.json({
         success: true,
-        data: { count: productsData.length, format: 'csv' },
-        message: 'CSV export placeholder - implementation needed',
+        data: { count: productsData.length, format: "csv" },
+        message: "CSV export placeholder - implementation needed",
       });
     } catch (error) {
-      console.error('Product export error:', error);
-      return c.json({ success: false, error: 'Failed to export products' }, 500);
+      console.error("Product export error:", error);
+      return c.json(
+        { success: false, error: "Failed to export products" },
+        500
+      );
     }
   }
 );
 
 // POST /api/admin/products/import - Import products from CSV
-admin.post('/products/import', async (c) => {
-  const db = c.get('db');
-  const cache = c.get('cache');
+admin.post("/products/import", async (c) => {
+  const db = c.get("db");
+  const cache = c.get("cache");
 
   try {
     const formData = await c.req.formData();
-    const file = formData.get('file') as File;
+    const file = formData.get("file") as File;
 
     if (!file) {
-      return c.json({ success: false, error: 'No file provided' }, 400);
+      return c.json({ success: false, error: "No file provided" }, 400);
     }
 
     // TODO: Implement CSV import logic
     // For now, return placeholder response
 
     // Invalidate cache
-    await cache.deleteByPrefix('admin:products');
-    await cache.deleteByPrefix('products');
+    await cache.deleteByPrefix("admin:products");
+    await cache.deleteByPrefix("products");
 
     return c.json({
       success: true,
       data: { filename: file.name, size: file.size },
-      message: 'CSV import placeholder - implementation needed',
+      message: "CSV import placeholder - implementation needed",
     });
   } catch (error) {
-    console.error('Product import error:', error);
-    return c.json({ success: false, error: 'Failed to import products' }, 500);
+    console.error("Product import error:", error);
+    return c.json({ success: false, error: "Failed to import products" }, 500);
   }
 });
 
 // File Upload API
-admin.post('/upload', async (c) => {
-  const storage = c.get('storage');
-  const db = c.get('db');
-  const user = c.get('user');
+admin.post("/upload", async (c) => {
+  const storage = c.get("storage");
+  const db = c.get("db");
+  const user = c.get("user");
 
   try {
     const formData = await c.req.formData();
-    const files = formData.getAll('files') as File[];
-    const folder = (formData.get('folder') as string) || 'uploads';
+    const files = formData.getAll("files") as File[];
+    const folder = (formData.get("folder") as string) || "uploads";
 
     if (!files || files.length === 0) {
-      return c.json({ success: false, error: 'No files provided' }, 400);
+      return c.json({ success: false, error: "No files provided" }, 400);
     }
 
     const uploadPromises = files.map(async (file) => {
       // Validate file
-      const validation = StorageManager.validateFile(file, FileTypes.IMAGES, FileSizes.MEDIUM);
+      const validation = StorageManager.validateFile(
+        file,
+        FileTypes.IMAGES,
+        FileSizes.MEDIUM
+      );
       if (!validation.valid) {
         throw new Error(validation.error);
       }
@@ -990,14 +1081,19 @@ admin.post('/upload', async (c) => {
         contentType: file.type,
         metadata: {
           originalName: file.name,
-          uploadedBy: c.get('user')?.id || 'unknown',
+          uploadedBy: c.get("user")?.id || "unknown",
           uploadedAt: new Date().toISOString(),
         },
       });
 
       const normalizedKey = stripDeliveryPrefix(uploadResult.key);
       const now = new Date();
-      const mediaType = determineIsImage(uploadResult.contentType, normalizedKey) ? 'image' : 'file';
+      const mediaType = determineIsImage(
+        uploadResult.contentType,
+        normalizedKey
+      )
+        ? "image"
+        : "file";
       const metadataPayload = {
         originalName: file.name,
         folder,
@@ -1046,11 +1142,12 @@ admin.post('/upload', async (c) => {
       message: `${uploadResults.length} file(s) uploaded successfully`,
     });
   } catch (error) {
-    console.error('File upload error:', error);
+    console.error("File upload error:", error);
     return c.json(
       {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to upload files',
+        error:
+          error instanceof Error ? error.message : "Failed to upload files",
       },
       500
     );
@@ -1062,130 +1159,143 @@ const mediaLibraryQuerySchema = z.object({
   cursor: z.string().optional(),
   limit: z.string().optional(),
   search: z.string().optional(),
-  type: z.enum(['all', 'images', 'files']).optional().default('all'),
-  sort: z.enum(['recent', 'name']).optional().default('recent'),
+  type: z.enum(["all", "images", "files"]).optional().default("all"),
+  sort: z.enum(["recent", "name"]).optional().default("recent"),
 });
 
 type MediaAssetRow = typeof mediaAssets.$inferSelect;
-type MediaCursorSort = 'recent' | 'name';
+type MediaCursorSort = "recent" | "name";
 
-admin.get('/media/library', zValidator('query', mediaLibraryQuerySchema), async (c) => {
-  try {
-    const db = c.get('db');
-    const storage = c.get('storage');
-    const { prefix, cursor, limit, search, type, sort } = c.req.valid('query');
+admin.get(
+  "/media/library",
+  zValidator("query", mediaLibraryQuerySchema),
+  async (c) => {
+    try {
+      const db = c.get("db");
+      const storage = c.get("storage");
+      const { prefix, cursor, limit, search, type, sort } =
+        c.req.valid("query");
 
-    const parsedLimit = clampLimit(limit);
-    const queryLimit = parsedLimit + 1;
-    const normalizedSort: 'recent' | 'name' = sort === 'name' ? 'name' : 'recent';
-    const searchTerm = search?.trim().toLowerCase() ?? '';
+      const parsedLimit = clampLimit(limit);
+      const queryLimit = parsedLimit + 1;
+      const normalizedSort: "recent" | "name" =
+        sort === "name" ? "name" : "recent";
+      const searchTerm = search?.trim().toLowerCase() ?? "";
 
-    const conditions: SQL[] = [];
+      const conditions: SQL[] = [];
 
-    if (prefix) {
-      const normalizedPrefix = prefix.replace(/^\/+/g, '');
-      const prefixPattern = `${escapeLikePattern(normalizedPrefix)}%`;
-      conditions.push(like(mediaAssets.key, prefixPattern));
-    }
+      if (prefix) {
+        const normalizedPrefix = prefix.replace(/^\/+/g, "");
+        const prefixPattern = `${escapeLikePattern(normalizedPrefix)}%`;
+        conditions.push(like(mediaAssets.key, prefixPattern));
+      }
 
-    if (searchTerm) {
-      const pattern = `%${escapeLikePattern(searchTerm)}%`;
-      conditions.push(
-        or(
-          like(mediaAssets.name, pattern),
-          like(mediaAssets.key, pattern)
-        )
-      );
-    }
+      if (searchTerm) {
+        const pattern = `%${escapeLikePattern(searchTerm)}%`;
+        conditions.push(
+          or(like(mediaAssets.name, pattern), like(mediaAssets.key, pattern))
+        );
+      }
 
-    if (type === 'images') {
-      conditions.push(eq(mediaAssets.mediaType, 'image'));
-    } else if (type === 'files') {
-      conditions.push(eq(mediaAssets.mediaType, 'file'));
-    }
+      if (type === "images") {
+        conditions.push(eq(mediaAssets.mediaType, "image"));
+      } else if (type === "files") {
+        conditions.push(eq(mediaAssets.mediaType, "file"));
+      }
 
-    const cursorParts = decodeCursor(cursor, normalizedSort);
-    if (cursorParts) {
-      if (normalizedSort === 'recent') {
-        const cursorDateValue = Number(cursorParts.primary);
-        if (!Number.isNaN(cursorDateValue)) {
-          const cursorDate = new Date(cursorDateValue);
+      const cursorParts = decodeCursor(cursor, normalizedSort);
+      if (cursorParts) {
+        if (normalizedSort === "recent") {
+          const cursorDateValue = Number(cursorParts.primary);
+          if (!Number.isNaN(cursorDateValue)) {
+            const cursorDate = new Date(cursorDateValue);
+            conditions.push(
+              or(
+                lt(mediaAssets.createdAt, cursorDate),
+                and(
+                  eq(mediaAssets.createdAt, cursorDate),
+                  lt(mediaAssets.id, cursorParts.id)
+                )
+              )
+            );
+          }
+        } else {
           conditions.push(
             or(
-              lt(mediaAssets.createdAt, cursorDate),
-              and(eq(mediaAssets.createdAt, cursorDate), lt(mediaAssets.id, cursorParts.id))
+              gt(mediaAssets.name, cursorParts.primary),
+              and(
+                eq(mediaAssets.name, cursorParts.primary),
+                gt(mediaAssets.id, cursorParts.id)
+              )
             )
           );
         }
-      } else {
-        conditions.push(
-          or(
-            gt(mediaAssets.name, cursorParts.primary),
-            and(eq(mediaAssets.name, cursorParts.primary), gt(mediaAssets.id, cursorParts.id))
-          )
+      }
+
+      let query = db.select().from(mediaAssets);
+      if (conditions.length) {
+        query = query.where(
+          conditions.length === 1 ? conditions[0]! : and(...conditions)
         );
       }
-    }
 
-    let query = db.select().from(mediaAssets);
-    if (conditions.length) {
-      query = query.where(conditions.length === 1 ? conditions[0]! : and(...conditions));
-    }
+      const orderings =
+        normalizedSort === "name"
+          ? [asc(mediaAssets.name), asc(mediaAssets.id)]
+          : [desc(mediaAssets.createdAt), desc(mediaAssets.id)];
 
-    const orderings =
-      normalizedSort === 'name'
-        ? [asc(mediaAssets.name), asc(mediaAssets.id)]
-        : [desc(mediaAssets.createdAt), desc(mediaAssets.id)];
+      const rows = await query.orderBy(...orderings).limit(queryLimit);
 
-    const rows = await query.orderBy(...orderings).limit(queryLimit);
+      const hasMore = rows.length > parsedLimit;
+      const sliced = hasMore ? rows.slice(0, parsedLimit) : rows;
 
-    const hasMore = rows.length > parsedLimit;
-    const sliced = hasMore ? rows.slice(0, parsedLimit) : rows;
+      const assets = sliced.map((item) => {
+        const lastModified = item.updatedAt || item.createdAt || new Date();
+        const isImage =
+          item.mediaType === "image" ||
+          determineIsImage(item.contentType, item.key);
 
-    const assets = sliced.map((item) => {
-      const lastModified = item.updatedAt || item.createdAt || new Date();
-      const isImage = item.mediaType === 'image' || determineIsImage(item.contentType, item.key);
+        return {
+          key: item.key,
+          name: item.name,
+          url: storage.getFileUrl(item.key),
+          size: item.size,
+          contentType: item.contentType ?? inferMimeFromKey(item.key),
+          lastModified: lastModified.toISOString(),
+          metadata: item.metadata ?? undefined,
+          isImage,
+        };
+      });
 
-      return {
-        key: item.key,
-        name: item.name,
-        url: storage.getFileUrl(item.key),
-        size: item.size,
-        contentType: item.contentType ?? inferMimeFromKey(item.key),
-        lastModified: lastModified.toISOString(),
-        metadata: item.metadata ?? undefined,
-        isImage,
-      };
-    });
+      const lastItem = hasMore ? sliced[sliced.length - 1] : undefined;
+      const nextCursor = lastItem
+        ? encodeCursor(normalizedSort, lastItem, normalizedSort === "name")
+        : null;
 
-    const lastItem = hasMore ? sliced[sliced.length - 1] : undefined;
-    const nextCursor = lastItem
-      ? encodeCursor(normalizedSort, lastItem, normalizedSort === 'name')
-      : null;
-
-    return c.json({
-      success: true,
-      data: {
-        items: assets,
-        pageInfo: {
-          nextCursor,
-          hasMore,
+      return c.json({
+        success: true,
+        data: {
+          items: assets,
+          pageInfo: {
+            nextCursor,
+            hasMore,
+          },
         },
-      },
-    });
-  } catch (error) {
-    console.error('Media library fetch error:', error);
-    return c.json(
-      {
-        success: false,
-        error: 'Failed to load media library',
-      },
-      500
-    );
+      });
+    } catch (error) {
+      console.error("Media library fetch error:", error);
+      return c.json(
+        {
+          success: false,
+          error: "Failed to load media library",
+        },
+        500
+      );
+    }
   }
-});
+);
 
-const CURSOR_SEPARATOR = '::';
+const CURSOR_SEPARATOR = "::";
 
 type CursorParts = {
   primary: string;
@@ -1194,16 +1304,21 @@ type CursorParts = {
 
 function encodeCursor(sort: MediaCursorSort, item: MediaAssetRow): string {
   const primaryValue =
-    sort === 'name'
+    sort === "name"
       ? item.name
       : String((item.createdAt || new Date(0)).getTime());
 
-  return [sort, encodeURIComponent(primaryValue), encodeURIComponent(item.id)].join(
-    CURSOR_SEPARATOR
-  );
+  return [
+    sort,
+    encodeURIComponent(primaryValue),
+    encodeURIComponent(item.id),
+  ].join(CURSOR_SEPARATOR);
 }
 
-function decodeCursor(cursor: string | null | undefined, sort: MediaCursorSort): CursorParts | null {
+function decodeCursor(
+  cursor: string | null | undefined,
+  sort: MediaCursorSort
+): CursorParts | null {
   if (!cursor) {
     return null;
   }
@@ -1229,43 +1344,52 @@ function escapeLikePattern(value: string): string {
 }
 
 function clampLimit(value?: string): number {
-  const parsed = Number.parseInt(value ?? '30', 10);
+  const parsed = Number.parseInt(value ?? "30", 10);
   if (Number.isNaN(parsed)) return 30;
   return Math.max(1, Math.min(parsed, 100));
 }
 
 function stripDeliveryPrefix(key: string): string {
-  return key.startsWith('media/') ? key.slice('media/'.length) : key;
+  return key.startsWith("media/") ? key.slice("media/".length) : key;
 }
 
 function determineIsImage(contentType?: string, key?: string): boolean {
-  if (contentType && contentType.startsWith('image/')) {
+  if (contentType && contentType.startsWith("image/")) {
     return true;
   }
 
-  const extension = key?.split('.').pop()?.toLowerCase();
+  const extension = key?.split(".").pop()?.toLowerCase();
   if (!extension) return false;
 
-  return ['jpg', 'jpeg', 'png', 'webp', 'gif', 'bmp', 'svg', 'avif', 'heic', 'heif'].includes(
-    extension
-  );
+  return [
+    "jpg",
+    "jpeg",
+    "png",
+    "webp",
+    "gif",
+    "bmp",
+    "svg",
+    "avif",
+    "heic",
+    "heif",
+  ].includes(extension);
 }
 
 function inferMimeFromKey(key: string): string | undefined {
-  const extension = key.split('.').pop()?.toLowerCase();
-  if (!extension) return undefined;
+  const extension = key.split(".").pop()?.toLowerCase();
+  if (!extension) return;
 
   const imageMap: Record<string, string> = {
-    jpg: 'image/jpeg',
-    jpeg: 'image/jpeg',
-    png: 'image/png',
-    webp: 'image/webp',
-    gif: 'image/gif',
-    bmp: 'image/bmp',
-    svg: 'image/svg+xml',
-    avif: 'image/avif',
-    heic: 'image/heic',
-    heif: 'image/heif',
+    jpg: "image/jpeg",
+    jpeg: "image/jpeg",
+    png: "image/png",
+    webp: "image/webp",
+    gif: "image/gif",
+    bmp: "image/bmp",
+    svg: "image/svg+xml",
+    avif: "image/avif",
+    heic: "image/heic",
+    heif: "image/heif",
   };
 
   if (imageMap[extension]) {
@@ -1273,14 +1397,14 @@ function inferMimeFromKey(key: string): string | undefined {
   }
 
   const documentMap: Record<string, string> = {
-    pdf: 'application/pdf',
-    txt: 'text/plain',
-    doc: 'application/msword',
-    docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    xls: 'application/vnd.ms-excel',
-    xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    csv: 'text/csv',
-    zip: 'application/zip',
+    pdf: "application/pdf",
+    txt: "text/plain",
+    doc: "application/msword",
+    docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    xls: "application/vnd.ms-excel",
+    xlsx: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    csv: "text/csv",
+    zip: "application/zip",
   };
 
   return documentMap[extension];
@@ -1288,27 +1412,27 @@ function inferMimeFromKey(key: string): string | undefined {
 
 // Blog Post Management
 admin.get(
-  '/posts',
+  "/posts",
   zValidator(
-    'query',
+    "query",
     z.object({
-      page: z.string().optional().default('1'),
-      limit: z.string().optional().default('20'),
+      page: z.string().optional().default("1"),
+      limit: z.string().optional().default("20"),
       status: z.string().optional(),
       search: z.string().optional(),
     })
   ),
   async (c) => {
-    const db = c.get('db');
-    const cache = c.get('cache');
-    const { page, limit, status, search } = c.req.valid('query');
+    const db = c.get("db");
+    const cache = c.get("cache");
+    const { page, limit, status, search } = c.req.valid("query");
 
-    const pageNum = parseInt(page);
-    const limitNum = parseInt(limit);
+    const pageNum = Number.parseInt(page);
+    const limitNum = Number.parseInt(limit);
     const offset = (pageNum - 1) * limitNum;
 
     try {
-      const cacheKey = `admin:posts:${page}:${limit}:${status || 'all'}:${search || 'none'}`;
+      const cacheKey = `admin:posts:${page}:${limit}:${status || "all"}:${search || "none"}`;
 
       const result = await cache.getOrSet(
         cacheKey,
@@ -1325,7 +1449,8 @@ admin.get(
           }
 
           if (conditions.length > 0) {
-            const whereClause = conditions.length === 1 ? conditions[0] : and(...conditions);
+            const whereClause =
+              conditions.length === 1 ? conditions[0] : and(...conditions);
             query = query.where(whereClause);
             countQuery = countQuery.where(whereClause);
           }
@@ -1351,24 +1476,28 @@ admin.get(
         CacheTTL.SHORT
       );
 
-      return c.json({ success: true, data: result.posts, pagination: result.pagination });
+      return c.json({
+        success: true,
+        data: result.posts,
+        pagination: result.pagination,
+      });
     } catch (error) {
-      console.error('Get posts error:', error);
-      return c.json({ success: false, error: 'Failed to fetch posts' }, 500);
+      console.error("Get posts error:", error);
+      return c.json({ success: false, error: "Failed to fetch posts" }, 500);
     }
   }
 );
 
 admin.post(
-  '/posts',
+  "/posts",
   zValidator(
-    'json',
+    "json",
     z.object({
       title: z.string().min(1),
       slug: z.string().min(1),
       description: z.string().min(1),
       content: z.string().min(1),
-      status: z.enum(['draft', 'published', 'archived']).default('draft'),
+      status: z.enum(["draft", "published", "archived"]).default("draft"),
       featured: z.boolean().default(false),
       tags: z.array(z.string()).default([]),
       featuredImage: z.string().optional(),
@@ -1378,42 +1507,44 @@ admin.post(
     })
   ),
   async (c) => {
-    const db = c.get('db');
-    const cache = c.get('cache');
-    const user = c.get('user');
-    const postData = c.req.valid('json');
+    const db = c.get("db");
+    const cache = c.get("cache");
+    const user = c.get("user");
+    const postData = c.req.valid("json");
 
     try {
       const newPostData = {
         ...postData,
         authorId: user.id,
-        publishedAt: postData.publishedAt ? new Date(postData.publishedAt) : undefined,
+        publishedAt: postData.publishedAt
+          ? new Date(postData.publishedAt)
+          : undefined,
       };
 
       const [newPost] = await db.insert(posts).values(newPostData).returning();
 
       // Invalidate cache
-      await cache.deleteByPrefix('admin:posts');
-      await cache.deleteByPrefix('posts');
+      await cache.deleteByPrefix("admin:posts");
+      await cache.deleteByPrefix("posts");
 
       return c.json({ success: true, data: newPost }, 201);
     } catch (error) {
-      console.error('Create post error:', error);
-      return c.json({ success: false, error: 'Failed to create post' }, 500);
+      console.error("Create post error:", error);
+      return c.json({ success: false, error: "Failed to create post" }, 500);
     }
   }
 );
 
 admin.put(
-  '/posts/:id',
+  "/posts/:id",
   zValidator(
-    'json',
+    "json",
     z.object({
       title: z.string().optional(),
       slug: z.string().optional(),
       description: z.string().optional(),
       content: z.string().optional(),
-      status: z.enum(['draft', 'published', 'archived']).optional(),
+      status: z.enum(["draft", "published", "archived"]).optional(),
       featured: z.boolean().optional(),
       tags: z.array(z.string()).optional(),
       featuredImage: z.string().optional(),
@@ -1423,16 +1554,18 @@ admin.put(
     })
   ),
   async (c) => {
-    const db = c.get('db');
-    const cache = c.get('cache');
-    const postId = c.req.param('id');
-    const updateData = c.req.valid('json');
+    const db = c.get("db");
+    const cache = c.get("cache");
+    const postId = c.req.param("id");
+    const updateData = c.req.valid("json");
 
     try {
       const updatedData = {
         ...updateData,
         updatedAt: new Date(),
-        publishedAt: updateData.publishedAt ? new Date(updateData.publishedAt) : undefined,
+        publishedAt: updateData.publishedAt
+          ? new Date(updateData.publishedAt)
+          : undefined,
       };
 
       const [updatedPost] = await db
@@ -1442,59 +1575,75 @@ admin.put(
         .returning();
 
       if (!updatedPost) {
-        return c.json({ success: false, error: 'Post not found' }, 404);
+        return c.json({ success: false, error: "Post not found" }, 404);
       }
 
       // Invalidate cache
-      await cache.deleteByPrefix('admin:posts');
-      await cache.deleteByPrefix('posts');
+      await cache.deleteByPrefix("admin:posts");
+      await cache.deleteByPrefix("posts");
       await cache.delete(`posts:detail:${postId}`);
 
       return c.json({ success: true, data: updatedPost });
     } catch (error) {
-      console.error('Update post error:', error);
-      return c.json({ success: false, error: 'Failed to update post' }, 500);
+      console.error("Update post error:", error);
+      return c.json({ success: false, error: "Failed to update post" }, 500);
     }
   }
 );
 
-admin.delete('/posts/:id', requireFreshSession(15), auditLog('post-delete'), async (c) => {
-  const db = c.get('db');
-  const cache = c.get('cache');
-  const postId = c.req.param('id');
+admin.delete(
+  "/posts/:id",
+  requireFreshSession(15),
+  auditLog("post-delete"),
+  async (c) => {
+    const db = c.get("db");
+    const cache = c.get("cache");
+    const postId = c.req.param("id");
 
-  try {
-    const deletedPost = await db.delete(posts).where(eq(posts.id, postId)).returning();
+    try {
+      const deletedPost = await db
+        .delete(posts)
+        .where(eq(posts.id, postId))
+        .returning();
 
-    if (deletedPost.length === 0) {
-      return c.json({ success: false, error: 'Post not found' }, 404);
+      if (deletedPost.length === 0) {
+        return c.json({ success: false, error: "Post not found" }, 404);
+      }
+
+      // Invalidate cache
+      await cache.deleteByPrefix("admin:posts");
+      await cache.deleteByPrefix("posts");
+      await cache.delete(`posts:detail:${postId}`);
+
+      return c.json({ success: true, message: "Post deleted successfully" });
+    } catch (error) {
+      console.error("Delete post error:", error);
+      return c.json({ success: false, error: "Failed to delete post" }, 500);
     }
-
-    // Invalidate cache
-    await cache.deleteByPrefix('admin:posts');
-    await cache.deleteByPrefix('posts');
-    await cache.delete(`posts:detail:${postId}`);
-
-    return c.json({ success: true, message: 'Post deleted successfully' });
-  } catch (error) {
-    console.error('Delete post error:', error);
-    return c.json({ success: false, error: 'Failed to delete post' }, 500);
   }
-});
+);
 
 export function parseCategoryFeaturesInput(features: unknown): string[] {
   if (Array.isArray(features)) {
     return features
-      .map((feature) => (typeof feature === 'string' ? feature.trim() : String(feature ?? '').trim()))
+      .map((feature) =>
+        typeof feature === "string"
+          ? feature.trim()
+          : String(feature ?? "").trim()
+      )
       .filter((feature) => feature.length > 0);
   }
 
-  if (typeof features === 'string') {
+  if (typeof features === "string") {
     try {
       const parsed = JSON.parse(features);
       if (Array.isArray(parsed)) {
         return parsed
-          .map((feature) => (typeof feature === 'string' ? feature.trim() : String(feature ?? '').trim()))
+          .map((feature) =>
+            typeof feature === "string"
+              ? feature.trim()
+              : String(feature ?? "").trim()
+          )
           .filter((feature) => feature.length > 0);
       }
     } catch {
@@ -1521,17 +1670,17 @@ export function normalizeCategoryUrlPath(
   if (!trimmed) {
     return `/${slug}`;
   }
-  return trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
+  return trimmed.startsWith("/") ? trimmed : `/${trimmed}`;
 }
 
 export function toCategoryIsoString(value: unknown): string {
   if (value instanceof Date) {
     return value.toISOString();
   }
-  if (typeof value === 'number') {
+  if (typeof value === "number") {
     return new Date(value).toISOString();
   }
-  if (typeof value === 'string') {
+  if (typeof value === "string") {
     const trimmed = value.trim();
     if (!trimmed) {
       return new Date(0).toISOString();

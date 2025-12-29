@@ -48,7 +48,7 @@ export interface CreateProductRequest {
   variants: ProductVariant[];
   features: string[];
   featuresMarkdown?: string;
-  accessoryType?: 'standalone' | 'accessory' | 'bundle';
+  accessoryType?: "standalone" | "accessory" | "bundle";
   parentProductId?: string;
   specifications: Record<string, any>;
   inStock: boolean;
@@ -102,7 +102,7 @@ export interface CreatePostRequest {
   slug: string;
   description: string;
   content: string;
-  status: 'draft' | 'published' | 'archived';
+  status: "draft" | "published" | "archived";
   featured: boolean;
   tags: string[];
   featuredImage?: UploadedFile;
@@ -118,14 +118,20 @@ export interface UpdatePostRequest extends Partial<CreatePostRequest> {
 
 export interface UpdateOrderRequest {
   id: string;
-  status?: 'pending' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
+  status?:
+    | "pending"
+    | "confirmed"
+    | "processing"
+    | "shipped"
+    | "delivered"
+    | "cancelled";
   notes?: string;
   trackingNumber?: string;
 }
 
 export interface UpdateAppointmentRequest {
   id: string;
-  status?: 'pending' | 'confirmed' | 'completed' | 'cancelled';
+  status?: "pending" | "confirmed" | "completed" | "cancelled";
   confirmedDateTime?: string;
   notes?: string;
 }

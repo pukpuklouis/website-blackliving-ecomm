@@ -1,5 +1,5 @@
-import { createPagesFunctionHandler } from '@remix-run/cloudflare';
-import * as build from './build/server/index.js';
+import { createPagesFunctionHandler } from "@remix-run/cloudflare";
+import * as build from "./build/server/index.js";
 
 type Env = Record<string, unknown> & {
   ASSETS?: { fetch(request: Request): Promise<Response> };
@@ -20,7 +20,11 @@ const handleRequest = createPagesFunctionHandler<Env>({
 });
 
 export default {
-  async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
+  async fetch(
+    request: Request,
+    env: Env,
+    ctx: ExecutionContext
+  ): Promise<Response> {
     return handleRequest(request, env, ctx);
   },
 };
