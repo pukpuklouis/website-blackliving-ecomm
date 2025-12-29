@@ -1,9 +1,6 @@
 ---
-// Check for auth cookies
-const hasSession = 
-  Astro.cookies.has("better-auth.session_token") || 
-  Astro.cookies.has("bl_access_token") || 
-  Astro.cookies.has("bl_refresh_token");
+// Check for BetterAuth session cookie
+const hasSession = Astro.cookies.has("better-auth.session_token");
 
 if (hasSession) {
   return Astro.redirect('/account/profile');

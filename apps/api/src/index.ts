@@ -17,7 +17,7 @@ import { createStorageManager } from "./lib/storage";
 import { createEnhancedAuthMiddleware } from "./middleware/auth";
 import admin from "./modules/admin";
 import appointments from "./modules/appointments";
-import authRouter from "./modules/auth";
+// Custom auth module removed - using BetterAuth only
 import businessCooperation from "./modules/business-cooperation";
 import contact from "./modules/contact";
 import customers from "./modules/customers";
@@ -174,7 +174,7 @@ app.get("/", (c) =>
 
 app.route("/media", media);
 
-app.route("/api/auth", authRouter);
+// Custom auth routes removed - BetterAuth handles /api/auth/* below
 app.route("/api/reservations", reservationsRouter);
 
 app.get("/api/auth/test", (c) => c.json({ message: "Test route works" }));

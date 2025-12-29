@@ -190,30 +190,11 @@ export default defineConfig({
     },
     build: {
       rollupOptions: {
-        external: [
-          "prosemirror-model",
-          "prosemirror-state",
-          "prosemirror-view",
-          "prosemirror-transform",
-          "prosemirror-schema-list",
-          "prosemirror-gapcursor",
-        ],
+        external: [],
         output: {
           manualChunks(id: string) {
             // Group node_modules into vendor chunk
             if (id.includes("node_modules")) {
-              // Large packages get their own chunks
-              if (id.includes("@blackliving/ui")) return "ui";
-
-              // Group BlockNote and ProseMirror together to ensure single instance
-              if (
-                id.includes("@blocknote") ||
-                id.includes("prosemirror") ||
-                id.includes("yjs")
-              ) {
-                return "editor";
-              }
-
               // Markdown parser gets its own chunk
               if (id.includes("marked")) return "markdown";
               // Other vendor packages

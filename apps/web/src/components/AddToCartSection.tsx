@@ -16,7 +16,7 @@ import type { FC } from "react";
 import { useState } from "react";
 import { type CartItem, useCartStore } from "../stores/cartStore";
 
-interface Product {
+type Product = {
   id: string;
   name: string;
   slug: string;
@@ -35,16 +35,16 @@ interface Product {
   }>;
   inStock: boolean;
   category?: string;
-}
+};
 
-interface AddToCartSectionProps {
+type AddToCartSectionProps = {
   product: Product;
   selectedVariantId?: string;
   onVariantSelect?: (variantId: string) => void;
   onAddToCartSuccess?: (item: CartItem) => void;
   onAddToCartError?: (error: string) => void;
   className?: string;
-}
+};
 
 const AddToCartSection: FC<AddToCartSectionProps> = ({
   product,

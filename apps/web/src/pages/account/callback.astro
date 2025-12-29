@@ -2,7 +2,7 @@
 import BaseLayout from "../../layouts/BaseLayout.astro";
 ---
 
-<BaseLayout>
+<BaseLayout title="登入處理中" description="正在完成 Google 登入驗證">
   <main class="container mx-auto px-4 py-8">
     <div class="max-w-md mx-auto text-center">
       <div class="bg-white p-8 rounded-lg shadow-md">
@@ -25,59 +25,74 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
     const urlParams = new URLSearchParams(window.location.search);
     const error = urlParams.get("error");
 
+    // Debug logging for staging
+    console.log("[OAuth Callback] Starting", {
+      apiBase: API_BASE,
+      origin: window.location.origin,
+      hasError: !!error,
+      cookies: document.cookie ? "present" : "none",
+    });
+
     if (error) {
-      console.error("OAuth error:", error);
-      window.location.href = "/login?error=" + encodeURIComponent(error);
+      console.error("[OAuth Callback] OAuth error:", error);
+      window.location.href = `/login?error=${encodeURIComponent(error)}`;
       return;
     }
 
-    try {
-      // Check if we have a valid session
-      const response = await fetch(`${API_BASE}/api/auth/get-session`, {
-        credentials: "include",
-      });
+    // Retry configuration - more aggressive for staging
+    const MAX_RETRIES = 3;
+    const RETRY_DELAY = 1500; // 1.5 seconds
 
-      if (response.ok) {
-        const data = await response.json();
-        if (data.user && data.session) {
-          // Clean up URL
-          window.history.replaceState({}, "", "/account/callback");
-          // Redirect to profile - any authenticated user can access
-          window.location.href = "/account/profile";
-        } else {
-          window.location.href = "/login?error=unauthorized";
-        }
-      } else {
-        // Session not found, try again in a moment
-        setTimeout(async () => {
-          try {
-            const retryResponse = await fetch(
-              `${API_BASE}/api/auth/get-session`,
-              {
-                credentials: "include",
-              }
-            );
+    for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+      try {
+        console.log(`[OAuth Callback] Attempt ${attempt + 1}/${MAX_RETRIES}`);
 
-            if (retryResponse.ok) {
-              const retryData = await retryResponse.json();
-              if (retryData.user && retryData.session) {
-                window.location.href = "/account/profile";
-              } else {
-                window.location.href = "/login?error=session_failed";
-              }
-            } else {
-              window.location.href = "/login?error=session_failed";
-            }
-          } catch (retryError) {
-            console.error("Session retry failed:", retryError);
-            window.location.href = "/login?error=session_failed";
+        const response = await fetch(`${API_BASE}/api/auth/get-session`, {
+          credentials: "include",
+        });
+
+        console.log("[OAuth Callback] Session check response:", {
+          status: response.status,
+          ok: response.ok,
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          console.log("[OAuth Callback] Session data:", {
+            hasUser: !!data?.user,
+            hasSession: !!data?.session,
+            userId: data?.user?.id,
+          });
+
+          if (data?.user && data?.session) {
+            // Success! Clean up URL and redirect
+            window.history.replaceState({}, "", "/account/callback");
+            console.log("[OAuth Callback] Success! Redirecting to profile");
+            window.location.href = "/account/profile";
+            return;
           }
-        }, 1000);
+        }
+      } catch (fetchError) {
+        console.error(
+          `[OAuth Callback] Attempt ${attempt + 1} failed:`,
+          fetchError
+        );
       }
-    } catch (error) {
-      console.error("Callback error:", error);
-      window.location.href = "/login?error=callback_failed";
+
+      // Wait before next retry (if not last attempt)
+      if (attempt < MAX_RETRIES - 1) {
+        console.log(
+          `[OAuth Callback] Waiting ${RETRY_DELAY}ms before retry...`
+        );
+        await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY));
+      }
     }
+
+    // All retries exhausted
+    console.error(
+      "[OAuth Callback] All retries exhausted, redirecting to login"
+    );
+    window.location.href = "/login?error=callback_failed";
   }
 
   // Handle callback when page loads
