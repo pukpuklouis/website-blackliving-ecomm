@@ -49,6 +49,7 @@ export default function ReviewStep() {
 
   const submitReservation = async (
     payload: ReturnType<typeof preparePayload>
+    // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: <explanation>
   ) => {
     let token: string | null = null;
     try {
@@ -72,7 +73,11 @@ export default function ReviewStep() {
       body: JSON.stringify(payload),
     });
 
-    let result;
+    let result: {
+      success?: boolean;
+      error?: string;
+      data?: { appointmentNumber?: string; verificationPending?: boolean };
+    };
     try {
       result = await response.json();
     } catch {
@@ -112,7 +117,7 @@ export default function ReviewStep() {
       const result = await submitReservation(payload);
 
       setReservationSummary({
-        appointmentNumber: result.data?.appointmentNumber,
+        appointmentNumber: result.data?.appointmentNumber ?? "",
         verificationPending: Boolean(result.data?.verificationPending),
       });
       setIsSubmitted(true);
@@ -158,12 +163,29 @@ export default function ReviewStep() {
               />
             </svg>
           </div>
-          <h2 className="mb-4 font-bold text-3xl text-gray-900">
-            預約已送出！
+          <h2 className="mb-4 font-bold text-gray-900 text-xl md:text-3xl">
+            您的預約資料已成功送出！
           </h2>
-          <p className="text-gray-600 text-lg">
-            感謝您的預約，我們已收到您的申請
-          </p>
+          <div className="space-y-4 text-balance text-gray-600 text-lg">
+            <p>
+              為避免 LINE 名稱不同導致無法對應，請您{" "}
+              <a
+                className="font-semibold text-green-600 underline hover:text-green-700"
+                href="https://line.me/R/ti/p/@blackking"
+                rel="noopener noreferrer"
+                target="_blank"
+              >
+                私訊我們 LINE 官方帳號
+              </a>{" "}
+              並告知：
+            </p>
+            <p className="text-balance rounded-lg bg-gray-50 p-4 font-medium text-gray-800">
+              👉「我已填寫官網預約，姓名：＿＿＿＿＿」
+            </p>
+            <p className="text-balance">
+              我們會盡快為您確認與回覆，期待為您服務 🤍
+            </p>
+          </div>
         </div>
 
         <div className="mb-6 rounded-lg border border-green-200 bg-green-50 p-6 text-left">
@@ -196,7 +218,7 @@ export default function ReviewStep() {
             預約其他產品
           </button>
 
-          <div className="text-gray-500 text-sm">
+          <div className="hidden text-gray-500 text-sm">
             <p>預約相關問題請洽服務專線：</p>
             <p className="font-medium">
               {String(

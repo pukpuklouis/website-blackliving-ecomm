@@ -3,16 +3,16 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
 // Types and schemas
-export interface ProductVariant {
+export type ProductVariant = {
   id: string;
   name: string;
   size?: string;
   price: number;
   originalPrice?: number;
   inStock: boolean;
-}
+};
 
-export interface CartItem {
+export type CartItem = {
   productId: string;
   variantId?: string;
   name: string;
@@ -23,24 +23,24 @@ export interface CartItem {
   quantity: number;
   image: string;
   inStock: boolean;
-}
+};
 
-export interface ShippingAddress {
+export type ShippingAddress = {
   name: string;
   phone: string;
   address: string;
   city: string;
   district: string;
   postalCode: string;
-}
+};
 
-export interface CustomerInfo {
+export type CustomerInfo = {
   name: string;
   email: string;
   phone: string;
-}
+};
 
-export interface LogisticSettings {
+export type LogisticSettings = {
   baseFee: number;
   freeShippingThreshold: number;
   remoteZones: Array<{
@@ -49,7 +49,7 @@ export interface LogisticSettings {
     district?: string;
     surcharge: number;
   }>;
-}
+};
 
 // Validation schemas
 
@@ -68,7 +68,7 @@ const shippingAddressSchema = z.object({
   postalCode: z.string().optional().default(""),
 });
 
-export interface CartStore {
+export type CartStore = {
   // State
   items: CartItem[];
   isLoading: boolean;
@@ -145,7 +145,7 @@ export interface CartStore {
   validateCart: () => { isValid: boolean; errors: string[] };
   getItemKey: (productId: string, variantId?: string) => string;
   fetchLogisticSettings: () => Promise<void>;
-}
+};
 
 // Helper functions
 // Helper to get API URL from environment
@@ -169,7 +169,9 @@ const getApiUrl = (): string => {
   }
 
   const apiUrl = candidates.reduce<string>((acc, candidate) => {
-    if (acc) return acc;
+    if (acc) {
+      return acc;
+    }
     if (typeof candidate === "string") {
       const trimmed = candidate.trim();
       if (trimmed) {
@@ -199,17 +201,20 @@ export const calculateShippingFee = (
 
   // 2. Remote Zone Surcharge logic
   if (address && settings.remoteZones.length > 0) {
-    const zone = settings.remoteZones.find((z) => {
+    const zone = settings.remoteZones.find((remoteZone) => {
       // Simple string matching, can be improved
       const cityMatch =
-        address.city.includes(z.city) || z.city.includes(address.city);
-      if (!cityMatch) return false;
+        address.city.includes(remoteZone.city) ||
+        remoteZone.city.includes(address.city);
+      if (!cityMatch) {
+        return false;
+      }
 
       // If zone has district, it must match
-      if (z.district) {
+      if (remoteZone.district) {
         return (
-          address.district.includes(z.district) ||
-          z.district.includes(address.district)
+          address.district.includes(remoteZone.district) ||
+          remoteZone.district.includes(address.district)
         );
       }
       return true;
@@ -226,16 +231,28 @@ export const calculateShippingFee = (
 const getItemKey = (productId: string, variantId?: string): string =>
   variantId ? `${productId}-${variantId}` : productId;
 
-const createOrder = async (
-  items: CartItem[],
-  customerInfo: CustomerInfo,
-  shippingAddress: ShippingAddress | null,
-  paymentMethod: string,
-  notes: string,
-  subtotal: number,
-  shippingFee: number,
-  total: number
-) => {
+type CreateOrderParams = {
+  items: CartItem[];
+  customerInfo: CustomerInfo;
+  shippingAddress: ShippingAddress | null;
+  paymentMethod: string;
+  notes: string;
+  subtotal: number;
+  shippingFee: number;
+  total: number;
+};
+
+const createOrder = async (params: CreateOrderParams) => {
+  const {
+    items,
+    customerInfo,
+    shippingAddress,
+    paymentMethod,
+    notes,
+    subtotal,
+    shippingFee,
+    total,
+  } = params;
   try {
     const orderData = {
       customerInfo,
@@ -290,6 +307,117 @@ const createOrder = async (
         error instanceof Error ? error.message : "訂單建立失敗，請稍後再試",
     };
   }
+};
+
+// Helper function to call GOMYPAY payment API
+type GomypayPaymentParams = {
+  orderNumber: string;
+  amount: number;
+  customerInfo: CustomerInfo;
+  paymentMethod: string;
+};
+
+type GomypayPaymentResult = {
+  success: boolean;
+  type?: "form" | "redirect";
+  submitUrl?: string;
+  formData?: Record<string, string>;
+  redirectUrl?: string;
+  error?: string;
+};
+
+const initiateGomypayApi = async (
+  params: GomypayPaymentParams
+): Promise<GomypayPaymentResult> => {
+  const { orderNumber, amount, customerInfo, paymentMethod } = params;
+
+  const apiUrl = getApiUrl();
+  const paymentEndpoint = apiUrl
+    ? `${apiUrl}/api/payment/initiate`
+    : "/api/payment/initiate";
+
+  const paymentResponse = await fetch(paymentEndpoint, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      orderNo: orderNumber,
+      amount,
+      buyerName: customerInfo.name,
+      buyerPhone: customerInfo.phone,
+      buyerEmail: customerInfo.email,
+      buyerMemo: `訂單 ${orderNumber}`,
+      paymentType: paymentMethod,
+    }),
+  });
+
+  const paymentResult = await paymentResponse.json();
+
+  if (!paymentResult.success) {
+    return {
+      success: false,
+      error: paymentResult.error || "付款初始化失敗",
+    };
+  }
+
+  return {
+    success: true,
+    type: paymentResult.data.type,
+    submitUrl: paymentResult.data.submitUrl,
+    formData: paymentResult.data.formData,
+    redirectUrl: paymentResult.data.redirectUrl,
+  };
+};
+
+// GOMYPAY supported payment methods
+const GOMYPAY_METHODS = [
+  "credit_card",
+  "virtual_account",
+  "apple_pay",
+  "google_pay",
+] as const;
+
+const isGomypayMethod = (method: string): boolean =>
+  GOMYPAY_METHODS.includes(method as (typeof GOMYPAY_METHODS)[number]);
+
+// Helper for GOMYPAY payment flow orchestration
+type GomypayFlowParams = {
+  items: CartItem[];
+  customerInfo: CustomerInfo;
+  shippingAddress: ShippingAddress | null;
+  paymentMethod: string;
+  notes: string;
+  subtotal: number;
+  shippingFee: number;
+  total: number;
+};
+
+const executeGomypayPaymentFlow = async (
+  params: GomypayFlowParams
+): Promise<GomypayPaymentResult> => {
+  // Create the order first
+  const orderResult = await createOrder(params);
+
+  if (!orderResult.success) {
+    return {
+      success: false,
+      error: orderResult.error || "訂單建立失敗",
+    };
+  }
+
+  if (!orderResult.orderNumber) {
+    return {
+      success: false,
+      error: "訂單編號遺失",
+    };
+  }
+
+  // Initiate GOMYPAY payment
+  return initiateGomypayApi({
+    orderNumber: orderResult.orderNumber,
+    amount: Math.round(params.total * 1.05), // Include tax
+    customerInfo: params.customerInfo,
+    paymentMethod: params.paymentMethod,
+  });
 };
 
 export const useCartStore = create<CartStore>()(
@@ -445,17 +573,24 @@ export const useCartStore = create<CartStore>()(
         }
         set({ isSubmittingOrder: true, error: null });
 
+        // Guard: ensure customerInfo is present (validation already checks this)
+        if (!state.customerInfo) {
+          set({ isSubmittingOrder: false, error: "請填寫客戶資料" });
+          return { success: false, error: "請填寫客戶資料" };
+        }
+        const customerInfo = state.customerInfo;
+
         try {
-          const result = await createOrder(
-            state.items,
-            state.customerInfo!,
-            state.shippingAddress,
-            state.paymentMethod,
-            state.notes,
-            state.getSubtotal(),
-            state.getShippingFee(),
-            state.getTotal()
-          );
+          const result = await createOrder({
+            items: state.items,
+            customerInfo,
+            shippingAddress: state.shippingAddress,
+            paymentMethod: state.paymentMethod,
+            notes: state.notes,
+            subtotal: state.getSubtotal(),
+            shippingFee: state.getShippingFee(),
+            total: state.getTotal(),
+          });
 
           if (result.success) {
             // Clear cart on successful order
@@ -484,78 +619,29 @@ export const useCartStore = create<CartStore>()(
         }
 
         // Check if payment method uses GOMYPAY
-        const gomypayMethods = [
-          "credit_card",
-          "virtual_account",
-          "apple_pay",
-          "google_pay",
-        ];
-        if (!gomypayMethods.includes(state.paymentMethod)) {
+        if (!isGomypayMethod(state.paymentMethod)) {
           return { success: false, error: "此付款方式不支援線上付款" };
         }
 
         set({ isSubmittingOrder: true, error: null });
 
         try {
-          // First create the order
-          const orderResult = await createOrder(
-            state.items,
-            state.customerInfo,
-            state.shippingAddress,
-            state.paymentMethod,
-            state.notes,
-            state.getSubtotal(),
-            state.getShippingFee(),
-            state.getTotal()
-          );
-
-          if (!orderResult.success || !orderResult.orderNumber) {
-            return {
-              success: false,
-              error: orderResult.error || "訂單建立失敗",
-            };
-          }
-
-          // Then initiate GOMYPAY payment
-          const apiUrl = getApiUrl();
-          const paymentEndpoint = apiUrl
-            ? `${apiUrl}/api/payment/initiate`
-            : "/api/payment/initiate";
-
-          const paymentResponse = await fetch(paymentEndpoint, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              orderNo: orderResult.orderNumber,
-              amount: Math.round(state.getTotal() * 1.05), // Include tax
-              buyerName: state.customerInfo.name,
-              buyerPhone: state.customerInfo.phone,
-              buyerEmail: state.customerInfo.email,
-              buyerMemo: `訂單 ${orderResult.orderNumber}`,
-              paymentType: state.paymentMethod,
-            }),
+          const paymentResult = await executeGomypayPaymentFlow({
+            items: state.items,
+            customerInfo: state.customerInfo,
+            shippingAddress: state.shippingAddress,
+            paymentMethod: state.paymentMethod,
+            notes: state.notes,
+            subtotal: state.getSubtotal(),
+            shippingFee: state.getShippingFee(),
+            total: state.getTotal(),
           });
 
-          const paymentResult = await paymentResponse.json();
-
-          if (!paymentResult.success) {
-            return {
-              success: false,
-              error: paymentResult.error || "付款初始化失敗",
-            };
+          if (paymentResult.success) {
+            get().clearCart();
           }
 
-          // Clear cart on successful payment initiation
-          get().clearCart();
-
-          // Return the result for frontend to handle (redirect or form submission)
-          return {
-            success: true,
-            type: paymentResult.data.type,
-            submitUrl: paymentResult.data.submitUrl,
-            formData: paymentResult.data.formData,
-            redirectUrl: paymentResult.data.redirectUrl,
-          };
+          return paymentResult;
         } catch (error) {
           console.error("GOMYPAY payment initiation error:", error);
           return {
