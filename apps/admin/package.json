@@ -4,6 +4,7 @@
   "type": "module",
   "scripts": {
     "build": "react-router build",
+    "build:production": "react-router build --mode production",
     "build:staging": "react-router build --mode staging",
     "dev": "PUBLIC_API_URL=http://localhost:8787 PUBLIC_IMAGE_CDN_URL=http://localhost:8787/media react-router dev --host --port 5173",
     "start": "wrangler dev",

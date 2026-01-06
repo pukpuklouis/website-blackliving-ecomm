@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="zh-Hant"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Order Details Overview</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script>
+    tailwind.config = {
+        darkMode: "class",
+        theme: {
+            extend: {
+                colors: {
+                    primary: "#8B5E3C",
+                    "primary-hover": "#70482C",
+                    "background-light": "#F9F5F2",
+                    "background-dark": "#1F1B18",
+                    "card-light": "#FFFFFF",
+                    "card-dark": "#2C2825",
+                    "text-main-light": "#3E3025",
+                    "text-main-dark": "#EAE0D5",
+                    "text-sub-light": "#6B5C52",
+                    "text-sub-dark": "#A89F95",
+                },
+                fontFamily: {
+                    display: ["'Noto Sans TC'", "sans-serif"],
+                },
+            },
+        },
+    };
+</script>
+<style>
+    .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+    .icon-sm { font-size: 18px; }
+    .icon-xs { font-size: 16px; }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+</style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-text-main-light dark:text-text-main-dark antialiased min-h-screen transition-colors duration-200 pb-12">
+<header class="bg-card-light dark:bg-card-dark shadow-sm sticky top-0 z-50 border-b border-stone-200 dark:border-stone-700">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+<div class="flex justify-between items-center h-16">
+<div class="flex items-center gap-4">
+<button class="p-2 rounded-full hover:bg-stone-100 dark:hover:bg-stone-700 transition-colors">
+<span class="material-symbols-outlined text-text-sub-light dark:text-text-sub-dark">arrow_back</span>
+</button>
+<div>
+<h1 class="text-xl font-bold text-primary flex items-center gap-2">
+                        訂單詳情 - BL20251229S4RX
+                        <span class="px-2 py-0.5 text-xs rounded-full bg-stone-200 text-stone-600 dark:bg-stone-700 dark:text-stone-300 font-medium">官方網站</span>
+</h1>
+<p class="text-xs text-text-sub-light dark:text-text-sub-dark mt-0.5">下單時間: 2025-12-29 14:30:22</p>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<button class="flex items-center gap-2 px-3 py-2 text-sm font-medium text-text-sub-light dark:text-text-sub-dark bg-stone-100 dark:bg-stone-800 rounded-md hover:bg-stone-200 dark:hover:bg-stone-700 transition-colors">
+<span class="material-symbols-outlined icon-sm">content_copy</span> 複製地址
+                </button>
+<button class="flex items-center gap-2 px-3 py-2 text-sm font-medium text-text-sub-light dark:text-text-sub-dark bg-stone-100 dark:bg-stone-800 rounded-md hover:bg-stone-200 dark:hover:bg-stone-700 transition-colors">
+<span class="material-symbols-outlined icon-sm">print</span> 列印
+                </button>
+<button class="flex items-center gap-2 px-3 py-2 text-sm font-medium text-white bg-primary rounded-md hover:bg-primary-hover transition-opacity shadow-sm">
+<span class="material-symbols-outlined icon-sm">contact_support</span> 聯絡顧客
+                </button>
+</div>
+</div>
+</div>
+</header>
+<div class="bg-white/95 dark:bg-card-dark/95 backdrop-blur-sm sticky top-16 z-40 border-b border-stone-200 dark:border-stone-700 shadow-sm transition-all">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+<div class="flex flex-col xl:flex-row items-center justify-between gap-4">
+<div class="flex items-center gap-8 w-full xl:w-auto overflow-x-auto no-scrollbar">
+<div class="flex flex-col whitespace-nowrap">
+<span class="text-[11px] font-bold text-text-sub-light dark:text-text-sub-dark uppercase tracking-wider mb-0.5">訂單狀態</span>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-blue-500 icon-sm">fiber_manual_record</span>
+<span class="text-base font-bold text-text-main-light dark:text-text-main-dark">新訂單</span>
+</div>
+</div>
+<div class="h-8 w-px bg-stone-200 dark:bg-stone-700 shrink-0"></div>
+<div class="flex flex-col whitespace-nowrap">
+<span class="text-[11px] font-bold text-text-sub-light dark:text-text-sub-dark uppercase tracking-wider mb-0.5">付款狀態</span>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-red-500 icon-sm">error</span>
+<span class="text-base font-bold text-red-600 dark:text-red-400">未付款</span>
+<span class="text-xs text-stone-500 dark:text-stone-400 bg-stone-100 dark:bg-stone-800 px-2 py-0.5 rounded-full border border-stone-200 dark:border-stone-700">信用卡 / 尚未完成</span>
+</div>
+</div>
+<div class="h-8 w-px bg-stone-200 dark:bg-stone-700 shrink-0"></div>
+<div class="flex flex-col whitespace-nowrap">
+<span class="text-[11px] font-bold text-text-sub-light dark:text-text-sub-dark uppercase tracking-wider mb-0.5">出貨狀態</span>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-stone-400 icon-sm">inventory_2</span>
+<span class="text-base font-bold text-stone-500 dark:text-stone-400">未出貨</span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-6 w-full xl:w-auto justify-between xl:justify-end">
+<div class="flex items-center gap-3 bg-primary/5 dark:bg-primary/20 p-2 pr-3 rounded-lg border border-primary/20">
+<div class="flex flex-col px-2 border-r border-primary/20">
+<span class="text-[10px] uppercase font-bold text-primary tracking-wider">下一步</span>
+<span class="text-xs font-medium text-text-main-light dark:text-text-main-dark">需完成付款</span>
+</div>
+<button class="px-3 py-1.5 bg-primary hover:bg-primary-hover text-white text-sm font-bold rounded shadow-sm transition-colors whitespace-nowrap">
+                         發送付款提醒
+                     </button>
+<button class="p-1.5 text-primary hover:bg-primary/10 rounded transition-colors" title="複製付款連結">
+<span class="material-symbols-outlined icon-sm">link</span>
+</button>
+</div>
+<div class="h-8 w-px bg-stone-200 dark:bg-stone-700 hidden sm:block"></div>
+<div class="hidden sm:flex flex-col items-end">
+<span class="text-xs text-text-sub-light dark:text-text-sub-dark">共 1 件商品</span>
+<span class="font-bold text-xl text-text-main-light dark:text-text-main-dark">NT$7,000</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+<div class="lg:col-span-2 space-y-6">
+<div class="bg-card-light dark:bg-card-dark rounded-lg shadow-sm border border-stone-100 dark:border-stone-800 p-5">
+<h2 class="text-base font-bold mb-4 flex items-center gap-2 text-primary">
+<span class="material-symbols-outlined icon-sm">person</span> 客戶資訊與配送
+                </h2>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+<div class="space-y-4">
+<h3 class="text-xs font-bold text-text-sub-light dark:text-text-sub-dark uppercase tracking-wider border-b border-stone-100 dark:border-stone-800 pb-1">基本資料</h3>
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-lg">A</div>
+<div>
+<p class="font-bold text-text-main-light dark:text-text-main-dark">ashley</p>
+<p class="text-xs text-text-sub-light dark:text-text-sub-dark">會員等級: 一般會員</p>
+</div>
+</div>
+<div class="group flex items-center justify-between py-1 hover:bg-stone-50 dark:hover:bg-stone-800/50 rounded -mx-2 px-2 transition-colors">
+<div class="flex items-center gap-2 overflow-hidden">
+<span class="material-symbols-outlined text-stone-400 icon-sm">mail</span>
+<span class="text-sm truncate text-text-sub-light dark:text-text-sub-dark">ashley199309@gmail.com</span>
+</div>
+<div class="flex items-center gap-1 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-1 text-stone-400 hover:text-primary hover:bg-stone-100 dark:hover:bg-stone-700 rounded" title="寄信">
+<span class="material-symbols-outlined icon-sm">send</span>
+</button>
+<button class="p-1 text-stone-400 hover:text-primary hover:bg-stone-100 dark:hover:bg-stone-700 rounded" title="複製 Email">
+<span class="material-symbols-outlined icon-sm">content_copy</span>
+</button>
+</div>
+</div>
+<div class="group flex items-center justify-between py-1 hover:bg-stone-50 dark:hover:bg-stone-800/50 rounded -mx-2 px-2 transition-colors">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-stone-400 icon-sm">call</span>
+<span class="text-sm text-text-sub-light dark:text-text-sub-dark">0910203044</span>
+</div>
+<div class="flex items-center gap-1 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-1 text-stone-400 hover:text-primary hover:bg-stone-100 dark:hover:bg-stone-700 rounded" title="撥打">
+<span class="material-symbols-outlined icon-sm">call_made</span>
+</button>
+<button class="p-1 text-stone-400 hover:text-primary hover:bg-stone-100 dark:hover:bg-stone-700 rounded" title="複製電話">
+<span class="material-symbols-outlined icon-sm">content_copy</span>
+</button>
+</div>
+</div>
+</div>
+<div class="space-y-4">
+<h3 class="text-xs font-bold text-text-sub-light dark:text-text-sub-dark uppercase tracking-wider border-b border-stone-100 dark:border-stone-800 pb-1">配送地址</h3>
+<div class="bg-stone-50 dark:bg-stone-800/40 p-3 rounded-lg border border-stone-200 dark:border-stone-700 group relative">
+<div class="flex items-start gap-2">
+<span class="material-symbols-outlined text-primary mt-0.5 icon-sm">location_on</span>
+<div class="flex-1">
+<p class="text-sm font-medium text-text-main-light dark:text-text-main-dark leading-relaxed">
+                                        新北市信義區 ㄅ1111111111
+                                    </p>
+<p class="text-xs text-text-sub-light dark:text-text-sub-dark mt-1">
+                                        收件人: ashley | 0910203044
+                                    </p>
+</div>
+</div>
+<div class="mt-3 flex justify-end gap-2">
+<button class="flex items-center gap-1 text-xs text-stone-500 hover:text-primary transition-colors bg-white dark:bg-stone-700 px-2 py-1 rounded border border-stone-200 dark:border-stone-600 shadow-sm">
+<span class="material-symbols-outlined icon-xs">map</span> 開地圖
+                                </button>
+<button class="flex items-center gap-1 text-xs text-stone-500 hover:text-primary transition-colors bg-white dark:bg-stone-700 px-2 py-1 rounded border border-stone-200 dark:border-stone-600 shadow-sm">
+<span class="material-symbols-outlined icon-xs">content_copy</span> 複製整段
+                                </button>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="bg-card-light dark:bg-card-dark rounded-lg shadow-sm border border-stone-100 dark:border-stone-800 overflow-hidden">
+<div class="p-4 border-b border-stone-100 dark:border-stone-800 bg-stone-50/50 dark:bg-stone-800/30 flex justify-between items-center">
+<h2 class="text-base font-bold text-primary flex items-center gap-2">
+<span class="material-symbols-outlined icon-sm">shopping_bag</span> 訂單商品
+                    </h2>
+<span class="text-xs text-text-sub-light dark:text-text-sub-dark bg-white dark:bg-stone-700 px-2 py-1 rounded border border-stone-200 dark:border-stone-600">共 1 項商品</span>
+</div>
+<div class="divide-y divide-stone-100 dark:divide-stone-800">
+<div class="p-4 flex gap-4 items-center hover:bg-stone-50 dark:hover:bg-stone-800/30 transition-colors">
+<div class="w-16 h-16 bg-stone-100 dark:bg-stone-800 rounded-md flex-shrink-0 flex items-center justify-center text-stone-300 border border-stone-200 dark:border-stone-700">
+<span class="material-symbols-outlined text-3xl">image</span>
+</div>
+<div class="flex-1 min-w-0">
+<h4 class="font-bold text-sm text-text-main-light dark:text-text-main-dark truncate">席夢思頂級黑標枕</h4>
+<p class="text-xs text-text-sub-light dark:text-text-sub-dark mt-1 font-mono">SKU: BL-PILLOW-001</p>
+</div>
+<div class="text-right">
+<div class="text-sm font-bold text-text-main-light dark:text-text-main-dark">NT$7,000</div>
+<div class="text-xs text-text-sub-light dark:text-text-sub-dark mt-0.5">x 1</div>
+</div>
+</div>
+</div>
+<div class="bg-stone-50 dark:bg-stone-800/50 p-4 border-t border-stone-100 dark:border-stone-800">
+<div class="flex flex-col gap-2 max-w-xs ml-auto">
+<div class="flex justify-between text-sm text-text-sub-light dark:text-text-sub-dark">
+<span>小計</span>
+<span>NT$7,000</span>
+</div>
+<div class="flex justify-between text-sm text-text-sub-light dark:text-text-sub-dark">
+<span>運費</span>
+<span>NT$0</span>
+</div>
+<div class="border-t border-stone-200 dark:border-stone-700 my-1"></div>
+<div class="flex justify-between font-bold text-lg text-primary">
+<span>總計</span>
+<span>NT$7,000</span>
+</div>
+</div>
+</div>
+</div>
+<div class="bg-card-light dark:bg-card-dark rounded-lg shadow-sm border border-stone-100 dark:border-stone-800 p-5">
+<h2 class="text-base font-bold mb-4 text-primary flex items-center gap-2">
+<span class="material-symbols-outlined icon-sm">history</span> 訂單歷程
+                </h2>
+<div class="relative border-l-2 border-stone-200 dark:border-stone-700 ml-2.5 space-y-6 pl-5">
+<div class="relative">
+<span class="absolute -left-[27px] top-1 w-3.5 h-3.5 rounded-full bg-primary border-2 border-white dark:border-card-dark shadow-sm"></span>
+<div class="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-1">
+<div>
+<p class="font-bold text-sm text-text-main-light dark:text-text-main-dark">訂單建立</p>
+<p class="text-xs text-text-sub-light dark:text-text-sub-dark mt-0.5">顧客 ashley 提交了訂單</p>
+</div>
+<span class="text-xs text-stone-400 font-mono">2025-12-29 14:30</span>
+</div>
+</div>
+</div>
+<button class="mt-4 w-full text-center text-xs text-stone-500 hover:text-primary py-2 hover:bg-stone-50 dark:hover:bg-stone-800 rounded transition-colors">
+                    查看完整紀錄
+                </button>
+</div>
+</div>
+<div class="lg:col-span-1 space-y-6">
+<div class="bg-card-light dark:bg-card-dark rounded-lg shadow-sm border border-stone-100 dark:border-stone-800 p-5">
+<div class="flex justify-between items-center mb-4 border-b border-stone-100 dark:border-stone-800 pb-3">
+<h2 class="font-bold text-primary flex items-center gap-2">
+<span class="material-symbols-outlined icon-sm">payments</span> 付款資訊
+                    </h2>
+</div>
+<div class="space-y-4">
+<div class="flex justify-between items-center">
+<span class="text-sm text-text-sub-light dark:text-text-sub-dark">付款方式</span>
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-stone-400 icon-xs">credit_card</span>
+<span class="text-sm font-medium text-text-main-light dark:text-text-main-dark">信用卡</span>
+</div>
+</div>
+<div class="flex justify-between items-center">
+<span class="text-sm text-text-sub-light dark:text-text-sub-dark">付款狀態</span>
+<span class="text-sm font-bold text-red-600 dark:text-red-400">未付款</span>
+</div>
+<div class="flex justify-between items-center">
+<span class="text-sm text-text-sub-light dark:text-text-sub-dark">交易金額</span>
+<span class="text-sm font-medium text-text-main-light dark:text-text-main-dark">NT$7,000</span>
+</div>
+</div>
+<div class="mt-6 flex flex-col gap-2.5">
+<button class="w-full py-2 bg-primary hover:bg-primary-hover text-white rounded-md text-sm font-bold transition-colors shadow-sm flex justify-center items-center gap-2">
+<span class="material-symbols-outlined icon-sm">notifications_active</span> 發送付款提醒
+                    </button>
+<button class="w-full py-2 bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 text-text-main-light dark:text-text-main-dark rounded-md text-sm font-medium hover:bg-stone-50 dark:hover:bg-stone-700 transition-colors flex justify-center items-center gap-2">
+<span class="material-symbols-outlined icon-sm">receipt_long</span> 檢視交易紀錄
+                    </button>
+<button class="w-full py-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-md text-xs font-medium transition-colors border border-transparent hover:border-red-100 dark:hover:border-red-900/30">
+                        手動標記已付款 (需要確認)
+                    </button>
+</div>
+</div>
+<div class="bg-card-light dark:bg-card-dark rounded-lg shadow-sm border border-stone-100 dark:border-stone-800 p-5">
+<div class="flex justify-between items-center mb-4 border-b border-stone-100 dark:border-stone-800 pb-3">
+<h2 class="font-bold text-primary flex items-center gap-2">
+<span class="material-symbols-outlined icon-sm">local_shipping</span> 物流資訊
+                    </h2>
+</div>
+<div class="bg-stone-50 dark:bg-stone-800/50 rounded-lg p-5 text-center border-2 border-dashed border-stone-200 dark:border-stone-700">
+<div class="w-12 h-12 bg-stone-100 dark:bg-stone-700 rounded-full flex items-center justify-center mx-auto mb-3">
+<span class="material-symbols-outlined text-stone-400">inventory_2</span>
+</div>
+<p class="text-sm font-bold text-text-main-light dark:text-text-main-dark mb-1">尚未建立物流單</p>
+<p class="text-xs text-red-500 mb-4 flex items-center justify-center gap-1">
+<span class="material-symbols-outlined icon-xs">info</span> 需先完成付款
+                    </p>
+<button class="w-full px-4 py-2 bg-stone-200 dark:bg-stone-700 text-stone-400 dark:text-stone-500 rounded text-sm font-medium cursor-not-allowed mb-3 flex items-center justify-center gap-2" disabled="">
+                        建立物流單
+                    </button>
+<button class="text-xs text-primary hover:underline flex items-center justify-center gap-1 w-full">
+<span class="material-symbols-outlined icon-xs">arrow_forward</span> 立即發送付款提醒
+                    </button>
+</div>
+</div>
+<div class="bg-card-light dark:bg-card-dark rounded-lg shadow-sm border border-stone-100 dark:border-stone-800 p-5">
+<h2 class="font-bold text-primary mb-3 flex items-center gap-2">
+<span class="material-symbols-outlined icon-sm">note</span> 備註
+                </h2>
+<textarea class="w-full text-sm bg-stone-50 dark:bg-stone-800 border-stone-200 dark:border-stone-700 rounded-md focus:ring-primary focus:border-primary placeholder-stone-400" placeholder="新增內部備註..." rows="3"></textarea>
+<div class="flex justify-end mt-2">
+<button class="text-xs bg-stone-800 dark:bg-stone-600 text-white px-3 py-1 rounded hover:bg-stone-700 transition-colors">儲存</button>
+</div>
+</div>
+</div>
+</div>
+</main>
+<div class="fixed bottom-6 right-6 z-50">
+<button class="bg-stone-800 dark:bg-white text-white dark:text-stone-900 p-3 rounded-full shadow-xl hover:scale-110 transition-transform flex items-center justify-center w-12 h-12" onclick="document.documentElement.classList.toggle('dark')">
+<span class="material-symbols-outlined dark:hidden">dark_mode</span>
+<span class="material-symbols-outlined hidden dark:block">light_mode</span>
+</button>
+</div>
+
+</body></html>

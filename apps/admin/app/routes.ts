@@ -14,6 +14,7 @@ export default [
       "routes/dashboard/products.[productId].edit.tsx"
     ),
     route("orders", "routes/dashboard/orders.tsx"),
+    route("orders/:orderId", "routes/dashboard/orders.[orderId].tsx"),
     route("posts", "routes/dashboard/posts.tsx"),
     route("blog-composer", "routes/dashboard/blog-composer.tsx"),
     route("editor-playground", "routes/dashboard/editor-playground.tsx"),

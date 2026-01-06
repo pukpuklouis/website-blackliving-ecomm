@@ -33,7 +33,6 @@ import Eye from "@lucide/react/eye";
 import Filter from "@lucide/react/filter";
 import MoreHorizontal from "@lucide/react/more-horizontal";
 import Package from "@lucide/react/package";
-import Pencil from "@lucide/react/pencil";
 // Tree-shakable Lucide imports
 import Search from "@lucide/react/search";
 import Trash2 from "@lucide/react/trash-2";
@@ -50,29 +49,25 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { useCallback, useEffect, useState } from "react";
+import { useNavigate } from "react-router";
 import { toast } from "sonner";
 import { useApiUrl } from "../../contexts/EnvironmentContext";
 import {
   type Order,
-  OrderDetailsDialog,
   paymentMethodLabels,
   paymentStatusLabels,
   statusColors,
   statusLabels,
 } from "./order-details-dialog";
-import { type OrderEditData, OrderEditDialog } from "./order-edit-dialog";
 
 export default function OrdersPage() {
   const apiUrl = useApiUrl();
+  const navigate = useNavigate();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [globalFilter, setGlobalFilter] = useState("");
-  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
-  const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [orderToEdit, setOrderToEdit] = useState<Order | null>(null);
   const [orderToDelete, setOrderToDelete] = useState<Order | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
@@ -156,15 +151,11 @@ export default function OrdersPage() {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-40">
-            <DropdownMenuItem onClick={() => handleViewDetails(row.original)}>
+            <DropdownMenuItem
+              onClick={() => navigate(`/dashboard/orders/${row.original.id}`)}
+            >
               <Eye className="mr-2 h-4 w-4" />
               查看詳情
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => handleOpenEditDialog(row.original)}
-            >
-              <Pencil className="mr-2 h-4 w-4" />
-              編輯訂單
             </DropdownMenuItem>
             {row.original.status === "paid" && (
               <DropdownMenuItem
@@ -237,11 +228,6 @@ export default function OrdersPage() {
     loadOrders();
   }, [loadOrders]);
 
-  const handleViewDetails = (order: Order) => {
-    setSelectedOrder(order);
-    setIsDetailDialogOpen(true);
-  };
-
   const handleUpdateStatus = async (
     orderId: string,
     newStatus: Order["status"]
@@ -272,64 +258,9 @@ export default function OrdersPage() {
     }
   };
 
-  const handleConfirmPayment = async (orderId: string) => {
-    try {
-      const response = await fetch(
-        `${apiUrl}/api/orders/${orderId}/confirm-payment`,
-        {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify({
-            paymentStatus: "paid",
-            status: "paid",
-            paymentVerifiedAt: new Date(),
-            paymentVerifiedBy: "admin", // This should be from auth context
-          }),
-        }
-      );
-
-      if (response.ok) {
-        await loadOrders(); // Reload to get updated data
-        toast.success("付款確認成功");
-      } else {
-        throw new Error("Failed to confirm payment");
-      }
-    } catch (error) {
-      console.error("Confirm payment failed:", error);
-      toast.error("確認付款失敗");
-    }
-  };
-
-  const handleOpenEditDialog = (order: Order) => {
-    setOrderToEdit(order);
-    setIsEditDialogOpen(true);
-  };
-
   const handleOpenDeleteDialog = (order: Order) => {
     setOrderToDelete(order);
     setIsDeleteDialogOpen(true);
-  };
-
-  const handleEditOrder = async (orderId: string, data: OrderEditData) => {
-    try {
-      const response = await fetch(`${apiUrl}/api/orders/${orderId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify(data),
-      });
-
-      if (response.ok) {
-        await loadOrders();
-        toast.success("訂單更新成功");
-      } else {
-        throw new Error("Failed to update order");
-      }
-    } catch (error) {
-      console.error("Edit order failed:", error);
-      toast.error("更新訂單失敗");
-    }
   };
 
   const handleDeleteOrder = async () => {
@@ -563,22 +494,6 @@ export default function OrdersPage() {
           </div>
         </CardContent>
       </Card>
-
-      {/* Order Details Dialog */}
-      <OrderDetailsDialog
-        isOpen={isDetailDialogOpen}
-        onConfirmPayment={handleConfirmPayment}
-        onOpenChange={setIsDetailDialogOpen}
-        selectedOrder={selectedOrder}
-      />
-
-      {/* Order Edit Dialog */}
-      <OrderEditDialog
-        onOpenChange={setIsEditDialogOpen}
-        onSave={handleEditOrder}
-        open={isEditDialogOpen}
-        order={orderToEdit}
-      />
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog

@@ -11,6 +11,7 @@
     "build:local": "wrangler deploy --dry-run --env development",
     "build:staging": "wrangler deploy --dry-run --env staging",
     "deploy": "wrangler deploy --name blackliving-api --env production",
+    "deploy:production": "wrangler deploy --name blackliving-api --env production",
     "deploy:staging": "wrangler deploy --name blackliving-api-staging --env staging",
     "secret:put": "wrangler secret put BETTER_AUTH_SECRET GOOGLE_CLIENT_ID GOOGLE_CLIENT_SECRET JWT_SECRET --name blackliving-api",
     "secret:put:staging": "wrangler secret put BETTER_AUTH_SECRET --name blackliving-api-staging",

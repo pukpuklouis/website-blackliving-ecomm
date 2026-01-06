@@ -1,11 +1,12 @@
 {
   "name": "web",
   "type": "module",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "scripts": {
     "dev": "astro dev --host --port 4321",
     "start": "astro dev --host --port 4321",
     "build": "NODE_OPTIONS='--loader=./loader.mjs' astro build && cp redirects/_redirects.production dist/_redirects",
+    "build:production": "NODE_OPTIONS='--loader=./loader.mjs --max_old_space_size=4096' astro build --mode production && cp redirects/_redirects.production dist/_redirects",
     "build:staging": "NODE_OPTIONS='--loader=./loader.mjs --max_old_space_size=4096' astro build --mode staging && cp redirects/_redirects.staging dist/_redirects",
     "build:check": "astro check && astro build",
     "preview": "wrangler pages dev dist --compatibility-date=2024-09-23 --port=4321",
@@ -18,8 +19,9 @@
     "lint:astro": "astro check",
     "test": "vitest run",
     "test:watch": "vitest",
-    "deploy": "wrangler pages deploy dist --project-name blackliving-web --commit-dirty=true --branch production",
-    "deploy:staging": "wrangler pages deploy dist --project-name blackliving-web --commit-dirty=true --branch staging"
+    "deploy": "pnpm deploy:production",
+    "deploy:staging": "wrangler pages deploy dist --project-name blackliving-web --commit-dirty=true --branch staging",
+    "deploy:production": "wrangler pages deploy dist --project-name blackliving-web --commit-dirty=true --branch production"
   },
   "dependencies": {
     "@astrojs/check": "^0.9.6",
