@@ -3,7 +3,10 @@
   "version": "1.0.0",
   "description": "Black Living 黑哥家居 - Premium Simmons mattress e-commerce platform",
   "private": true,
-  "workspaces": ["apps/*", "packages/*"],
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev",
@@ -17,22 +20,43 @@
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md,mdx,astro}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md,mdx,astro}\"",
     "db:sync": "node sync-local-db.js",
-    "db:studio": "pnpm db:sync && cd packages/db && pnpm db:studio:local"
+    "db:studio": "pnpm db:sync && cd packages/db && pnpm db:studio:local",
+    "build:local:simple": "NODE_ENV=development turbo run build:local",
+    "build:staging": "NODE_ENV=staging turbo run build:staging",
+    "build:production": "NODE_ENV=production turbo run build",
+    "preview:local:built": "pnpm build:local:simple && concurrently \"cd apps/api && wrangler dev --env development --local --port 8787\" \"cd apps/web && pnpm preview\"",
+    "preview:web:only": "cd apps/web && pnpm build && pnpm preview",
+    "dev:local": "concurrently \"cd apps/api && wrangler dev --env development --local --port 8787\" \"cd apps/web && pnpm dev\"",
+    "dev:staging": "concurrently \"cd apps/api && wrangler dev --env staging\" \"cd apps/web && pnpm dev\"",
+    "bmad:refresh": "bmad-method install -f -i codex",
+    "bmad:list": "bmad-method list:agents",
+    "bmad:validate": "bmad-method validate"
   },
   "devDependencies": {
-    "@turbo/gen": "^1.13.4",
-    "@typescript-eslint/eslint-plugin": "^8.38.0",
-    "@typescript-eslint/parser": "^8.38.0",
-    "eslint": "^9.0.0",
-    "prettier": "^3.6.2",
-    "prettier-plugin-astro": "^0.14.1",
-    "tailwindcss": "^4.1.11",
-    "turbo": "^2.5.5",
-    "typescript": "^5.8.3"
+    "@biomejs/biome": "2.3.8",
+    "@turbo/gen": "^2.6.3",
+    "concurrently": "^9.2.1",
+    "tailwindcss": "^4.1.18",
+    "turbo": "^2.6.3",
+    "typescript": "^5.9.3",
+    "ultracite": "6.4.0"
   },
-  "packageManager": "pnpm@9.5.0",
+  "packageManager": "pnpm@10.26.2+sha512.0e308ff2005fc7410366f154f625f6631ab2b16b1d2e70238444dd6ae9d630a8482d92a451144debc492416896ed16f7b114a86ec68b8404b2443869e68ffda6",
   "engines": {
     "node": ">=18.0.0",
     "pnpm": ">=8.0.0"
+  },
+  "pnpm": {
+    "overrides": {
+      "react": "19.1.4",
+      "react-dom": "19.1.4",
+      "prosemirror-model": "^1.24.1",
+      "prosemirror-state": "^1.4.3",
+      "prosemirror-view": "^1.37.0",
+      "prosemirror-transform": "^1.10.2",
+      "drizzle-orm": "^0.44.7",
+      "@libsql/client": "^0.15.15",
+      "@cloudflare/workers-types": "^4.20251213.0"
+    }
   }
 }

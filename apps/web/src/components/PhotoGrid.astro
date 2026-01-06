@@ -1,0 +1,103 @@
+---
+interface Photo {
+  src: string;
+  alt: string;
+  text?: string;
+  textAlign?: "left" | "right" | "center";
+  focalPoint?: { x: string; y: string }; // e.g., { x: '50%', y: '50%' }
+  backgroundSize?: string; // e.g., 'cover', 'contain', '150%', '200%', default 'cover'
+  gradientFrom?: string; // e.g., 'rgba(0,0,0,0.7)'
+  gradientTo?: string; // e.g., 'rgba(0,0,0,0)'
+  gradientCoverage?: number; // Percentage where solid color ends (0-100), default 40
+  hoverScale?: number; // Scale multiplier on hover (e.g., 1.1 for scale-110), default 1.1
+}
+
+interface Props {
+  photos: Photo[];
+  columns?: number;
+  gap?: string;
+  aspectRatio?: string;
+  fullWidth?: boolean;
+}
+
+const {
+  photos,
+  columns = 1,
+  gap = "2",
+  aspectRatio = "16/4",
+  fullWidth = false,
+} = Astro.props;
+---
+
+<div
+  class={`${fullWidth ? 'w-screen relative left-1/2 right-1/2 -mx-[50vw]' : ''} grid gap-${gap}`}
+  style={`grid-template-columns: repeat(${columns}, minmax(0, 1fr));`}
+>
+  {
+    photos.map((photo) => {
+      const focalX = photo.focalPoint?.x || '50%';
+      const focalY = photo.focalPoint?.y || '50%';
+      const backgroundSize = photo.backgroundSize || 'cover';
+      const gradientFrom = photo.gradientFrom || 'rgba(0,0,0,0.6)';
+      const gradientTo = photo.gradientTo || 'rgba(0,0,0,0)';
+      const gradientCoverage = photo.gradientCoverage || 40;
+      const textAlign = photo.textAlign || 'right';
+      const hoverScale = photo.hoverScale || 1.1;
+
+      // Text alignment classes
+      let justifyClass = 'justify-end';
+      let textClass = 'text-right';
+      if (textAlign === 'left') {
+        justifyClass = 'justify-start';
+        textClass = 'text-left';
+      } else if (textAlign === 'center') {
+        justifyClass = 'justify-center';
+        textClass = 'text-center';
+      }
+
+      return (
+        <div
+          class='relative overflow-hidden group'
+          style={`aspect-ratio: ${aspectRatio};`}
+        >
+          {/* Background Image */}
+          <div
+            class='absolute inset-0 bg-no-repeat transition-transform duration-500'
+            style={`background-image: url('${photo.src}'); background-position: ${focalX} ${focalY}; background-size: ${backgroundSize}; --hover-scale: ${hoverScale};`}
+          />
+
+          {/* Gradient Overlay - Left to Right with configurable coverage */}
+          <div
+            class='absolute inset-0'
+            style={`background: linear-gradient(to right, ${gradientFrom} 0%, ${gradientFrom} ${gradientCoverage}%, ${gradientTo} 100%);`}
+          />
+
+          {/* Text Overlay */}
+          {photo.text && (
+            <div class={`absolute inset-0 flex items-center p-8 md:p-12 ${justifyClass}`}>
+              <div class={`max-w-2xl ${textClass}`}>
+                <h3 class='text-lg md:text-3xl lg:text-4xl font-bold text-gray-700 leading-tight md:ml-24'>
+                  {photo.text}
+                </h3>
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    })
+  }
+</div>
+
+<style>
+  /* Hover scale effect using CSS variable */
+  .group:hover > div[style*="--hover-scale"] {
+    transform: scale(var(--hover-scale));
+  }
+
+  /* Responsive grid */
+  @media (max-width: 768px) {
+    div[class*="grid"] {
+      grid-template-columns: 1fr !important;
+    }
+  }
+</style>

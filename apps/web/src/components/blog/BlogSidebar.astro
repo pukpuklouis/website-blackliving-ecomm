@@ -1,0 +1,94 @@
+---
+export interface Props {
+  class?: string;
+}
+
+const { class: className = "" } = Astro.props;
+---
+
+<aside class={`blog-sidebar space-y-6 ${className}`}>
+  <!-- Promo/Advertisement Space -->
+  <div class="sidebar-section rounded-lg">
+    <slot name="promo">
+      <!-- Default promo space if no content provided -->
+      <div class="bg-gray-50 rounded-lg p-4 text-center text-gray-500">
+        <div
+          class="h-32 flex items-center justify-center border-2 border-dashed border-gray-200 rounded"
+        >
+          廣告位置
+        </div>
+      </div>
+    </slot>
+  </div>
+
+  <!-- Additional Ad Space -->
+  <div class="sidebar-section rounded-lg">
+    <slot name="ads">
+      <!-- Default ad space if no content provided -->
+    </slot>
+  </div>
+
+  <!-- Tags Section -->
+  <div class="sidebar-section rounded-lg">
+    <slot name="tags">
+      <!-- Tags will be rendered here -->
+    </slot>
+  </div>
+
+  <!-- Newsletter Signup (Future) -->
+  <div class="sidebar-section rounded-lg">
+    <slot name="newsletter">
+      <!-- Newsletter signup form can go here -->
+    </slot>
+  </div>
+
+  <!-- Additional Content -->
+  <div class="sidebar-section rounded-lg">
+    <slot name="extra">
+      <!-- Any additional sidebar content -->
+    </slot>
+  </div>
+
+  <!-- Default slot for any other content -->
+  <div class="sidebar-section rounded-lg">
+    <slot/>
+  </div>
+</aside>
+
+<style>
+  .blog-sidebar {
+    /* Sticky sidebar on desktop */
+    @media (min-width: 1024px) {
+      position: sticky;
+      top: 2rem;
+      max-height: calc(100vh - 4rem);
+      overflow-y: auto;
+    }
+  }
+
+  .sidebar-section:empty {
+    display: none;
+  }
+
+  .sidebar-section {
+    /* Custom sidebar section styles */
+  }
+
+  /* Custom scrollbar for sidebar */
+  .blog-sidebar::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  .blog-sidebar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .blog-sidebar::-webkit-scrollbar-thumb {
+    background: rgba(156, 163, 175, 0.5);
+    border-radius: 2px;
+  }
+
+  .blog-sidebar::-webkit-scrollbar-thumb:hover {
+    background: rgba(156, 163, 175, 0.8);
+  }
+</style>

@@ -1,6 +1,6 @@
 import * as React from 'react';
 import * as CheckboxPrimitive from '@radix-ui/react-checkbox';
-import { CheckIcon } from 'lucide-react';
+// Tree-shakable Lucide imports
 
 import { cn } from '@/lib/utils';
 

@@ -1,28 +1,26 @@
-import { Hono } from 'hono';
-import { zValidator } from '@hono/zod-validator';
-import { z } from 'zod';
-import { eq, sql, and, or, desc, asc, count, avg, sum, min, max } from 'drizzle-orm';
-import { CustomerProfileService } from '../../../packages/db/customer-profile-service';
-import { authMiddleware } from '../middleware/auth';
-import { CacheInvalidator } from '../middleware/cache';
+import { zValidator } from "@hono/zod-validator";
+import { and, avg, count, desc, eq, sql, sum } from "drizzle-orm";
+import { Hono } from "hono";
+import { z } from "zod";
+import { db } from "../../../packages/db/client";
+import { CustomerProfileService } from "../../../packages/db/customer-profile-service";
 import {
-  users,
-  customerProfiles,
   customerAddresses,
-  customerPaymentMethods,
-  orders,
-  customerReviews,
-  customerWishlists,
-} from '../../../packages/db/schema';
-import { db } from '../../../packages/db/client';
+  customerProfiles,
+  users,
+} from "../../../packages/db/schema";
+import { authMiddleware } from "../middleware/auth";
+import { CacheInvalidator } from "../middleware/cache";
 
 // Validation schemas for batch operations
 const bulkUpdateSchema = z.object({
   userIds: z.array(z.string()).min(1).max(1000),
   updates: z.object({
-    segment: z.enum(['new', 'customer', 'regular', 'vip', 'inactive']).optional(),
-    churnRisk: z.enum(['low', 'medium', 'high']).optional(),
-    contactPreference: z.enum(['email', 'phone', 'sms']).optional(),
+    segment: z
+      .enum(["new", "customer", "regular", "vip", "inactive"])
+      .optional(),
+    churnRisk: z.enum(["low", "medium", "high"]).optional(),
+    contactPreference: z.enum(["email", "phone", "sms"]).optional(),
     notes: z.string().max(500).optional(),
   }),
 });
@@ -42,7 +40,7 @@ const customerExportSchema = z.object({
       lastOrderBefore: z.string().optional(),
     })
     .optional(),
-  format: z.enum(['json', 'csv']).default('json'),
+  format: z.enum(["json", "csv"]).default("json"),
   fields: z.array(z.string()).optional(),
 });
 
@@ -54,11 +52,11 @@ const segmentRecalculationSchema = z.object({
 const dataCleanupSchema = z.object({
   operations: z.array(
     z.enum([
-      'cleanup_recently_viewed',
-      'cleanup_expired_sessions',
-      'anonymize_inactive_users',
-      'remove_duplicate_addresses',
-      'consolidate_payment_methods',
+      "cleanup_recently_viewed",
+      "cleanup_expired_sessions",
+      "anonymize_inactive_users",
+      "remove_duplicate_addresses",
+      "consolidate_payment_methods",
     ])
   ),
   dryRun: z.boolean().default(true),
@@ -80,9 +78,9 @@ const app = new Hono<{
 
 // Admin authentication middleware
 const adminOnly = async (c: any, next: any) => {
-  const user = c.get('user');
-  if (user.role !== 'admin') {
-    return c.json({ error: 'Admin access required' }, 403);
+  const user = c.get("user");
+  if (user.role !== "admin") {
+    return c.json({ error: "Admin access required" }, 403);
   }
   await next();
 };
@@ -96,27 +94,29 @@ const adminOnly = async (c: any, next: any) => {
  * For mass customer management operations
  */
 app.post(
-  '/admin/bulk-update',
+  "/admin/bulk-update",
   authMiddleware,
   adminOnly,
-  zValidator('json', bulkUpdateSchema),
-  async c => {
+  zValidator("json", bulkUpdateSchema),
+  async (c) => {
     try {
-      const { userIds, updates } = c.req.valid('json');
+      const { userIds, updates } = c.req.valid("json");
 
       // Validate userIds exist
       const existingUsers = await db
         .select({ id: customerProfiles.userId })
         .from(customerProfiles)
-        .where(sql`${customerProfiles.userId} IN (${userIds.map(id => `'${id}'`).join(',')})`);
+        .where(
+          sql`${customerProfiles.userId} IN (${userIds.map((id) => `'${id}'`).join(",")})`
+        );
 
-      const validUserIds = existingUsers.map(u => u.id);
-      const invalidUserIds = userIds.filter(id => !validUserIds.includes(id));
+      const validUserIds = existingUsers.map((u) => u.id);
+      const invalidUserIds = userIds.filter((id) => !validUserIds.includes(id));
 
       if (invalidUserIds.length > 0) {
         return c.json(
           {
-            error: 'Some user IDs not found',
+            error: "Some user IDs not found",
             invalidUserIds,
           },
           400
@@ -134,14 +134,20 @@ app.post(
             ...updates,
             updatedAt: new Date(),
           })
-          .where(sql`${customerProfiles.userId} IN (${chunk.map(id => `'${id}'`).join(',')})`);
+          .where(
+            sql`${customerProfiles.userId} IN (${chunk.map((id) => `'${id}'`).join(",")})`
+          );
 
         totalUpdated += chunk.length;
       }
 
       // Clear cache for affected users
       const cacheInvalidator = new CacheInvalidator(c.env.CACHE);
-      await Promise.all(validUserIds.map(userId => cacheInvalidator.invalidateUserCache(userId)));
+      await Promise.all(
+        validUserIds.map((userId) =>
+          cacheInvalidator.invalidateUserCache(userId)
+        )
+      );
 
       return c.json({
         success: true,
@@ -153,8 +159,8 @@ app.post(
         },
       });
     } catch (error) {
-      console.error('Bulk update error:', error);
-      return c.json({ error: 'Internal server error' }, 500);
+      console.error("Bulk update error:", error);
+      return c.json({ error: "Internal server error" }, 500);
     }
   }
 );
@@ -168,13 +174,13 @@ app.post(
  * For reporting and analytics
  */
 app.post(
-  '/admin/export-customers',
+  "/admin/export-customers",
   authMiddleware,
   adminOnly,
-  zValidator('json', customerExportSchema),
-  async c => {
+  zValidator("json", customerExportSchema),
+  async (c) => {
     try {
-      const { filters = {}, format, fields } = c.req.valid('json');
+      const { filters = {}, format, fields } = c.req.valid("json");
 
       // Build dynamic query based on filters
       let query = db
@@ -200,37 +206,45 @@ app.post(
         })
         .from(users)
         .leftJoin(customerProfiles, eq(users.id, customerProfiles.userId))
-        .where(eq(users.role, 'customer'));
+        .where(eq(users.role, "customer"));
 
       // Apply filters
       const conditions = [];
 
       if (filters.segment?.length) {
         conditions.push(
-          sql`${customerProfiles.segment} IN (${filters.segment.map(s => `'${s}'`).join(',')})`
+          sql`${customerProfiles.segment} IN (${filters.segment.map((s) => `'${s}'`).join(",")})`
         );
       }
 
       if (filters.churnRisk?.length) {
         conditions.push(
-          sql`${customerProfiles.churnRisk} IN (${filters.churnRisk.map(r => `'${r}'`).join(',')})`
+          sql`${customerProfiles.churnRisk} IN (${filters.churnRisk.map((r) => `'${r}'`).join(",")})`
         );
       }
 
       if (filters.totalSpentMin !== undefined) {
-        conditions.push(sql`${customerProfiles.totalSpent} >= ${filters.totalSpentMin}`);
+        conditions.push(
+          sql`${customerProfiles.totalSpent} >= ${filters.totalSpentMin}`
+        );
       }
 
       if (filters.totalSpentMax !== undefined) {
-        conditions.push(sql`${customerProfiles.totalSpent} <= ${filters.totalSpentMax}`);
+        conditions.push(
+          sql`${customerProfiles.totalSpent} <= ${filters.totalSpentMax}`
+        );
       }
 
       if (filters.orderCountMin !== undefined) {
-        conditions.push(sql`${customerProfiles.orderCount} >= ${filters.orderCountMin}`);
+        conditions.push(
+          sql`${customerProfiles.orderCount} >= ${filters.orderCountMin}`
+        );
       }
 
       if (filters.orderCountMax !== undefined) {
-        conditions.push(sql`${customerProfiles.orderCount} <= ${filters.orderCountMax}`);
+        conditions.push(
+          sql`${customerProfiles.orderCount} <= ${filters.orderCountMax}`
+        );
       }
 
       if (filters.registeredAfter) {
@@ -245,12 +259,16 @@ app.post(
 
       if (filters.lastOrderAfter) {
         const date = new Date(filters.lastOrderAfter);
-        conditions.push(sql`${customerProfiles.lastOrderAt} >= ${date.getTime()}`);
+        conditions.push(
+          sql`${customerProfiles.lastOrderAt} >= ${date.getTime()}`
+        );
       }
 
       if (filters.lastOrderBefore) {
         const date = new Date(filters.lastOrderBefore);
-        conditions.push(sql`${customerProfiles.lastOrderAt} <= ${date.getTime()}`);
+        conditions.push(
+          sql`${customerProfiles.lastOrderAt} <= ${date.getTime()}`
+        );
       }
 
       if (conditions.length > 0) {
@@ -258,14 +276,14 @@ app.post(
       }
 
       // Execute query with limit for large datasets
-      const customers = await query.limit(10000); // Limit exports to 10k records
+      const customers = await query.limit(10_000); // Limit exports to 10k records
 
       // Filter fields if specified
       let exportData = customers;
       if (fields?.length) {
-        exportData = customers.map(customer => {
+        exportData = customers.map((customer) => {
           const filtered: any = {};
-          fields.forEach(field => {
+          fields.forEach((field) => {
             if (field in customer) {
               filtered[field] = customer[field as keyof typeof customer];
             }
@@ -275,10 +293,13 @@ app.post(
       }
 
       // Format response based on requested format
-      if (format === 'csv') {
+      if (format === "csv") {
         const csv = convertToCSV(exportData);
-        c.res.headers.set('Content-Type', 'text/csv');
-        c.res.headers.set('Content-Disposition', 'attachment; filename="customers.csv"');
+        c.res.headers.set("Content-Type", "text/csv");
+        c.res.headers.set(
+          "Content-Disposition",
+          'attachment; filename="customers.csv"'
+        );
         return c.text(csv);
       }
 
@@ -292,8 +313,8 @@ app.post(
         },
       });
     } catch (error) {
-      console.error('Customer export error:', error);
-      return c.json({ error: 'Internal server error' }, 500);
+      console.error("Customer export error:", error);
+      return c.json({ error: "Internal server error" }, 500);
     }
   }
 );
@@ -307,13 +328,13 @@ app.post(
  * For updating customer classification based on current analytics
  */
 app.post(
-  '/admin/recalculate-segments',
+  "/admin/recalculate-segments",
   authMiddleware,
   adminOnly,
-  zValidator('json', segmentRecalculationSchema),
-  async c => {
+  zValidator("json", segmentRecalculationSchema),
+  async (c) => {
     try {
-      const { userIds, force } = c.req.valid('json');
+      const { userIds, force } = c.req.valid("json");
 
       let targetUsers: string[];
 
@@ -325,19 +346,22 @@ app.post(
           .select({ userId: customerProfiles.userId })
           .from(customerProfiles);
 
-        targetUsers = allCustomers.map(c => c.userId);
+        targetUsers = allCustomers.map((c) => c.userId);
       }
 
       let updated = 0;
       const chunks = chunkArray(targetUsers, 50); // Process in smaller chunks
 
       for (const chunk of chunks) {
-        const promises = chunk.map(async userId => {
+        const promises = chunk.map(async (userId) => {
           try {
             await CustomerProfileService.updateSegment(userId);
             updated++;
           } catch (error) {
-            console.error(`Failed to update segment for user ${userId}:`, error);
+            console.error(
+              `Failed to update segment for user ${userId}:`,
+              error
+            );
           }
         });
 
@@ -346,7 +370,11 @@ app.post(
 
       // Clear affected cache
       const cacheInvalidator = new CacheInvalidator(c.env.CACHE);
-      await Promise.all(targetUsers.map(userId => cacheInvalidator.invalidateUserCache(userId)));
+      await Promise.all(
+        targetUsers.map((userId) =>
+          cacheInvalidator.invalidateUserCache(userId)
+        )
+      );
 
       return c.json({
         success: true,
@@ -358,8 +386,8 @@ app.post(
         },
       });
     } catch (error) {
-      console.error('Segment recalculation error:', error);
-      return c.json({ error: 'Internal server error' }, 500);
+      console.error("Segment recalculation error:", error);
+      return c.json({ error: "Internal server error" }, 500);
     }
   }
 );
@@ -373,13 +401,13 @@ app.post(
  * For database maintenance and optimization
  */
 app.post(
-  '/admin/data-cleanup',
+  "/admin/data-cleanup",
   authMiddleware,
   adminOnly,
-  zValidator('json', dataCleanupSchema),
-  async c => {
+  zValidator("json", dataCleanupSchema),
+  async (c) => {
     try {
-      const { operations, dryRun } = c.req.valid('json');
+      const { operations, dryRun } = c.req.valid("json");
 
       const results: any[] = [];
 
@@ -387,28 +415,28 @@ app.post(
         let result: any = { operation, dryRun };
 
         switch (operation) {
-          case 'cleanup_recently_viewed':
+          case "cleanup_recently_viewed":
             result = await cleanupRecentlyViewed(dryRun);
             break;
 
-          case 'cleanup_expired_sessions':
+          case "cleanup_expired_sessions":
             result = await cleanupExpiredSessions(dryRun);
             break;
 
-          case 'anonymize_inactive_users':
+          case "anonymize_inactive_users":
             result = await anonymizeInactiveUsers(dryRun);
             break;
 
-          case 'remove_duplicate_addresses':
+          case "remove_duplicate_addresses":
             result = await removeDuplicateAddresses(dryRun);
             break;
 
-          case 'consolidate_payment_methods':
+          case "consolidate_payment_methods":
             result = await consolidatePaymentMethods(dryRun);
             break;
 
           default:
-            result = { operation, error: 'Unknown operation' };
+            result = { operation, error: "Unknown operation" };
         }
 
         results.push(result);
@@ -416,12 +444,12 @@ app.post(
 
       return c.json({
         success: true,
-        message: dryRun ? 'Dry run completed' : 'Cleanup operations completed',
+        message: dryRun ? "Dry run completed" : "Cleanup operations completed",
         data: results,
       });
     } catch (error) {
-      console.error('Data cleanup error:', error);
-      return c.json({ error: 'Internal server error' }, 500);
+      console.error("Data cleanup error:", error);
+      return c.json({ error: "Internal server error" }, 500);
     }
   }
 );
@@ -434,7 +462,7 @@ app.post(
  * GET /admin/customer-analytics - Get customer analytics overview
  * For admin dashboard and reporting
  */
-app.get('/admin/customer-analytics', authMiddleware, adminOnly, async c => {
+app.get("/admin/customer-analytics", authMiddleware, adminOnly, async (c) => {
   try {
     // Get comprehensive customer analytics
     const [
@@ -463,8 +491,8 @@ app.get('/admin/customer-analytics', authMiddleware, adminOnly, async c => {
       },
     });
   } catch (error) {
-    console.error('Customer analytics error:', error);
-    return c.json({ error: 'Internal server error' }, 500);
+    console.error("Customer analytics error:", error);
+    return c.json({ error: "Internal server error" }, 500);
   }
 });
 
@@ -481,25 +509,28 @@ function chunkArray<T>(array: T[], size: number): T[][] {
 }
 
 function convertToCSV(data: any[]): string {
-  if (!data.length) return '';
+  if (!data.length) return "";
 
   const headers = Object.keys(data[0]);
-  const csvHeaders = headers.join(',');
+  const csvHeaders = headers.join(",");
 
-  const csvRows = data.map(row => {
+  const csvRows = data.map((row) => {
     return headers
-      .map(header => {
+      .map((header) => {
         const value = row[header];
         // Escape CSV values
-        if (typeof value === 'string' && (value.includes(',') || value.includes('"'))) {
+        if (
+          typeof value === "string" &&
+          (value.includes(",") || value.includes('"'))
+        ) {
           return `"${value.replace(/"/g, '""')}"`;
         }
-        return value || '';
+        return value || "";
       })
-      .join(',');
+      .join(",");
   });
 
-  return [csvHeaders, ...csvRows].join('\n');
+  return [csvHeaders, ...csvRows].join("\n");
 }
 
 // Cleanup operation implementations
@@ -518,11 +549,13 @@ async function cleanupRecentlyViewed(dryRun: boolean) {
   if (!dryRun && recordsToDelete > 0) {
     await db
       .delete(customerRecentlyViewed)
-      .where(sql`${customerRecentlyViewed.createdAt} < ${cutoffDate.getTime()}`);
+      .where(
+        sql`${customerRecentlyViewed.createdAt} < ${cutoffDate.getTime()}`
+      );
   }
 
   return {
-    operation: 'cleanup_recently_viewed',
+    operation: "cleanup_recently_viewed",
     recordsAffected: recordsToDelete,
     dryRun,
   };
@@ -532,10 +565,10 @@ async function cleanupExpiredSessions(dryRun: boolean) {
   // This would clean up expired sessions from the sessions table
   // Implementation depends on session management strategy
   return {
-    operation: 'cleanup_expired_sessions',
+    operation: "cleanup_expired_sessions",
     recordsAffected: 0,
     dryRun,
-    note: 'Implementation depends on session strategy',
+    note: "Implementation depends on session strategy",
   };
 }
 
@@ -560,7 +593,7 @@ async function anonymizeInactiveUsers(dryRun: boolean) {
   }
 
   return {
-    operation: 'anonymize_inactive_users',
+    operation: "anonymize_inactive_users",
     recordsAffected: inactiveUsers.length,
     dryRun,
   };
@@ -576,12 +609,18 @@ async function removeDuplicateAddresses(dryRun: boolean) {
       count: count(),
     })
     .from(customerAddresses)
-    .groupBy(customerAddresses.userId, customerAddresses.street, customerAddresses.city)
+    .groupBy(
+      customerAddresses.userId,
+      customerAddresses.street,
+      customerAddresses.city
+    )
     .having(sql`count(*) > 1`);
 
   let removedCount = 0;
 
-  if (!dryRun) {
+  if (dryRun) {
+    removedCount = duplicates.reduce((sum, d) => sum + d.count - 1, 0);
+  } else {
     for (const duplicate of duplicates) {
       // Keep the most recently used address, remove others
       const addresses = await db
@@ -598,16 +637,16 @@ async function removeDuplicateAddresses(dryRun: boolean) {
 
       // Remove all but the first (most recent)
       for (let i = 1; i < addresses.length; i++) {
-        await db.delete(customerAddresses).where(eq(customerAddresses.id, addresses[i].id));
+        await db
+          .delete(customerAddresses)
+          .where(eq(customerAddresses.id, addresses[i].id));
         removedCount++;
       }
     }
-  } else {
-    removedCount = duplicates.reduce((sum, d) => sum + d.count - 1, 0);
   }
 
   return {
-    operation: 'remove_duplicate_addresses',
+    operation: "remove_duplicate_addresses",
     recordsAffected: removedCount,
     dryRun,
   };
@@ -616,10 +655,10 @@ async function removeDuplicateAddresses(dryRun: boolean) {
 async function consolidatePaymentMethods(dryRun: boolean) {
   // Similar logic to remove duplicate payment methods
   return {
-    operation: 'consolidate_payment_methods',
+    operation: "consolidate_payment_methods",
     recordsAffected: 0,
     dryRun,
-    note: 'Implementation would consolidate duplicate payment methods',
+    note: "Implementation would consolidate duplicate payment methods",
   };
 }
 
@@ -674,9 +713,15 @@ async function getRegistrationTrends() {
       count: count(),
     })
     .from(customerProfiles)
-    .where(sql`${customerProfiles.createdAt} >= ${Date.now() - 365 * 24 * 60 * 60 * 1000}`)
-    .groupBy(sql`strftime('%Y-%m', datetime(${customerProfiles.createdAt}/1000, 'unixepoch'))`)
-    .orderBy(sql`strftime('%Y-%m', datetime(${customerProfiles.createdAt}/1000, 'unixepoch'))`);
+    .where(
+      sql`${customerProfiles.createdAt} >= ${Date.now() - 365 * 24 * 60 * 60 * 1000}`
+    )
+    .groupBy(
+      sql`strftime('%Y-%m', datetime(${customerProfiles.createdAt}/1000, 'unixepoch'))`
+    )
+    .orderBy(
+      sql`strftime('%Y-%m', datetime(${customerProfiles.createdAt}/1000, 'unixepoch'))`
+    );
 
   return result;
 }

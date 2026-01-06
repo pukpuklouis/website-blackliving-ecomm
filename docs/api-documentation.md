@@ -62,7 +62,7 @@ All authentication is handled through Better Auth:
 ```
 POST /api/auth/sign-in
 POST /api/auth/sign-up
-POST /api/auth/sign-out  
+POST /api/auth/sign-out
 GET  /api/auth/session
 ```
 
@@ -168,11 +168,11 @@ The API uses Cloudflare KV for intelligent caching with TTL values:
 
 ```javascript
 const CacheTTL = {
-  SHORT: 300,      // 5 minutes
-  MEDIUM: 1800,    // 30 minutes  
-  LONG: 3600,      // 1 hour
-  VERY_LONG: 86400 // 24 hours
-}
+  SHORT: 300, // 5 minutes
+  MEDIUM: 1800, // 30 minutes
+  LONG: 3600, // 1 hour
+  VERY_LONG: 86400, // 24 hours
+};
 ```
 
 ### Cache Keys
@@ -199,6 +199,7 @@ admin:products:${page}:${limit}:${filters}
 ### Cache Invalidation
 
 Cache is automatically invalidated when:
+
 - Products are created/updated/deleted
 - Posts are published/updated
 - Orders status changes
@@ -214,7 +215,7 @@ Files are uploaded to Cloudflare R2 storage with validation and optimization.
 const FileTypes = {
   IMAGES: ['image/jpeg', 'image/png', 'image/webp', 'image/gif'],
   DOCUMENTS: ['application/pdf', 'text/plain', 'application/msword'],
-}
+};
 ```
 
 ### File Size Limits
@@ -222,7 +223,7 @@ const FileTypes = {
 ```javascript
 const FileSizes = {
   SMALL: 1MB,    // Profile images
-  MEDIUM: 5MB,   // Product images  
+  MEDIUM: 5MB,   // Product images
   LARGE: 10MB,   // Document uploads
   XLARGE: 50MB   // Video/large files
 }
@@ -231,9 +232,18 @@ const FileSizes = {
 ### File URL Format
 
 Uploaded files are accessible via CDN:
+
 ```
-https://images.blackliving.com/uploads/1640995200000-product-image-abc123.jpg
+https://images.blackliving.com/media/uploads/1640995200000-product-image-abc123.jpg
 ```
+
+### Media delivery worker
+
+- **Read endpoint**: `GET https://images.blackliving.com/media/:key`
+- **Caching**: Responses include `Cache-Control: public, max-age=31536000, immutable` and are cached at Cloudflare edge. Regenerate keys or purge the cache after replacements.
+- **Range requests**: Byte-range requests are supported for streaming (audio/video) workloads.
+- **Protected assets**: Keys starting with `private/` are blocked unless a signed URL flow is implemented.
+- **Staging domain**: Until the staging worker host is ready, assets are served from Cloudflare’s generated R2 endpoint `https://pub-bdf23ffacc974ac28ddec02806cf30cb.r2.dev`.
 
 ---
 
@@ -246,6 +256,7 @@ Check API status and version.
 **GET** `/`
 
 **Response:**
+
 ```json
 {
   "message": "Black Living API is running",
@@ -265,16 +276,19 @@ Retrieve products with optional filtering.
 **GET** `/api/products`
 
 **Query Parameters:**
+
 - `category` (optional): `simmons-black`, `accessories`, `us-imports`
 - `featured` (optional): `true`, `false`
 - `inStock` (optional): `true`, `false`
 
 **Example Request:**
+
 ```bash
 GET /api/products?category=simmons-black&featured=true
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -285,9 +299,7 @@ GET /api/products?category=simmons-black&featured=true
       "slug": "simmons-s3-premium",
       "description": "美國原裝進口，頂級獨立筒設計...",
       "category": "simmons-black",
-      "images": [
-        "https://images.blackliving.com/products/s3-1.jpg"
-      ],
+      "images": ["https://images.blackliving.com/media/products/s3-1.jpg"],
       "variants": [
         {
           "size": "雙人加大6尺",
@@ -296,11 +308,7 @@ GET /api/products?category=simmons-black&featured=true
           "originalPrice": 120000
         }
       ],
-      "features": [
-        "美國原裝進口",
-        "1200顆獨立筒彈簧",
-        "天然乳膠層"
-      ],
+      "features": ["美國原裝進口", "1200顆獨立筒彈簧", "天然乳膠層"],
       "specifications": {
         "thickness": "32cm",
         "material": "天然乳膠+獨立筒",
@@ -321,12 +329,13 @@ GET /api/products?category=simmons-black&featured=true
 **GET** `/api/products/{id}`
 
 **Response:**
+
 ```json
 {
   "success": true,
   "data": {
     "id": "prod_123",
-    "name": "Simmons Black Label S3",
+    "name": "Simmons Black Label S3"
     // ... full product details
   }
 }
@@ -343,6 +352,7 @@ Create a new order for bank transfer payment.
 **POST** `/api/orders`
 
 **Request Body:**
+
 ```json
 {
   "customerInfo": {
@@ -367,6 +377,7 @@ Create a new order for bank transfer payment.
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -383,6 +394,7 @@ Create a new order for bank transfer payment.
 **GET** `/api/orders/{id}`
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -410,6 +422,7 @@ Create a new order for bank transfer payment.
 **GET** `/api/orders/customer/{email}`
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -435,6 +448,7 @@ Book a showroom visit appointment.
 **POST** `/api/appointments`
 
 **Request Body:**
+
 ```json
 {
   "customerInfo": {
@@ -451,6 +465,7 @@ Book a showroom visit appointment.
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -475,11 +490,13 @@ Check appointment availability for specific date and store.
 **GET** `/api/appointments/availability/{store}/{date}`
 
 **Example:**
+
 ```bash
 GET /api/appointments/availability/中和/2024-01-15
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -500,6 +517,7 @@ GET /api/appointments/availability/中和/2024-01-15
 **GET** `/api/appointments/customer/{phone}`
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -528,6 +546,7 @@ All admin endpoints require authentication and admin role.
 **GET** `/api/admin/dashboard/stats`
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -568,6 +587,7 @@ All admin endpoints require authentication and admin role.
 **GET** `/api/admin/products`
 
 **Query Parameters:**
+
 - `page` (default: 1): Page number
 - `limit` (default: 20): Items per page
 - `category`: Filter by category
@@ -575,6 +595,7 @@ All admin endpoints require authentication and admin role.
 - `featured`: Filter by featured status
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -605,28 +626,23 @@ All admin endpoints require authentication and admin role.
 **POST** `/api/admin/products`
 
 **Request Body:**
+
 ```json
 {
   "name": "Simmons Black Label S4 旗艦款",
   "slug": "simmons-s4-flagship",
   "description": "旗艦級床墊，極致舒適體驗...",
   "category": "simmons-black",
-  "images": [
-    "https://images.blackliving.com/products/s4-1.jpg"
-  ],
+  "images": ["https://images.blackliving.com/media/products/s4-1.jpg"],
   "variants": [
     {
       "size": "標準雙人5尺",
-      "firmness": "軟硬適中", 
+      "firmness": "軟硬適中",
       "price": 68000,
       "originalPrice": 140000
     }
   ],
-  "features": [
-    "美國原裝進口",
-    "1400顆獨立筒彈簧",
-    "天然乳膠+記憶泡棉"
-  ],
+  "features": ["美國原裝進口", "1400顆獨立筒彈簧", "天然乳膠+記憶泡棉"],
   "specifications": {
     "thickness": "35cm",
     "material": "乳膠+記憶泡棉+獨立筒",
@@ -641,11 +657,12 @@ All admin endpoints require authentication and admin role.
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
   "data": {
-    "id": "prod_456",
+    "id": "prod_456"
     // ... created product data
   }
 }
@@ -662,6 +679,7 @@ All admin endpoints require authentication and admin role.
 **DELETE** `/api/admin/products/{id}`
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -678,10 +696,12 @@ All admin endpoints require authentication and admin role.
 **POST** `/api/admin/upload`
 
 **Request:** Multipart form data
+
 - `files`: File(s) to upload
 - `folder` (optional): Destination folder (default: "uploads")
 
 **Example:**
+
 ```bash
 curl -X POST /api/admin/upload \
   -H "Authorization: Bearer <token>" \
@@ -690,13 +710,14 @@ curl -X POST /api/admin/upload \
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
   "data": [
     {
       "key": "products/1640995200000-product-image-abc123.jpg",
-      "url": "https://images.blackliving.com/products/1640995200000-product-image-abc123.jpg",
+      "url": "https://images.blackliving.com/media/products/1640995200000-product-image-abc123.jpg",
       "size": 245760
     }
   ],
@@ -705,6 +726,7 @@ curl -X POST /api/admin/upload \
 ```
 
 **File Validation:**
+
 - Max size: 5MB for images
 - Allowed types: JPEG, PNG, WebP, GIF
 - Files are automatically renamed with timestamp and random suffix
@@ -718,6 +740,7 @@ curl -X POST /api/admin/upload \
 **GET** `/api/admin/posts`
 
 **Query Parameters:**
+
 - `page`, `limit`: Pagination
 - `status`: `draft`, `published`, `archived`
 - `search`: Search in post titles
@@ -727,6 +750,7 @@ curl -X POST /api/admin/upload \
 **POST** `/api/admin/posts`
 
 **Request Body:**
+
 ```json
 {
   "title": "如何選擇適合的床墊軟硬度",
@@ -736,7 +760,7 @@ curl -X POST /api/admin/upload \
   "status": "published",
   "featured": true,
   "tags": ["床墊選購", "睡眠健康", "Simmons"],
-  "featuredImage": "https://images.blackliving.com/posts/mattress-guide.jpg",
+  "featuredImage": "https://images.blackliving.com/media/posts/mattress-guide.jpg",
   "seoTitle": "床墊軟硬度選擇指南 - Black Living",
   "seoDescription": "專業床墊顧問教你如何選擇...",
   "publishedAt": "2024-01-01T00:00:00.000Z"
@@ -762,10 +786,12 @@ curl -X POST /api/admin/upload \
 **GET** `/api/admin/orders`
 
 **Query Parameters:**
+
 - `status`: Filter by order status
 - `limit`, `offset`: Pagination
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -790,6 +816,7 @@ curl -X POST /api/admin/upload \
 **PUT** `/api/admin/orders/{id}/status`
 
 **Request Body:**
+
 ```json
 {
   "status": "confirmed",
@@ -806,6 +833,7 @@ curl -X POST /api/admin/upload \
 **GET** `/api/admin/appointments`
 
 **Query Parameters:**
+
 - `status`: Filter by appointment status
 - `store`: Filter by store location
 - `date`: Filter by specific date
@@ -816,6 +844,7 @@ curl -X POST /api/admin/upload \
 **PUT** `/api/admin/appointments/{id}`
 
 **Request Body:**
+
 ```json
 {
   "status": "confirmed",
@@ -870,7 +899,7 @@ The API uses Cloudflare D1 with the following main tables:
 ```
 blackliving-images/
 ├── products/           # Product images
-├── posts/             # Blog post images  
+├── posts/             # Blog post images
 ├── uploads/           # General uploads
 └── users/             # User avatars
 ```
@@ -887,10 +916,10 @@ blackliving-images/
 async function fetchProducts(category = '') {
   const url = new URL('/api/products', 'https://api.blackliving.com');
   if (category) url.searchParams.set('category', category);
-  
+
   const response = await fetch(url);
   const data = await response.json();
-  
+
   if (data.success) {
     return data.data;
   }
@@ -910,11 +939,11 @@ async function createOrder(orderData) {
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify(orderData)
+    body: JSON.stringify(orderData),
   });
-  
+
   const result = await response.json();
-  
+
   if (result.success) {
     // Redirect to confirmation page
     window.location.href = `/order-confirmation?id=${result.data.id}`;
@@ -934,16 +963,16 @@ async function bookAppointment(appointmentData) {
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify(appointmentData)
+    body: JSON.stringify(appointmentData),
   });
-  
+
   const result = await response.json();
-  
+
   if (result.success) {
     return {
       id: result.data.id,
       message: result.data.message,
-      storeInfo: result.data.storeInfo
+      storeInfo: result.data.storeInfo,
     };
   }
   throw new Error(result.error);
@@ -959,17 +988,17 @@ async function bookAppointment(appointmentData) {
 async function getProducts(page = 1, filters = {}) {
   const url = new URL('/api/admin/products', 'https://api.blackliving.com');
   url.searchParams.set('page', page.toString());
-  
+
   Object.entries(filters).forEach(([key, value]) => {
     if (value) url.searchParams.set(key, value);
   });
-  
+
   const response = await fetch(url, {
     headers: {
-      'Authorization': `Bearer ${getAuthToken()}`,
-    }
+      Authorization: `Bearer ${getAuthToken()}`,
+    },
   });
-  
+
   return response.json();
 }
 
@@ -979,11 +1008,11 @@ async function createProduct(productData) {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${getAuthToken()}`,
+      Authorization: `Bearer ${getAuthToken()}`,
     },
-    body: JSON.stringify(productData)
+    body: JSON.stringify(productData),
   });
-  
+
   return response.json();
 }
 ```
@@ -993,24 +1022,24 @@ async function createProduct(productData) {
 ```javascript
 async function uploadProductImages(files) {
   const formData = new FormData();
-  
-  files.forEach(file => {
+
+  files.forEach((file) => {
     formData.append('files', file);
   });
   formData.append('folder', 'products');
-  
+
   const response = await fetch('/api/admin/upload', {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${getAuthToken()}`,
+      Authorization: `Bearer ${getAuthToken()}`,
     },
-    body: formData
+    body: formData,
   });
-  
+
   const result = await response.json();
-  
+
   if (result.success) {
-    return result.data.map(file => file.url);
+    return result.data.map((file) => file.url);
   }
   throw new Error(result.error);
 }
@@ -1024,31 +1053,31 @@ class APIClient {
     this.baseURL = baseURL;
     this.getAuthToken = getAuthToken;
   }
-  
+
   async request(endpoint, options = {}) {
     const url = `${this.baseURL}${endpoint}`;
     const headers = {
       'Content-Type': 'application/json',
-      ...options.headers
+      ...options.headers,
     };
-    
+
     // Add auth token for admin routes
     if (endpoint.startsWith('/api/admin')) {
       headers.Authorization = `Bearer ${this.getAuthToken()}`;
     }
-    
+
     try {
       const response = await fetch(url, {
         ...options,
-        headers
+        headers,
       });
-      
+
       const data = await response.json();
-      
+
       if (!response.ok) {
         throw new APIError(data.error || 'Request failed', response.status, data);
       }
-      
+
       return data;
     } catch (error) {
       if (error instanceof APIError) {

@@ -1,0 +1,14 @@
+{
+  "filePath": ".spec-workflow/specs/admin-settings-system/design.md",
+  "currentVersion": 1,
+  "snapshots": [
+    {
+      "version": 1,
+      "filename": "snapshot-001.json",
+      "timestamp": "2025-11-04T08:25:15.581Z",
+      "trigger": "initial",
+      "approvalId": "approval_1762244715572_md1mxfvqk",
+      "approvalTitle": "Admin Settings System Design Document"
+    }
+  ]
+}

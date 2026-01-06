@@ -1,90 +1,173 @@
 ---
+import { Image } from "astro:assets";
+import { getEntry } from "astro:content";
+import BrandStory from "../components/BrandStory.astro";
+import CTA from "../components/CTA.astro";
+import FeatureAd from "../components/FeatureAd.astro";
+import FeaturedProducts from "../components/FeaturedProducts.astro";
+import FeatureIcons from "../components/FeatureIcons.astro";
+import FeatureProductBanner from "../components/FeatureProductBanner.astro";
+import HeroSlider from "../components/HeroSlider.astro";
+import StoreMaps from "../components/StoreMaps.astro";
+import Testimonial from "../components/Testimonial.astro";
 // Homepage for Black Living
-import BaseLayout from '../layouts/BaseLayout.astro';
-import HeroSlider from '../components/HeroSlider.astro';
-import BrandStory from '../components/BrandStory.astro';
-import FeatureIcons from '../components/FeatureIcons.astro';
-import FeatureAd from '../components/FeatureAd.astro';
-import FeaturedProducts from '../components/FeaturedProducts.astro';
-import CTA from '../components/CTA.astro';
+import BaseLayout from "../layouts/BaseLayout.astro";
+
+// Get store information from content collection
+const storeData = await getEntry("storeinfo", "storeinfo");
+const stores = storeData?.data.stores || [];
 ---
 
 <BaseLayout
-  title='Black Living 黑哥家居 - 席夢思黑標床墊專家'
-  description='專營席夢思黑標床墊，提供全台最低價與專業服務。中和、中壢實體展間，歡迎預約試躺體驗。'
-  type='website'
-  image='/og-image.jpg'
+  title="Black Living 黑哥家居 - 席夢思黑標床墊專家"
+  description="專營席夢思黑標床墊，提供全台最低價與專業服務。中和、中壢實體展間，歡迎預約試躺體驗。"
+  type="website"
+  image="/og-image.jpg"
 >
   <!-- Hero Section -->
-  <HeroSlider />
-
-  <BrandStory />
-
+  <HeroSlider/>
+  <!-- Brand Story -->
+  <BrandStory/>
   <!-- Feature Icons -->
-  <FeatureIcons />
-
-  <!-- Feature AD image -->
-  <FeatureAd />
-
+  <FeatureIcons/>
+  <!-- Feature Product Banner -->
+  <FeatureProductBanner
+    imageUrl="/feature-banner/blackliving-feature-banner.webp"
+    alt="席夢思黑標床墊"
+    aspectRatio="standard"
+    showOnDesktop={true}
+    showOnMobile={false}
+    gradientDirection="left-to-right"
+    gradientFromColor="transparent"
+    gradientToColor="black"
+    gradientOpacity={0}
+    textPosition="right"
+    textTitle="席夢思黑標系列"
+    textDescription="Beautyrest Black"
+  />
+  <FeatureProductBanner
+    imageUrl="/feature-banner/blackliving-feature-banner-mobile.webp"
+    alt="席夢思黑標床墊"
+    aspectRatio="wide"
+    showOnDesktop={false}
+    showOnMobile={true}
+    gradientDirection="left-to-right"
+    gradientFromColor="transparent"
+    gradientToColor="black"
+    gradientOpacity={0}
+    textPosition="right"
+    textTitle="席夢思黑標系列"
+    textDescription="Beautyrest Black"
+  />
   <!-- Featured Bed Products -->
-  <FeaturedProducts 
+  <FeaturedProducts
     title="席夢思熱銷床墊"
     category="simmons-black"
     ctaText="查看完整產品系列"
     ctaHref="/simmons-black"
-    limit={3}
+    limit={4}
+    class="!bg-primary/25"
   />
-
+  <!-- Feature Product Banner -->
+  <FeatureProductBanner
+    imageUrl="/feature-banner/blackliving-feature-banner-accesories-2.webp"
+    alt="席夢思黑標床墊"
+    aspectRatio="standard"
+    showOnDesktop={true}
+    showOnMobile={false}
+    gradientDirection="right-to-left"
+    gradientFromColor="transparent"
+    gradientToColor="var(--primary)"
+    gradientOpacity={0}
+    textPosition="left"
+    textTitle="精選周邊系列"
+    textDescription="Selected Peripheral Series"
+  />
+  <FeatureProductBanner
+    imageUrl="/feature-banner/blackliving-feature-banner-accesories-mobile-2.webp"
+    alt="席夢思黑標床墊"
+    aspectRatio="wide"
+    showOnDesktop={false}
+    showOnMobile={true}
+    gradientDirection="right-to-left"
+    gradientFromColor="transparent"
+    gradientToColor="var(--primary)"
+    gradientOpacity={0}
+    textPosition="left"
+    textTitle="精選周邊系列"
+    textDescription="Selected Peripheral Series"
+  />
   <!-- Featured Accessories -->
-  <FeaturedProducts 
-    title="精選周邊配件"
+  <FeaturedProducts
+    title="精選周邊熱銷品"
     category="accessories"
     ctaText="查看更多配件"
     ctaHref="/accessories"
-    limit={3}
-    class="bg-gray-50"
+    limit={4}
+    class="!bg-primary/25"
+  />
+  <FeatureProductBanner
+    imageUrl="/feature-banner/blackliving-feature-banner-shopee-no1.webp"
+    alt="蝦皮第一賣家"
+    aspectRatio="video"
+    showOnDesktop={true}
+    showOnMobile={true}
+    gradientDirection="right-to-left"
+    gradientFromColor="transparent"
+    gradientToColor="var(--primary)"
+    gradientOpacity={0}
+    textPosition="left"
+    textTitle=""
+    textDescription=""
   />
 
   <!-- Testimonials Preview -->
-  <section class='py-16 bg-gray-50'>
-    <div class='container mx-auto px-4'>
-      <h2 class='text-3xl font-bold text-center mb-12'>顧客好評</h2>
-
-      <div class='grid grid-cols-1 md:grid-cols-3 gap-8'>
-        <!-- Sample testimonials -->
-        <div class='bg-white p-6 rounded-lg shadow'>
-          <div class='flex items-center mb-4'>
-            <div class='flex text-yellow-400'>★★★★★</div>
-            <span class='ml-2 text-gray-600'>蝦皮買家</span>
-          </div>
-          <p class='text-gray-700'>
-            "床墊品質真的很好，價格也比專櫃便宜很多，客服回復很快速專業！"
-          </p>
-        </div>
-
-        <div class='bg-white p-6 rounded-lg shadow'>
-          <div class='flex items-center mb-4'>
-            <div class='flex text-yellow-400'>★★★★★</div>
-            <span class='ml-2 text-gray-600'>Google 評論</span>
-          </div>
-          <p class='text-gray-700'>"實體店面試躺後決定購買，睡了半年品質依然很好，推薦！"</p>
-        </div>
-
-        <div class='bg-white p-6 rounded-lg shadow'>
-          <div class='flex items-center mb-4'>
-            <div class='flex text-yellow-400'>★★★★★</div>
-            <span class='ml-2 text-gray-600'>Line 客戶</span>
-          </div>
-          <p class='text-gray-700'>"從諮詢到送貨都很滿意，黑哥的服務真的沒話說！"</p>
-        </div>
-      </div>
-
-      <div class='text-center mt-8'>
-        <a href='/testimonials' class='text-black font-semibold hover:underline'>查看更多好評 →</a>
-      </div>
-    </div>
-  </section>
+  <Testimonial/>
 
   <!-- CTA Section -->
-  <CTA />
+  <CTA
+    title="準備好體驗頂級睡眠了嗎？"
+    description="歡迎蒞臨我們的實體展間，親自體驗席夢思黑標床墊的舒適感受。"
+    primaryButtonText="立即預約試躺"
+    primaryButtonHref="/appointment"
+    secondaryButtonText="Line 線上諮詢"
+    secondaryButtonHref="https://line.me/R/ti/p/@blackking"
+    secondaryButtonTarget="_blank"
+    desktopImage="/CTA/blackliving-CTA-background-img.webp"
+    mobileImage="/CTA/blackliving-CTA-background-mobile-img.webp"
+    textAlignDesktop="left"
+    textAlignMobile="right"
+    gradientDirection="left-to-right"
+    gradientFromColor="var(--primary)"
+    gradientToColor="transparent"
+    gradientOpacity={0}
+    className="mt-0"
+  />
+  <!-- Store Locations -->
+  <section class="w-screen mx-auto pt-4 bg-primary/25">
+    <div class="flex flex-col items-center gap-4">
+      {
+        stores.map((store) => (
+          <div class="w-screen h-fit">
+            <StoreMaps
+              embedUrl={store.embedUrl}
+              infoBox={{
+                name: store.name,
+                address: store.address,
+                phone: store.phone,
+                opening: store.opening,
+              }}
+              infoBoxPosition={store.infoBoxPosition}
+              mapHeight={store.mapHeight}
+              responsivePosition={store.responsivePosition}
+              bgColor={store.bgColor}
+              textColor={store.textColor}
+              textAlign={store.textAlign}
+              borderColor={store.borderColor}
+            />
+          </div>
+        ))
+      }
+    </div>
+  </section>
 </BaseLayout>

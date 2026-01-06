@@ -1,0 +1,102 @@
+---
+import { Image } from "astro:assets";
+import BlockNoteRenderer from "../components/BlockNoteRenderer";
+import MarkdownRenderer from "../components/MarkdownRenderer.astro";
+import BaseLayout from "../layouts/BaseLayout.astro";
+
+const { slug } = Astro.params;
+const apiUrl = import.meta.env.PUBLIC_API_URL || "http://localhost:8787";
+
+type PageData = {
+  title: string;
+  content: unknown[] | null;
+  contentMarkdown: string | null;
+  seoTitle: string | null;
+  seoDescription: string | null;
+  featuredImage: string | null;
+  publishedAt: string | null;
+};
+
+let page: PageData | null = null;
+let error: Error | null = null;
+
+try {
+  const response = await fetch(`${apiUrl}/api/pages/${slug}`);
+  if (!response.ok) {
+    if (response.status === 404) {
+      // biome-ignore parse: Astro frontmatter allows return statements
+      return Astro.redirect("/404");
+    }
+    throw new Error("Failed to fetch page");
+  }
+  const json = await response.json();
+  if (json.success) {
+    page = json.data;
+  }
+} catch (e) {
+  console.error("Error fetching page:", e);
+  error = e instanceof Error ? e : new Error(String(e));
+}
+
+if (!page) {
+  // biome-ignore parse: Astro frontmatter allows return statements
+  return Astro.redirect("/404");
+}
+
+const {
+  title,
+  content,
+  contentMarkdown,
+  seoTitle,
+  seoDescription,
+  featuredImage,
+  publishedAt,
+} = page;
+---
+
+<BaseLayout
+  title={seoTitle || title}
+  description={seoDescription || ''}
+  image={featuredImage ?? undefined}
+  type="article"
+  publishedTime={publishedAt ?? undefined}
+>
+  {
+    featuredImage && (
+      <div class="w-full aspect-[16/7] md:aspect-[1106/300] max-h-[600px] overflow-hidden mb-2">
+        <Image
+          src={featuredImage}
+          alt={title}
+          width={1920}
+          height={1080}
+          class="w-full h-full object-cover"
+        />
+      </div>
+    )
+  }
+
+  <article
+    class={`md:max-w-4xl mx-auto px-4 ${featuredImage ? 'py-4' : 'py-12'}`}
+  >
+    <header class="mb-8 text-center">
+      <h1 class="text-2xl md:text-4xl font-bold mb-4">{title}</h1>
+      {
+        publishedAt && (
+          <time datetime={publishedAt} class="hidden text-gray-500">
+            {new Date(publishedAt).toLocaleDateString('zh-TW')}
+          </time>
+        )
+      }
+    </header>
+
+    <div class="mx-auto">
+      {
+        content && content.length > 0 ? (
+          <BlockNoteRenderer client:only="react" content={content} />
+        ) : (
+          <MarkdownRenderer content={contentMarkdown || ''} />
+        )
+      }
+    </div>
+  </article>
+</BaseLayout>

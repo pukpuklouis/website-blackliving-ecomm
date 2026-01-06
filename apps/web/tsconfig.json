@@ -1,5 +1,31 @@
 {
   "extends": "astro/tsconfigs/strict",
   "include": [".astro/types.d.ts", "**/*"],
-  "exclude": ["dist"]
+  "exclude": [
+    "dist",
+    // "**/node_modules",
+    // "**/build",
+    "**/.git",
+    "**/.agent",
+    "**/.claude",
+    "**/.clinerules",
+    "**/.cursor",
+    "**/.gemini",
+    "**/.github",
+    "**/.husky",
+    "**/.kilocode",
+    "**/.roo",
+    "**/.serena",
+    "**/.spec-workflow",
+    "**/.specify",
+    "**/.windsurf",
+    "**/.zed"
+  ],
+  "compilerOptions": {
+    "strictNullChecks": true,
+    "baseUrl": ".",
+    "paths": {
+      "@blackliving/*": ["../../packages/*"]
+    }
+  }
 }

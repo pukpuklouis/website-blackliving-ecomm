@@ -1,0 +1,127 @@
+---
+import type { BlogPost as CoreBlogPost } from "@blackliving/types";
+
+type BlogPost = Pick<
+  CoreBlogPost,
+  | "id"
+  | "title"
+  | "slug"
+  | "description"
+  | "excerpt"
+  | "category"
+  | "categoryId"
+  | "categorySlug"
+  | "featuredImage"
+  | "publishedAt"
+>;
+
+export interface Props {
+  posts: BlogPost[];
+  layout?: "inline" | "grid";
+  class?: string;
+  maxPosts?: number;
+  locale?: string;
+}
+
+const {
+  posts,
+  layout = "inline",
+  class: className = "",
+  maxPosts = 3,
+  locale = "zh-TW",
+} = Astro.props;
+
+const relatedPosts = posts.slice(0, maxPosts);
+
+// Internationalization
+const labels = {
+  "zh-TW": {
+    title: "相關文章",
+    readMore: "繼續閱讀",
+  },
+  en: {
+    title: "Related Posts",
+    readMore: "Read More",
+  },
+};
+
+const label = labels[locale as keyof typeof labels] || labels["zh-TW"];
+---
+
+{
+  relatedPosts.length > 0 && (
+    <section
+      class={`related-posts related-posts--${layout} border-t border-gray-200 pt-8 mt-12 ${className}`}
+    >
+      <h2 class="related-posts__title text-2xl md:text-2xl font-bold text-gray-900 mb-6">
+        {label.title}
+      </h2>
+
+      <div
+        class={`related-posts__list ${layout === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6' : 'space-y-4'}`}
+      >
+        {relatedPosts.map((post) => (
+          <article
+            class={`related-post ${layout === 'inline' ? 'flex md:flex-row flex-col gap-4 md:gap-4 gap-3 p-4 bg-white rounded-lg border border-gray-200 hover:shadow-md transition-shadow' : 'bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow'}`}
+          >
+            {post.featuredImage && (
+              <div
+                class={`related-post__image ${layout === 'inline' ? 'flex-shrink-0 w-20 h-20 md:w-20 md:h-20 w-full h-32' : 'w-full h-32'}`}
+              >
+                <img
+                  src={post.featuredImage}
+                  alt={post.title}
+                  class={`related-post__img ${layout === 'inline' ? 'w-full h-full object-cover rounded-md' : 'w-full h-full object-cover'}`}
+                  loading="lazy"
+                />
+              </div>
+            )}
+
+            <div class={`related-post__content ${layout === 'inline' ? 'flex-1 min-w-0' : 'p-4'}`}>
+              <div class="related-post__meta flex items-center gap-2 mb-2 text-xs text-gray-500">
+                <span class="related-post__category inline-flex items-center px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 font-medium">
+                  {post.category}
+                </span>
+              </div>
+
+              <h3
+                class={`related-post__title ${layout === 'inline' ? 'text-base font-semibold mb-2' : 'text-lg font-semibold mb-2'}`}
+              >
+                <a
+                  href={`/blog/${post.categorySlug ?? post.categoryId}/${post.slug}`}
+                  class="related-post__link text-gray-900 hover:text-blue-600 no-underline transition-colors"
+                >
+                  {post.title}
+                </a>
+              </h3>
+
+              <p
+                class={`related-post__excerpt text-sm text-gray-600 line-clamp-2 ${layout === 'inline' ? 'mb-2' : 'mb-3'}`}
+              >
+                {post.excerpt || post.description}
+              </p>
+
+              <a
+                href={`/blog/${post.categorySlug ?? post.categoryId}/${post.slug}`}
+                class="related-post__read-more text-blue-600 hover:text-blue-800 text-sm font-medium no-underline transition-colors"
+                aria-label={`閱讀文章：${post.title}`}
+              >
+                {label.readMore} →
+              </a>
+            </div>
+          </article>
+        ))}
+      </div>
+    </section>
+  )
+}
+
+<style>
+  /* Utility for line clamping - Tailwind v4 may not have this built-in */
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+</style>

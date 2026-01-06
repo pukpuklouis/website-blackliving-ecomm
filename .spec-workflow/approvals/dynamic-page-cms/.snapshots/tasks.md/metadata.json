@@ -1,0 +1,14 @@
+{
+  "filePath": ".spec-workflow/specs/dynamic-page-cms/tasks.md",
+  "currentVersion": 1,
+  "snapshots": [
+    {
+      "version": 1,
+      "filename": "snapshot-001.json",
+      "timestamp": "2025-11-26T06:09:33.105Z",
+      "trigger": "initial",
+      "approvalId": "approval_1764137373088_be7ac853q",
+      "approvalTitle": "Tasks Document: Dynamic Page CMS Module"
+    }
+  ]
+}

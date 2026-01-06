@@ -1,0 +1,83 @@
+# Black Living Admin App - Cloudflare Worker Configuration
+#
+# SECURITY: This is a TEMPLATE file. Copy to wrangler.toml and replace placeholder values.
+# NEVER commit wrangler.toml if it contains any non-public information!
+#
+# Setup Instructions:
+# 1. Copy this file: cp wrangler.example.toml wrangler.toml
+# 2. Replace all placeholder values (<YOUR_*>) with your actual values
+# 3. For KV namespaces, get IDs from: wrangler kv:namespace list
+
+name = "blackliving-admin"
+main = "./functions/[[path]].ts"
+compatibility_date = "2025-01-15"
+compatibility_flags = ["nodejs_compat"]
+
+[build]
+command = "node ./node_modules/@react-router/dev/bin.js build"
+
+[assets]
+directory = "./build/client"
+binding = "ASSETS"
+
+# ==========================================
+# KV NAMESPACE FOR SESSIONS (if needed)
+# ==========================================
+# Uncomment and replace IDs if using Better Auth sessions
+# [[kv_namespaces]]
+# binding = "SESSION"
+# id = "YOUR_DEV_SESSION_KV_ID"  # REPLACE THIS
+# preview_id = "YOUR_DEV_SESSION_PREVIEW_KV_ID"  # REPLACE THIS
+
+# Environment Variables (Development - uses local API)
+[vars]
+NODE_ENV = "development"
+API_BASE_URL = "http://localhost:8787"
+PUBLIC_API_BASE_URL = "http://localhost:8787"
+PUBLIC_API_URL = "http://localhost:8787"
+PUBLIC_IMAGE_CDN_URL = "http://localhost:8787/media"
+PUBLIC_SITE_URL = "http://localhost:5173"
+PUBLIC_WEB_URL = "http://localhost:4321"
+
+# ==========================================
+# STAGING ENVIRONMENT
+# ==========================================
+[env.staging]
+name = "blackliving-admin-staging"
+
+# [[env.staging.kv_namespaces]]
+# binding = "SESSION"
+# id = "YOUR_STAGING_SESSION_KV_ID"  # REPLACE THIS
+# preview_id = "YOUR_STAGING_SESSION_PREVIEW_KV_ID"  # REPLACE THIS
+
+[env.staging.vars]
+NODE_ENV = "staging"
+API_BASE_URL = "https://<YOUR_API_WORKER>-staging.workers.dev"  # REPLACE THIS
+PUBLIC_API_BASE_URL = "https://<YOUR_API_WORKER>-staging.workers.dev"  # REPLACE THIS
+PUBLIC_API_URL = "https://<YOUR_API_WORKER>-staging.workers.dev"  # REPLACE THIS
+PUBLIC_IMAGE_CDN_URL = "https://<YOUR_API_WORKER>-staging.workers.dev/media"  # REPLACE THIS
+PUBLIC_SITE_URL = "https://<YOUR_ADMIN_WORKER>-staging.workers.dev"  # REPLACE THIS
+PUBLIC_WEB_URL = "https://staging.<YOUR_SITE>.pages.dev"  # REPLACE THIS
+
+# ==========================================
+# PRODUCTION ENVIRONMENT
+# ==========================================
+[env.production]
+name = "blackliving-admin"
+
+# [[env.production.kv_namespaces]]
+# binding = "SESSION"
+# id = "YOUR_PROD_SESSION_KV_ID"  # REPLACE THIS
+# preview_id = "YOUR_PROD_SESSION_PREVIEW_KV_ID"  # REPLACE THIS
+
+[env.production.vars]
+NODE_ENV = "production"
+API_BASE_URL = "https://<YOUR_API_WORKER>.workers.dev"  # REPLACE THIS
+PUBLIC_API_BASE_URL = "https://<YOUR_API_WORKER>.workers.dev"  # REPLACE THIS
+PUBLIC_API_URL = "https://<YOUR_API_WORKER>.workers.dev"  # REPLACE THIS
+PUBLIC_IMAGE_CDN_URL = "https://<YOUR_API_WORKER>.workers.dev/media"  # REPLACE THIS
+PUBLIC_SITE_URL = "https://<YOUR_ADMIN_WORKER>.workers.dev"  # REPLACE THIS
+PUBLIC_WEB_URL = "https://<YOUR_SITE>.pages.dev"  # REPLACE THIS
+
+[observability]
+enabled = true

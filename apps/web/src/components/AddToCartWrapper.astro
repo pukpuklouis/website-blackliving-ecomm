@@ -1,0 +1,194 @@
+---
+import type { CategoryConfig } from "../types/category";
+import AddToCartSection from "./AddToCartSection";
+
+export interface Props {
+  product: {
+    id: string;
+    name: string;
+    slug: string;
+    description: string;
+    images: string[];
+    variants: Array<{
+      id: string;
+      name: string;
+      size?: string;
+      firmness?: string;
+      price: number;
+      originalPrice?: number;
+      inStock: boolean;
+      stock?: number;
+      sku?: string;
+    }>;
+    inStock: boolean;
+    category?: string;
+  };
+  selectedVariantId?: string;
+  categoryConfig?: CategoryConfig;
+  className?: string;
+}
+
+const {
+  product,
+  selectedVariantId,
+  categoryConfig,
+  className = "",
+} = Astro.props;
+
+// Server-side validation and data preparation
+if (!product) {
+  throw new Error("Product data is required for AddToCartWrapper");
+}
+
+// Ensure product has proper structure for cart operations
+const processedProduct = {
+  ...product,
+  // Ensure images array exists
+  images:
+    product.images && product.images.length > 0
+      ? product.images
+      : ["/images/placeholder-mattress.jpg"],
+
+  // Ensure variants array exists and is properly structured
+  variants:
+    product.variants && product.variants.length > 0
+      ? product.variants.map((variant) => ({
+          ...variant,
+          // Ensure required fields have defaults
+          name: variant.name || "Standard",
+          price: typeof variant.price === "number" ? variant.price : 0,
+          inStock:
+            typeof variant.inStock === "boolean" ? variant.inStock : false,
+          // Add category context to variant name if available
+          displayName: categoryConfig?.series
+            ? `${categoryConfig.series} - ${variant.name}`
+            : variant.name,
+        }))
+      : [
+          {
+            id: "default",
+            name: "Standard",
+            price: 0,
+            inStock: product.inStock,
+          },
+        ],
+
+  // Add category info if available
+  category: categoryConfig?.series || product.category,
+};
+
+// Determine initial selected variant
+const initialVariantId = selectedVariantId || processedProduct.variants[0]?.id;
+
+// Check if product has valid pricing
+const hasValidPricing = processedProduct.variants.some(
+  (variant) => variant.price > 0
+);
+
+// Validate product data processing
+// All product data should be properly processed at this point
+---
+
+<!-- 
+  Astro component that wraps the React AddToCartSection with proper hydration
+  This follows Astro's island architecture pattern for optimal performance
+-->
+{hasValidPricing ? (
+  <!-- Product with valid pricing - show full cart functionality -->
+  <AddToCartSection
+    product={processedProduct}
+    selectedVariantId={initialVariantId}
+    className={className}
+    client:load
+  />
+) : (
+  <!-- Fallback for products without pricing - show contact form -->
+  <div class={`bg-white border rounded-xl shadow-sm p-6 ${className}`}>
+    <!-- Product Info Header -->
+    <div class="mb-6">
+      {categoryConfig?.series && (
+        <div class="inline-block bg-black text-white text-sm px-3 py-1 rounded mb-2">
+          {categoryConfig.series}
+        </div>
+      )}
+      <h2 class="text-xl md:text-2xl font-bold text-gray-900 mb-2">
+        {processedProduct.name}
+      </h2>
+      {processedProduct.description && (
+        <p class="text-gray-600">
+          {processedProduct.description}
+        </p>
+      )}
+    </div>
+
+    <!-- Contact for Pricing Section -->
+    <div class="space-y-4">
+      <div class="p-4 bg-gradient-to-r from-gray-50 to-blue-50 rounded-lg border">
+        <div class="text-center space-y-3">
+          <div class="text-4xl">💎</div>
+          <h3 class="text-lg font-semibold text-gray-900">
+            專業客製化服務
+          </h3>
+          <p class="text-sm text-gray-600">
+            此商品需要專業顧問評估您的需求後提供最適合的方案與報價
+          </p>
+        </div>
+      </div>
+
+      <!-- Contact Options -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <a
+          href="tel:+886-2-12345678"
+          class="flex items-center justify-center space-x-2 px-6 py-4 bg-black text-white font-semibold rounded-lg hover:bg-gray-800 transition-colors group"
+        >
+          <span class="text-lg">📞</span>
+          <div class="text-left">
+            <div class="text-sm opacity-90">立即撥打</div>
+            <div>02-1234-5678</div>
+          </div>
+        </a>
+        <a
+          href="mailto:info@blackliving.com?subject=產品諮詢 - {processedProduct.name}"
+          class="flex items-center justify-center space-x-2 px-6 py-4 border-2 border-black text-black font-semibold rounded-lg hover:bg-black hover:text-white transition-colors group"
+        >
+          <span class="text-lg">✉️</span>
+          <div class="text-left">
+            <div class="text-sm opacity-70 group-hover:opacity-90">發送郵件</div>
+            <div>專業諮詢</div>
+          </div>
+        </a>
+      </div>
+
+      <!-- Service Features -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-4 border-t">
+        <div class="flex items-center space-x-2 text-sm text-gray-600">
+          <span class="text-blue-600">🚛</span>
+          <span>免費配送安裝</span>
+        </div>
+        <div class="flex items-center space-x-2 text-sm text-gray-600">
+          <span class="text-green-600">🛡️</span>
+          <span>原廠品質保固</span>
+        </div>
+        <div class="flex items-center space-x-2 text-sm text-gray-600">
+          <span class="text-purple-600">💳</span>
+          <span>分期零利率</span>
+        </div>
+      </div>
+
+      <!-- Additional Info -->
+      <div class="text-xs text-gray-500 text-center pt-2 border-t">
+        💡 我們的專業顧問將在 24 小時內與您聯繫，提供最適合您的方案
+      </div>
+    </div>
+  </div>
+)}
+
+<!-- 
+  Performance Optimization Notes for Astro:
+  
+  1. client:load directive ensures React component hydrates immediately
+  2. Server-side data processing reduces client-side work
+  3. Conditional rendering reduces bundle size for products without pricing
+  4. Fallback UI is pure HTML/CSS for better performance
+  5. Structured data preparation follows Astro's SSR best practices
+-->

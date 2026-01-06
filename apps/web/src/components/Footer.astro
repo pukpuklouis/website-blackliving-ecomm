@@ -1,104 +1,57 @@
 ---
-// Footer component for Black Living website
+import { Image } from "astro:assets";
+import { getCollection } from "astro:content";
+import FooterLinkColumn from "./FooterLinkColumn.astro";
+
+const footerCollection = await getCollection("footer");
+const footerData = footerCollection[0].data.sections;
 ---
 
-<footer class='bg-gray-900 text-white'>
-  <div class='container mx-auto px-4 py-12'>
-    <div class='grid grid-cols-1 md:grid-cols-4 gap-8'>
-      <!-- Company Info -->
-      <div>
-        <h3 class='text-lg font-semibold mb-4'>Black Living 黑哥家居</h3>
-        <p class='text-gray-300 mb-4'>專營席夢思黑標床墊，提供全台最低價與專業服務。</p>
-        <div class='space-y-2 text-sm text-gray-300'>
-          <p>📍 中和展間：新北市中和區</p>
-          <p>📍 中壢展間：桃園市中壢區</p>
-          <p>📞 Line: @blackking</p>
+<footer class="bg-primary/25 py-16">
+  <div class="container mx-auto px-6">
+    <div class="flex flex-col gap-12 md:grid md:grid-cols-5 md:gap-12">
+      <div class="flex justify-center md:justify-start md:col-span-2">
+        <Image
+          src="/blackliving-logo-zh.svg"
+          alt="BlackLiving Logo"
+          width={100}
+          height={100}
+          class="h-24 w-auto"
+          loading="eager"
+          decoding="async"
+        />
+      </div>
+      <div
+        class="flex flex-col justify-center gap-6 md:col-span-3 md:grid md:grid-cols-4 md:gap-6 md:pr-12"
+      >
+        {footerData.map((column) => <FooterLinkColumn title={column.title} links={column.links} />)}
+
+        <div
+          class="text-center md:text-left md:col-span-2 lg:col-span-1 whitespace-nowrap"
+        >
+          <h4 class="text-lg font-semibold text-stone-800 mb-3">
+            黑哥實業有限公司
+          </h4>
+          <ul
+            class="flex flex-col justify-center gap-2 md:flex-col md:items-start md:gap-0 md:space-y-2"
+          >
+            <li class="text-base text-stone-600 md:text-base">
+              統編 : 96823427
+            </li>
+            <li class="text-base text-stone-600 md:text-base">
+              地址：新北市中和區景平路398號2樓
+            </li>
+            <li>
+              <a
+                href="mailto:Blackliving2018@gmail.com"
+                class="text-base text-stone-600 transition-colors hover:text-stone-800 md:text-base"
+              >
+                E-mail : Blackliving2018@gmail.com
+              </a>
+            </li>
+          </ul>
         </div>
       </div>
-
-      <!-- Quick Links -->
-      <div>
-        <h3 class='text-lg font-semibold mb-4'>快速連結</h3>
-        <ul class='space-y-2 text-sm text-gray-300'>
-          <li><a href='/about' class='hover:text-white'>關於黑哥</a></li>
-          <li><a href='/simmons-black' class='hover:text-white'>席夢思黑標</a></li>
-          <li><a href='/testimonials' class='hover:text-white'>顧客好評</a></li>
-          <li><a href='/appointment' class='hover:text-white'>預約試躺</a></li>
-        </ul>
-      </div>
-
-      <!-- Customer Service -->
-      <div>
-        <h3 class='text-lg font-semibold mb-4'>客戶服務</h3>
-        <ul class='space-y-2 text-sm text-gray-300'>
-          <li><a href='/faq' class='hover:text-white'>常見問題</a></li>
-          <li><a href='/warranty' class='hover:text-white'>保固說明</a></li>
-          <li><a href='/shipping' class='hover:text-white'>配送資訊</a></li>
-          <li><a href='/contact' class='hover:text-white'>聯絡我們</a></li>
-        </ul>
-      </div>
-
-      <!-- Social Links -->
-      <div>
-        <h3 class='text-lg font-semibold mb-4'>關注我們</h3>
-        <div class='flex space-x-4'>
-          <!-- Facebook -->
-          <a
-            href='#'
-            class='text-gray-300 hover:text-blue-500 transition-colors duration-200'
-            title='Facebook'
-          >
-            <svg class='w-6 h-6' fill='currentColor' viewBox='0 0 24 24'>
-              <path
-                d='M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z'
-              >
-              </path>
-            </svg>
-          </a>
-
-          <!-- Instagram -->
-          <a
-            href='#'
-            class='text-gray-300 hover:text-pink-500 transition-colors duration-200'
-            title='Instagram'
-          >
-            <svg class='w-6 h-6' fill='currentColor' viewBox='0 0 24 24'>
-              <path
-                d='M12.017 0C5.396 0 .029 5.367.029 11.987c0 6.62 5.367 11.987 11.988 11.987 6.62 0 11.987-5.367 11.987-11.987C24.014 5.367 18.637.001 12.017.001zm5.265 7.887l-.353 1.803c-.23.115-.461.166-.691.166-.23 0-.461-.051-.691-.166l-.918-.459-.918.459c-.23.115-.461.166-.691.166-.23 0-.461-.051-.691-.166l-.353-1.803.918-.459.918.459.918-.459.918.459zm-2.647 3.373c0 1.151-.938 2.088-2.088 2.088s-2.088-.938-2.088-2.088.938-2.088 2.088-2.088 2.088.938 2.088 2.088z'
-              >
-              </path>
-            </svg>
-          </a>
-
-          <!-- LINE -->
-          <a
-            href='https://line.me/R/ti/p/@blackking'
-            target='_blank'
-            rel='noopener noreferrer'
-            class='text-gray-300 hover:text-green-500 transition-colors duration-200'
-            title='LINE'
-          >
-            <svg class='w-6 h-6' viewBox='0 0 48 48' fill='none' xmlns='http://www.w3.org/2000/svg'>
-              <g clipPath='url(#clip0_footer_line)'>
-                <path
-                  d='M29.1563 18.45V26.0719C29.1563 26.2688 29.0063 26.4188 28.8094 26.4188H27.5906C27.4688 26.4188 27.3656 26.3531 27.3094 26.2781L23.8125 21.5625V26.0813C23.8125 26.2781 23.6625 26.4281 23.4656 26.4281H22.2469C22.05 26.4281 21.9 26.2781 21.9 26.0813V18.4594C21.9 18.2625 22.05 18.1125 22.2469 18.1125H23.4563C23.5594 18.1125 23.6813 18.1688 23.7375 18.2625L27.2344 22.9781V18.4594C27.2344 18.2625 27.3844 18.1125 27.5813 18.1125H28.8C28.9969 18.1031 29.1563 18.2625 29.1563 18.4406V18.45ZM20.3719 18.1031H19.1531C18.9563 18.1031 18.8063 18.2531 18.8063 18.45V26.0719C18.8063 26.2688 18.9563 26.4188 19.1531 26.4188H20.3719C20.5688 26.4188 20.7188 26.2688 20.7188 26.0719V18.45C20.7188 18.2719 20.5688 18.1031 20.3719 18.1031ZM17.4281 24.4875H14.0906V18.45C14.0906 18.2531 13.9406 18.1031 13.7438 18.1031H12.525C12.3281 18.1031 12.1781 18.2531 12.1781 18.45V26.0719C12.1781 26.1656 12.2063 26.2406 12.2719 26.3063C12.3375 26.3625 12.4125 26.4 12.5063 26.4H17.4C17.5969 26.4 17.7469 26.25 17.7469 26.0531V24.8344C17.7469 24.6563 17.5969 24.4875 17.4188 24.4875H17.4281ZM35.5875 18.1031H30.6844C30.5063 18.1031 30.3375 18.2531 30.3375 18.45V26.0719C30.3375 26.25 30.4875 26.4188 30.6844 26.4188H35.5781C35.775 26.4188 35.925 26.2688 35.925 26.0719V24.8438C35.925 24.6469 35.775 24.4969 35.5781 24.4969H32.25V23.2219H35.5781C35.775 23.2219 35.925 23.0719 35.925 22.875V21.6469C35.925 21.45 35.775 21.3 35.5781 21.3H32.25V20.0156H35.5781C35.775 20.0156 35.925 19.8656 35.925 19.6688V18.45C35.9156 18.2719 35.7656 18.1031 35.5781 18.1031H35.5875ZM48 8.75627V39.3188C47.9906 44.1188 44.0531 48.0094 39.2438 48H8.68127C3.88127 47.9906 -0.00935809 44.0438 1.69072e-05 39.2438V8.68127C0.00939191 3.88127 3.95627 -0.00935809 8.75627 1.69072e-05H39.3188C44.1188 0.00939191 48.0094 3.94689 48 8.75627ZM41.4 21.8906C41.4 14.0719 33.5531 7.70627 23.925 7.70627C14.2969 7.70627 6.45002 14.0719 6.45002 21.8906C6.45002 28.8938 12.6656 34.7719 21.0656 35.8875C23.1094 36.3281 22.875 37.0781 22.4156 39.8344C22.3406 40.275 22.0594 41.5594 23.925 40.7813C25.7906 40.0031 33.9844 34.8563 37.6594 30.6375C40.1906 27.8531 41.4 25.0313 41.4 21.9094V21.8906Z'
-                  fill='currentColor'
-                >
-                </path>
-              </g>
-              <defs>
-                <clipPath id='clip0_footer_line'>
-                  <rect width='48' height='48' fill='white'></rect>
-                </clipPath>
-              </defs>
-            </svg>
-          </a>
-        </div>
-      </div>
-    </div>
-
-    <div class='border-t border-gray-700 mt-8 pt-8 text-center text-sm text-gray-300'>
-      <p>&copy; 2025 Black Living 黑哥家居. All rights reserved.</p>
     </div>
   </div>
 </footer>

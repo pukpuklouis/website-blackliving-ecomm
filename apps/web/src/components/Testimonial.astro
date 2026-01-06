@@ -1,0 +1,39 @@
+---
+import { getCollection } from "astro:content";
+import type { TestimonialData } from "../types/testimonial";
+import { fetchTestimonials } from "../utils/testimonialApi";
+import TestimonialCard from "./TestimonialCard.astro";
+
+let testimonials: TestimonialData[] = [];
+
+try {
+  testimonials = await fetchTestimonials();
+} catch (error) {
+  // console.error("Falling back to static testimonials due to API error:", error);
+  const testimonialsData = await getCollection("testimonials");
+  testimonials = testimonialsData[0]?.data.testimonials || [];
+}
+---
+
+<section class="py-16 bg-gray-50">
+  <div class="container mx-auto px-4">
+    <h2 class="text-3xl font-bold text-center mb-12">部落格推薦</h2>
+
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-8">
+      {
+        testimonials.map((testimonial) => (
+          <TestimonialCard testimonial={testimonial} />
+        ))
+      }
+    </div>
+
+    <div class="text-center mt-8">
+      <a
+        href="/blog/blogger-testimonial"
+        class="inline-block text-foreground-card font-semibold hover:-translate-y-1 hover:scale-105 hover:text-primary transition-all duration-300"
+        aria-label="查看更多部落格推薦"
+        >查看更多好評 →</a
+      >
+    </div>
+  </div>
+</section>

@@ -1,0 +1,14 @@
+{
+  "filePath": ".spec-workflow/specs/appointment-flow-simplification/requirements.md",
+  "currentVersion": 1,
+  "snapshots": [
+    {
+      "version": 1,
+      "filename": "snapshot-001.json",
+      "timestamp": "2025-11-30T12:51:42.425Z",
+      "trigger": "initial",
+      "approvalId": "approval_1764507102356_qd0pr68an",
+      "approvalTitle": "Appointment Flow Simplification Requirements"
+    }
+  ]
+}

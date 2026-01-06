@@ -1,0 +1,103 @@
+---
+export interface Props {
+  image?: string;
+  link?: string;
+  alt?: string;
+  title?: string;
+  description?: string;
+  class?: string;
+  trackingId?: string;
+}
+
+const {
+  image,
+  link,
+  alt = "推廣內容",
+  title,
+  description,
+  class: className = "",
+  trackingId,
+} = Astro.props;
+---
+
+{image ? (
+  <div class={`promo-image bg-white rounded-lg border border-gray-200 overflow-hidden ${className}`}>
+    {link ? (
+      <a 
+        href={link}
+        class='promo-image__link block relative hover:opacity-95 transition-opacity'
+        target='_blank'
+        rel='noopener sponsored'
+        data-tracking-id={trackingId}
+        title={title}
+      >
+        <img
+          src={image}
+          alt={alt}
+          class='promo-image__img w-full h-auto object-cover'
+          loading='lazy'
+        />
+        {(title || description) && (
+          <div class='promo-image__overlay absolute inset-0 bg-black bg-opacity-40 flex flex-col justify-end p-4 opacity-0 hover:opacity-100 transition-opacity'>
+            {title && (
+              <h4 class='promo-image__title text-white font-semibold text-sm mb-1'>{title}</h4>
+            )}
+            {description && (
+              <p class='promo-image__description text-white text-xs leading-tight'>{description}</p>
+            )}
+          </div>
+        )}
+      </a>
+    ) : (
+      <div class='promo-image__container block relative'>
+        <img
+          src={image}
+          alt={alt}
+          class='promo-image__img w-full h-auto object-cover'
+          loading='lazy'
+        />
+        {(title || description) && (
+          <div class='promo-image__content p-4'>
+            {title && (
+              <h4 class='promo-image__title text-gray-900 font-semibold text-base mb-2'>{title}</h4>
+            )}
+            {description && (
+              <p class='promo-image__description text-gray-600 text-sm'>{description}</p>
+            )}
+          </div>
+        )}
+      </div>
+    )}
+  </div>
+) : (
+  <!-- Fallback: Empty promo space -->
+  <div class={`promo-image promo-image--empty bg-gray-50 rounded-lg border border-dashed border-gray-200 overflow-hidden ${className}`}>
+    <div class='promo-image__placeholder flex flex-col items-center justify-center py-8 px-4 text-center'>
+      <svg class='w-8 h-8 text-gray-400' fill='currentColor' viewBox='0 0 20 20'>
+        <path fill-rule='evenodd' d='M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z' clip-rule='evenodd'></path>
+      </svg>
+      <span class='text-sm text-gray-500'>推廣位置</span>
+    </div>
+  </div>
+)}
+
+<script>
+  // Analytics tracking for promo image clicks
+  document.addEventListener("DOMContentLoaded", () => {
+    const promoLinks = document.querySelectorAll(
+      ".promo-image__link[data-tracking-id]"
+    );
+
+    promoLinks.forEach((link) => {
+      link.addEventListener("click", function (e) {
+        const trackingId = this.getAttribute("data-tracking-id");
+        if (trackingId && typeof gtag !== "undefined") {
+          gtag("event", "click", {
+            event_category: "promo",
+            event_label: trackingId,
+          });
+        }
+      });
+    });
+  });
+</script>

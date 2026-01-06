@@ -1,7 +1,42 @@
-import type { R2Bucket } from '@cloudflare/workers-types';
+import type { R2Bucket } from "@cloudflare/workers-types";
+
+type UploadedFileResult = {
+  key: string;
+  url: string;
+  size: number;
+  contentType: string;
+};
+
+type UploadOptions = {
+  contentType?: string;
+  metadata?: Record<string, string>;
+  cacheControl?: string;
+};
 
 export class StorageManager {
-  constructor(private r2: R2Bucket) {}
+  private publicUrl: string;
+  private static readonly DEFAULT_CACHE_CONTROL =
+    "public, max-age=31536000, immutable";
+
+  constructor(
+    private r2: R2Bucket,
+    publicUrl: string
+  ) {
+    if (!publicUrl) {
+      throw new Error(
+        "R2 public URL is not configured. Set R2_PUBLIC_URL in your environment."
+      );
+    }
+    this.publicUrl = StorageManager.normalizeBase(publicUrl);
+  }
+
+  private static normalizeBase(url: string): string {
+    return url.replace(/\/+$/, "");
+  }
+
+  getPublicUrl(): string {
+    return this.publicUrl;
+  }
 
   /**
    * Upload a file to R2 storage
@@ -9,11 +44,8 @@ export class StorageManager {
   async uploadFile(
     key: string,
     file: File | ArrayBuffer | Uint8Array | string,
-    options: {
-      contentType?: string;
-      metadata?: Record<string, string>;
-    } = {}
-  ): Promise<{ key: string; url: string; size: number }> {
+    options: UploadOptions = {}
+  ): Promise<UploadedFileResult> {
     try {
       let body: ArrayBuffer | Uint8Array | string;
       let contentType = options.contentType;
@@ -34,19 +66,23 @@ export class StorageManager {
         size = new TextEncoder().encode(file).length;
       }
 
+      const resolvedContentType = contentType || "application/octet-stream";
+
       await this.r2.put(key, body, {
         httpMetadata: {
-          contentType: contentType || 'application/octet-stream',
+          contentType: resolvedContentType,
+          cacheControl:
+            options.cacheControl || StorageManager.DEFAULT_CACHE_CONTROL,
         },
         customMetadata: options.metadata,
       });
 
-      const url = `https://images.blackliving.com/${key}`;
+      const url = this.getFileUrl(key);
 
-      return { key, url, size };
+      return { key, url, size, contentType: resolvedContentType };
     } catch (error) {
-      console.error('Storage upload error:', error);
-      throw new Error('Failed to upload file');
+      console.error("Storage upload error:", error);
+      throw new Error("Failed to upload file");
     }
   }
 
@@ -54,8 +90,12 @@ export class StorageManager {
    * Upload multiple files
    */
   async uploadFiles(
-    files: Array<{ key: string; file: File | ArrayBuffer | Uint8Array | string; options?: any }>
-  ): Promise<Array<{ key: string; url: string; size: number }>> {
+    files: Array<{
+      key: string;
+      file: File | ArrayBuffer | Uint8Array | string;
+      options?: UploadOptions;
+    }>
+  ): Promise<Array<UploadedFileResult>> {
     const uploadPromises = files.map(({ key, file, options = {} }) =>
       this.uploadFile(key, file, options)
     );
@@ -70,8 +110,8 @@ export class StorageManager {
     try {
       await this.r2.delete(key);
     } catch (error) {
-      console.error('Storage delete error:', error);
-      throw new Error('Failed to delete file');
+      console.error("Storage delete error:", error);
+      throw new Error("Failed to delete file");
     }
   }
 
@@ -79,7 +119,7 @@ export class StorageManager {
    * Delete multiple files
    */
   async deleteFiles(keys: string[]): Promise<void> {
-    const deletePromises = keys.map(key => this.deleteFile(key));
+    const deletePromises = keys.map((key) => this.deleteFile(key));
     await Promise.all(deletePromises);
   }
 
@@ -100,12 +140,13 @@ export class StorageManager {
       return {
         key,
         size: object.size,
-        contentType: object.httpMetadata?.contentType || 'application/octet-stream',
+        contentType:
+          object.httpMetadata?.contentType || "application/octet-stream",
         lastModified: object.uploaded,
         metadata: object.customMetadata,
       };
     } catch (error) {
-      console.error('Storage get file info error:', error);
+      console.error("Storage get file info error:", error);
       return null;
     }
   }
@@ -114,41 +155,61 @@ export class StorageManager {
    * List files with optional prefix
    */
   async listFiles(
-    prefix?: string,
-    limit = 100
-  ): Promise<
-    Array<{
+    options: {
+      prefix?: string;
+      limit?: number;
+      cursor?: string;
+      startAfter?: string;
+    } = {}
+  ): Promise<{
+    items: Array<{
       key: string;
       size: number;
       lastModified: Date;
-    }>
-  > {
+      contentType?: string;
+      metadata?: Record<string, string>;
+    }>;
+    truncated: boolean;
+    cursor?: string;
+  }> {
     try {
+      const { prefix, limit = 100, cursor, startAfter } = options;
       const result = await this.r2.list({
         prefix,
         limit,
+        cursor,
+        startAfter,
       });
 
-      return result.objects.map(obj => ({
-        key: obj.key,
-        size: obj.size,
-        lastModified: obj.uploaded,
-      }));
+      return {
+        items: result.objects.map((obj) => ({
+          key: obj.key,
+          size: obj.size,
+          lastModified: obj.uploaded,
+          contentType: obj.httpMetadata?.contentType,
+          metadata: obj.customMetadata,
+        })),
+        truncated: result.truncated,
+        cursor: result.cursor,
+      };
     } catch (error) {
-      console.error('Storage list files error:', error);
-      return [];
+      console.error("Storage list files error:", error);
+      return {
+        items: [],
+        truncated: false,
+      };
     }
   }
 
   /**
    * Generate a unique file key with timestamp and random suffix
    */
-  static generateFileKey(originalName: string, folder = 'uploads'): string {
+  static generateFileKey(originalName: string, folder = "uploads"): string {
     const timestamp = Date.now();
     const randomSuffix = Math.random().toString(36).substring(2, 8);
-    const extension = originalName.split('.').pop();
-    const nameWithoutExt = originalName.replace(/\.[^/.]+$/, '');
-    const sanitizedName = nameWithoutExt.replace(/[^a-zA-Z0-9-_]/g, '-');
+    const extension = originalName.split(".").pop();
+    const nameWithoutExt = originalName.replace(/\.[^/.]+$/, "");
+    const sanitizedName = nameWithoutExt.replace(/[^a-zA-Z0-9-_]/g, "-");
 
     return `${folder}/${timestamp}-${sanitizedName}-${randomSuffix}.${extension}`;
   }
@@ -158,13 +219,13 @@ export class StorageManager {
    */
   static validateFile(
     file: File,
-    allowedTypes: string[] = ['image/jpeg', 'image/png', 'image/webp'],
+    allowedTypes: string[] = ["image/jpeg", "image/png", "image/webp"],
     maxSize = 5 * 1024 * 1024 // 5MB
   ): { valid: boolean; error?: string } {
     if (!allowedTypes.includes(file.type)) {
       return {
         valid: false,
-        error: `File type ${file.type} is not allowed. Allowed types: ${allowedTypes.join(', ')}`,
+        error: `File type ${file.type} is not allowed. Allowed types: ${allowedTypes.join(", ")}`,
       };
     }
 
@@ -181,28 +242,53 @@ export class StorageManager {
   /**
    * Get file URL for a given key
    */
-  static getFileUrl(key: string): string {
-    return `https://images.blackliving.com/${key}`;
+  getFileUrl(key: string): string {
+    return `${this.publicUrl}/${key}`;
   }
 
   /**
    * Extract key from URL
    */
-  static getKeyFromUrl(url: string): string {
-    return url.replace('https://images.blackliving.com/', '');
+  getKeyFromUrl(url: string): string {
+    const base = `${this.publicUrl}/`;
+    if (url.startsWith(base)) {
+      return StorageManager.stripDeliveryPrefix(url.slice(base.length));
+    }
+    try {
+      const parsed = new URL(url);
+      return StorageManager.stripDeliveryPrefix(
+        parsed.pathname.replace(/^\/+/, "")
+      );
+    } catch {
+      return StorageManager.stripDeliveryPrefix(url.replace(/^\/+/, ""));
+    }
+  }
+
+  private static stripDeliveryPrefix(key: string): string {
+    return key.startsWith("media/") ? key.slice("media/".length) : key;
   }
 }
 
 // Helper function to create storage manager instance
-export function createStorageManager(r2: R2Bucket): StorageManager {
-  return new StorageManager(r2);
+export function createStorageManager(
+  r2: R2Bucket,
+  publicUrl: string
+): StorageManager {
+  return new StorageManager(r2, publicUrl);
 }
 
 // File type constants
 export const FileTypes = {
-  IMAGES: ['image/jpeg', 'image/png', 'image/webp', 'image/gif'],
-  DOCUMENTS: ['application/pdf', 'text/plain', 'application/msword'],
-  ALL: ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'application/pdf', 'text/plain'],
+  IMAGES: ["image/jpeg", "image/png", "image/webp", "image/gif"],
+  DOCUMENTS: ["application/pdf", "text/plain", "application/msword"],
+  ALL: [
+    "image/jpeg",
+    "image/png",
+    "image/webp",
+    "image/gif",
+    "application/pdf",
+    "text/plain",
+  ],
 } as const;
 
 // File size constants (in bytes)

@@ -1,8 +1,8 @@
-import { Context, Next } from 'hono';
-import { HTTPException } from 'hono/http-exception';
-import { secureHeaders } from 'hono/secure-headers';
-import { rateLimiter } from 'hono-rate-limiter';
-import { z } from 'zod';
+import type { Context, Next } from "hono";
+import { HTTPException } from "hono/http-exception";
+import { secureHeaders } from "hono/secure-headers";
+import { rateLimiter } from "hono-rate-limiter";
+import type { z } from "zod";
 
 export interface SecurityConfig {
   rateLimiting: {
@@ -23,16 +23,32 @@ export const defaultSecurityConfig: SecurityConfig = {
     limit: 100, // requests per window
   },
   requestSizeLimit: 10 * 1024 * 1024, // 10MB
-  allowedOrigins: [
-    'http://localhost:4321',
-    'http://localhost:5173',
-    'http://localhost:8787',
-    'https://blackliving.com',
-    'https://admin.blackliving.com',
-  ],
+  allowedOrigins: [], // Will be populated from environment variables
   csrfProtection: true,
   suspiciousActivityThreshold: 50,
 };
+
+/**
+ * Get allowed origins from environment variables
+ */
+function getAllowedOrigins(c: Context): string[] {
+  const allowedOrigins = c.env.ALLOWED_ORIGINS;
+
+  if (!allowedOrigins) {
+    // Fallback for development - include all common dev ports
+    console.warn("ALLOWED_ORIGINS not set, using development fallback");
+    return [
+      "http://localhost:4321", // Astro web app
+      "http://localhost:5173", // React admin app
+      "http://localhost:8787", // API worker
+    ];
+  }
+
+  return allowedOrigins
+    .split(",")
+    .map((origin: string) => origin.trim())
+    .filter((origin: string) => origin.length > 0);
+}
 
 /**
  * Comprehensive security middleware for API routes
@@ -41,17 +57,24 @@ export function createSecurityMiddleware(config: Partial<SecurityConfig> = {}) {
   const securityConfig = { ...defaultSecurityConfig, ...config };
 
   return async (c: Context, next: Next) => {
-    const isDevelopment = c.env.NODE_ENV === 'development';
+    // Get environment-specific allowed origins
+    const allowedOrigins = getAllowedOrigins(c);
+    securityConfig.allowedOrigins = allowedOrigins;
+    const isDevelopment = c.env.NODE_ENV === "development";
 
     // Define CSP based on environment
     const csp = isDevelopment
       ? {
           defaultSrc: ["'self'"],
-          styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
-          fontSrc: ["'self'", 'https://fonts.gstatic.com'],
-          imgSrc: ["'self'", 'data:', 'https:', 'blob:', 'http://localhost:*'],
-          scriptSrc: ["'self'", "'unsafe-eval'", 'http://localhost:*'],
-          connectSrc: ["'self'", 'http://localhost:*', 'ws://localhost:*'],
+          styleSrc: [
+            "'self'",
+            "'unsafe-inline'",
+            "https://fonts.googleapis.com",
+          ],
+          fontSrc: ["'self'", "https://fonts.gstatic.com"],
+          imgSrc: ["'self'", "data:", "https:", "blob:", "http://localhost:*"],
+          scriptSrc: ["'self'", "'unsafe-eval'", "http://localhost:*"],
+          connectSrc: ["'self'", "http://localhost:*", "ws://localhost:*"],
           frameSrc: ["'none'"],
           objectSrc: ["'none'"],
           baseUri: ["'self'"],
@@ -59,11 +82,15 @@ export function createSecurityMiddleware(config: Partial<SecurityConfig> = {}) {
         }
       : {
           defaultSrc: ["'self'"],
-          styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
-          fontSrc: ["'self'", 'https://fonts.gstatic.com'],
-          imgSrc: ["'self'", 'data:', 'https:', 'blob:'],
+          styleSrc: [
+            "'self'",
+            "'unsafe-inline'",
+            "https://fonts.googleapis.com",
+          ],
+          fontSrc: ["'self'", "https://fonts.gstatic.com"],
+          imgSrc: ["'self'", "data:", "https:", "blob:"],
           scriptSrc: ["'self'", "'unsafe-eval'"], // unsafe-eval needed for development
-          connectSrc: ["'self'", 'https://api.blackliving.com'],
+          connectSrc: ["'self'", "https://api.blackliving.com"],
           frameSrc: ["'none'"],
           objectSrc: ["'none'"],
           baseUri: ["'self'"],
@@ -74,29 +101,63 @@ export function createSecurityMiddleware(config: Partial<SecurityConfig> = {}) {
     await secureHeaders({
       contentSecurityPolicy: csp,
       crossOriginEmbedderPolicy: false, // Disable for Cloudflare compatibility
-      crossOriginOpenerPolicy: 'same-origin',
-      crossOriginResourcePolicy: 'cross-origin',
-      originAgentCluster: '?1',
-      referrerPolicy: 'strict-origin-when-cross-origin',
-      strictTransportSecurity: 'max-age=31536000; includeSubDomains',
-      xContentTypeOptions: 'nosniff',
-      xDnsPrefetchControl: 'off',
-      xDownloadOptions: 'noopen',
-      xFrameOptions: 'DENY',
-      xPermittedCrossDomainPolicies: 'none',
-      xXssProtection: '1; mode=block',
+      crossOriginOpenerPolicy: "same-origin",
+      crossOriginResourcePolicy: "cross-origin",
+      originAgentCluster: "?1",
+      referrerPolicy: "strict-origin-when-cross-origin",
+      strictTransportSecurity: "max-age=31536000; includeSubDomains",
+      xContentTypeOptions: "nosniff",
+      xDnsPrefetchControl: "off",
+      xDownloadOptions: "noopen",
+      xFrameOptions: "DENY",
+      xPermittedCrossDomainPolicies: "none",
+      xXssProtection: "1; mode=block",
+      // Explicitly configure Permissions-Policy to avoid unsupported features
+      permissionsPolicy: {
+        accelerometer: [],
+        "ambient-light-sensor": [],
+        autoplay: [],
+        battery: [],
+        camera: [],
+        "display-capture": [],
+        "document-domain": [],
+        "encrypted-media": [],
+        "execution-while-not-rendered": [],
+        "execution-while-out-of-viewport": [],
+        fullscreen: ["self"],
+        geolocation: [],
+        gyroscope: [],
+        "layout-animations": [],
+        "legacy-image-formats": [],
+        magnetometer: [],
+        microphone: [],
+        midi: [],
+        "navigation-override": [],
+        "oversized-images": [],
+        payment: [],
+        "picture-in-picture": [],
+        "publickey-credentials-get": [],
+        "sync-xhr": [],
+        usb: [],
+        "wake-lock": [],
+        xr: [],
+        // Explicitly exclude 'browsing-topics' to avoid browser warnings
+      },
     })(c, next);
 
     // Request size validation
-    const contentLength = c.req.header('content-length');
-    if (contentLength && parseInt(contentLength) > securityConfig.requestSizeLimit) {
+    const contentLength = c.req.header("content-length");
+    if (
+      contentLength &&
+      Number.parseInt(contentLength) > securityConfig.requestSizeLimit
+    ) {
       throw new HTTPException(413, {
         message: `Request size exceeds limit of ${securityConfig.requestSizeLimit / 1024 / 1024}MB`,
       });
     }
 
     // Validate request headers for suspicious patterns
-    const userAgent = c.req.header('user-agent');
+    const userAgent = c.req.header("user-agent");
     const suspiciousPatterns = [
       /sqlmap/i,
       /nmap/i,
@@ -109,9 +170,12 @@ export function createSecurityMiddleware(config: Partial<SecurityConfig> = {}) {
       /spider/i,
     ];
 
-    if (userAgent && suspiciousPatterns.some(pattern => pattern.test(userAgent))) {
+    if (
+      userAgent &&
+      suspiciousPatterns.some((pattern) => pattern.test(userAgent))
+    ) {
       console.warn(`Suspicious user agent detected: ${userAgent}`);
-      throw new HTTPException(403, { message: 'Access denied' });
+      throw new HTTPException(403, { message: "Access denied" });
     }
 
     // Block common attack patterns in URL
@@ -128,9 +192,9 @@ export function createSecurityMiddleware(config: Partial<SecurityConfig> = {}) {
       /javascript:/i, // XSS attempts
     ];
 
-    if (attackPatterns.some(pattern => pattern.test(url))) {
+    if (attackPatterns.some((pattern) => pattern.test(url))) {
       console.warn(`Malicious URL pattern detected: ${url}`);
-      throw new HTTPException(403, { message: 'Access denied' });
+      throw new HTTPException(403, { message: "Access denied" });
     }
 
     await next();
@@ -140,11 +204,13 @@ export function createSecurityMiddleware(config: Partial<SecurityConfig> = {}) {
 /**
  * Rate limiting middleware with IP-based tracking
  */
-export function createRateLimitMiddleware(config: Partial<SecurityConfig['rateLimiting']> = {}) {
+export function createRateLimitMiddleware(
+  config: Partial<SecurityConfig["rateLimiting"]> = {}
+) {
   const rateLimitConfig = { ...defaultSecurityConfig.rateLimiting, ...config };
 
   return async (c: Context, next: Next) => {
-    const isDevelopment = c.env.NODE_ENV === 'development';
+    const isDevelopment = c.env.NODE_ENV === "development";
 
     if (isDevelopment) {
       return next();
@@ -153,19 +219,19 @@ export function createRateLimitMiddleware(config: Partial<SecurityConfig['rateLi
     return rateLimiter({
       windowMs: rateLimitConfig.windowMs,
       limit: rateLimitConfig.limit,
-      standardHeaders: 'draft-6' as const,
+      standardHeaders: "draft-6" as const,
       keyGenerator: (c: Context) => {
         // Use CF-Connecting-IP for Cloudflare, fallback to x-forwarded-for
         return (
-          c.req.header('cf-connecting-ip') ||
-          c.req.header('x-forwarded-for')?.split(',')[0] ||
-          c.req.header('x-real-ip') ||
-          'unknown'
+          c.req.header("cf-connecting-ip") ||
+          c.req.header("x-forwarded-for")?.split(",")[0] ||
+          c.req.header("x-real-ip") ||
+          "unknown"
         );
       },
       skip: (c: Context) => {
         // Skip rate limiting for health checks
-        return c.req.path === '/' || c.req.path === '/health';
+        return c.req.path === "/" || c.req.path === "/health";
       },
       // Remove onLimitReached as it might not be supported
       // Rate limit errors will be handled by default behavior
@@ -199,9 +265,9 @@ export function createAuthRateLimitMiddleware() {
 export function createInputSanitizationMiddleware() {
   return async (c: Context, next: Next) => {
     // Get request body if present
-    const contentType = c.req.header('content-type');
+    const contentType = c.req.header("content-type");
 
-    if (contentType?.includes('application/json')) {
+    if (contentType?.includes("application/json")) {
       try {
         const body = await c.req.json();
 
@@ -212,7 +278,7 @@ export function createInputSanitizationMiddleware() {
         c.req.json = () => Promise.resolve(sanitizedBody);
       } catch (error) {
         // Invalid JSON
-        throw new HTTPException(400, { message: 'Invalid JSON format' });
+        throw new HTTPException(400, { message: "Invalid JSON format" });
       }
     }
 
@@ -224,7 +290,7 @@ export function createInputSanitizationMiddleware() {
  * Recursively sanitize object properties
  */
 function sanitizeObject(obj: any): any {
-  if (typeof obj === 'string') {
+  if (typeof obj === "string") {
     return sanitizeString(obj);
   }
 
@@ -232,7 +298,7 @@ function sanitizeObject(obj: any): any {
     return obj.map(sanitizeObject);
   }
 
-  if (obj && typeof obj === 'object') {
+  if (obj && typeof obj === "object") {
     const sanitized: any = {};
     for (const [key, value] of Object.entries(obj)) {
       sanitized[key] = sanitizeObject(value);
@@ -248,11 +314,11 @@ function sanitizeObject(obj: any): any {
  */
 function sanitizeString(input: string): string {
   return input
-    .replace(/<script[^>]*>.*?<\/script>/gi, '') // Remove script tags
-    .replace(/<[^>]*>/g, '') // Remove HTML tags
-    .replace(/javascript:/gi, '') // Remove javascript: protocol
-    .replace(/on\w+\s*=/gi, '') // Remove event handlers
-    .replace(/\0/g, '') // Remove null bytes
+    .replace(/<script[^>]*>.*?<\/script>/gi, "") // Remove script tags
+    .replace(/<[^>]*>/g, "") // Remove HTML tags
+    .replace(/javascript:/gi, "") // Remove javascript: protocol
+    .replace(/on\w+\s*=/gi, "") // Remove event handlers
+    .replace(/\0/g, "") // Remove null bytes
     .trim();
 }
 
@@ -261,7 +327,7 @@ function sanitizeString(input: string): string {
  */
 export function createCSRFMiddleware() {
   return async (c: Context, next: Next) => {
-    const isDevelopment = c.env.NODE_ENV === 'development';
+    const isDevelopment = c.env.NODE_ENV === "development";
     if (isDevelopment) {
       return next();
     }
@@ -269,35 +335,39 @@ export function createCSRFMiddleware() {
     const method = c.req.method;
 
     // Only check CSRF for state-changing operations
-    if (!['POST', 'PUT', 'DELETE', 'PATCH'].includes(method)) {
+    if (!["POST", "PUT", "DELETE", "PATCH"].includes(method)) {
       await next();
       return;
     }
 
     // Skip CSRF for API endpoints with valid Bearer tokens
-    const authHeader = c.req.header('authorization');
-    if (authHeader?.startsWith('Bearer ')) {
+    const authHeader = c.req.header("authorization");
+    if (authHeader?.startsWith("Bearer ")) {
       await next();
       return;
     }
 
     // For form submissions, check CSRF token
-    const origin = c.req.header('origin');
-    const referer = c.req.header('referer');
+    const origin = c.req.header("origin");
+    const referer = c.req.header("referer");
 
-    if (!origin && !referer) {
-      throw new HTTPException(403, { message: 'Missing origin/referer header' });
+    if (!(origin || referer)) {
+      throw new HTTPException(403, {
+        message: "Missing origin/referer header",
+      });
     }
 
-    const allowedOrigins = defaultSecurityConfig.allowedOrigins;
+    const allowedOrigins = getAllowedOrigins(c);
     const isValidOrigin =
       origin &&
       allowedOrigins.some(
-        allowed => origin === allowed || origin.endsWith(allowed.replace(/^https?:\/\//, ''))
+        (allowed) =>
+          origin === allowed ||
+          origin.endsWith(allowed.replace(/^https?:\/\//, ""))
       );
 
     if (!isValidOrigin) {
-      throw new HTTPException(403, { message: 'Invalid origin' });
+      throw new HTTPException(403, { message: "Invalid origin" });
     }
 
     await next();
@@ -323,11 +393,11 @@ export function createIPBlockingMiddleware() {
       }
     });
 
-    ipsToDelete.forEach(ip => suspiciousIPs.delete(ip));
+    ipsToDelete.forEach((ip) => suspiciousIPs.delete(ip));
   };
 
   return async (c: Context, next: Next) => {
-    const isDevelopment = c.env.NODE_ENV === 'development';
+    const isDevelopment = c.env.NODE_ENV === "development";
     if (isDevelopment) {
       return next();
     }
@@ -338,9 +408,9 @@ export function createIPBlockingMiddleware() {
     }
 
     const ip =
-      c.req.header('cf-connecting-ip') ||
-      c.req.header('x-forwarded-for')?.split(',')[0] ||
-      'unknown';
+      c.req.header("cf-connecting-ip") ||
+      c.req.header("x-forwarded-for")?.split(",")[0] ||
+      "unknown";
 
     const suspiciousData = suspiciousIPs.get(ip);
 
@@ -350,12 +420,11 @@ export function createIPBlockingMiddleware() {
       if (timeSinceFirstViolation < BLOCK_DURATION) {
         console.warn(`Blocked IP due to suspicious activity: ${ip}`);
         throw new HTTPException(403, {
-          message: 'Access denied due to suspicious activity',
+          message: "Access denied due to suspicious activity",
         });
-      } else {
-        // Reset after block duration
-        suspiciousIPs.delete(ip);
       }
+      // Reset after block duration
+      suspiciousIPs.delete(ip);
     }
 
     try {
@@ -363,7 +432,10 @@ export function createIPBlockingMiddleware() {
     } catch (error) {
       // Track 4xx and 5xx errors as potential suspicious activity
       if (error instanceof HTTPException && error.status >= 400) {
-        const current = suspiciousIPs.get(ip) || { count: 0, firstSeen: Date.now() };
+        const current = suspiciousIPs.get(ip) || {
+          count: 0,
+          firstSeen: Date.now(),
+        };
         current.count += 1;
 
         if (current.count === 1) {
@@ -373,7 +445,9 @@ export function createIPBlockingMiddleware() {
         suspiciousIPs.set(ip, current);
 
         if (current.count >= MAX_VIOLATIONS) {
-          console.warn(`IP marked as suspicious: ${ip} (${current.count} violations)`);
+          console.warn(
+            `IP marked as suspicious: ${ip} (${current.count} violations)`
+          );
         }
       }
 
@@ -387,20 +461,20 @@ export function createIPBlockingMiddleware() {
  */
 export function createValidationMiddleware<T>(
   schema: z.ZodSchema<T>,
-  target: 'json' | 'query' | 'param' = 'json'
+  target: "json" | "query" | "param" = "json"
 ) {
   return async (c: Context, next: Next) => {
     try {
       let data: any;
 
       switch (target) {
-        case 'json':
+        case "json":
           data = await c.req.json();
           break;
-        case 'query':
+        case "query":
           data = c.req.query();
           break;
-        case 'param':
+        case "param":
           data = c.req.param();
           break;
       }
@@ -408,13 +482,13 @@ export function createValidationMiddleware<T>(
       const result = schema.safeParse(data);
 
       if (!result.success) {
-        const errors = result.error.errors.map(err => ({
-          path: err.path.join('.'),
+        const errors = result.error.errors.map((err) => ({
+          path: err.path.join("."),
           message: err.message,
         }));
 
         throw new HTTPException(400, {
-          message: 'Validation failed',
+          message: "Validation failed",
           cause: { errors },
         });
       }

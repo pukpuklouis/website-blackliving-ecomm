@@ -1,0 +1,127 @@
+---
+import type { BlogPost, PostCategory } from "@blackliving/types";
+
+export interface Props {
+  // Make post optional for category-only breadcrumbs
+  post?: Pick<BlogPost, "title">;
+  // Allow flexible category input - can be full PostCategory or simple object
+  category?:
+    | PostCategory
+    | { name: string; slug: string; color?: string; icon?: string }
+    | string
+    | null;
+}
+
+const { post, category } = Astro.props as Props;
+
+type NormalizedCategory = {
+  slug: string;
+  name: string;
+  color?: string;
+  icon?: string;
+} | null;
+
+function normalizeCategory(input: any): NormalizedCategory {
+  if (!input) return null;
+  if (typeof input === "object") {
+    const slug =
+      input.slug ||
+      (typeof input.name === "string"
+        ? input.name.toLowerCase().replace(/\s+/g, "-")
+        : undefined);
+    const name = input.name || input.slug || "";
+    if (!(slug && name)) return null;
+    return { slug, name, color: input.color, icon: input.icon };
+  }
+  if (typeof input === "string") {
+    const raw = input.trim();
+    // Exact matches for all 3 categories (prioritize these)
+    if (
+      [
+        "customer-reviews",
+        "顧客好評",
+        "Customer Reviews",
+        "部落格推薦",
+      ].includes(raw)
+    ) {
+      return { slug: "customer-reviews", name: "部落格推薦" };
+    }
+    if (
+      ["simmons-knowledge", "席夢思小知識", "Simmons Knowledge"].includes(raw)
+    ) {
+      return { slug: "simmons-knowledge", name: "席夢思小知識" };
+    }
+    if (["blog-post", "好文分享", "部落格文章", "Blog"].includes(raw)) {
+      return { slug: "blog-post", name: "好文分享" };
+    }
+    if (raw.startsWith("cat_")) {
+      let slug: string;
+      let name: string;
+      if (raw === "cat_003") {
+        slug = "simmons-knowledge";
+        name = "席夢思小知識";
+      } else if (raw === "cat_002") {
+        slug = "customer-reviews";
+        name = "部落格推薦";
+      } else if (raw === "cat_001") {
+        slug = "blog-post";
+        name = "好文分享";
+      } else {
+        slug = raw.slice(4);
+        name = raw;
+      }
+      return { slug, name };
+    }
+    // Generic fallback: slugify and use raw as name (or default)
+    const slug = raw.toLowerCase().replace(/\s+/g, "-");
+    return { slug, name: raw || "好文分享" };
+  }
+  return null;
+}
+
+const normalized = normalizeCategory(category);
+const isBlogCategory =
+  normalized &&
+  ["blog-post", "customer-reviews", "simmons-knowledge"].includes(
+    normalized.slug
+  );
+const basePath = normalized
+  ? `${isBlogCategory ? "/blog" : "/shop"}/${normalized.slug}`
+  : "";
+---
+
+<nav class="blog-breadcrumb mb-8" aria-label="麵包屑">
+  <ol class="flex items-center space-x-2 text-sm text-gray-500">
+    <li>
+      <a href="/" class="hover:text-gray-700">首頁</a>
+    </li>
+    {
+      normalized && (
+        <>
+          <li>/</li>
+          <li>
+            {post ? (
+              <a href={`${basePath}`} class="hover:text-gray-700">
+                {normalized.name}
+              </a>
+            ) : (
+              <span class="font-semibold text-gray-900" aria-current="page">
+                {normalized.name}
+              </span>
+            )}
+          </li>
+        </>
+      )
+    }
+    {
+      post && (
+        <>
+          <li>/</li>
+          <li class="text-gray-900 font-semibold" aria-current="page">
+            {post.title}
+          </li>
+        </>
+      )
+    }
+  </ol>
+</nav>

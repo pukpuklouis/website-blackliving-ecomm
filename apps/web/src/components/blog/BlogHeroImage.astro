@@ -1,0 +1,31 @@
+---
+export interface Props {
+  image?: string;
+  alt: string;
+  category?: string;
+  class?: string;
+}
+
+const { image, alt, category = "", class: className = "" } = Astro.props;
+---
+
+{image ? (
+  <section class={`w-full ${className}`}>
+    <div class={`relative overflow-hidden ${category === 'blogger-testimonial' ? 'w-4xl aspect-[20/11] rounded-xl mx-auto mt-4 shadow-lg' : 'w-full h-64 md:h-96 lg:h-[32rem]'}`}>
+      <img
+        src={image}
+        alt={alt}
+        class='w-full h-full object-cover'
+        loading='eager'
+      />
+      <div class='absolute inset-0 w-full h-full bg-gradient-to-t from-black/20 to-transparent z-20'></div>
+    </div>
+  </section>
+) : (
+  <!-- Fallback: Empty hero space with gradient background -->
+  <section class={`blog-hero-image w-full ${className}`}>
+    <div class='relative w-full h-32 md:h-48 bg-gradient-to-r from-blue-50 to-indigo-50'>
+      <div class='absolute inset-0 bg-gradient-to-t from-white/10 to-transparent'></div>
+    </div>
+  </section>
+)}

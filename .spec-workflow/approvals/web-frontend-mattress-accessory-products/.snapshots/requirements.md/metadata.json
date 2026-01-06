@@ -1,0 +1,14 @@
+{
+  "filePath": ".spec-workflow/specs/web-frontend-mattress-accessory-products/requirements.md",
+  "currentVersion": 1,
+  "snapshots": [
+    {
+      "version": 1,
+      "filename": "snapshot-001.json",
+      "timestamp": "2025-11-03T15:06:25.558Z",
+      "trigger": "initial",
+      "approvalId": "approval_1762182385548_t3hpkl08p",
+      "approvalTitle": "Web Frontend Mattress & Accessory Products Requirements"
+    }
+  ]
+}

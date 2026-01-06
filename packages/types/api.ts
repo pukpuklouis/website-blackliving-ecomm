@@ -1,4 +1,10 @@
 // API Response types
+export interface ApiError {
+  code: string;
+  message: string;
+  details?: any;
+}
+
 export interface ApiResponse<T = any> {
   success: boolean;
   data?: T;
@@ -36,10 +42,14 @@ export interface CreateProductRequest {
   name: string;
   slug: string;
   description: string;
-  category: 'simmons-black' | 'accessories' | 'us-imports';
+  category: string;
+  productType?: string;
   images: UploadedFile[];
   variants: ProductVariant[];
   features: string[];
+  featuresMarkdown?: string;
+  accessoryType?: "standalone" | "accessory" | "bundle";
+  parentProductId?: string;
   specifications: Record<string, any>;
   inStock: boolean;
   featured: boolean;
@@ -50,6 +60,29 @@ export interface CreateProductRequest {
 
 export interface UpdateProductRequest extends Partial<CreateProductRequest> {
   id: string;
+}
+
+export interface ProductCategoryInput {
+  slug: string;
+  title: string;
+  description: string;
+  series: string;
+  brand: string;
+  features: string[];
+  seoKeywords?: string;
+  urlPath: string;
+  isActive: boolean;
+  sortOrder: number;
+}
+
+export interface ProductCategory extends ProductCategoryInput {
+  id: string;
+  createdAt: string;
+  updatedAt: string;
+  stats?: {
+    productCount: number;
+    inStockCount: number;
+  };
 }
 
 export interface ProductVariant {
@@ -69,13 +102,14 @@ export interface CreatePostRequest {
   slug: string;
   description: string;
   content: string;
-  status: 'draft' | 'published' | 'archived';
+  status: "draft" | "published" | "archived";
   featured: boolean;
   tags: string[];
   featuredImage?: UploadedFile;
   seoTitle?: string;
   seoDescription?: string;
   publishedAt?: string;
+  sortOrder?: number;
 }
 
 export interface UpdatePostRequest extends Partial<CreatePostRequest> {
@@ -84,14 +118,20 @@ export interface UpdatePostRequest extends Partial<CreatePostRequest> {
 
 export interface UpdateOrderRequest {
   id: string;
-  status?: 'pending' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
+  status?:
+    | "pending"
+    | "confirmed"
+    | "processing"
+    | "shipped"
+    | "delivered"
+    | "cancelled";
   notes?: string;
   trackingNumber?: string;
 }
 
 export interface UpdateAppointmentRequest {
   id: string;
-  status?: 'pending' | 'confirmed' | 'completed' | 'cancelled';
+  status?: "pending" | "confirmed" | "completed" | "cancelled";
   confirmedDateTime?: string;
   notes?: string;
 }

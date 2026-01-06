@@ -147,7 +147,7 @@ export function ChartAreaInteractive() {
     }
   }, [isMobile]);
 
-  const filteredData = chartData.filter(item => {
+  const filteredData = chartData.filter((item) => {
     const date = new Date(item.date);
     const referenceDate = new Date('2024-06-30');
     let daysToSubtract = 90;
@@ -223,7 +223,7 @@ export function ChartAreaInteractive() {
               axisLine={false}
               tickMargin={8}
               minTickGap={32}
-              tickFormatter={value => {
+              tickFormatter={(value) => {
                 const date = new Date(value);
                 return date.toLocaleDateString('en-US', {
                   month: 'short',
@@ -235,7 +235,7 @@ export function ChartAreaInteractive() {
               cursor={false}
               content={
                 <ChartTooltipContent
-                  labelFormatter={value => {
+                  labelFormatter={(value) => {
                     return new Date(value).toLocaleDateString('en-US', {
                       month: 'short',
                       day: 'numeric',

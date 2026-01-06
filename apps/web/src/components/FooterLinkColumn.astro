@@ -1,0 +1,29 @@
+---
+interface Link {
+  text: string;
+  url: string;
+}
+interface Props {
+  title: string;
+  links: Link[];
+}
+const { title, links } = Astro.props;
+---
+
+<div class="text-center md:text-left">
+  <h4 class="text-lg font-semibold text-stone-800 mb-3">{title}</h4>
+  <ul
+    class="flex flex-col justify-center gap-2 md:flex-col md:items-start md:gap-0 md:space-y-2"
+  >
+    {links.map((link) => (
+      <li>
+        <a
+          href={link.url}
+          class="text-base text-stone-600 transition-colors hover:text-stone-800 md:text-base"
+        >
+          {link.text}
+        </a>
+      </li>
+    ))}
+  </ul>
+</div>

@@ -1,0 +1,22 @@
+{
+  "testimonials": [
+    {
+      "rating": 5,
+      "source": "蝦皮買家",
+      "text": "床墊品質真的很好，價格也比專櫃便宜很多，客服回復很快速專業！",
+      "image": "/images/testimonials/blackliving-testimonial-image.webp"
+    },
+    {
+      "rating": 5,
+      "source": "Google 評論",
+      "text": "實體店面試躺後決定購買，睡了半年品質依然很好，推薦！",
+      "image": "/images/testimonials/blackliving-testimonial-image.webp"
+    },
+    {
+      "rating": 5,
+      "source": "Line 客戶",
+      "text": "從諮詢到送貨都很滿意，黑哥的服務真的沒話說！",
+      "image": "/images/testimonials/blackliving-testimonial-image.webp"
+    }
+  ]
+}

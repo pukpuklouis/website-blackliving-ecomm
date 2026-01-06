@@ -1,26 +1,31 @@
 ---
-import BaseLayout from '../layouts/BaseLayout.astro';
+import CheckoutForm from "../components/CheckoutForm";
+import BaseLayout from "../layouts/BaseLayout.astro";
+
+const title = "結帳 | Black Living";
+const description = "輸入您的付款資料以完成交易";
 ---
 
-<BaseLayout>
-  <main class='container mx-auto px-4 py-8'>
-    <div class='text-center mb-12'>
-      <h1 class='text-4xl font-bold text-gray-900 mb-4'>結帳</h1>
-      <p class='text-xl text-gray-600'>完成您的訂單</p>
+<BaseLayout {title} {description}>
+  <div
+    class="bg-primary-foreground min-h-screen pt-10 pb-20 px-4 sm:px-6 lg:px-8 transition-colors duration-300"
+  >
+    <div class="w-full max-w-7xl text-center mx-auto mb-8">
+      <h1
+        class="text-3xl font-bold tracking-tight text-gray-900 dark:text-white"
+      >
+        完成您的購買
+      </h1>
+      <p class="mt-2 text-lg text-muted-foreground">
+        輸入您的付款資料以完成交易
+      </p>
     </div>
 
-    <div class='max-w-4xl mx-auto'>
-      <div class='grid grid-cols-1 lg:grid-cols-2 gap-8'>
-        <div>
-          <h2 class='text-2xl font-semibold mb-6'>訂單資訊</h2>
-          <!-- Order summary will be implemented -->
-        </div>
-
-        <div>
-          <h2 class='text-2xl font-semibold mb-6'>配送資訊</h2>
-          <!-- Shipping form will be implemented -->
-        </div>
-      </div>
-    </div>
-  </main>
+    <CheckoutForm
+      client:only="react"
+      onSuccess={() => {
+      // Success is handled within the form logic to show the success card
+    }}
+    />
+  </div>
 </BaseLayout>

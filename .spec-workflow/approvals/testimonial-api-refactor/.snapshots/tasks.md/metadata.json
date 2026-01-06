@@ -1,0 +1,14 @@
+{
+  "filePath": ".spec-workflow/specs/testimonial-api-refactor/tasks.md",
+  "currentVersion": 1,
+  "snapshots": [
+    {
+      "version": 1,
+      "filename": "snapshot-001.json",
+      "timestamp": "2025-12-16T09:14:29.019Z",
+      "trigger": "initial",
+      "approvalId": "approval_1765876468984_rm73mrh71",
+      "approvalTitle": "Tasks Approval: Testimonial API Refactor"
+    }
+  ]
+}

@@ -1,0 +1,821 @@
+[
+  {
+    "id": "variant-1764080767866",
+    "name": "Queen",
+    "price": 19800,
+    "size": "Queen(150x200)",
+    "color": "細色(Y8301)",
+    "legs": "胡桃(6cm)"
+  },
+  {
+    "id": "variant-1764080924412",
+    "name": "King",
+    "price": 23800,
+    "size": "King(190x200)",
+    "color": "細色(Y8301)",
+    "legs": "胡桃(6cm)"
+  },
+  {
+    "id": "variant-1764080928563",
+    "name": "Cal King",
+    "price": 23800,
+    "size": "Cal King(180x210)",
+    "color": "細色(Y8301)",
+    "legs": "胡桃(6cm)"
+  },
+  {
+    "id": "variant-1764080767866",
+    "name": "Queen",
+    "price": 19800,
+    "size": "Queen(150x200)",
+    "color": "細色(Y8301)",
+    "legs": "胡桃(12cm)"
+  },
+  {
+    "id": "variant-1764080924412",
+    "name": "King",
+    "price": 23800,
+    "size": "King(190x200)",
+    "color": "細色(Y8301)",
+    "legs": "胡桃(12cm)"
+  },
+  {
+    "id": "variant-1764080928563",
+    "name": "Cal King",
+    "price": 23800,
+    "size": "Cal King(180x210)",
+    "color": "細色(Y8301)",
+    "legs": "胡桃(12cm)"
+  },
+  {
+    "id": "variant-1764080767866",
+    "name": "Queen",
+    "price": 19800,
+    "size": "Queen(150x200)",
+    "color": "細色(Y8301)",
+    "legs": "白橡(6cm)"
+  },
+  {
+    "id": "variant-1764080924412",
+    "name": "King",
+    "price": 23800,
+    "size": "King(190x200)",
+    "color": "細色(Y8301)",
+    "legs": "白橡(6cm)"
+  },
+  {
+    "id": "variant-1764080928563",
+    "name": "Cal King",
+    "price": 23800,
+    "size": "Cal King(180x210)",
+    "color": "細色(Y8301)",
+    "legs": "白橡(6cm)"
+  },
+  {
+    "id": "variant-1764080767866",
+    "name": "Queen",
+    "price": 19800,
+    "size": "Queen(150x200)",
+    "color": "細色(Y8301)",
+    "legs": "白橡(12cm)"
+  },
+  {
+    "id": "variant-1764080924412",
+    "name": "King",
+    "price": 23800,
+    "size": "King(190x200)",
+    "color": "細色(Y8301)",
+    "legs": "白橡(12cm)"
+  },
+  {
+    "id": "variant-1764080928563",
+    "name": "Cal King",
+    "price": 23800,
+    "size": "Cal King(180x210)",
+    "color": "細色(Y8301)",
+    "legs": "白橡(12cm)"
+  },
+  {
+    "id": "variant-1764080767866",
+    "name": "Queen",
+    "price": 19800,
+    "size": "Queen(150x200)",
+    "color": "細色(Y8301)",
+    "legs": "塑鋼黑(10cm)"
+  },
+  {
+    "id": "variant-1764080924412",
+    "name": "King",
+    "price": 23800,
+    "size": "King(190x200)",
+    "color": "細色(Y8301)",
+    "legs": "塑鋼黑(10cm)"
+  },
+  {
+    "id": "variant-1764080928563",
+    "name": "Cal King",
+    "price": 23800,
+    "size": "Cal King(180x210)",
+    "color": "細色(Y8301)",
+    "legs": "塑鋼黑(10cm)"
+  },
+  {
+    "id": "variant-1764080767866",
+    "name": "Queen",
+    "price": 19800,
+    "size": "Queen(150x200)",
+    "color": "靛藍色(Y8302)",
+    "legs": "胡桃(6cm)"
+  },
+  {
+    "id": "variant-1764080924412",
+    "name": "King",
+    "price": 23800,
+    "size": "King(190x200)",
+    "color": "靛藍色(Y8302)",
+    "legs": "胡桃(6cm)"
+  },
+  {
+    "id": "variant-1764080928563",
+    "name": "Cal King",
+    "price": 23800,
+    "size": "Cal King(180x210)",
+    "color": "靛藍色(Y8302)",
+    "legs": "胡桃(6cm)"
+  },
+  {
+    "id": "variant-1764080767866",
+    "name": "Queen",
+    "price": 19800,
+    "size": "Queen(150x200)",
+    "color": "靛藍色(Y8302)",
+    "legs": "胡桃(12cm)"
+  },
+  {
+    "id": "variant-1764080924412",
+    "name": "King",
+    "price": 23800,
+    "size": "King(190x200)",
+    "color": "靛藍色(Y8302)",
+    "legs": "胡桃(12cm)"
+  },
+  {
+    "id": "variant-1764080928563",
+    "name": "Cal King",
+    "price": 23800,
+    "size": "Cal King(180x210)",
+    "color": "靛藍色(Y8302)",
+    "legs": "胡桃(12cm)"
+  },
+  {
+    "id": "variant-1764080767866",
+    "name": "Queen",
+    "price": 19800,
+    "size": "Queen(150x200)",
+    "color": "靛藍色(Y8302)",
+    "legs": "白橡(6cm)"
+  },
+  {
+    "id": "variant-1764080924412",
+    "name": "King",
+    "price": 23800,
+    "size": "King(190x200)",
+    "color": "靛藍色(Y8302)",
+    "legs": "白橡(6cm)"
+  },
+  {
+    "id": "variant-1764080928563",
+    "name": "Cal King",
+    "price": 23800,
+    "size": "Cal King(180x210)",
+    "color": "靛藍色(Y8302)",
+    "legs": "白橡(6cm)"
+  },
+  {
+    "id": "variant-1764080767866",
+    "name": "Queen",
+    "price": 19800,
+    "size": "Queen(150x200)",
+    "color": "靛藍色(Y8302)",
+    "legs": "白橡(12cm)"
+  },
+  {
+    "id": "variant-1764080924412",
+    "name": "King",
+    "price": 23800,
+    "size": "King(190x200)",
+    "color": "靛藍色(Y8302)",
+    "legs": "白橡(12cm)"
+  },
+  {
+    "id": "variant-1764080928563",
+    "name": "Cal King",
+    "price": 23800,
+    "size": "Cal King(180x210)",
+    "color": "靛藍色(Y8302)",
+    "legs": "白橡(12cm)"
+  },
+  {
+    "id": "variant-1764080767866",
+    "name": "Queen",
+    "price": 19800,
+    "size": "Queen(150x200)",
+    "color": "靛藍色(Y8302)",
+    "legs": "塑鋼黑(10cm)"
+  },
+  {
+    "id": "variant-1764080924412",
+    "name": "King",
+    "price": 23800,
+    "size": "King(190x200)",
+    "color": "靛藍色(Y8302)",
+    "legs": "塑鋼黑(10cm)"
+  },
+  {
+    "id": "variant-1764080928563",
+    "name": "Cal King",
+    "price": 23800,
+    "size": "Cal King(180x210)",
+    "color": "靛藍色(Y8302)",
+    "legs": "塑鋼黑(10cm)"
+  },
+  {
+    "id": "variant-1764080767866",
+    "name": "Queen",
+    "price": 19800,
+    "size": "Queen(150x200)",
+    "color": "碧色(Y8303)",
+    "legs": "胡桃(6cm)"
+  },
+  {
+    "id": "variant-1764080924412",
+    "name": "King",
+    "price": 23800,
+    "size": "King(190x200)",
+    "color": "碧色(Y8303)",
+    "legs": "胡桃(6cm)"
+  },
+  {
+    "id": "variant-1764080928563",
+    "name": "Cal King",
+    "price": 23800,
+    "size": "Cal King(180x210)",
+    "color": "碧色(Y8303)",
+    "legs": "胡桃(6cm)"
+  },
+  {
+    "id": "variant-1764080767866",
+    "name": "Queen",
+    "price": 19800,
+    "size": "Queen(150x200)",
+    "color": "碧色(Y8303)",
+    "legs": "胡桃(12cm)"
+  },
+  {
+    "id": "variant-1764080924412",
+    "name": "King",
+    "price": 23800,
+    "size": "King(190x200)",
+    "color": "碧色(Y8303)",
+    "legs": "胡桃(12cm)"
+  },
+  {
+    "id": "variant-1764080928563",
+    "name": "Cal King",
+    "price": 23800,
+    "size": "Cal King(180x210)",
+    "color": "碧色(Y8303)",
+    "legs": "胡桃(12cm)"
+  },
+  {
+    "id": "variant-1764080767866",
+    "name": "Queen",
+    "price": 19800,
+    "size": "Queen(150x200)",
+    "color": "碧色(Y8303)",
+    "legs": "白橡(6cm)"
+  },
+  {
+    "id": "variant-1764080924412",
+    "name": "King",
+    "price": 23800,
+    "size": "King(190x200)",
+    "color": "碧色(Y8303)",
+    "legs": "白橡(6cm)"
+  },
+  {
+    "id": "variant-1764080928563",
+    "name": "Cal King",
+    "price": 23800,
+    "size": "Cal King(180x210)",
+    "color": "碧色(Y8303)",
+    "legs": "白橡(6cm)"
+  },
+  {
+    "id": "variant-1764080767866",
+    "name": "Queen",
+    "price": 19800,
+    "size": "Queen(150x200)",
+    "color": "碧色(Y8303)",
+    "legs": "白橡(12cm)"
+  },
+  {
+    "id": "variant-1764080924412",
+    "name": "King",
+    "price": 23800,
+    "size": "King(190x200)",
+    "color": "碧色(Y8303)",
+    "legs": "白橡(12cm)"
+  },
+  {
+    "id": "variant-1764080928563",
+    "name": "Cal King",
+    "price": 23800,
+    "size": "Cal King(180x210)",
+    "color": "碧色(Y8303)",
+    "legs": "白橡(12cm)"
+  },
+  {
+    "id": "variant-1764080767866",
+    "name": "Queen",
+    "price": 19800,
+    "size": "Queen(150x200)",
+    "color": "碧色(Y8303)",
+    "legs": "塑鋼黑(10cm)"
+  },
+  {
+    "id": "variant-1764080924412",
+    "name": "King",
+    "price": 23800,
+    "size": "King(190x200)",
+    "color": "碧色(Y8303)",
+    "legs": "塑鋼黑(10cm)"
+  },
+  {
+    "id": "variant-1764080928563",
+    "name": "Cal King",
+    "price": 23800,
+    "size": "Cal King(180x210)",
+    "color": "碧色(Y8303)",
+    "legs": "塑鋼黑(10cm)"
+  },
+  {
+    "id": "variant-1764080767866",
+    "name": "Queen",
+    "price": 19800,
+    "size": "Queen(150x200)",
+    "color": "琥珀色(Y8304)",
+    "legs": "胡桃(6cm)"
+  },
+  {
+    "id": "variant-1764080924412",
+    "name": "King",
+    "price": 23800,
+    "size": "King(190x200)",
+    "color": "琥珀色(Y8304)",
+    "legs": "胡桃(6cm)"
+  },
+  {
+    "id": "variant-1764080928563",
+    "name": "Cal King",
+    "price": 23800,
+    "size": "Cal King(180x210)",
+    "color": "琥珀色(Y8304)",
+    "legs": "胡桃(6cm)"
+  },
+  {
+    "id": "variant-1764080767866",
+    "name": "Queen",
+    "price": 19800,
+    "size": "Queen(150x200)",
+    "color": "琥珀色(Y8304)",
+    "legs": "胡桃(12cm)"
+  },
+  {
+    "id": "variant-1764080924412",
+    "name": "King",
+    "price": 23800,
+    "size": "King(190x200)",
+    "color": "琥珀色(Y8304)",
+    "legs": "胡桃(12cm)"
+  },
+  {
+    "id": "variant-1764080928563",
+    "name": "Cal King",
+    "price": 23800,
+    "size": "Cal King(180x210)",
+    "color": "琥珀色(Y8304)",
+    "legs": "胡桃(12cm)"
+  },
+  {
+    "id": "variant-1764080767866",
+    "name": "Queen",
+    "price": 19800,
+    "size": "Queen(150x200)",
+    "color": "琥珀色(Y8304)",
+    "legs": "白橡(6cm)"
+  },
+  {
+    "id": "variant-1764080924412",
+    "name": "King",
+    "price": 23800,
+    "size": "King(190x200)",
+    "color": "琥珀色(Y8304)",
+    "legs": "白橡(6cm)"
+  },
+  {
+    "id": "variant-1764080928563",
+    "name": "Cal King",
+    "price": 23800,
+    "size": "Cal King(180x210)",
+    "color": "琥珀色(Y8304)",
+    "legs": "白橡(6cm)"
+  },
+  {
+    "id": "variant-1764080767866",
+    "name": "Queen",
+    "price": 19800,
+    "size": "Queen(150x200)",
+    "color": "琥珀色(Y8304)",
+    "legs": "白橡(12cm)"
+  },
+  {
+    "id": "variant-1764080924412",
+    "name": "King",
+    "price": 23800,
+    "size": "King(190x200)",
+    "color": "琥珀色(Y8304)",
+    "legs": "白橡(12cm)"
+  },
+  {
+    "id": "variant-1764080928563",
+    "name": "Cal King",
+    "price": 23800,
+    "size": "Cal King(180x210)",
+    "color": "琥珀色(Y8304)",
+    "legs": "白橡(12cm)"
+  },
+  {
+    "id": "variant-1764080767866",
+    "name": "Queen",
+    "price": 19800,
+    "size": "Queen(150x200)",
+    "color": "琥珀色(Y8304)",
+    "legs": "塑鋼黑(10cm)"
+  },
+  {
+    "id": "variant-1764080924412",
+    "name": "King",
+    "price": 23800,
+    "size": "King(190x200)",
+    "color": "琥珀色(Y8304)",
+    "legs": "塑鋼黑(10cm)"
+  },
+  {
+    "id": "variant-1764080928563",
+    "name": "Cal King",
+    "price": 23800,
+    "size": "Cal King(180x210)",
+    "color": "琥珀色(Y8304)",
+    "legs": "塑鋼黑(10cm)"
+  },
+  {
+    "id": "variant-1764080767866",
+    "name": "Queen",
+    "price": 19800,
+    "size": "Queen(150x200)",
+    "color": "藏青色(Y8305)",
+    "legs": "胡桃(6cm)"
+  },
+  {
+    "id": "variant-1764080924412",
+    "name": "King",
+    "price": 23800,
+    "size": "King(190x200)",
+    "color": "藏青色(Y8305)",
+    "legs": "胡桃(6cm)"
+  },
+  {
+    "id": "variant-1764080928563",
+    "name": "Cal King",
+    "price": 23800,
+    "size": "Cal King(180x210)",
+    "color": "藏青色(Y8305)",
+    "legs": "胡桃(6cm)"
+  },
+  {
+    "id": "variant-1764080767866",
+    "name": "Queen",
+    "price": 19800,
+    "size": "Queen(150x200)",
+    "color": "魚白色(Y8306)"
+  },
+  {
+    "id": "variant-1764080924412",
+    "name": "King",
+    "price": 23800,
+    "size": "King(190x200)",
+    "color": "魚白色(Y8306)"
+  },
+  {
+    "id": "variant-1764080928563",
+    "name": "Queen",
+    "price": 23800,
+    "size": "Cal King(180x210)",
+    "color": "魚白色(Y8306)"
+  },
+  {
+    "id": "variant-1764080767866",
+    "name": "Queen",
+    "price": 19800,
+    "size": "Queen(150x200)",
+    "color": "稻殼色(Y8307)"
+  },
+  {
+    "id": "variant-1764080924412",
+    "name": "King",
+    "price": 23800,
+    "size": "King(190x200)",
+    "color": "稻殼色(Y8307)"
+  },
+  {
+    "id": "variant-1764080928563",
+    "name": "Cal King",
+    "price": 23800,
+    "size": "Cal King(180x210)",
+    "color": "稻殼色(Y8307)"
+  },
+  {
+    "id": "variant-1764080767866",
+    "name": "Queen",
+    "price": 19800,
+    "size": "Queen(150x200)",
+    "color": "蒸栗色(Y8308)"
+  },
+  {
+    "id": "variant-1764080924412",
+    "name": "King",
+    "price": 23800,
+    "size": "King(190x200)",
+    "color": "蒸栗色(Y8308)"
+  },
+  {
+    "id": "variant-1764080928563",
+    "name": "Cal King",
+    "price": 23800,
+    "size": "Cal King(180x210)",
+    "color": "蒸栗色(Y8308)"
+  },
+  {
+    "id": "variant-1764080767866",
+    "name": "Queen",
+    "price": 19800,
+    "size": "Queen(150x200)",
+    "color": "海老茶(Y8309)"
+  },
+  {
+    "id": "variant-1764080924412",
+    "name": "King",
+    "price": 23800,
+    "size": "King(190x200)",
+    "color": "海老茶(Y8309)"
+  },
+  {
+    "id": "variant-1764080928563",
+    "name": "Cal King",
+    "price": 23800,
+    "size": "Cal King(180x210)",
+    "color": "海老茶(Y8309)"
+  },
+  {
+    "id": "variant-1764080767866",
+    "name": "Queen",
+    "price": 19800,
+    "size": "Queen(150x200)",
+    "color": "銀鼠色(Y8310)"
+  },
+  {
+    "id": "variant-1764080924412",
+    "name": "King",
+    "price": 23800,
+    "size": "King(190x200)",
+    "color": "銀鼠色(Y8310)"
+  },
+  {
+    "id": "variant-1764080928563",
+    "name": "Cal King",
+    "price": 23800,
+    "size": "Cal King(180x210)",
+    "color": "銀鼠色(Y8310)"
+  },
+  {
+    "id": "variant-1764080767866",
+    "name": "Queen",
+    "price": 19800,
+    "size": "Queen(150x200)",
+    "color": "芽灰色(Y8311)"
+  },
+  {
+    "id": "variant-1764080924412",
+    "name": "King",
+    "price": 23800,
+    "size": "King(190x200)",
+    "color": "芽灰色(Y8311)"
+  },
+  {
+    "id": "variant-1764080928563",
+    "name": "Cal King",
+    "price": 23800,
+    "size": "Cal King(180x210)",
+    "color": "芽灰色(Y8311)"
+  },
+  {
+    "id": "variant-1764080767866",
+    "name": "Queen",
+    "price": 19800,
+    "size": "Queen(150x200)",
+    "color": "流沙色(Y8312)"
+  },
+  {
+    "id": "variant-1764080924412",
+    "name": "King",
+    "price": 23800,
+    "size": "King(190x200)",
+    "color": "流沙色(Y8312)"
+  },
+  {
+    "id": "variant-1764080928563",
+    "name": "Cal King",
+    "price": 23800,
+    "size": "Cal King(180x210)",
+    "color": "流沙色(Y8312)"
+  },
+  {
+    "id": "variant-1764080767866",
+    "name": "Queen",
+    "price": 19800,
+    "size": "Queen(150x200)",
+    "color": "岩井色(Y8313)"
+  },
+  {
+    "id": "variant-1764080924412",
+    "name": "King",
+    "price": 23800,
+    "size": "King(190x200)",
+    "color": "岩井色(Y8313)"
+  },
+  {
+    "id": "variant-1764080928563",
+    "name": "Cal King",
+    "price": 23800,
+    "size": "Cal King(180x210)",
+    "color": "岩井色(Y8313)"
+  },
+  {
+    "id": "variant-1764080767866",
+    "name": "Queen",
+    "price": 19800,
+    "size": "Queen(150x200)",
+    "color": "黑珍珠(Y8314)"
+  },
+  {
+    "id": "variant-1764080924412",
+    "name": "King",
+    "price": 23800,
+    "size": "King(190x200)",
+    "color": "黑珍珠(Y8314)"
+  },
+  {
+    "id": "variant-1764080928563",
+    "name": "Cal King",
+    "price": 23800,
+    "size": "Cal King(180x210)",
+    "color": "黑珍珠(Y8314)"
+  },
+  {
+    "id": "variant-1764080767866",
+    "name": "Queen",
+    "price": 19800,
+    "size": "Queen(150x200)",
+    "color": "紺青色(Y8315)"
+  },
+  {
+    "id": "variant-1764080924412",
+    "name": "King",
+    "price": 23800,
+    "size": "King(190x200)",
+    "color": "紺青色(Y8315)"
+  },
+  {
+    "id": "variant-1764080928563",
+    "name": "Cal King",
+    "price": 23800,
+    "size": "Cal King(180x210)",
+    "color": "紺青色(Y8315)"
+  },
+  {
+    "id": "variant-1764080767866",
+    "name": "Queen",
+    "price": 19800,
+    "size": "Queen(150x200)",
+    "color": "胡珀綠(Y8316)"
+  },
+  {
+    "id": "variant-1764080924412",
+    "name": "King",
+    "price": 23800,
+    "size": "King(190x200)",
+    "color": "胡珀綠(Y8316)"
+  },
+  {
+    "id": "variant-1764080928563",
+    "name": "Cal King",
+    "price": 23800,
+    "size": "Cal King(180x210)",
+    "color": "胡珀綠(Y8316)"
+  },
+  {
+    "id": "variant-1764080767866",
+    "name": "Queen",
+    "price": 19800,
+    "size": "Queen(150x200)",
+    "color": "芒果黃(Y8317)"
+  },
+  {
+    "id": "variant-1764080924412",
+    "name": "King",
+    "price": 23800,
+    "size": "King(190x200)",
+    "color": "芒果黃(Y8317)"
+  },
+  {
+    "id": "variant-1764080928563",
+    "name": "Cal King",
+    "price": 23800,
+    "size": "Cal King(180x210)",
+    "color": "芒果黃(Y8317)"
+  },
+  {
+    "id": "variant-1764080767866",
+    "name": "Queen",
+    "price": 19800,
+    "size": "Queen(150x200)",
+    "color": "蟹殼橙(Y8318)"
+  },
+  {
+    "id": "variant-1764080924412",
+    "name": "King",
+    "price": 23800,
+    "size": "King(190x200)",
+    "color": "蟹殼橙(Y8318)"
+  },
+  {
+    "id": "variant-1764080928563",
+    "name": "Cal King",
+    "price": 23800,
+    "size": "Cal King(180x210)",
+    "color": "蟹殼橙(Y8318)"
+  },
+  {
+    "id": "variant-1764080767866",
+    "name": "Queen",
+    "price": 19800,
+    "size": "Queen(150x200)",
+    "color": "胭粉色(Y8319)"
+  },
+  {
+    "id": "variant-1764080924412",
+    "name": "King",
+    "price": 23800,
+    "size": "King(190x200)",
+    "color": "胭粉色(Y8319)"
+  },
+  {
+    "id": "variant-1764080928563",
+    "name": "Cal King",
+    "price": 23800,
+    "size": "Cal King(180x210)",
+    "color": "胭粉色(Y8319)"
+  },
+  {
+    "id": "variant-1764080767866",
+    "name": "Queen",
+    "price": 19800,
+    "size": "Queen(150x200)",
+    "color": "薰衣紫(Y8320)"
+  },
+  {
+    "id": "variant-1764080924412",
+    "name": "King",
+    "price": 23800,
+    "size": "King(190x200)",
+    "color": "薰衣紫(Y8320)"
+  },
+  {
+    "id": "variant-1764080928563",
+    "name": "Cal King",
+    "price": 23800,
+    "size": "Cal King(180x210)",
+    "color": "薰衣紫(Y8320)"
+  }
+]

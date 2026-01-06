@@ -1,0 +1,34 @@
+{
+  "defaultFeatures": [
+    {
+      "icon": "/feature-icon/features-line-icon-price.webp",
+      "title": "全台最低價",
+      "description": "專櫃價2-3折起，買貴退差價保證"
+    },
+    {
+      "icon": "/feature-icon/features-line-icon-shopee.webp",
+      "title": "蝦皮第一賣家",
+      "description": "百位網友推薦，蝦皮第一賣家"
+    },
+    {
+      "icon": "/feature-icon/features-line-icon-responsive.webp",
+      "title": "即時回覆",
+      "description": "訊息快速回應零等待"
+    },
+    {
+      "icon": "/feature-icon/features-line-icon-warranty.webp",
+      "title": "十年保固",
+      "description": "百位網友推薦，蝦皮第一賣家"
+    },
+    {
+      "icon": "/feature-icon/features-line-icon-reputation.webp",
+      "title": "一致好評",
+      "description": "真實評價，信任加倍"
+    },
+    {
+      "icon": "/feature-icon/features-line-icon-delivery.webp",
+      "title": "出貨快速",
+      "description": "下單立即配送不久候"
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "filePath": ".spec-workflow/steering/product.md",
+  "currentVersion": 1,
+  "snapshots": [
+    {
+      "version": 1,
+      "filename": "snapshot-001.json",
+      "timestamp": "2025-10-30T07:55:00.481Z",
+      "trigger": "initial",
+      "approvalId": "approval_1761810900467_xblaa2y1g",
+      "approvalTitle": "Product.md - Black Living eCommerce Platform Overview"
+    }
+  ]
+}

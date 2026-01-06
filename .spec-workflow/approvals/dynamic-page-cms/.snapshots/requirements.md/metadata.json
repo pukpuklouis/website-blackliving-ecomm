@@ -1,0 +1,14 @@
+{
+  "filePath": ".spec-workflow/specs/dynamic-page-cms/requirements.md",
+  "currentVersion": 1,
+  "snapshots": [
+    {
+      "version": 1,
+      "filename": "snapshot-001.json",
+      "timestamp": "2025-11-25T18:42:40.796Z",
+      "trigger": "initial",
+      "approvalId": "approval_1764096160767_zdn5vkbyb",
+      "approvalTitle": "Requirements for Dynamic Page CMS Module"
+    }
+  ]
+}

@@ -1,78 +1,113 @@
 ---
-import BaseLayout from '../../layouts/BaseLayout.astro';
+import BaseLayout from "../../layouts/BaseLayout.astro";
 ---
 
-<BaseLayout>
-  <main class='container mx-auto px-4 py-8'>
-    <div class='max-w-md mx-auto text-center'>
-      <div class='bg-white p-8 rounded-lg shadow-md'>
-        <div class='mb-4'>
-          <div class='inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-black'></div>
+<BaseLayout title="登入處理中" description="正在完成 Google 登入驗證">
+  <main class="container mx-auto px-4 py-8">
+    <div class="max-w-md mx-auto text-center">
+      <div class="bg-white p-8 rounded-lg shadow-md">
+        <div class="mb-4">
+          <div
+            class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-black"
+          ></div>
         </div>
-        <h1 class='text-2xl font-bold text-gray-900 mb-4'>登入中...</h1>
-        <p class='text-gray-600'>正在完成 Google 登入，請稍候...</p>
+        <h1 class="text-2xl font-bold text-gray-900 mb-4">登入中...</h1>
+        <p class="text-gray-600">正在完成 Google 登入，請稍候...</p>
       </div>
     </div>
   </main>
 </BaseLayout>
 
 <script>
-  const API_BASE = import.meta.env.PUBLIC_API_URL || 'http://localhost:8787';
+  const API_BASE = import.meta.env.PUBLIC_API_URL || "http://localhost:8787";
 
   async function handleCallback() {
     const urlParams = new URLSearchParams(window.location.search);
-    const error = urlParams.get('error');
+    const error = urlParams.get("error");
+
+    // Debug logging for staging
+    console.log("[OAuth Callback] Starting", {
+      apiBase: API_BASE,
+      origin: window.location.origin,
+      hasError: !!error,
+      cookies: document.cookie ? "present" : "none",
+    });
 
     if (error) {
-      console.error('OAuth error:', error);
-      window.location.href = '/login?error=' + encodeURIComponent(error);
+      console.error("[OAuth Callback] OAuth error:", error);
+      window.location.href = `/login?error=${encodeURIComponent(error)}`;
       return;
     }
 
-    try {
-      // Check if we have a valid session
-      const response = await fetch(`${API_BASE}/api/auth/session`, {
-        credentials: 'include',
-      });
+    // Retry configuration - add initial delay for cookie propagation
+    const MAX_RETRIES = 5;
+    const RETRY_DELAY = 2000; // 2 seconds
+    const INITIAL_DELAY = 1000; // Wait 1 second before first check
 
-      if (response.ok) {
-        const data = await response.json();
-        if (data.user && data.authenticated) {
-          // Clean up URL
-          window.history.replaceState({}, '', '/account/callback');
-          // Redirect to profile - any authenticated user can access
-          window.location.href = '/account/profile';
-        } else {
-          window.location.href = '/login?error=unauthorized';
-        }
-      } else {
-        // Session not found, try again in a moment
-        setTimeout(async () => {
-          try {
-            const retryResponse = await fetch(`${API_BASE}/api/auth/session`, {
-              credentials: 'include',
-            });
+    // Wait for cookie to propagate to browser
+    await new Promise((resolve) => setTimeout(resolve, INITIAL_DELAY));
 
-            if (retryResponse.ok) {
-              const retryData = await retryResponse.json();
-              if (retryData.user && retryData.authenticated) {
-                window.location.href = '/account/profile';
-              } else {
-                window.location.href = '/login?error=session_failed';
-              }
-            } else {
-              window.location.href = '/login?error=session_failed';
-            }
-          } catch (retryError) {
-            console.error('Session retry failed:', retryError);
-            window.location.href = '/login?error=session_failed';
+    for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+      try {
+        console.log(`[OAuth Callback] Attempt ${attempt + 1}/${MAX_RETRIES}`);
+
+        const response = await fetch(`${API_BASE}/api/auth/get-session`, {
+          credentials: "include",
+        });
+
+        console.log("[OAuth Callback] Session check response:", {
+          status: response.status,
+          ok: response.ok,
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+
+          // Log the FULL response for debugging
+          console.log("[OAuth Callback] Full response data:", data);
+
+          console.log("[OAuth Callback] Session data:", {
+            hasUser: !!data?.user,
+            hasSession: !!data?.session,
+            userId: data?.user?.id,
+          });
+
+          // Check if we have valid session - BetterAuth returns { session, user }
+          if (data?.user && data?.session) {
+            // Success! Clean up URL and redirect
+            window.history.replaceState({}, "", "/account/callback");
+            console.log("[OAuth Callback] Success! Redirecting to profile");
+            window.location.href = "/account/profile";
+            return;
           }
-        }, 1000);
+
+          // Session check passed but no user/session in response
+          console.warn(
+            "[OAuth Callback] Response OK but missing user/session:",
+            data
+          );
+        }
+      } catch (fetchError) {
+        console.error(
+          `[OAuth Callback] Attempt ${attempt + 1} failed:`,
+          fetchError
+        );
       }
-    } catch (error) {
-      console.error('Callback error:', error);
-      window.location.href = '/login?error=callback_failed';
+
+      // Wait before next retry (if not last attempt)
+      if (attempt < MAX_RETRIES - 1) {
+        console.log(
+          `[OAuth Callback] Waiting ${RETRY_DELAY}ms before retry...`
+        );
+        await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY));
+      }
     }
+
+    // All retries exhausted
+    console.error(
+      "[OAuth Callback] All retries exhausted, redirecting to login"
+    );
+    window.location.href = "/login?error=callback_failed";
   }
 
   // Handle callback when page loads

@@ -1,67 +1,139 @@
 ---
 // Header component for Black Living website
-import { Image } from 'astro:assets';
-import { getEntry } from 'astro:content';
-import { CartIcon } from '@blackliving/ui';
-import { UserIcon } from '@blackliving/ui';
+import { Image } from "astro:assets";
+import { getEntry } from "astro:content";
+import { CartIcon, UserIcon } from "@blackliving/ui";
+import CartTrigger from "./cart/CartTrigger";
 
-export interface Props {
+export type Props = {
   class?: string;
-}
+};
 
 const { class: className } = Astro.props;
 
 // Get navigation data from content collection
-const navigationData = await getEntry('navigation', 'main-menu');
-const menuItems = navigationData?.data.items.sort((a, b) => a.order - b.order) || [];
+const navigationData = await getEntry("navigation", "main-menu");
+const menuItems =
+  navigationData?.data.items.sort((a, b) => a.order - b.order) || [];
 ---
 
-<header class={`bg-white shadow-lg sticky top-0 z-50 ${className}`}>
+<header
+  id="main-header"
+  class={`bg-white shadow-lg sticky top-0 z-50  transition-all duration-500 ${className}`}
+>
   <!-- Top Row: Logo and User Actions -->
-  <div class='bg-white border-b border-gray-200'>
-    <div class='container mx-auto px-4 lg:px-6'>
-      <div class='flex items-center justify-between py-3 lg:py-4'>
+  <div class="bg-white border-b border-gray-200">
+    <div class="container mx-auto px-4 lg:px-6 bg-white w-full">
+      <div
+        class="flex items-center justify-between py-3 transition-all duration-700 ease-out"
+        id="header-content"
+      >
         <!-- Logo -->
-        <a href='/' class='flex items-center' aria-label='Black Living 黑哥家居 首頁'>
-          <img
-            src='/blackliving-logo.svg'
-            alt='Black Living 黑哥家居'
-            class='h-8 w-auto lg:h-9'
-            loading='eager'
-            decoding='async'
+        <a
+          id="main-logo"
+          href="/"
+          class="flex items-center z-20"
+          aria-label="Black Living 黑哥家居 首頁"
+        >
+          <Image
+            src="/blackliving-logo-zh.svg"
+            width={96}
+            height={48}
+            alt="Black Living 黑哥家居"
+            class="h-12 w-auto lg:h-12"
+            loading="eager"
+            decoding="async"
           />
         </a>
 
+        <!-- placeholder make User action can be rightplace -->
+        <div class="flex item-center w-1"></div>
         <!-- Desktop User Actions -->
-        <div class='hidden md:flex items-center gap-4 lg:gap-6'>
-          <a
-            href='/cart'
-            class='text-black text-sm lg:text-base font-normal hover:text-gray-600 transition-colors flex items-center gap-1'
-            aria-label='購物車'
+        <div class="hidden md:flex items-center gap-4 lg:gap-6">
+          <button
+            type="button"
+            id="search-trigger"
+            data-testid="search-trigger-desktop"
+            class="flex items-center gap-2 rounded-full border border-gray-200 px-4 py-2 text-sm text-black transition-colors hover:bg-gray-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-400"
+            aria-label="搜尋 Black Living 內容"
           >
-            <CartIcon />
-            購物車
-          </a>
+            <svg
+              class="h-4 w-4 text-gray-600"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="m21 21-4.35-4.35M10 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16z"
+              ></path>
+            </svg>
+            <span class="hidden lg:inline text-sm text-gray-600">搜尋</span>
+            <kbd
+              class="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-gray-100 px-1.5 font-mono text-[10px] font-medium text-gray-500"
+            >
+              <span class="text-xs">⌘</span>K
+            </kbd>
+          </button>
+          <CartTrigger client:load/>
           <a
-            href='/account'
-            class='text-black text-sm lg:text-base font-normal hover:text-gray-600 transition-colors flex items-center gap-1'
-            aria-label='會員中心'
+            href="/account"
+            class="text-black text-sm lg:text-base font-normal hover:text-gray-600 transition-colors flex items-center gap-1"
+            aria-label="會員中心"
           >
-            <UserIcon />
+            <UserIcon/>
             會員中心
           </a>
         </div>
 
+        <!-- Mobile Search Button -->
+        <button
+          type="button"
+          id="search-trigger-mobile"
+          data-testid="search-trigger-mobile"
+          class="md:hidden p-2 text-gray-600 hover:text-gray-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-400"
+          aria-label="搜尋"
+        >
+          <svg
+            class="h-5 w-5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="m21 21-4.35-4.35M10 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16z"
+            ></path>
+          </svg>
+        </button>
+
         <!-- Mobile Menu Button -->
         <button
-          id='mobile-menu-button'
-          class='md:hidden p-2 text-gray-600 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[#C69C6D]'
-          aria-expanded='false'
-          aria-controls='mobile-menu'
-          aria-label='開啟選單'
+          id="mobile-menu-button"
+          class="md:hidden p-2 text-gray-600 hover:text-gray-900"
+          aria-expanded="false"
+          aria-controls="mobile-menu"
+          aria-label="開啟選單"
         >
-          <svg class='w-6 h-6' fill='none' stroke='currentColor' viewBox='0 0 24 24' aria-hidden='true'>
-            <path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M4 6h16M4 12h16M4 18h16'></path>
+          <svg
+            class="w-6 h-6"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M4 6h16M4 12h16M4 18h16"
+            ></path>
           </svg>
         </button>
       </div>
@@ -69,64 +141,119 @@ const menuItems = navigationData?.data.items.sort((a, b) => a.order - b.order) |
   </div>
 
   <!-- Desktop Navigation -->
-  <div class='hidden md:block bg-[#C69C6D]'>
-    <div class='container mx-auto px-4 lg:px-6'>
-      <nav class='flex justify-center py-3 lg:py-4' role='navigation' aria-label='主導航'>
-        <ul class='flex items-center gap-4 lg:gap-6 flex-wrap justify-center'>
-          {menuItems.map((item) => (
-            <li>
-              <a
-                href={item.href}
-                class='text-white text-sm lg:text-base font-normal hover:text-gray-200 transition-colors whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-[#C69C6D] rounded px-2 py-1'
-              >
-                {item.label}
-              </a>
-            </li>
-          ))}
+  <div class="hidden md:block bg-primary relative" id="nav-section">
+    <div class="container mx-auto px-4 lg:px-6">
+      <nav
+        class="flex justify-center py-3"
+        role="navigation"
+        aria-label="主導航"
+      >
+        <ul
+          class="flex items-center gap-4 md:gap-2 lg:gap-6 justify-center relative"
+        >
+          {
+            menuItems.map((item) => (
+              <li class={`relative group ${item.subItems ? 'has-submenu' : ''}`}>
+                <a
+                  href={item.href}
+                  class="text-white text-sm lg:text-base font-normal hover:text-gray-200 transition-colors whitespace-nowrap rounded px-2 py-1 flex items-center gap-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
+                  aria-haspopup={item.subItems ? 'true' : 'false'}
+                  aria-expanded={item.subItems ? 'false' : undefined}
+                >
+                  {item.label}
+                  {item.subItems && (
+                    <svg
+                      class="h-4 w-4 transition-transform group-hover:rotate-180"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      aria-hidden="true"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M19 9l-7 7-7-7"
+                      />
+                    </svg>
+                  )}
+                </a>
+                {item.subItems && (
+                  <ul class="absolute left-0 top-full mt-3 bg-primary shadow-lg rounded-b-lg py-2 w-fit opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 overflow-hidden">
+                    {item.subItems.map((subItem) => (
+                      <li>
+                        <a
+                          href={subItem.href}
+                          class="block pl-4 pr-8 py-2  text-md text-gray-50 hover:bg-gray-100/20 transition-colors whitespace-nowrap"
+                        >
+                          {subItem.label}
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </li>
+            ))
+          }
         </ul>
       </nav>
     </div>
   </div>
 
   <!-- Mobile Menu Backdrop -->
-  <div 
-    id='mobile-menu-backdrop' 
-    class='md:hidden fixed inset-0 bg-black/20 backdrop-blur-sm z-40 hidden transition-all duration-300'
-    aria-hidden='true'
+  <div
+    id="mobile-menu-backdrop"
+    class="md:hidden fixed inset-0 bg-black/20 backdrop-blur-sm z-40 hidden transition-all duration-300"
+    aria-hidden="true"
   ></div>
 
   <!-- Mobile Navigation Overlay -->
-  <div 
-    id='mobile-menu' 
-    class='md:hidden fixed top-0 left-0 right-0 z-50 bg-primary shadow-xl transform -translate-y-full transition-transform duration-300 ease-in-out' 
-    role='navigation' 
-    aria-label='行動版主導航'
+  <div
+    id="mobile-menu"
+    class="md:hidden fixed top-0 left-0 right-0 z-50 bg-primary shadow-xl transform -translate-y-full transition-transform duration-300 ease-in-out"
+    role="navigation"
+    aria-label="行動版主導航"
   >
     <!-- Mobile Header -->
-    <div class='bg-background border-b border-primary-foreground/20'>
-      <div class='container mx-auto px-4'>
-        <div class='flex items-center justify-between py-3'>
+    <div class="bg-background border-b border-primary-foreground/20">
+      <div class="container mx-auto px-4">
+        <div class="flex items-center justify-between py-3">
           <!-- Logo -->
-          <a href='/' class='flex items-center' aria-label='Black Living 黑哥家居 首頁'>
+          <a
+            href="/"
+            class="flex items-center"
+            aria-label="Black Living 黑哥家居 首頁"
+          >
             <Image
-              src='/blackliving-logo.svg'
+              src="/blackliving-logo-zh.svg"
               width={102}
               height={35}
-              alt='Black Living 黑哥家居'
-              class='h-8 w-auto'
-              loading='eager'
-              decoding='async'
+              alt="Black Living 黑哥家居"
+              class="h-8 w-auto"
+              loading="eager"
+              decoding="async"
             />
           </a>
 
           <!-- Close Button -->
           <button
-            id='mobile-menu-close'
-            class='p-2 text-muted-foreground hover:text-muted-foreground/80 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-muted-foreground/50'
-            aria-label='關閉選單'
+            id="mobile-menu-close"
+            class="p-2 text-muted-foreground hover:text-muted-foreground/80"
+            aria-label="關閉選單"
           >
-            <svg class='w-6 h-6' fill='none' stroke='currentColor' viewBox='0 0 24 24' aria-hidden='true'>
-              <path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M6 18L18 6M6 6l12 12'></path>
+            <svg
+              class="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M6 18L18 6M6 6l12 12"
+              ></path>
             </svg>
           </button>
         </div>
@@ -134,134 +261,271 @@ const menuItems = navigationData?.data.items.sort((a, b) => a.order - b.order) |
     </div>
 
     <!-- Mobile Menu Content -->
-    <div class='bg-primary max-h-screen overflow-y-auto'>
-      <div class='x-4 py-3 space-y-1'>
+    <div class="bg-primary max-h-screen overflow-y-auto">
+      <div class="px-4 py-3 space-y-1">
         <!-- Mobile User Actions -->
-        <div class='flex items-center gap-4 px-6 pb-3 border-b border-primary-foreground/20 mb-3'>
+        <div
+          class="flex items-center gap-4 px-6 pb-3 border-b border-primary-foreground/20 mb-3"
+        >
+          <CartTrigger
+            client:load
+            className="text-primary-foreground/80 text-sm font-normal hover:text-primary-foreground transition-colors flex items-center gap-2"
+          />
           <a
-            href='/cart'
-            class='text-primary-foreground/80 text-sm font-normal hover:text-primary-foreground transition-colors flex items-center gap-2'
+            href="/account"
+            class="text-primary-foreground/80 text-sm font-normal hover:text-primary-foreground transition-colors flex items-center gap-2"
           >
-            <CartIcon />
-            購物車
-          </a>
-          <a
-            href='/account'
-            class='text-primary-foreground/80 text-sm font-normal hover:text-primary-foreground transition-colors flex items-center gap-2'
-          >
-            <UserIcon />
+            <UserIcon/>
             會員中心
           </a>
         </div>
-        
-        <!-- Mobile Navigation Links -->
-        {menuItems.map((item, index) => (
-          <a
-            href={item.href}
-            class={`block px-6 py-3 text-primary-foreground text-base font-normal hover:bg-primary-foreground/10 hover:text-primary-foreground transition-colors rounded-md focus:outline-none focus:ring-2 focus:ring-primary-foreground/50${index === menuItems.length - 1 ? ' mb-3' : ''}`}
-          >
-            {item.label}
-          </a>
-        ))}
+
+        <!-- Mobile Navigation Links with Submenu Support -->
+        {
+          menuItems.map((item, index) => (
+            <div class={`space-y-1 ${index === menuItems.length - 1 ? ' mb-3' : ''}`}>
+              <button
+                class={`w-full block px-6 py-3 text-left text-primary-foreground text-base font-normal hover:bg-primary-foreground/10 hover:text-primary-foreground transition-colors rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-foreground/50 ${item.subItems ? 'flex items-center justify-between' : ''}`}
+                data-submenu-toggle={item.href}
+                aria-expanded="false"
+                aria-haspopup={item.subItems ? 'true' : 'false'}
+              >
+                <span>{item.label}</span>
+                {item.subItems && (
+                  <svg
+                    class="h-4 w-4 transition-transform"
+                    id={`toggle-icon-${item.href}`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M19 9l-7 7-7-7"
+                    />
+                  </svg>
+                )}
+              </button>
+              {item.subItems && (
+                <ul
+                  id={`submenu-${item.href}`}
+                  class={`space-y-1 px-6 max-h-0 overflow-hidden transition-all duration-300 bg-primary-foreground/5 rounded-md ${item.subItems.length > 0 ? 'border-l-2 border-primary-foreground/20' : ''}`}
+                >
+                  {item.subItems.map((subItem) => (
+                    <li>
+                      <a
+                        href={subItem.href}
+                        class="block px-4 py-2 text-primary-foreground/80 text-sm font-normal hover:bg-primary-foreground/10 hover:text-primary-foreground transition-colors rounded-md"
+                      >
+                        {subItem.label}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          ))
+        }
       </div>
     </div>
   </div>
 </header>
 
 <script>
-  // Mobile menu overlay functionality
-  document.addEventListener('DOMContentLoaded', () => {
-    const mobileMenuButton = document.getElementById('mobile-menu-button');
-    const mobileMenuClose = document.getElementById('mobile-menu-close');
-    const mobileMenu = document.getElementById('mobile-menu');
-    const mobileMenuBackdrop = document.getElementById('mobile-menu-backdrop');
-    
-    if (mobileMenuButton && mobileMenu && mobileMenuBackdrop && mobileMenuClose) {
-      
+  // Search modal functionality
+  document.addEventListener("DOMContentLoaded", () => {
+    const searchTriggerDesktop = document.getElementById("search-trigger");
+    const searchTriggerMobile = document.getElementById(
+      "search-trigger-mobile"
+    );
+
+    const openSearchModal = (event?: Event) => {
+      event?.preventDefault?.();
+      window.dispatchEvent(new CustomEvent("cmdk:open"));
+    };
+
+    searchTriggerDesktop?.addEventListener("click", openSearchModal);
+    searchTriggerMobile?.addEventListener("click", openSearchModal);
+
+    // Mobile menu overlay functionality
+    const mobileMenuButton = document.getElementById("mobile-menu-button");
+    const mobileMenuClose = document.getElementById("mobile-menu-close");
+    const mobileMenu = document.getElementById("mobile-menu");
+    const mobileMenuBackdrop = document.getElementById("mobile-menu-backdrop");
+
+    if (
+      mobileMenuButton &&
+      mobileMenu &&
+      mobileMenuBackdrop &&
+      mobileMenuClose
+    ) {
       // Function to open mobile menu
       const openMobileMenu = () => {
         // Show backdrop
-        mobileMenuBackdrop.classList.remove('hidden');
-        
+        mobileMenuBackdrop.classList.remove("hidden");
+
         // Animate menu slide down
         requestAnimationFrame(() => {
-          mobileMenu.classList.remove('-translate-y-full');
-          mobileMenu.classList.add('translate-y-0');
+          mobileMenu.classList.remove("-translate-y-full");
+          mobileMenu.classList.add("translate-y-0");
         });
-        
+
         // Update button state
-        mobileMenuButton.setAttribute('aria-expanded', 'true');
-        
+        mobileMenuButton.setAttribute("aria-expanded", "true");
+
         // Update button icon to close
-        const icon = mobileMenuButton.querySelector('svg');
+        const icon = mobileMenuButton.querySelector("svg");
         if (icon) {
-          icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>';
-          mobileMenuButton.setAttribute('aria-label', '關閉選單');
+          icon.innerHTML =
+            '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>';
+          mobileMenuButton.setAttribute("aria-label", "關閉選單");
         }
-        
+
         // Prevent body scroll
-        document.body.style.overflow = 'hidden';
+        document.body.style.overflow = "hidden";
       };
-      
+
       // Function to close mobile menu
       const closeMobileMenu = () => {
         // Animate menu slide up
-        mobileMenu.classList.remove('translate-y-0');
-        mobileMenu.classList.add('-translate-y-full');
-        
+        mobileMenu.classList.remove("translate-y-0");
+        mobileMenu.classList.add("-translate-y-full");
+
         // Hide backdrop after animation
         setTimeout(() => {
-          mobileMenuBackdrop.classList.add('hidden');
+          mobileMenuBackdrop.classList.add("hidden");
         }, 300);
-        
+
         // Update button state
-        mobileMenuButton.setAttribute('aria-expanded', 'false');
-        
+        mobileMenuButton.setAttribute("aria-expanded", "false");
+
         // Reset button icon to hamburger
-        const icon = mobileMenuButton.querySelector('svg');
+        const icon = mobileMenuButton.querySelector("svg");
         if (icon) {
-          icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>';
-          mobileMenuButton.setAttribute('aria-label', '開啟選單');
+          icon.innerHTML =
+            '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>';
+          mobileMenuButton.setAttribute("aria-label", "開啟選單");
         }
-        
+
         // Restore body scroll
-        document.body.style.overflow = '';
+        document.body.style.overflow = "";
+
+        // Close all submenus
+        closeAllSubmenus();
       };
-      
+
       // Mobile menu button click handler
-      mobileMenuButton.addEventListener('click', () => {
-        const isExpanded = mobileMenuButton.getAttribute('aria-expanded') === 'true';
-        
+      mobileMenuButton.addEventListener("click", () => {
+        const isExpanded =
+          mobileMenuButton.getAttribute("aria-expanded") === "true";
+
         if (isExpanded) {
           closeMobileMenu();
         } else {
           openMobileMenu();
         }
       });
-      
+
       // Mobile menu close button click handler
-      mobileMenuClose.addEventListener('click', closeMobileMenu);
-      
+      mobileMenuClose.addEventListener("click", closeMobileMenu);
+
       // Close mobile menu when clicking backdrop
-      mobileMenuBackdrop.addEventListener('click', closeMobileMenu);
-      
+      mobileMenuBackdrop.addEventListener("click", closeMobileMenu);
+
       // Close mobile menu on escape key
-      document.addEventListener('keydown', (event) => {
-        if (event.key === 'Escape') {
-          const isExpanded = mobileMenuButton.getAttribute('aria-expanded') === 'true';
+      document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") {
+          const isExpanded =
+            mobileMenuButton.getAttribute("aria-expanded") === "true";
           if (isExpanded) {
             closeMobileMenu();
             mobileMenuButton.focus(); // Return focus to button
           }
         }
       });
-      
+
       // Handle window resize - close mobile menu if switching to desktop
-      window.addEventListener('resize', () => {
-        if (window.innerWidth >= 768) { // md breakpoint
+      window.addEventListener("resize", () => {
+        if (window.innerWidth >= 768) {
+          // md breakpoint
           closeMobileMenu();
+        }
+      });
+
+      // Mobile submenu toggle functionality
+      const submenuToggles = mobileMenu.querySelectorAll(
+        "[data-submenu-toggle]"
+      );
+      const closeAllSubmenus = () => {
+        for (const toggle of submenuToggles) {
+          const href = toggle.getAttribute("data-submenu-toggle");
+          const submenu = document.getElementById(`submenu-${href}`);
+          const icon = document.getElementById(`toggle-icon-${href}`);
+          if (submenu) {
+            submenu.classList.add("max-h-0");
+            toggle.setAttribute("aria-expanded", "false");
+          }
+          if (icon) {
+            icon.classList.remove("rotate-180");
+          }
+        }
+      };
+
+      const handleSubmenuToggle = (e: Event) => {
+        e.preventDefault(); // Prevent navigating to parent href on toggle
+
+        const toggle = e.currentTarget as HTMLElement;
+        const href = toggle.getAttribute("data-submenu-toggle");
+        const submenu = document.getElementById(`submenu-${href}`);
+        const icon = document.getElementById(`toggle-icon-${href}`);
+        const isExpanded = toggle.getAttribute("aria-expanded") === "true";
+
+        // Close all other submenus
+        closeAllSubmenus();
+
+        if (!isExpanded && submenu) {
+          // Open this submenu
+          submenu.classList.remove("max-h-0");
+          submenu.style.maxHeight = `${submenu.scrollHeight}px`; // Smooth expand
+          toggle.setAttribute("aria-expanded", "true");
+          if (icon) {
+            icon.classList.add("rotate-180");
+          }
+        } else if (href) {
+          // Already open or no submenu - navigate to parent
+          window.location.href = href;
+        }
+      };
+
+      for (const toggle of submenuToggles) {
+        toggle.addEventListener("click", handleSubmenuToggle);
+      }
+
+      // Allow Enter key to toggle submenus on desktop too (for accessibility)
+      document.addEventListener("keydown", (e) => {
+        const target = e.target as HTMLElement;
+        if (
+          e.key === "Enter" &&
+          target?.closest('.has-submenu a[aria-haspopup="true"]')
+        ) {
+          e.preventDefault();
+          const parentLi = target.closest("li");
+          if (parentLi) {
+            parentLi.querySelector("ul")?.classList.toggle("opacity-100");
+            parentLi.querySelector("ul")?.classList.toggle("invisible");
+          }
         }
       });
     }
   });
 </script>
+
+<style>
+  /* Custom CSS for desktop submenu hover (enhances Tailwind transitions) */
+  .has-submenu:hover > ul {
+    opacity: 1 !important;
+    visibility: visible !important;
+  }
+</style>

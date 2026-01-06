@@ -1,0 +1,74 @@
+# Black Living Web App - Cloudflare Pages Configuration
+#
+# SECURITY: This is a TEMPLATE file. Copy to wrangler.toml and replace placeholder values.
+# NEVER commit wrangler.toml if it contains any non-public information!
+#
+# Setup Instructions:
+# 1. Copy this file: cp wrangler.example.toml wrangler.toml
+# 2. Replace all placeholder values (<YOUR_*>) with your actual values
+# 3. NOTE: All values here are PUBLIC (client-side) - no secrets allowed!
+
+name = "blackliving-web"
+compatibility_date = "2024-09-23"
+compatibility_flags = ["nodejs_compat"]
+
+# Pages-specific configuration
+pages_build_output_dir = "dist"
+
+# ==========================================
+# CLOUDFLARE PAGES ENVIRONMENTS
+# ==========================================
+# Cloudflare Pages uses branch-based deployments:
+# - Production: main/master branch → [vars]
+# - Preview: staging + all other branches → [env.preview]
+#
+# IMPORTANT: Build scripts must use --mode preview (not --mode staging)
+# See package.json: "build:staging": "astro build --mode preview"
+
+# Default environment variables (production)
+[vars]
+NODE_ENV = "production"
+PUBLIC_API_BASE_URL = "https://<YOUR_API_WORKER>.workers.dev"  # REPLACE THIS
+PUBLIC_API_URL = "https://<YOUR_API_WORKER>.workers.dev"  # REPLACE THIS
+PUBLIC_SITE_URL = "https://<YOUR_SITE>.pages.dev"  # REPLACE THIS
+PUBLIC_ADMIN_URL = "https://<YOUR_ADMIN_WORKER>.workers.dev"  # REPLACE THIS
+PUBLIC_IMAGE_CDN_URL = "https://<YOUR_API_WORKER>.workers.dev/media"  # REPLACE THIS
+PUBLIC_R2_PUBLIC_URL = "https://<YOUR_API_WORKER>.workers.dev/media"  # REPLACE THIS
+PUBLIC_TURNSTILE_SITE_KEY = "YOUR_TURNSTILE_SITE_KEY"  # REPLACE THIS (from Cloudflare Turnstile)
+
+# Preview environment (staging and other branches)
+[env.preview]
+name = "blackliving-web-preview"
+
+[env.preview.vars]
+NODE_ENV = "preview"
+PUBLIC_API_BASE_URL = "https://<YOUR_API_WORKER>-staging.workers.dev"  # REPLACE THIS
+PUBLIC_API_URL = "https://<YOUR_API_WORKER>-staging.workers.dev"  # REPLACE THIS
+PUBLIC_SITE_URL = "https://staging.<YOUR_SITE>.pages.dev"  # REPLACE THIS
+PUBLIC_ADMIN_URL = "https://<YOUR_ADMIN_WORKER>-staging.workers.dev"  # REPLACE THIS
+PUBLIC_IMAGE_CDN_URL = "https://<YOUR_API_WORKER>-staging.workers.dev/media"  # REPLACE THIS
+PUBLIC_R2_PUBLIC_URL = "https://<YOUR_API_WORKER>-staging.workers.dev/media"  # REPLACE THIS
+PUBLIC_TURNSTILE_SITE_KEY = "YOUR_TURNSTILE_SITE_KEY"  # REPLACE THIS
+
+# ==========================================
+# IMPORTANT: CLIENT-SIDE SECURITY
+# ==========================================
+# This is a CLIENT-SIDE application - all variables in [vars] are PUBLIC!
+# Only PUBLIC_ prefixed variables should be here.
+#
+# ❌ NEVER add these (they belong in apps/api):
+# - BETTER_AUTH_SECRET
+# - GOOGLE_CLIENT_SECRET
+# - JWT_SECRET
+# - RESEND_API_KEY
+#
+# ✅ Only PUBLIC variables are safe:
+# - PUBLIC_TURNSTILE_SITE_KEY (client renders CAPTCHA)
+# - PUBLIC_API_BASE_URL (client makes API calls)
+# - PUBLIC_SITE_URL (client navigation)
+
+# ==========================================
+# LOCAL DEVELOPMENT
+# ==========================================
+# For local development, use .env.local (not this file)
+# Run: pnpm dev (uses Astro dev server on localhost:4321)

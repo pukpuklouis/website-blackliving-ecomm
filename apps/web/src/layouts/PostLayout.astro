@@ -1,11 +1,11 @@
 ---
-import BaseLayout from './BaseLayout.astro';
-import { unified } from 'unified';
-import remarkParse from 'remark-parse';
-import remarkGfm from 'remark-gfm';
-import remarkSmartypants from 'remark-smartypants';
-import remarkRehype from 'remark-rehype';
-import rehypeStringify from 'rehype-stringify';
+import BlogContent from "../components/blog/BlogContent.astro";
+import BlogHeroImage from "../components/blog/BlogHeroImage.astro";
+import BlogSidebar from "../components/blog/BlogSidebar.astro";
+import BlogTags from "../components/blog/BlogTags.astro";
+import Breadcrumbs from "../components/blog/Breadcrumbs.astro";
+import PostHeader from "../components/blog/PostHeader.astro";
+import BaseLayout from "./BaseLayout.astro";
 
 interface BlogPost {
   id: string;
@@ -17,6 +17,7 @@ interface BlogPost {
   authorName: string;
   category: string;
   categoryId: string;
+  categorySlug?: string;
   tags: string[];
   featuredImage: string;
   publishedAt: string;
@@ -44,214 +45,50 @@ export interface Props {
   ogImage: string;
 }
 
-const { post, category, relatedPosts = [], seoTitle, seoDescription, ogImage } = Astro.props;
-
-// Process markdown content using Astro's internal processing approach
-const processor = unified()
-  .use(remarkParse)
-  .use(remarkGfm) // GitHub-flavored markdown (enabled by default in Astro)
-  .use(remarkSmartypants) // Smart punctuation (enabled by default in Astro)
-  .use(remarkRehype)
-  .use(rehypeStringify);
-
-const processedContent = await processor.process(post.content);
-const htmlContent = processedContent.toString();
+const {
+  post,
+  category,
+  relatedPosts = [],
+  seoTitle,
+  seoDescription,
+  ogImage,
+} = Astro.props;
 ---
 
-<BaseLayout title={seoTitle} description={seoDescription} image={ogImage} type="article" publishedTime={post.publishedAt} class="blog">
-  <main class='container mx-auto px-4 py-8'>
-    <!-- Breadcrumb -->
-    <nav class='blog-breadcrumb mb-8' aria-label='麵包屑'>
-      <ol class='flex items-center space-x-2 text-sm text-gray-500'>
-        <li><a href='/' class='hover:text-gray-700'>首頁</a></li>
-        <li>/</li>
-        <li><a href='/posts' class='hover:text-gray-700'>好文分享</a></li>
-        {
-          category && (
-            <>
-              <li>/</li>
-              <li>
-                <a href={`/posts?category=${category.slug}`} class='hover:text-gray-700'>
-                  {category.name}
-                </a>
-              </li>
-            </>
-          )
-        }
-        <li>/</li>
-        <li class='text-gray-900'>{post.title}</li>
-      </ol>
-    </nav>
+<BaseLayout
+  title={seoTitle}
+  description={seoDescription}
+  image={ogImage}
+  type="article"
+  publishedTime={post.publishedAt}
+  class="blog"
+>
+  <!-- Hero Image Section -->
+  <BlogHeroImage
+    image={post.featuredImage}
+    alt={post.title}
+    category={category?.slug}
+  />
 
-    <article class='max-w-4xl mx-auto'>
-      <!-- Article Header -->
-      <header class='mb-8'>
-        {
-          category && (
-            <div class='mb-4'>
-              <span
-                class='blog-category-tag inline-flex items-center px-3 py-1 rounded-full text-sm font-medium'
-                style={`background-color: ${category.color}20; color: ${category.color}`}
-              >
-                <span class='mr-1'>{category.icon}</span>
-                {category.name}
-              </span>
-            </div>
-          )
-        }
+  <main class="container max-w-4xl mx-auto px-4 py-8">
+    <!-- Breadcrumbs -->
+    <Breadcrumbs post={post} category={category}/>
 
-        <h1 class='text-4xl font-bold text-gray-900 mb-6'>{post.title}</h1>
+    <!-- Main Content Grid: Content + Sidebar -->
+    <div class="max-w-5xl mx-auto">
+      <!-- Main Content Column  -->
+      <div class="">
+        <article>
+          <!-- Post Header: Title, Meta -->
+          <PostHeader post={post} category={category}/>
 
-        <div class='flex items-center justify-between text-sm text-gray-500 mb-6'>
-          <div class='flex items-center space-x-4'>
-            <span>作者：{post.authorName}</span>
-            <span>發布日期：{new Date(post.publishedAt).toLocaleDateString('zh-TW')}</span>
-            <span>閱讀時間：{post.readingTime} 分鐘</span>
-          </div>
-          <div class='flex items-center space-x-2'>
-            <svg class='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-              <path
-                stroke-linecap='round'
-                stroke-linejoin='round'
-                stroke-width='2'
-                d='M15 12a3 3 0 11-6 0 3 3 0 016 0z'
-              >
-              </path>
-              <path
-                stroke-linecap='round'
-                stroke-linejoin='round'
-                stroke-width='2'
-                d='M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z'
-              >
-              </path>
-            </svg>
-            <span>{post.viewCount} 次瀏覽</span>
-          </div>
-        </div>
+          <!-- Main Blog Content -->
+          <BlogContent content={post.content} className="mb-12"/>
 
-        {
-          post.featuredImage && (
-            <img
-              src={post.featuredImage}
-              alt={post.title}
-              class='w-full h-64 md:h-96 object-cover rounded-lg mb-8'
-            />
-          )
-        }
-      </header>
-
-      <!-- Article Content -->
-      <div class='blog-content prose prose-lg max-w-none mb-12'>
-        <div set:html={htmlContent} />
+          <!-- Page-specific content slot -->
+          <slot/>
+        </article>
       </div>
-
-      <!-- Tags -->
-      {
-        post.tags && post.tags.length > 0 && (
-          <div class='mb-8'>
-            <h3 class='text-lg font-semibold text-gray-900 mb-3'>標籤</h3>
-            <div class='flex flex-wrap gap-2'>
-              {post.tags.map(tag => (
-                <span class='blog-tag inline-flex items-center px-3 py-1 rounded-full text-sm bg-gray-100 text-gray-700'>
-                  {tag}
-                </span>
-              ))}
-            </div>
-          </div>
-        )
-      }
-
-      <!-- Share Buttons -->
-      <div class='border-t border-gray-200 pt-8 mb-12'>
-        <h3 class='text-lg font-semibold text-gray-900 mb-4'>分享文章</h3>
-        <div class='flex space-x-4'>
-          <button
-            onclick={`window.open('https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(Astro.url.href)}', '_blank', 'width=600,height=400')`}
-            class='blog-share-button flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors'
-          >
-            <svg class='w-4 h-4 mr-2' fill='currentColor' viewBox='0 0 24 24'>
-              <path
-                d='M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z'
-              >
-              </path>
-            </svg>
-            Facebook
-          </button>
-          <button
-            onclick={`window.open('https://line.me/R/msg/text/?${encodeURIComponent(post.title + ' ' + Astro.url.href)}', '_blank')`}
-            class='blog-share-button flex items-center px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors'
-          >
-            <svg class='w-4 h-4 mr-2' fill='currentColor' viewBox='0 0 24 24'>
-              <path
-                d='M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.627-.63h2.386c.349 0 .63.285.63.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.27.173-.51.43-.595.06-.023.136-.033.194-.033.195 0 .375.104.495.254l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.627-.63.349 0 .631.285.631.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.282.629-.629.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.038 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.078 9.436-6.975C23.176 14.393 24 12.458 24 10.314'
-              >
-              </path>
-            </svg>
-            LINE
-          </button>
-          <button
-            onclick={`navigator.clipboard.writeText('${Astro.url.href}'); alert('連結已複製到剪貼簿！')`}
-            class='blog-share-button flex items-center px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors'
-          >
-            <svg class='w-4 h-4 mr-2' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-              <path
-                stroke-linecap='round'
-                stroke-linejoin='round'
-                stroke-width='2'
-                d='M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z'
-              >
-              </path>
-            </svg>
-            複製連結
-          </button>
-        </div>
-      </div>
-    </article>
-
-    <!-- Related Posts -->
-    {
-      relatedPosts.length > 0 && (
-        <section class='max-w-4xl mx-auto'>
-          <h2 class='text-2xl font-bold text-gray-900 mb-8'>相關文章</h2>
-          <div class='grid grid-cols-1 md:grid-cols-3 gap-6'>
-            {relatedPosts.map(relatedPost => (
-              <article class='blog-related-post bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow'>
-                {relatedPost.featuredImage && (
-                  <img
-                    src={relatedPost.featuredImage}
-                    alt={relatedPost.title}
-                    class='w-full h-32 object-cover'
-                  />
-                )}
-                <div class='p-4'>
-                  <div class='flex items-center mb-2'>
-                    <span class='inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800'>
-                      {relatedPost.category}
-                    </span>
-                  </div>
-                  <h3 class='text-lg font-semibold text-gray-900 mb-2'>
-                    <a href={`/posts/${relatedPost.slug}`} class='hover:text-blue-600'>
-                      {relatedPost.title}
-                    </a>
-                  </h3>
-                  <p class='text-gray-600 text-sm line-clamp-2'>
-                    {relatedPost.excerpt || relatedPost.description}
-                  </p>
-                </div>
-              </article>
-            ))}
-          </div>
-        </section>
-      )
-    }
+    </div>
   </main>
 </BaseLayout>
-
-<style>
-  .line-clamp-2 {
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-</style>

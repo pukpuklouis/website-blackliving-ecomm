@@ -1,0 +1,1 @@
+ALTER TABLE `products` ADD `features_markdown` text DEFAULT '' NOT NULL;

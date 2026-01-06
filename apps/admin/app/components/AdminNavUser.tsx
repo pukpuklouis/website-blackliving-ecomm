@@ -1,5 +1,8 @@
-import { ChevronUp, LogOut, User } from 'lucide-react';
+// Tree-shakable Lucide imports
+
 import {
+  Avatar,
+  AvatarFallback,
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -9,11 +12,12 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
-  Avatar,
-  AvatarFallback,
-} from '@blackliving/ui';
-import { useAuth } from '../contexts/AuthContext';
-import { useNavigate } from 'react-router';
+} from "@blackliving/ui";
+import ChevronUp from "@lucide/react/chevron-up";
+import LogOut from "@lucide/react/log-out";
+import User from "@lucide/react/user";
+import { useNavigate } from "react-router";
+import { useAuth } from "../contexts/AuthContext";
 
 export function AdminNavUser() {
   const { isMobile } = useSidebar();
@@ -22,7 +26,7 @@ export function AdminNavUser() {
 
   const handleLogout = async () => {
     await logout();
-    navigate('/login', { replace: true });
+    navigate("/login", { replace: true });
   };
 
   if (!user) return null;
@@ -33,8 +37,8 @@ export function AdminNavUser() {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <SidebarMenuButton
-              size="lg"
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+              size="lg"
             >
               <Avatar className="h-8 w-8 rounded-lg">
                 <AvatarFallback className="rounded-lg">
@@ -49,9 +53,9 @@ export function AdminNavUser() {
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent
-            className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
-            side={isMobile ? 'bottom' : 'right'}
             align="end"
+            className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
+            side={isMobile ? "bottom" : "right"}
             sideOffset={4}
           >
             <DropdownMenuItem>

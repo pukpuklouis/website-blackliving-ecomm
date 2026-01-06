@@ -1,0 +1,14 @@
+---
+import { marked } from "marked";
+
+type Props = {
+  content: string;
+  class?: string;
+};
+
+const { content, class: className = "" } = Astro.props;
+
+const htmlContent = content ? await marked.parse(content) : "";
+---
+
+<div class={`prose prose-lg max-w-none ${className}`} set:html={htmlContent}/>

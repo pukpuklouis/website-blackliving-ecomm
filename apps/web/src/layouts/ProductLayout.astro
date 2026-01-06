@@ -1,7 +1,7 @@
 ---
-import BaseLayout from './BaseLayout.astro';
-import SEO from '../components/SEO.astro';
-import '../styles/global.css';
+import SEO from "../components/SEO.astro";
+import BaseLayout from "./BaseLayout.astro";
+import "../styles/global.css";
 
 export interface Props {
   title: string;
@@ -15,7 +15,26 @@ const { title, description, image, publishedTime, modifiedTime } = Astro.props;
 ---
 
 <BaseLayout {title} {description} {image} {publishedTime} {modifiedTime}>
-  <main class='container mx-auto px-4 py-8'>
-    <slot />
+  <main class="container mx-auto px-4 py-8">
+    <!-- Two-column product layout -->
+    <div class="grid grid-cols-1 lg:grid-cols-18 gap-8">
+      <!-- Left Column - Product Images (60% width on desktop) -->
+      <div class="lg:col-span-8">
+        <slot name="product-images"/>
+      </div>
+
+      <!-- Right Column - Product Details & Actions (40% width on desktop) -->
+      <div class="lg:col-span-10">
+        <slot name="product-details"/>
+      </div>
+    </div>
+
+    <!-- Full-width content below the main grid (tabs, additional info) -->
+    <div class="mt-12">
+      <slot name="product-tabs"/>
+    </div>
+
+    <!-- Fallback slot for backwards compatibility -->
+    <slot/>
   </main>
 </BaseLayout>

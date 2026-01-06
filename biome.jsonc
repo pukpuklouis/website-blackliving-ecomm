@@ -1,0 +1,42 @@
+{
+  "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
+  "extends": [
+    "ultracite/core",
+    "ultracite/astro",
+    "ultracite/remix",
+    "ultracite/react"
+  ],
+  "files": {
+    "includes": [
+      "**/*.{js,jsx,ts,tsx,mjs,cjs,astro,mdx}",
+      "!!node_modules",
+      "!!dist",
+      "!!build",
+      "!!research",
+      "!!packages/ui",
+      "!!turbo",
+      "!!git",
+      "!!astro",
+      "!!react-router",
+      "!!wrangler",
+      "!!public"
+    ]
+  },
+  "overrides": [
+    {
+      "includes": [
+        "**/use*.ts",
+        "**/use*.tsx",
+        "apps/admin/**/*.tsx",
+        "**/*.astro"
+      ],
+      "linter": {
+        "rules": {
+          "style": {
+            "useFilenamingConvention": "off"
+          }
+        }
+      }
+    }
+  ]
+}

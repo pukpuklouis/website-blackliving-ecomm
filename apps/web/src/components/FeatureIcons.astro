@@ -1,63 +1,54 @@
 ---
-import { Image } from 'astro:assets';
+import { Image } from "astro:assets";
+import { getEntry } from "astro:content";
 
 // Feature icons section for Black Living homepage
+interface FeatureItem {
+  icon: string;
+  title: string;
+  description: string;
+}
+
 export interface Props {
-  features?: Array<{
-    icon3d?: string;
-    title: string;
-    description: string;
-  }>;
+  features?: FeatureItem[];
 }
 
 const { features = [] } = Astro.props;
 
-const defaultFeatures = [
-  {
-    icon3d: '/feature-icon/features-icon-price.webp',
-    title: '全台最低價',
-    description: '專櫃價2-3折起，買貴退差價保證',
-  },
-  {
-    icon3d: '/feature-icon/features-icon-USA.webp',
-    title: '100% 美國製造',
-    description: '席夢思原廠進口，品質保證',
-  },
-  {
-    icon3d: '/feature-icon/features-icon-WRNTY.webp',
-    title: '十年保固',
-    description: '無折舊保固，睡壞直接換新',
-  },
-  {
-    icon3d: '/feature-icon/features-icon-REVIEW.webp',
-    title: '五星好評',
-    description: '百位網友推薦，蝦皮第一賣家',
-  },
-];
+// Get default features from content collection
+const featuresCollection = await getEntry("features", "featureicon");
+const defaultFeatures = featuresCollection?.data.defaultFeatures || [];
 
-const featuresToShow = features.length > 0 ? features : defaultFeatures;
+const featuresToShow: FeatureItem[] =
+  features.length > 0 ? features : defaultFeatures;
 ---
 
-<section class='py-16 bg-gray-50'>
-  <div class='container mx-auto px-4'>
-    <h2 class='text-3xl font-bold text-center mb-12'>四大堅持</h2>
+<section class="py-16 bg-gray-50">
+  <div class="container md:max-w-7xl mx-auto px-4">
+    <h2
+      class="text-2xl md:text-3xl font-sans text-gray-800 font-bold text-center mb-12"
+    >
+      價格安心 x 服務貼心 x 品質放心
+    </h2>
 
-    <div class='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mx-auto'>
+    <div
+      class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-8 px-8 md:px-0 mx-auto"
+    >
       {
-        featuresToShow.map(feature => (
-          <div class='text-center'>
-            {feature.icon3d && (
+        featuresToShow.map((feature) => (
+          <div class="text-center">
+            {feature.icon && (
               <Image
-                src={feature.icon3d}
+                src={feature.icon}
                 alt={feature.title}
                 width={400}
                 height={400}
-                loading='eager'
-                class='size-48 mx-auto'
+                loading="eager"
+                class="size-42 object-contain mx-auto"
               />
             )}
-            <h3 class='text-xl font-semibold mb-3'>{feature.title}</h3>
-            <p class='text-gray-600'>{feature.description}</p>
+            <h3 class="text-2xl text-gray-700 font-semibold mb-3">{feature.title}</h3>
+            <p class="text-gray-600">{feature.description}</p>
           </div>
         ))
       }

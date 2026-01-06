@@ -1,8 +1,8 @@
 ---
-import { LineIcon } from '@blackliving/ui';
+import { LineIcon } from "@blackliving/ui";
 // Floating action buttons for Line and appointment
 export interface Props {
-  position?: 'right' | 'left';
+  position?: "right" | "left";
   showLine?: boolean;
   showAppointment?: boolean;
   lineUrl?: string;
@@ -11,15 +11,15 @@ export interface Props {
 }
 
 const {
-  position = 'right',
+  position = "right",
   showLine = true,
   showAppointment = true,
-  lineUrl = 'https://line.me/R/ti/p/@blackking',
-  appointmentUrl = '/appointment',
-  class: className = ''
+  lineUrl = "https://line.me/R/ti/p/@blackking",
+  appointmentUrl = "/appointment",
+  class: className = "",
 } = Astro.props;
 
-const positionClasses = position === 'right' ? 'right-4' : 'left-4';
+const positionClasses = position === "right" ? "right-4" : "left-4";
 ---
 
 <div class={`fixed ${positionClasses} bottom-4 z-50 space-y-3 ${className}`}>
@@ -41,11 +41,11 @@ const positionClasses = position === 'right' ? 'right-4' : 'left-4';
       </div>
     </a>
   )}
-  
+
   {showAppointment && (
     <a 
       href={appointmentUrl}
-      class="block w-14 h-14 bg-black hover:bg-gray-800 text-white rounded-full shadow-lg flex items-center justify-center transition-all duration-300 hover:scale-110 group"
+      class="block w-14 h-14 bg-gray-800 hover:bg-gray-700 text-white rounded-full shadow-lg flex items-center justify-center transition-all duration-300 hover:scale-110 group"
       title="預約試躺"
       aria-label="預約試躺"
     >
@@ -61,7 +61,7 @@ const positionClasses = position === 'right' ? 'right-4' : 'left-4';
       </div>
     </a>
   )}
-  
+
   <!-- Pulse animation for LINE button -->
   {showLine && (
     <style>
@@ -88,9 +88,9 @@ const positionClasses = position === 'right' ? 'right-4' : 'left-4';
       right: 1rem;
       bottom: 1rem;
     }
-    
+
     .fixed.left-4 {
-      left: 1rem; 
+      left: 1rem;
       bottom: 1rem;
     }
   }

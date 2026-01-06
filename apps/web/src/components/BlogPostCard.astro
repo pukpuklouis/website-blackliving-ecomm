@@ -1,0 +1,31 @@
+---
+import { BlogPostCard } from "./BlogPostCard";
+
+interface Props {
+  post: {
+    slug: string;
+    title: string;
+    excerpt?: string;
+    description?: string;
+    featuredImage?: string;
+    category: string;
+    readingTime?: string;
+    authorName: string;
+    publishedAt: string;
+  };
+  variant?: "vertical" | "horizontal";
+  class?: string;
+  href: string;
+}
+
+const {
+  post,
+  variant = "vertical",
+  class: className = "",
+  href,
+} = Astro.props as Props & { href: string };
+---
+
+<div class={className}>
+  <BlogPostCard post={post} variant={variant} href={href} client:load/>
+</div>

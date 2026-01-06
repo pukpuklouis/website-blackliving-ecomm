@@ -1,27 +1,111 @@
-import React, { useState } from 'react';
-import { useAppointmentStore } from '../../../stores/appointmentStore';
-
-const timeSlotLabels = {
-  morning: '上午時段 (10:00-12:00)',
-  afternoon: '下午時段 (14:00-17:00)',
-  evening: '晚上時段 (18:00-21:00)',
-};
+import { useState } from "react";
+import { getApiUrl } from "../../../lib/api";
+import {
+  type Store,
+  useAppointmentStore,
+} from "../../../stores/appointmentStore";
+import { useAuthStore } from "../../../stores/authStore";
 
 export default function ReviewStep() {
-  const { appointmentData, setIsSubmitting, isSubmitting, resetForm } = useAppointmentStore();
+  const { appointmentData, setIsSubmitting, isSubmitting, resetForm } =
+    useAppointmentStore();
+  const { ensureFreshAccessToken, user } = useAuthStore();
 
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [submissionError, setSubmissionError] = useState<string | null>(null);
+  const [reservationSummary, setReservationSummary] = useState<{
+    appointmentNumber: string;
+    verificationPending: boolean;
+  } | null>(null);
 
-  const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr);
-    const weekdays = ['日', '一', '二', '三', '四', '五', '六'];
-    const year = date.getFullYear();
-    const month = date.getMonth() + 1;
-    const day = date.getDate();
-    const weekday = weekdays[date.getDay()];
+  const triggerAuthModal = () => {
+    window.dispatchEvent(new CustomEvent("reservation-auth-required"));
+  };
 
-    return `${year}年${month}月${day}日 (週${weekday})`;
+  const preparePayload = () => {
+    if (!(appointmentData.selectedStore && appointmentData.series)) {
+      throw new Error("請先選擇門市與試躺系列");
+    }
+
+    return {
+      storeId: appointmentData.selectedStore.id,
+      // Survey data
+      source: appointmentData.source,
+      hasTriedOtherStores: appointmentData.hasTriedOtherStores,
+      otherStoreNames: appointmentData.otherStoreNames,
+      priceAwareness: appointmentData.priceAwareness,
+      // Product preferences
+      series: appointmentData.series,
+      firmness: appointmentData.firmness,
+      accessories: appointmentData.accessories,
+      notes: appointmentData.notes,
+      customerInfo: {
+        name: appointmentData.name,
+        phone: appointmentData.phone,
+        email: appointmentData.email,
+      },
+    };
+  };
+
+  const submitReservation = async (
+    payload: ReturnType<typeof preparePayload>
+    // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: <explanation>
+  ) => {
+    let token: string | null = null;
+    try {
+      token = await ensureFreshAccessToken();
+    } catch {
+      // Token missing is fine, we'll try cookie auth
+    }
+
+    const headers: HeadersInit = {
+      "Content-Type": "application/json",
+    };
+
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    }
+
+    const response = await fetch(getApiUrl("/api/reservations/create"), {
+      method: "POST",
+      headers,
+      credentials: "include", // Important: Send cookies!
+      body: JSON.stringify(payload),
+    });
+
+    let result: {
+      success?: boolean;
+      error?: string;
+      data?: { appointmentNumber?: string; verificationPending?: boolean };
+    };
+    try {
+      result = await response.json();
+    } catch {
+      throw new Error("伺服器回應格式錯誤，請稍後再試");
+    }
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        triggerAuthModal();
+        throw new Error("登入驗證已過期，請重新登入後再嘗試提交。");
+      }
+      // Extract error message from result
+      const errorMessage =
+        typeof result?.error === "string"
+          ? result.error
+          : "預約提交失敗，請稍後再試";
+      throw new Error(errorMessage);
+    }
+
+    if (!result?.success) {
+      const errorMessage =
+        typeof result?.error === "string"
+          ? result.error
+          : "預約提交失敗，請稍後再試";
+      throw new Error(errorMessage);
+    }
+
+    return result;
   };
 
   const handleSubmit = async () => {
@@ -29,63 +113,19 @@ export default function ReviewStep() {
     setSubmissionError(null);
 
     try {
-      // Prepare appointment data for API
-      const appointmentPayload = {
-        storeId: appointmentData.selectedStore?.id,
-        productId: appointmentData.selectedProduct?.id,
-        customerInfo: {
-          name: appointmentData.name,
-          phone: appointmentData.phone,
-          email: appointmentData.email,
-        },
-        preferredDate: appointmentData.preferredDate,
-        preferredTime: appointmentData.preferredTime,
-        message: appointmentData.message,
-        createAccount: appointmentData.createAccount,
-        hasExistingAccount: appointmentData.hasAccount,
-      };
+      const payload = preparePayload();
+      const result = await submitReservation(payload);
 
-      // Submit appointment to API
-      const response = await fetch('/api/appointments', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(appointmentPayload),
+      setReservationSummary({
+        appointmentNumber: result.data?.appointmentNumber ?? "",
+        verificationPending: Boolean(result.data?.verificationPending),
       });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || '預約提交失敗');
-      }
-
-      const result = await response.json();
-
-      // Success
       setIsSubmitted(true);
-
-      // If user needs account creation, handle that
-      if (appointmentData.createAccount) {
-        try {
-          await fetch('/api/user/create-account', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              email: appointmentData.email,
-              name: appointmentData.name,
-              phone: appointmentData.phone,
-              appointmentId: result.appointmentId,
-            }),
-          });
-        } catch (accountError) {
-          console.warn('帳戶建立失敗，但預約已成功:', accountError);
-        }
-      }
     } catch (error) {
-      console.error('預約提交錯誤:', error);
-      setSubmissionError(error instanceof Error ? error.message : '預約提交失敗，請稍後再試');
+      console.error("預約提交錯誤:", error);
+      setSubmissionError(
+        error instanceof Error ? error.message : "預約提交失敗，請稍後再試"
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -95,66 +135,97 @@ export default function ReviewStep() {
     resetForm();
     setIsSubmitted(false);
     setSubmissionError(null);
+    setReservationSummary(null);
   };
 
   if (isSubmitted) {
+    const pendingMessage = reservationSummary?.verificationPending
+      ? "系統顯示您的 Email 尚未驗證，請確認收件匣並完成 Magic Link 驗證後預約才會生效。"
+      : "您的 Email 已完成驗證，專人將盡快與您聯繫確認預約時間。";
+
     return (
-      <div className="text-center py-8">
+      <div className="py-8 text-center">
         <div className="mb-6">
-          <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100 text-green-500">
             <svg
-              className="w-8 h-8 text-green-500"
+              aria-hidden="true"
+              className="h-8 w-8"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
             >
+              <title>成功</title>
               <path
+                d="M5 13l4 4L19 7"
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 strokeWidth={2}
-                d="M5 13l4 4L19 7"
               />
             </svg>
           </div>
-          <h2 className="text-3xl font-bold text-gray-900 mb-4">預約成功！</h2>
-          <p className="text-lg text-gray-600 mb-6">感謝您的預約，我們已收到您的申請</p>
+          <h2 className="mb-4 font-bold text-gray-900 text-xl md:text-3xl">
+            您的預約資料已成功送出！
+          </h2>
+          <div className="space-y-4 text-balance text-gray-600 text-lg">
+            <p>
+              為避免 LINE 名稱不同導致無法對應，請您{" "}
+              <a
+                className="font-semibold text-green-600 underline hover:text-green-700"
+                href="https://line.me/R/ti/p/@blackking"
+                rel="noopener noreferrer"
+                target="_blank"
+              >
+                私訊我們 LINE 官方帳號
+              </a>{" "}
+              並告知：
+            </p>
+            <p className="text-balance rounded-lg bg-gray-50 p-4 font-medium text-gray-800">
+              👉「我已填寫官網預約，姓名：＿＿＿＿＿」
+            </p>
+            <p className="text-balance">
+              我們會盡快為您確認與回覆，期待為您服務 🤍
+            </p>
+          </div>
         </div>
 
-        <div className="bg-green-50 border border-green-200 rounded-lg p-6 mb-6 text-left max-w-md mx-auto">
-          <h3 className="font-semibold text-green-800 mb-3">接下來的流程：</h3>
+        <div className="mb-6 rounded-lg border border-green-200 bg-green-50 p-6 text-left">
+          <h3 className="mb-3 font-semibold text-green-800">預約資訊</h3>
           <ul className="space-y-2 text-green-700">
             <li className="flex items-start">
-              <span className="mr-2">1.</span>
-              <span>我們會在24小時內致電給您確認預約時間</span>
+              <span className="mr-2">預約編號</span>
+              <span className="font-medium">
+                {reservationSummary?.appointmentNumber || "建立中"}
+              </span>
             </li>
             <li className="flex items-start">
-              <span className="mr-2">2.</span>
-              <span>請攜帶身分證件準時到達門市</span>
+              <span className="mr-2">姓名</span>
+              <span>{appointmentData.name}</span>
             </li>
             <li className="flex items-start">
-              <span className="mr-2">3.</span>
-              <span>專業睡眠顧問將為您提供個人化試躺服務</span>
+              <span className="mr-2">電子信箱</span>
+              <span>{appointmentData.email}</span>
             </li>
-            {appointmentData.createAccount && (
-              <li className="flex items-start">
-                <span className="mr-2">4.</span>
-                <span>您的會員帳戶已建立，可享受會員專屬優惠</span>
-              </li>
-            )}
           </ul>
+          <p className="mt-4 text-green-700 text-sm">{pendingMessage}</p>
         </div>
 
         <div className="space-y-3">
           <button
+            className="rounded-lg bg-black px-6 py-3 font-medium text-white transition-colors hover:bg-gray-800"
             onClick={handleNewAppointment}
-            className="px-6 py-3 bg-black text-white rounded-lg font-medium hover:bg-gray-800 transition-colors"
+            type="button"
           >
             預約其他產品
           </button>
 
-          <div className="text-sm text-gray-500">
+          <div className="hidden text-gray-500 text-sm">
             <p>預約相關問題請洽服務專線：</p>
-            <p className="font-medium">{appointmentData.selectedStore?.phone}</p>
+            <p className="font-medium">
+              {String(
+                (appointmentData.selectedStore as Store & { phone?: string })
+                  ?.phone || "N/A"
+              )}
+            </p>
           </div>
         </div>
       </div>
@@ -164,56 +235,91 @@ export default function ReviewStep() {
   return (
     <div className="text-center">
       <div className="mb-8">
-        <h2 className="text-3xl font-bold text-gray-900 mb-4">確認預約資訊</h2>
-        <p className="text-lg text-gray-600">請檢查以下預約資訊是否正確</p>
+        <h2 className="mb-4 font-bold text-3xl text-gray-900">確認預約資訊</h2>
+        <p className="text-gray-600 text-lg">請檢查以下預約資訊是否正確</p>
       </div>
 
       {/* Review information */}
-      <div className="max-w-lg mx-auto space-y-6 text-left">
+      <div className="mx-auto max-w-lg space-y-6 text-left">
         {/* Store information */}
-        <div className="bg-gray-50 rounded-lg p-6">
-          <h3 className="font-semibold text-gray-900 mb-3 flex items-center">
-            <svg className="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className="rounded-lg bg-gray-50 p-6">
+          <h3 className="mb-3 flex items-center font-semibold text-gray-900">
+            <svg
+              aria-hidden="true"
+              className="mr-2 h-5 w-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
               <path
+                d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 strokeWidth={2}
-                d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
               />
             </svg>
             預約門市
           </h3>
-          <p className="text-lg font-medium">{appointmentData.selectedStore?.name}</p>
-          <p className="text-gray-600">{appointmentData.selectedStore?.address}</p>
-          <p className="text-gray-600">{appointmentData.selectedStore?.phone}</p>
+          <p className="font-medium text-lg">
+            {appointmentData.selectedStore?.name}
+          </p>
+          <p className="text-gray-600">
+            {appointmentData.selectedStore?.address}
+          </p>
         </div>
 
-        {/* Product information */}
-        <div className="bg-gray-50 rounded-lg p-6">
-          <h3 className="font-semibold text-gray-900 mb-3 flex items-center">
-            <svg className="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        {/* Trial Preferences */}
+        <div className="rounded-lg bg-gray-50 p-6">
+          <h3 className="mb-3 flex items-center font-semibold text-gray-900">
+            <svg
+              aria-hidden="true"
+              className="mr-2 h-5 w-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
               <path
+                d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 strokeWidth={2}
-                d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
               />
             </svg>
-            試躺產品
+            試躺需求
           </h3>
-          <p className="text-lg font-medium">{appointmentData.selectedProduct?.name}</p>
-          <p className="text-gray-600">{appointmentData.selectedProduct?.description}</p>
+          <div className="space-y-2">
+            <p>
+              <span className="text-gray-600">系列：</span>
+              {appointmentData.series || "未選擇"}
+            </p>
+            <p>
+              <span className="text-gray-600">軟硬度：</span>
+              {appointmentData.firmness || "未選擇"}
+            </p>
+            <p>
+              <span className="text-gray-600">配件：</span>
+              {(appointmentData.accessories?.length ?? 0) > 0
+                ? appointmentData.accessories.join("、")
+                : "無"}
+            </p>
+          </div>
         </div>
 
         {/* Personal information */}
-        <div className="bg-gray-50 rounded-lg p-6">
-          <h3 className="font-semibold text-gray-900 mb-3 flex items-center">
-            <svg className="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className="rounded-lg bg-gray-50 p-6">
+          <h3 className="mb-3 flex items-center font-semibold text-gray-900">
+            <svg
+              aria-hidden="true"
+              className="mr-2 h-5 w-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
               <path
+                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 strokeWidth={2}
-                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
               />
             </svg>
             聯絡資訊
@@ -234,71 +340,61 @@ export default function ReviewStep() {
           </div>
         </div>
 
-        {/* Date and time */}
-        <div className="bg-gray-50 rounded-lg p-6">
-          <h3 className="font-semibold text-gray-900 mb-3 flex items-center">
-            <svg className="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-              />
-            </svg>
-            預約時間
-          </h3>
-          <p>
-            <span className="text-gray-600">日期：</span>
-            {formatDate(appointmentData.preferredDate)}
-          </p>
-          <p>
-            <span className="text-gray-600">時段：</span>
-            {timeSlotLabels[appointmentData.preferredTime as keyof typeof timeSlotLabels]}
-          </p>
-        </div>
-
         {/* Message */}
-        {appointmentData.message && (
-          <div className="bg-gray-50 rounded-lg p-6">
-            <h3 className="font-semibold text-gray-900 mb-3 flex items-center">
-              <svg className="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        {appointmentData.notes?.trim() ? (
+          <div className="rounded-lg bg-gray-50 p-6">
+            <h3 className="mb-3 flex items-center font-semibold text-gray-900">
+              <svg
+                aria-hidden="true"
+                className="mr-2 h-5 w-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <title>備註說明</title>
                 <path
+                  d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   strokeWidth={2}
-                  d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"
                 />
               </svg>
               備註說明
             </h3>
-            <p className="text-gray-700">{appointmentData.message}</p>
+            <p className="text-gray-700">{String(appointmentData.notes)}</p>
           </div>
-        )}
+        ) : null}
       </div>
 
       {/* Error message */}
-      {submissionError && (
-        <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 max-w-lg mx-auto">
-          <p>{submissionError}</p>
+      {submissionError ? (
+        <div className="mx-auto mt-6 max-w-lg rounded-lg border border-red-200 bg-red-50 p-4 text-red-700">
+          <p>{String(submissionError)}</p>
         </div>
-      )}
+      ) : null}
 
       {/* Submit button */}
-      <div className="mt-8 space-y-4">
+      <div className="mt-8 flex justify-center">
         <button
-          onClick={handleSubmit}
+          className="rounded-lg bg-black px-8 py-3 font-medium text-lg text-white transition-colors hover:bg-gray-800 disabled:cursor-not-allowed disabled:bg-gray-400"
           disabled={isSubmitting}
-          className="
-            px-8 py-4 bg-black text-white rounded-lg font-medium text-lg
-            hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed
-            transition-colors
-          "
+          onClick={handleSubmit}
+          type="button"
         >
-          {isSubmitting ? '提交中...' : '確認預約'}
+          {isSubmitting ? "提交中..." : "送出預約"}
         </button>
-
-        <p className="text-sm text-gray-500">點擊確認後，我們將在24小時內致電與您確認預約時間</p>
       </div>
+
+      <p className="mt-4 text-gray-500 text-sm">
+        完成提交後，系統會保留您的預約資料並以 Email 通知。請確保信箱可收到
+        blackliving.com 寄出的郵件。
+      </p>
+
+      {user ? (
+        <p className="mt-2 text-gray-400 text-xs">
+          目前以 {String(user.email)} 身份預約
+        </p>
+      ) : null}
     </div>
   );
 }

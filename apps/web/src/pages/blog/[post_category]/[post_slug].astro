@@ -1,0 +1,407 @@
+---
+import type { BlogPost, PostCategory } from "@blackliving/types";
+import PostLayout from "../../../layouts/PostLayout.astro";
+
+type ApiPost = BlogPost & {
+  status?: BlogPost["status"];
+  featured?: boolean;
+  category?: PostCategory | string;
+  content?: string;
+  seoTitle?: string;
+  seoDescription?: string;
+};
+
+type CategoryMeta = {
+  id: string;
+  slug: string;
+  name: string;
+  description: string;
+  color: string;
+  icon: string;
+};
+
+const apiUrl = import.meta.env.PUBLIC_API_BASE_URL || "http://localhost:8787";
+
+// (No module-level fallbacks to avoid dev/build scope issues)
+
+function normalizeCategorySlug(raw?: string | null): string {
+  if (!raw) {
+    return "blog-post";
+  }
+  const input = raw.trim().toLowerCase();
+  if (
+    ["blogger-testimonial", "blogger testimonial", "部落格推薦"].includes(input)
+  ) {
+    return "blogger-testimonial";
+  }
+  if (
+    ["customer-reviews", "顧客好評", "顧客真實回饋", "客戶評價"].includes(input)
+  ) {
+    return "customer-reviews";
+  }
+  if (["blog-post", "好文分享", "部落格文章", "blog"].includes(input)) {
+    return "blog-post";
+  }
+  // Support Simmons Knowledge aliases
+  if (
+    ["simmons-knowledge", "席夢思小知識", "simmons knowledge"].includes(input)
+  ) {
+    return "simmons-knowledge";
+  }
+  if (input.startsWith("cat_")) {
+    if (input === "cat_001") {
+      return "blog-post";
+    }
+    if (input === "cat_002") {
+      return "blogger-testimonial";
+    }
+    if (input === "cat_003") {
+      return "simmons-knowledge";
+    }
+    if (input === "cat_004") {
+      return "customer-reviews";
+    }
+
+    return input.slice(4);
+  }
+  return input.replace(/\s+/g, "-");
+}
+
+function resolveCategoryMeta(category: ApiPost["category"]): CategoryMeta {
+  if (category && typeof category === "object") {
+    const cat = category as PostCategory;
+    const slug = normalizeCategorySlug(cat.slug || cat.name);
+    return {
+      id: cat.id || slug,
+      slug,
+      name: cat.name || cat.slug || "好文分享",
+      description: cat.description || "",
+      color: cat.color || "#1f2937",
+      icon: cat.icon || "",
+    };
+  }
+
+  const slug = normalizeCategorySlug(
+    typeof category === "string" ? category : undefined
+  );
+  const categoryNames: Record<string, string> = {
+    "customer-reviews": "顧客真實回饋",
+    "blogger-testimonial": "部落格推薦",
+    "blog-post": "好文分享",
+    "simmons-knowledge": "席夢思小知識",
+  };
+
+  const name =
+    categoryNames[slug] ||
+    (typeof category === "string" ? category : "好文分享");
+
+  return {
+    id: slug,
+    slug,
+    name,
+    description: "",
+    color: "#1f2937",
+    icon: "",
+  };
+}
+
+function mapApiPostToBlogPost(
+  entry: ApiPost,
+  fallbackCategory?: CategoryMeta
+): BlogPost {
+  const categoryMeta = entry?.category
+    ? resolveCategoryMeta(entry.category)
+    : (fallbackCategory ?? resolveCategoryMeta("blog-post"));
+
+  const categorySlug = categoryMeta.slug;
+
+  const result: BlogPost = {
+    id: entry?.id ?? "",
+    title: entry?.title ?? "",
+    slug: entry?.slug ?? "",
+    description: entry?.description || entry?.excerpt || "",
+    excerpt: entry?.excerpt || entry?.description || "",
+    content: entry?.content || entry?.excerpt || entry?.description || "",
+    authorName: entry?.authorName || "Black Living 專業團隊",
+    category: categoryMeta.name,
+    categoryId: categorySlug,
+    categorySlug,
+    tags: Array.isArray(entry?.tags) ? entry.tags : [],
+    featuredImage: entry?.featuredImage || "",
+    publishedAt: entry?.publishedAt || "",
+    viewCount: entry?.viewCount ?? 0,
+    readingTime:
+      typeof entry?.readingTime === "number"
+        ? entry.readingTime
+        : Number(entry?.readingTime ?? 0),
+    status: (entry?.status ?? "published") as BlogPost["status"],
+    featured: Boolean(entry?.featured),
+    seoTitle: entry?.seoTitle,
+    seoDescription: entry?.seoDescription,
+    createdAt: entry?.createdAt,
+    updatedAt: entry?.updatedAt,
+  };
+
+  return result;
+}
+
+export async function getStaticPaths() {
+  try {
+    const response = await fetch(`${apiUrl}/api/posts/public?include=category`);
+
+    if (response.ok) {
+      const payload = await response.json();
+      const posts = Array.isArray(payload?.data) ? payload.data : [];
+
+      if (posts.length > 0) {
+        return posts
+          .map((post: ApiPost) => {
+            if (!post?.slug) return null;
+            const categoryMeta = resolveCategoryMeta(postItem.category);
+
+            return {
+              params: {
+                post_category: categoryMeta.slug,
+                post_slug: postItem.slug,
+              },
+            };
+          })
+          .filter(Boolean);
+      }
+    } else {
+      console.error("Failed to fetch posts for static paths:", response.status);
+    }
+  } catch (error) {
+    console.error("Error fetching static paths:", error);
+  }
+
+  // Inline fallbacks to avoid any scope issues during dev/build
+  return [
+    {
+      params: {
+        post_category: "blog-post",
+        post_slug: "simmons-black-label-buying-guide",
+      },
+    },
+    {
+      params: {
+        post_category: "blogger-testimonial",
+        post_slug: "simmons-black-label-media-review",
+      },
+    },
+    {
+      params: {
+        post_category: "customer-reviews",
+        post_slug: "customer-review-simmons-3-months",
+      },
+    },
+  ];
+}
+
+// Conditional prerender: disabled in dev for easier preview, enabled in staging/production for static generation
+export const prerender = import.meta.env.MODE !== "development";
+
+const { post_category: routeCategorySlug, post_slug: routeSlug } = Astro.params;
+const normalizedRouteCategory = normalizeCategorySlug(routeCategorySlug);
+
+let apiPost: ApiPost | undefined;
+
+try {
+  const postResponse = await fetch(
+    `${apiUrl}/api/posts/${encodeURIComponent(routeSlug)}?include=category`
+  );
+
+  if (postResponse.ok) {
+    const postPayload = await postResponse.json();
+    apiPost = postPayload?.data;
+  } else {
+    console.error(
+      "Failed to fetch post details:",
+      postResponse.status,
+      routeSlug
+    );
+  }
+} catch (error) {
+  console.error("Error fetching post details:", error);
+}
+
+if (!apiPost) {
+  const inlineFallbackPosts: ApiPost[] = [
+    {
+      id: "fallback-post-1",
+      title: "Simmons Black Label 床墊選購指南",
+      slug: "simmons-black-label-buying-guide",
+      description: "全面介紹 Simmons Black Label 系列床墊的特色與選購建議",
+      excerpt:
+        "選擇合適的床墊對睡眠品質至關重要，本文將深入解析 Simmons Black Label 系列的各項特色...",
+      content:
+        "# Simmons Black Label 床墊選購指南\n\n選擇合適的床墊對睡眠品質至關重要...",
+      authorName: "黑哥家居團隊",
+      category: "blog-post",
+      categoryId: "blog-post",
+      categorySlug: "blog-post",
+      tags: ["床墊", "Simmons", "選購指南"],
+      featuredImage: "/images/blog/simmons-guide.jpg",
+      publishedAt: "2024-01-15T10:00:00Z",
+      viewCount: 0,
+      readingTime: 8,
+      status: "published",
+      featured: false,
+      seoTitle: "Simmons Black Label 床墊完整選購指南 | 黑哥家居",
+      seoDescription:
+        "專業介紹 Simmons Black Label 系列床墊特色，幫您選擇最適合的床墊型號",
+      createdAt: undefined,
+      updatedAt: undefined,
+    } as unknown as ApiPost,
+    {
+      id: "fallback-post-2",
+      title: "媒體報導：Simmons Black Label 評測亮點",
+      slug: "simmons-black-label-media-review",
+      description:
+        "彙整媒體與部落客對 Simmons Black Label 的評測重點與推薦亮點",
+      excerpt:
+        "多家媒體與資深部落客一致推薦 Simmons Black Label，帶您快速掌握核心亮點...",
+      content:
+        "# 媒體報導：Simmons Black Label 評測亮點\n\n整理各大媒體與專業部落客的評測觀點，協助您快速了解產品特色...",
+      authorName: "黑哥家居團隊",
+      category: "blogger-testimonial",
+      categoryId: "blogger-testimonial",
+      categorySlug: "blogger-testimonial",
+      tags: ["媒體報導", "部落客推薦", "Simmons"],
+      featuredImage: "/images/blog/simmons-media-review.jpg",
+      publishedAt: "2024-01-12T08:00:00Z",
+      viewCount: 0,
+      readingTime: 6,
+      status: "published",
+      featured: false,
+      seoTitle: "媒體報導：Simmons Black Label 評測亮點 | 黑哥家居",
+      seoDescription:
+        "精選媒體與部落客對 Simmons Black Label 的評測與推薦亮點，快速掌握產品優勢",
+      createdAt: undefined,
+      updatedAt: undefined,
+    } as unknown as ApiPost,
+    {
+      id: "fallback-post-3",
+      title: "客戶分享：使用 Simmons 床墊三個月心得",
+      slug: "customer-review-simmons-3-months",
+      description: "真實客戶分享使用 Simmons Black Label 床墊三個月的使用心得",
+      excerpt:
+        "購買 Simmons Black Label Natasha 已經三個月了，想跟大家分享一下使用心得...",
+      content:
+        "# 客戶分享：使用 Simmons 床墊三個月心得\n\n購買 Simmons Black Label Natasha 已經三個月了...",
+      authorName: "張小姐",
+      category: "customer-reviews",
+      categoryId: "customer-reviews",
+      categorySlug: "customer-reviews",
+      tags: ["客戶心得", "Simmons", "Black Label"],
+      featuredImage: "/images/reviews/customer-review-1.jpg",
+      publishedAt: "2024-01-10T14:30:00Z",
+      viewCount: 0,
+      readingTime: 5,
+      status: "published",
+      featured: false,
+      seoTitle: "客戶真實分享：Simmons 床墊使用心得 | 黑哥家居",
+      seoDescription:
+        "真實客戶分享 Simmons Black Label 床墊使用三個月的詳細心得與評價",
+      createdAt: undefined,
+      updatedAt: undefined,
+    } as unknown as ApiPost,
+  ];
+
+  const fallbackPost = inlineFallbackPosts.find(
+    (entry) => entry.slug === routeSlug
+  );
+  if (fallbackPost) {
+    apiPost = fallbackPost;
+  } else {
+    throw new Response(null, { status: 404 });
+  }
+}
+
+const categoryMeta = resolveCategoryMeta(apiPost.category);
+
+if (categoryMeta.slug !== normalizedRouteCategory) {
+  throw new Error(`Route category mismatch for slug: ${routeSlug}`);
+}
+
+const post = mapApiPostToBlogPost(apiPost, categoryMeta);
+
+const relatedParams = new URLSearchParams();
+relatedParams.set("include", "category");
+if (categoryMeta.slug) {
+  relatedParams.set("category", categoryMeta.slug);
+}
+relatedParams.set("limit", "6");
+
+let relatedEntries: ApiPost[] = [];
+
+try {
+  const relatedResponse = await fetch(
+    `${apiUrl}/api/posts/public?${relatedParams.toString()}`
+  );
+
+  if (relatedResponse.ok) {
+    const relatedPayload = await relatedResponse.json();
+    relatedEntries = Array.isArray(relatedPayload?.data)
+      ? relatedPayload.data
+      : [];
+  } else {
+    console.warn("Failed to fetch related posts:", relatedResponse.status);
+  }
+} catch (error) {
+  console.error("Error fetching related posts:", error);
+}
+
+if (relatedEntries.length === 0) {
+  const inlineFallbackPosts: Array<{ slug: string; categorySlug: string }> = [
+    { slug: "simmons-black-label-buying-guide", categorySlug: "blog-post" },
+    {
+      slug: "simmons-black-label-media-review",
+      categorySlug: "blogger-testimonial",
+    },
+    {
+      slug: "customer-review-simmons-3-months",
+      categorySlug: "customer-reviews",
+    },
+  ];
+  relatedEntries = inlineFallbackPosts.filter(
+    (entry: { slug: string; categorySlug: string }) =>
+      normalizeCategorySlug(entry.categorySlug) === categoryMeta.slug &&
+      entry.slug !== post.slug
+  ) as ApiPost[];
+}
+
+const relatedPosts = relatedEntries
+  .filter((entry) => entry?.slug && entry.slug !== post.slug)
+  .slice(0, 3)
+  .map((entry) => mapApiPostToBlogPost(entry, categoryMeta));
+
+const categoryForLayout: PostCategory | null = categoryMeta
+  ? {
+      id: categoryMeta.id,
+      name: categoryMeta.name,
+      slug: categoryMeta.slug,
+      description: categoryMeta.description,
+      color: categoryMeta.color,
+      icon: categoryMeta.icon,
+    }
+  : null;
+
+const seoTitle =
+  apiPost.seoTitle ||
+  `${post.title} | ${categoryMeta.name ? `${categoryMeta.name} | ` : ""}黑哥家居`;
+const seoDescription =
+  apiPost.seoDescription || post.excerpt || post.description;
+const ogImage = post.featuredImage || "/images/default-og.jpg";
+---
+
+<PostLayout
+  {post}
+  category={categoryForLayout}
+  relatedPosts={relatedPosts}
+  {seoTitle}
+  {seoDescription}
+  {ogImage}
+>
+  <!-- Content rendered by BlogContent component in PostLayout -->
+</PostLayout>

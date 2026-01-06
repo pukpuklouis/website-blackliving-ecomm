@@ -42,6 +42,11 @@ Thumbs.db
 .env.local
 .env.*.local
 
+# Cloudflare Workers configuration (contains sensitive IDs and secrets)
+apps/api/wrangler.toml
+**/wrangler.toml
+!**/wrangler.example.toml
+
 # React Router
 .react-router/
 
@@ -64,6 +69,10 @@ coverage/
 # tests
 
 __tests__
+!apps/api/src/routes/__tests__/
+!apps/api/src/routes/__tests__/*.test.ts
+!apps/api/src/modules/__tests__/
+!apps/api/src/modules/__tests__/*.test.ts
 test-results/
 tests-results/*/*
 tests/
@@ -83,4 +92,14 @@ dev-debug.log
 # Note: _journal.json should be tracked in git for proper migration state
 
 # research
-research/*
+research/*/*
+research/** */
+
+# claude  command
+.claude/*/*    
+
+# gemini
+.gemini/*/*
+# BMAD (local only)
+.bmad-core/
+.bmad-*/

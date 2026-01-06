@@ -1,0 +1,14 @@
+{
+  "filePath": ".spec-workflow/specs/web-frontend-mattress-accessory-products/tasks.md",
+  "currentVersion": 1,
+  "snapshots": [
+    {
+      "version": 1,
+      "filename": "snapshot-001.json",
+      "timestamp": "2025-11-03T17:23:38.527Z",
+      "trigger": "initial",
+      "approvalId": "approval_1762190618518_lejzznbp2",
+      "approvalTitle": "Web Frontend Mattress & Accessory Products Tasks Document"
+    }
+  ]
+}

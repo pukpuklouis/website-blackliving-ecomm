@@ -1,4 +1,4 @@
-import type { KVNamespace } from '@cloudflare/workers-types';
+import type { KVNamespace } from "@cloudflare/workers-types";
 
 export class CacheManager {
   constructor(private kv: KVNamespace) {}
@@ -13,7 +13,7 @@ export class CacheManager {
 
       return parseJson ? JSON.parse(value) : value;
     } catch (error) {
-      console.error('Cache get error:', error);
+      console.error("Cache get error:", error);
       return null;
     }
   }
@@ -23,12 +23,13 @@ export class CacheManager {
    */
   async set(key: string, value: any, ttl = 3600): Promise<void> {
     try {
-      const serialized = typeof value === 'string' ? value : JSON.stringify(value);
+      const serialized =
+        typeof value === "string" ? value : JSON.stringify(value);
       await this.kv.put(key, serialized, {
         expirationTtl: ttl,
       });
     } catch (error) {
-      console.error('Cache set error:', error);
+      console.error("Cache set error:", error);
     }
   }
 
@@ -39,7 +40,7 @@ export class CacheManager {
     try {
       await this.kv.delete(key);
     } catch (error) {
-      console.error('Cache delete error:', error);
+      console.error("Cache delete error:", error);
     }
   }
 
@@ -49,17 +50,21 @@ export class CacheManager {
   async deleteByPrefix(prefix: string): Promise<void> {
     try {
       const keys = await this.kv.list({ prefix });
-      const deletePromises = keys.keys.map(key => this.kv.delete(key.name));
+      const deletePromises = keys.keys.map((key) => this.kv.delete(key.name));
       await Promise.all(deletePromises);
     } catch (error) {
-      console.error('Cache clear by prefix error:', error);
+      console.error("Cache clear by prefix error:", error);
     }
   }
 
   /**
    * Get or set cache data with a fallback function
    */
-  async getOrSet<T = any>(key: string, fallback: () => Promise<T>, ttl = 3600): Promise<T> {
+  async getOrSet<T = any>(
+    key: string,
+    fallback: () => Promise<T>,
+    ttl = 3600
+  ): Promise<T> {
     const cached = await this.get<T>(key);
     if (cached !== null) {
       return cached;
@@ -76,35 +81,44 @@ export class CacheManager {
   static keys = {
     products: {
       list: (category?: string, featured?: boolean) =>
-        `products:list:${category || 'all'}:${featured || 'all'}`,
+        `products:list:${category || "all"}:${featured || "all"}`,
       detail: (id: string) => `products:detail:${id}`,
       search: (query: string) => `products:search:${query}`,
     },
     orders: {
-      list: (filters?: string) => `orders:list:${filters || 'all'}`,
+      list: (filters?: string) => `orders:list:${filters || "all"}`,
       detail: (id: string) => `orders:detail:${id}`,
-      stats: () => 'orders:stats',
+      stats: () => "orders:stats",
     },
     posts: {
-      list: (status?: string) => `posts:list:${status || 'all'}`,
+      list: (status?: string) => `posts:list:${status || "all"}`,
       detail: (id: string) => `posts:detail:${id}`,
-      featured: () => 'posts:featured',
+      featured: () => "posts:featured",
     },
     appointments: {
-      list: (filters?: string) => `appointments:list:${filters || 'all'}`,
+      list: (filters?: string) => `appointments:list:${filters || "all"}`,
       detail: (id: string) => `appointments:detail:${id}`,
-      pending: () => 'appointments:pending',
+      pending: () => "appointments:pending",
     },
     analytics: {
-      dashboard: () => 'analytics:dashboard',
-      sales: () => 'analytics:sales',
+      dashboard: () => "analytics:dashboard",
+      sales: () => "analytics:sales",
+    },
+    pages: {
+      list: (status?: string) => `pages:list:${status || "all"}`,
+      detail: (slug: string) => `pages:detail:${slug}`,
     },
   };
 
   /**
    * Cache with automatic invalidation tags
    */
-  async setWithTags(key: string, value: any, tags: string[], ttl = 3600): Promise<void> {
+  async setWithTags(
+    key: string,
+    value: any,
+    tags: string[],
+    ttl = 3600
+  ): Promise<void> {
     await this.set(key, value, ttl);
 
     // Store reverse mapping for tag-based invalidation
@@ -127,7 +141,7 @@ export class CacheManager {
       const taggedKeys = (await this.get<string[]>(tagKey, true)) || [];
 
       // Delete all keys associated with this tag
-      const deletePromises = taggedKeys.map(key => this.delete(key));
+      const deletePromises = taggedKeys.map((key) => this.delete(key));
       await Promise.all(deletePromises);
 
       // Delete the tag key itself
@@ -146,5 +160,5 @@ export const CacheTTL = {
   SHORT: 300, // 5 minutes
   MEDIUM: 1800, // 30 minutes
   LONG: 3600, // 1 hour
-  VERY_LONG: 86400, // 24 hours
+  VERY_LONG: 86_400, // 24 hours
 } as const;

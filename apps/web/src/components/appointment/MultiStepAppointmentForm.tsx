@@ -1,65 +1,125 @@
-import React from 'react';
-import { useAppointmentStore } from '../../stores/appointmentStore';
-import { Button } from '@blackliving/ui';
-import AccountCheckStep from './steps/AccountCheckStep';
-import StoreSelectionStep from './steps/StoreSelectionStep';
-import ProductSelectionStep from './steps/ProductSelectionStep';
-import PersonalInfoStep from './steps/PersonalInfoStep';
-import DateTimeStep from './steps/DateTimeStep';
-import ReviewStep from './steps/ReviewStep';
+import { Button } from "@blackliving/ui";
+import { useEffect, useState } from "react";
+import { useAppointmentStore } from "../../stores/appointmentStore";
+import AuthModal from "../auth/AuthModal";
+import AccessoriesStep from "./steps/AccessoriesStep";
+import CompetitorResearchStep from "./steps/CompetitorResearchStep";
+
+import FirmnessStep from "./steps/FirmnessStep";
+import PersonalInfoStep from "./steps/PersonalInfoStep";
+import PriceAwarenessStep from "./steps/PriceAwarenessStep";
+import ReviewStep from "./steps/ReviewStep";
+import SeriesSelectionStep from "./steps/SeriesSelectionStep";
+import SourceStep from "./steps/SourceStep";
+import StoreSelectionStep from "./steps/StoreSelectionStep";
 
 const steps = [
-  { id: 'account', title: '帳戶檢查', component: AccountCheckStep },
-  { id: 'store', title: '選擇門市', component: StoreSelectionStep },
-  { id: 'product', title: '選擇產品', component: ProductSelectionStep },
-  { id: 'personal', title: '個人資訊', component: PersonalInfoStep },
-  { id: 'datetime', title: '預約時間', component: DateTimeStep },
-  { id: 'review', title: '確認預約', component: ReviewStep },
+  { id: "store", title: "選擇門市展間", component: StoreSelectionStep },
+  { id: "source", title: "來源渠道", component: SourceStep },
+  {
+    id: "competitor",
+    title: "試躺經驗",
+    component: CompetitorResearchStep,
+  },
+  { id: "price", title: "價格認知", component: PriceAwarenessStep },
+  { id: "series", title: "選擇系列", component: SeriesSelectionStep },
+  { id: "firmness", title: "軟硬偏好", component: FirmnessStep },
+  { id: "accessories", title: "配件需求", component: AccessoriesStep },
+  { id: "personal", title: "個人資訊", component: PersonalInfoStep },
+
+  { id: "review", title: "確認預約", component: ReviewStep },
 ];
 
 export default function MultiStepAppointmentForm() {
   const { currentStep, nextStep, prevStep } = useAppointmentStore();
+  const [authModalOpen, setAuthModalOpen] = useState(false);
 
   const CurrentStepComponent = steps[currentStep]?.component;
+
+  useEffect(() => {
+    const handler = () => setAuthModalOpen(true);
+    window.addEventListener("reservation-auth-required", handler);
+    return () =>
+      window.removeEventListener("reservation-auth-required", handler);
+  }, []);
+
+  useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      if (authModalOpen) {
+        return;
+      }
+
+      // Next step: Enter or Right Arrow
+      if (
+        (e.key === "Enter" || e.key === "ArrowRight") &&
+        currentStep < steps.length - 1
+      ) {
+        e.preventDefault();
+        nextStep();
+      }
+
+      // Previous step: Left Arrow
+      if (e.key === "ArrowLeft" && currentStep > 0) {
+        e.preventDefault();
+        prevStep();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyPress);
+    return () => window.removeEventListener("keydown", handleKeyPress);
+  }, [authModalOpen, currentStep, nextStep, prevStep]);
+
+  const handleCloseModal = () => {
+    setAuthModalOpen(false);
+  };
 
   if (!CurrentStepComponent) {
     return <div>步驟不存在</div>;
   }
 
   return (
-    <div className="max-w-2xl mx-auto">
+    <div className="relative mx-auto max-w-2xl">
+      <AuthModal
+        onAuthenticated={() => setAuthModalOpen(false)}
+        onClose={handleCloseModal}
+        open={authModalOpen}
+      />
+
       {/* Progress indicator */}
       <div className="mb-8">
-        <div className="flex items-center justify-between text-sm text-gray-500 mb-2">
+        <div className="mb-2 flex items-center justify-between text-gray-500 text-sm">
           <span>
             步驟 {currentStep + 1} / {steps.length}
           </span>
           <span>{steps[currentStep]?.title}</span>
         </div>
 
-        <div className="w-full bg-gray-200 rounded-full h-2">
+        <div className="h-fit w-full rounded-full border-2 border-gray-200/30 bg-gray-400/30">
           <div
-            className="bg-black h-2 rounded-full transition-all duration-300"
+            className="h-2 rounded-full bg-black transition-all duration-300"
             style={{ width: `${((currentStep + 1) / steps.length) * 100}%` }}
           />
         </div>
       </div>
 
       {/* Current step content */}
-      <div className="bg-white rounded-lg shadow-lg p-8 min-h-[500px]">
+      <div className="relative min-h-[500px] rounded-lg bg-white p-8 shadow-lg">
         <CurrentStepComponent />
       </div>
 
       {/* Navigation buttons */}
-      <div className="flex justify-between mt-6">
-        <Button variant="outline" onClick={prevStep} disabled={currentStep === 0} className="px-6">
+      <div className="mt-6 flex justify-between">
+        <Button
+          className="px-6"
+          disabled={currentStep === 0 || authModalOpen}
+          onClick={prevStep}
+          variant="outline"
+        >
           上一步
         </Button>
 
-        <div className="text-sm text-gray-500 self-center">按 Enter 繼續</div>
-
         {currentStep < steps.length - 1 && (
-          <Button onClick={nextStep} className="px-6">
+          <Button className="px-6" disabled={authModalOpen} onClick={nextStep}>
             下一步
           </Button>
         )}

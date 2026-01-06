@@ -1,9 +1,12 @@
-import { Hono } from 'hono';
-import { zValidator } from '@hono/zod-validator';
-import { z } from 'zod';
-import { eq, desc, asc, and, or, like, count, sql } from 'drizzle-orm';
-import { products } from '@blackliving/db';
-import { createId } from '@paralleldrive/cuid2';
+import { productCategories, products } from "@blackliving/db";
+import { PRODUCT_TYPE_TEMPLATES } from "@blackliving/types";
+import { zValidator } from "@hono/zod-validator";
+import { createId } from "@paralleldrive/cuid2";
+import { and, asc, count, desc, eq, inArray, like, or, sql } from "drizzle-orm";
+import { Hono } from "hono";
+import { z } from "zod";
+import { transformProduct } from "../utils/searchSync";
+import type { SearchModule } from "./search";
 
 type Env = {
   Bindings: {
@@ -16,6 +19,7 @@ type Env = {
     db: any;
     cache: any;
     storage: any;
+    search: SearchModule;
     user: any;
     session: any;
   };
@@ -23,33 +27,67 @@ type Env = {
 
 const app = new Hono<Env>();
 
+const ACCESSORY_SUBCATEGORY_SLUGS = Object.values(PRODUCT_TYPE_TEMPLATES)
+  .filter((template) => template.category === "accessories")
+  .map((template) => template.id);
+
+const accessorySubtypeSet = new Set(ACCESSORY_SUBCATEGORY_SLUGS);
+
+export function resolveAccessorySubcategory(
+  category?: string,
+  subCategory?: string | null
+): string[] | null {
+  if (category !== "accessories" || !subCategory) {
+    return null;
+  }
+
+  // Split by comma and validate each type
+  const types = subCategory.split(",").map((s) => s.trim().toLowerCase());
+  const validTypes = types.filter((t) => accessorySubtypeSet.has(t));
+
+  return validTypes.length > 0 ? validTypes : null;
+}
+
 // Validation schemas
 const createProductSchema = z.object({
-  name: z.string().min(1, 'Product name is required'),
+  name: z.string().min(1, "Product name is required"),
   slug: z
     .string()
-    .min(1, 'Product slug is required')
-    .regex(/^[a-z0-9-]+$/, 'Slug must contain only lowercase letters, numbers, and hyphens'),
-  description: z.string().min(10, 'Description must be at least 10 characters'),
-  category: z.enum(['simmons-black', 'accessories', 'us-imports']),
+    .min(1, "Product slug is required")
+    .regex(
+      /^[a-z0-9-]+$/,
+      "Slug must contain only lowercase letters, numbers, and hyphens"
+    ),
+  description: z.string().min(10, "Description must be at least 10 characters"),
+  category: z
+    .string()
+    .min(1, "Category is required")
+    .regex(/^[a-z0-9-]+$/, "Category must be a lowercase slug"),
+  productType: z.string().optional(),
   images: z.array(z.string().url()).default([]),
   variants: z
     .array(
       z.object({
         id: z.string(),
         name: z.string(),
-        sku: z.string(),
+        sku: z.string().max(32, "SKU must be 32 characters or less"),
         price: z.number().positive(),
         originalPrice: z.number().positive().optional(),
-        size: z.enum(['single', 'double', 'queen', 'king']),
-        firmness: z.enum(['soft', 'medium', 'firm']),
+        size: z.string(),
+        firmness: z.string().optional(),
         stock: z.number().int().min(0),
         inStock: z.boolean().default(true),
         sortOrder: z.number().default(0),
+        optionValues: z.record(z.string()).optional(), // Enhanced variant fields
       })
     )
-    .min(1, 'At least one variant is required'),
+    .min(1, "At least one variant is required"),
   features: z.array(z.string()).default([]),
+  featuresMarkdown: z.string().default(""), // Accessory-specific field
+  accessoryType: z
+    .enum(["standalone", "accessory", "bundle"])
+    .default("standalone"), // Accessory-specific field
+  parentProductId: z.string().optional(), // Accessory-specific field
   specifications: z.record(z.string()).default({}),
   inStock: z.boolean().default(true),
   featured: z.boolean().default(false),
@@ -61,25 +99,35 @@ const createProductSchema = z.object({
 const updateProductSchema = createProductSchema.partial();
 
 const productQuerySchema = z.object({
-  category: z.enum(['simmons-black', 'accessories', 'us-imports']).optional(),
+  category: z
+    .string()
+    .regex(/^[a-z0-9-]+$/, "Category must be a lowercase slug")
+    .optional(),
+  subCategory: z
+    .string()
+    .regex(
+      /^[a-z0-9,-]+$/,
+      "Subcategory must be a lowercase slug or comma-separated slugs"
+    )
+    .optional(),
   featured: z.string().optional(),
   inStock: z.string().optional(),
   search: z.string().optional(),
   limit: z.string().optional(),
   offset: z.string().optional(),
-  sortBy: z.enum(['name', 'price', 'created', 'featured']).default('created'),
-  sortOrder: z.enum(['asc', 'desc']).default('desc'),
+  sortBy: z.enum(["name", "price", "created", "featured"]).default("created"),
+  sortOrder: z.enum(["asc", "desc"]).default("desc"),
 });
 
 // Helper function to require admin role
 const requireAdmin = async (c: any, next: any) => {
-  const user = c.get('user');
-  if (!user || user.role !== 'admin') {
+  const user = c.get("user");
+  if (!user || user.role !== "admin") {
     return c.json(
       {
         success: false,
-        error: 'Unauthorized',
-        message: 'Admin access required',
+        error: "Unauthorized",
+        message: "Admin access required",
       },
       403
     );
@@ -88,11 +136,11 @@ const requireAdmin = async (c: any, next: any) => {
 };
 
 // GET /api/products - List all products with advanced filtering and search
-app.get('/', zValidator('query', productQuerySchema), async c => {
+app.get("/", zValidator("query", productQuerySchema), async (c) => {
   try {
-    const db = c.get('db');
-    const cache = c.get('cache');
-    const query = c.req.valid('query');
+    const db = c.get("db");
+    const cache = c.get("cache");
+    const query = c.req.valid("query");
 
     // Build cache key
     const cacheKey = `products:list:${JSON.stringify(query)}`;
@@ -115,28 +163,45 @@ app.get('/', zValidator('query', productQuerySchema), async c => {
     }
 
     if (query.featured) {
-      conditions.push(eq(products.featured, query.featured === 'true'));
+      conditions.push(eq(products.featured, query.featured === "true"));
     }
 
     if (query.inStock) {
-      conditions.push(eq(products.inStock, query.inStock === 'true'));
+      conditions.push(eq(products.inStock, query.inStock === "true"));
+    }
+
+    const resolvedSubCategories = resolveAccessorySubcategory(
+      query.category,
+      query.subCategory
+    );
+    if (resolvedSubCategories && resolvedSubCategories.length > 0) {
+      conditions.push(
+        resolvedSubCategories.length === 1
+          ? eq(products.productType, resolvedSubCategories[0])
+          : inArray(products.productType, resolvedSubCategories)
+      );
     }
 
     // Handle search
     if (query.search) {
       const searchTerm = `%${query.search}%`;
-      conditions.push(or(like(products.name, searchTerm), like(products.description, searchTerm)));
+      conditions.push(
+        or(
+          like(products.name, searchTerm),
+          like(products.description, searchTerm)
+        )
+      );
     }
 
     // Handle sorting
     let orderBy;
-    const sortDirection = query.sortOrder === 'asc' ? asc : desc;
+    const sortDirection = query.sortOrder === "asc" ? asc : desc;
 
     switch (query.sortBy) {
-      case 'name':
+      case "name":
         orderBy = sortDirection(products.name);
         break;
-      case 'featured':
+      case "featured":
         orderBy = [desc(products.featured), desc(products.createdAt)];
         break;
       default:
@@ -144,8 +209,8 @@ app.get('/', zValidator('query', productQuerySchema), async c => {
     }
 
     // Execute query with pagination
-    const limit = parseInt(query.limit || '20');
-    const offset = parseInt(query.offset || '0');
+    const limit = Number.parseInt(query.limit || "20");
+    const offset = Number.parseInt(query.offset || "0");
 
     const result = await db
       .select()
@@ -172,19 +237,21 @@ app.get('/', zValidator('query', productQuerySchema), async c => {
     };
 
     // Cache the result for 10 minutes
-    await cache.set(cacheKey, JSON.stringify(responseData), { expirationTtl: 600 });
+    await cache.set(cacheKey, JSON.stringify(responseData), {
+      expirationTtl: 600,
+    });
 
     return c.json({
       success: true,
       data: responseData,
     });
   } catch (error) {
-    console.error('Error fetching products:', error);
+    console.error("Error fetching products:", error);
     return c.json(
       {
         success: false,
-        error: 'Internal Server Error',
-        message: 'Failed to fetch products',
+        error: "Internal Server Error",
+        message: "Failed to fetch products",
       },
       500
     );
@@ -192,12 +259,12 @@ app.get('/', zValidator('query', productQuerySchema), async c => {
 });
 
 // GET /api/products/featured - Get featured products for homepage
-app.get('/featured', async c => {
+app.get("/featured", async (c) => {
   try {
-    const db = c.get('db');
-    const cache = c.get('cache');
+    const db = c.get("db");
+    const cache = c.get("cache");
 
-    const cacheKey = 'products:featured';
+    const cacheKey = "products:featured";
 
     // Try cache first
     const cached = await cache.get(cacheKey);
@@ -217,34 +284,35 @@ app.get('/featured', async c => {
       .limit(8);
 
     // Cache for 15 minutes
-    await cache.set(cacheKey, JSON.stringify(featuredProducts), { expirationTtl: 900 });
+    await cache.set(cacheKey, JSON.stringify(featuredProducts), {
+      expirationTtl: 900,
+    });
 
     return c.json({
       success: true,
       data: featuredProducts,
     });
   } catch (error) {
-    console.error('Error fetching featured products:', error);
+    console.error("Error fetching featured products:", error);
     return c.json(
       {
         success: false,
-        error: 'Internal Server Error',
-        message: 'Failed to fetch featured products',
+        error: "Internal Server Error",
+        message: "Failed to fetch featured products",
       },
       500
     );
   }
 });
 
-// GET /api/products/categories - Get products grouped by category
-app.get('/categories', async c => {
+// GET /api/products/categories - Fetch product categories with stats
+app.get("/categories", async (c) => {
   try {
-    const db = c.get('db');
-    const cache = c.get('cache');
+    const db = c.get("db");
+    const cache = c.get("cache");
 
-    const cacheKey = 'products:categories';
+    const cacheKey = "products:categories";
 
-    // Try cache first
     const cached = await cache.get(cacheKey);
     if (cached) {
       return c.json({
@@ -254,46 +322,146 @@ app.get('/categories', async c => {
       });
     }
 
-    // Get products count by category
-    const categoryStats = await db
+    const categories = await db
+      .select()
+      .from(productCategories)
+      .where(eq(productCategories.isActive, true))
+      .orderBy(asc(productCategories.sortOrder), asc(productCategories.title));
+
+    const stats = await db
       .select({
         category: products.category,
-        count: count(),
+        productCount: count(),
         inStockCount: sql<number>`SUM(CASE WHEN ${products.inStock} = TRUE THEN 1 ELSE 0 END)`,
       })
       .from(products)
       .groupBy(products.category);
 
-    // Get sample products for each category
-    const categories = {};
-    for (const stat of categoryStats) {
-      const sampleProducts = await db
-        .select()
-        .from(products)
-        .where(and(eq(products.category, stat.category), eq(products.inStock, true)))
-        .orderBy(desc(products.featured), desc(products.createdAt))
-        .limit(4);
+    const statsMap = new Map(stats.map((entry) => [entry.category, entry]));
 
-      categories[stat.category] = {
-        ...stat,
-        sampleProducts,
-      };
-    }
+    const enrichedCategories = await Promise.all(
+      categories.map(async (category) => {
+        const stat = statsMap.get(category.slug) ?? {
+          productCount: 0,
+          inStockCount: 0,
+        };
 
-    // Cache for 30 minutes
-    await cache.set(cacheKey, JSON.stringify(categories), { expirationTtl: 1800 });
+        const sampleProducts = await db
+          .select()
+          .from(products)
+          .where(
+            and(
+              eq(products.category, category.slug),
+              eq(products.inStock, true)
+            )
+          )
+          .orderBy(desc(products.featured), desc(products.createdAt))
+          .limit(4);
+
+        return {
+          category,
+          stats: {
+            productCount: Number(stat.productCount ?? 0),
+            inStockCount: Number(stat.inStockCount ?? 0),
+          },
+          sampleProducts,
+        };
+      })
+    );
+
+    const payload = { categories: enrichedCategories };
+
+    await cache.set(cacheKey, JSON.stringify(payload), { expirationTtl: 1800 });
 
     return c.json({
       success: true,
-      data: categories,
+      data: payload,
     });
   } catch (error) {
-    console.error('Error fetching product categories:', error);
+    console.error("Error fetching product categories:", error);
     return c.json(
       {
         success: false,
-        error: 'Internal Server Error',
-        message: 'Failed to fetch product categories',
+        error: "Internal Server Error",
+        message: "Failed to fetch product categories",
+      },
+      500
+    );
+  }
+});
+
+// GET /api/products/categories/:slug - Fetch single product category
+app.get("/categories/:slug", async (c) => {
+  try {
+    const db = c.get("db");
+    const cache = c.get("cache");
+    const slug = c.req.param("slug");
+
+    const cacheKey = `products:category:${slug}`;
+
+    const cached = await cache.get(cacheKey);
+    if (cached) {
+      return c.json({
+        success: true,
+        data: JSON.parse(cached),
+        cached: true,
+      });
+    }
+
+    const [category] = await db
+      .select()
+      .from(productCategories)
+      .where(eq(productCategories.slug, slug))
+      .limit(1);
+
+    if (!(category && category.isActive)) {
+      return c.json(
+        {
+          success: false,
+          error: "Not Found",
+          message: "Category not found",
+        },
+        404
+      );
+    }
+
+    const [stat] = await db
+      .select({
+        productCount: count(),
+        inStockCount: sql<number>`SUM(CASE WHEN ${products.inStock} = TRUE THEN 1 ELSE 0 END)`,
+      })
+      .from(products)
+      .where(eq(products.category, slug));
+
+    const sampleProducts = await db
+      .select()
+      .from(products)
+      .where(and(eq(products.category, slug), eq(products.inStock, true)))
+      .orderBy(desc(products.featured), desc(products.createdAt))
+      .limit(4);
+
+    const payload = {
+      category,
+      stats: {
+        productCount: Number(stat?.productCount ?? 0),
+        inStockCount: Number(stat?.inStockCount ?? 0),
+      },
+      sampleProducts,
+    };
+
+    await cache.set(cacheKey, JSON.stringify(payload), { expirationTtl: 1800 });
+
+    return c.json({
+      success: true,
+      data: payload,
+    });
+  } catch (error) {
+    console.error("Error fetching product category:", error);
+    return c.json(
+      {
+        success: false,
+        error: "Internal Server Error",
+        message: "Failed to fetch product category",
       },
       500
     );
@@ -302,32 +470,38 @@ app.get('/categories', async c => {
 
 // GET /api/products/search - Advanced product search
 app.get(
-  '/search',
+  "/search",
   zValidator(
-    'query',
+    "query",
     z.object({
-      q: z.string().min(1, 'Search query is required'),
-      category: z.enum(['simmons-black', 'accessories', 'us-imports']).optional(),
+      q: z.string().min(1, "Search query is required"),
+      category: z
+        .string()
+        .regex(/^[a-z0-9-]+$/)
+        .optional(),
       limit: z.string().optional(),
       offset: z.string().optional(),
     })
   ),
-  async c => {
+  async (c) => {
     try {
-      const db = c.get('db');
-      const query = c.req.valid('query');
+      const db = c.get("db");
+      const query = c.req.valid("query");
 
       const searchTerm = `%${query.q}%`;
       const conditions = [
-        or(like(products.name, searchTerm), like(products.description, searchTerm)),
+        or(
+          like(products.name, searchTerm),
+          like(products.description, searchTerm)
+        ),
       ];
 
       if (query.category) {
         conditions.push(eq(products.category, query.category));
       }
 
-      const limit = parseInt(query.limit || '10');
-      const offset = parseInt(query.offset || '0');
+      const limit = Number.parseInt(query.limit || "10");
+      const offset = Number.parseInt(query.offset || "0");
 
       const results = await db
         .select()
@@ -346,12 +520,12 @@ app.get(
         },
       });
     } catch (error) {
-      console.error('Error searching products:', error);
+      console.error("Error searching products:", error);
       return c.json(
         {
           success: false,
-          error: 'Internal Server Error',
-          message: 'Failed to search products',
+          error: "Internal Server Error",
+          message: "Failed to search products",
         },
         500
       );
@@ -360,24 +534,32 @@ app.get(
 );
 
 // GET /api/products/:identifier - Get single product by ID or slug
-app.get('/:identifier', async c => {
+app.get("/:identifier", async (c) => {
   try {
-    const db = c.get('db');
-    const identifier = c.req.param('identifier');
+    const db = c.get("db");
+    const identifier = c.req.param("identifier");
 
     // Try to find by ID first, then by slug
-    let product = await db.select().from(products).where(eq(products.id, identifier)).limit(1);
+    let product = await db
+      .select()
+      .from(products)
+      .where(eq(products.id, identifier))
+      .limit(1);
 
     if (product.length === 0) {
-      product = await db.select().from(products).where(eq(products.slug, identifier)).limit(1);
+      product = await db
+        .select()
+        .from(products)
+        .where(eq(products.slug, identifier))
+        .limit(1);
     }
 
     if (product.length === 0) {
       return c.json(
         {
           success: false,
-          error: 'Not Found',
-          message: 'Product not found',
+          error: "Not Found",
+          message: "Product not found",
         },
         404
       );
@@ -388,12 +570,12 @@ app.get('/:identifier', async c => {
       data: product[0],
     });
   } catch (error) {
-    console.error('Error fetching product:', error);
+    console.error("Error fetching product:", error);
     return c.json(
       {
         success: false,
-        error: 'Internal Server Error',
-        message: 'Failed to fetch product',
+        error: "Internal Server Error",
+        message: "Failed to fetch product",
       },
       500
     );
@@ -401,160 +583,239 @@ app.get('/:identifier', async c => {
 });
 
 // POST /api/products - Create new product (Admin only)
-app.post('/', requireAdmin, zValidator('json', createProductSchema), async c => {
-  try {
-    const db = c.get('db');
-    const cache = c.get('cache');
-    const productData = c.req.valid('json');
+app.post(
+  "/",
+  requireAdmin,
+  zValidator("json", createProductSchema),
+  async (c) => {
+    try {
+      const db = c.get("db");
+      const cache = c.get("cache");
+      const productData = c.req.valid("json");
 
-    // Check if slug already exists
-    const [existingProduct] = await db
-      .select({ id: products.id })
-      .from(products)
-      .where(eq(products.slug, productData.slug));
-
-    if (existingProduct) {
-      return c.json(
-        {
-          success: false,
-          error: 'Conflict',
-          message: 'A product with this slug already exists',
-        },
-        409
-      );
-    }
-
-    const productId = createId();
-    const now = new Date();
-
-    const [newProduct] = await db
-      .insert(products)
-      .values({
-        id: productId,
-        name: productData.name,
-        slug: productData.slug,
-        description: productData.description,
-        category: productData.category,
-        images: productData.images,
-        variants: productData.variants,
-        features: productData.features,
-        specifications: productData.specifications,
-        inStock: productData.inStock,
-        featured: productData.featured,
-        sortOrder: productData.sortOrder,
-        seoTitle: productData.seoTitle || null,
-        seoDescription: productData.seoDescription || null,
-        createdAt: now,
-        updatedAt: now,
-      })
-      .returning();
-
-    // Clear relevant caches
-    await cache.delete('products:featured');
-    await cache.delete('products:categories');
-
-    return c.json(
-      {
-        success: true,
-        data: newProduct,
-        message: 'Product created successfully',
-      },
-      201
-    );
-  } catch (error) {
-    console.error('Error creating product:', error);
-    return c.json(
-      {
-        success: false,
-        error: 'Internal Server Error',
-        message: 'Failed to create product',
-      },
-      500
-    );
-  }
-});
-
-// PUT /api/products/:id - Update product (Admin only)
-app.put('/:id', requireAdmin, zValidator('json', updateProductSchema), async c => {
-  try {
-    const db = c.get('db');
-    const cache = c.get('cache');
-    const id = c.req.param('id');
-    const updateData = c.req.valid('json');
-
-    // Check if product exists
-    const [existingProduct] = await db
-      .select({ id: products.id, slug: products.slug })
-      .from(products)
-      .where(eq(products.id, id));
-
-    if (!existingProduct) {
-      return c.json(
-        {
-          success: false,
-          error: 'Not Found',
-          message: 'Product not found',
-        },
-        404
-      );
-    }
-
-    // Check if new slug conflicts with existing products (if slug is being updated)
-    if (updateData.slug && updateData.slug !== existingProduct.slug) {
-      const [conflictingProduct] = await db
+      // Check if slug already exists
+      const [existingProduct] = await db
         .select({ id: products.id })
         .from(products)
-        .where(eq(products.slug, updateData.slug));
+        .where(eq(products.slug, productData.slug));
 
-      if (conflictingProduct) {
+      if (existingProduct) {
         return c.json(
           {
             success: false,
-            error: 'Conflict',
-            message: 'A product with this slug already exists',
+            error: "Conflict",
+            message: "A product with this slug already exists",
           },
           409
         );
       }
+
+      // Ensure category exists
+      const [resolvedCategory] = await db
+        .select({ id: productCategories.id })
+        .from(productCategories)
+        .where(
+          and(
+            eq(productCategories.slug, productData.category),
+            eq(productCategories.isActive, true)
+          )
+        );
+
+      if (!resolvedCategory) {
+        return c.json(
+          {
+            success: false,
+            error: "Invalid Category",
+            message: "Specified category does not exist or is inactive",
+          },
+          400
+        );
+      }
+
+      const productId = createId();
+      const now = new Date();
+
+      const [newProduct] = await db
+        .insert(products)
+        .values({
+          id: productId,
+          name: productData.name,
+          slug: productData.slug,
+          description: productData.description,
+          category: productData.category,
+          images: productData.images,
+          variants: productData.variants,
+          features: productData.features,
+          productType: productData.productType ?? null,
+          featuresMarkdown: productData.featuresMarkdown,
+          accessoryType: productData.accessoryType,
+          parentProductId: productData.parentProductId,
+          specifications: productData.specifications,
+          inStock: productData.inStock,
+          featured: productData.featured,
+          sortOrder: productData.sortOrder,
+          seoTitle: productData.seoTitle || null,
+          seoDescription: productData.seoDescription || null,
+          createdAt: now,
+          updatedAt: now,
+        })
+        .returning();
+
+      // Clear relevant caches so new product appears immediately everywhere
+      await cache.delete("products:featured");
+      await cache.delete("products:categories");
+      await cache.deleteByPrefix("products:category:");
+      await cache.deleteByPrefix("products:list:");
+      await cache.deleteByPrefix("products:detail:");
+
+      // Sync to search index (non-blocking)
+      try {
+        const searchModule = c.get("search");
+        if (searchModule) {
+          const searchDocument = transformProduct(newProduct);
+          await searchModule.indexDocument(searchDocument).catch((error) => {
+            console.warn("Failed to index new product in search:", error);
+          });
+        }
+      } catch (error) {
+        console.warn("Search sync failed for new product:", error);
+        // Don't fail the main operation
+      }
+
+      return c.json(
+        {
+          success: true,
+          data: newProduct,
+          message: "Product created successfully",
+        },
+        201
+      );
+    } catch (error) {
+      console.error("Error creating product:", error);
+      return c.json(
+        {
+          success: false,
+          error: "Internal Server Error",
+          message: "Failed to create product",
+        },
+        500
+      );
     }
-
-    const [updatedProduct] = await db
-      .update(products)
-      .set({
-        ...updateData,
-        updatedAt: new Date(),
-      })
-      .where(eq(products.id, id))
-      .returning();
-
-    // Clear relevant caches
-    await cache.delete('products:featured');
-    await cache.delete('products:categories');
-
-    return c.json({
-      success: true,
-      data: updatedProduct,
-      message: 'Product updated successfully',
-    });
-  } catch (error) {
-    console.error('Error updating product:', error);
-    return c.json(
-      {
-        success: false,
-        error: 'Internal Server Error',
-        message: 'Failed to update product',
-      },
-      500
-    );
   }
-});
+);
+
+// PUT /api/products/:id - Update product (Admin only)
+app.put(
+  "/:id",
+  requireAdmin,
+  zValidator("json", updateProductSchema),
+  async (c) => {
+    try {
+      const db = c.get("db");
+      const cache = c.get("cache");
+      const id = c.req.param("id");
+      const updateData = c.req.valid("json");
+
+      // Check if product exists
+      const [existingProduct] = await db
+        .select({ id: products.id, slug: products.slug })
+        .from(products)
+        .where(eq(products.id, id));
+
+      if (!existingProduct) {
+        return c.json(
+          {
+            success: false,
+            error: "Not Found",
+            message: "Product not found",
+          },
+          404
+        );
+      }
+
+      // Check if new slug conflicts with existing products (if slug is being updated)
+      if (updateData.slug && updateData.slug !== existingProduct.slug) {
+        const [conflictingProduct] = await db
+          .select({ id: products.id })
+          .from(products)
+          .where(eq(products.slug, updateData.slug));
+
+        if (conflictingProduct) {
+          return c.json(
+            {
+              success: false,
+              error: "Conflict",
+              message: "A product with this slug already exists",
+            },
+            409
+          );
+        }
+      }
+
+      if (updateData.category) {
+        const [resolvedCategory] = await db
+          .select({ id: productCategories.id })
+          .from(productCategories)
+          .where(
+            and(
+              eq(productCategories.slug, updateData.category),
+              eq(productCategories.isActive, true)
+            )
+          );
+
+        if (!resolvedCategory) {
+          return c.json(
+            {
+              success: false,
+              error: "Invalid Category",
+              message: "Specified category does not exist or is inactive",
+            },
+            400
+          );
+        }
+      }
+
+      const [updatedProduct] = await db
+        .update(products)
+        .set({
+          ...updateData,
+          updatedAt: new Date(),
+        })
+        .where(eq(products.id, id))
+        .returning();
+
+      // Clear relevant caches so updated data is reflected immediately
+      await cache.delete("products:featured");
+      await cache.delete("products:categories");
+      await cache.deleteByPrefix("products:category:");
+      await cache.deleteByPrefix("products:list:");
+      await cache.deleteByPrefix("products:detail:");
+
+      return c.json({
+        success: true,
+        data: updatedProduct,
+        message: "Product updated successfully",
+      });
+    } catch (error) {
+      console.error("Error updating product:", error);
+      return c.json(
+        {
+          success: false,
+          error: "Internal Server Error",
+          message: "Failed to update product",
+        },
+        500
+      );
+    }
+  }
+);
 
 // DELETE /api/products/:id - Delete product (Admin only)
-app.delete('/:id', requireAdmin, async c => {
+app.delete("/:id", requireAdmin, async (c) => {
   try {
-    const db = c.get('db');
-    const cache = c.get('cache');
-    const id = c.req.param('id');
+    const db = c.get("db");
+    const cache = c.get("cache");
+    const id = c.req.param("id");
 
     // Check if product exists
     const [existingProduct] = await db
@@ -566,8 +827,8 @@ app.delete('/:id', requireAdmin, async c => {
       return c.json(
         {
           success: false,
-          error: 'Not Found',
-          message: 'Product not found',
+          error: "Not Found",
+          message: "Product not found",
         },
         404
       );
@@ -575,21 +836,24 @@ app.delete('/:id', requireAdmin, async c => {
 
     await db.delete(products).where(eq(products.id, id));
 
-    // Clear relevant caches
-    await cache.delete('products:featured');
-    await cache.delete('products:categories');
+    // Clear relevant caches so removed product disappears everywhere
+    await cache.delete("products:featured");
+    await cache.delete("products:categories");
+    await cache.deleteByPrefix("products:category:");
+    await cache.deleteByPrefix("products:list:");
+    await cache.deleteByPrefix("products:detail:");
 
     return c.json({
       success: true,
-      message: 'Product deleted successfully',
+      message: "Product deleted successfully",
     });
   } catch (error) {
-    console.error('Error deleting product:', error);
+    console.error("Error deleting product:", error);
     return c.json(
       {
         success: false,
-        error: 'Internal Server Error',
-        message: 'Failed to delete product',
+        error: "Internal Server Error",
+        message: "Failed to delete product",
       },
       500
     );

@@ -1,0 +1,14 @@
+{
+  "filePath": ".spec-workflow/specs/logistic-settings/design.md",
+  "currentVersion": 1,
+  "snapshots": [
+    {
+      "version": 1,
+      "filename": "snapshot-001.json",
+      "timestamp": "2025-11-30T12:36:15.575Z",
+      "trigger": "initial",
+      "approvalId": "approval_1764506175535_6dqkdk0a4",
+      "approvalTitle": "Logistic Settings Design"
+    }
+  ]
+}

@@ -1,0 +1,178 @@
+---
+import { Image } from "astro:assets";
+
+interface Advantage {
+  id: string;
+  title: string;
+  subtitle: string;
+  description: string;
+  iconImage: string;
+  angle: number; // Position on circle in degrees
+}
+
+const advantages: Advantage[] = [
+  {
+    id: "import",
+    title: "全程直營進口",
+    subtitle: "價格透明無中間商",
+    description:
+      "美國原廠直接下單，省去中間商層層加價，確保最優惠價格與正品保證",
+    iconImage: "/images/about/blackliving-about-icon-freight.svg",
+    angle: 45, // Top left
+  },
+  {
+    id: "warehouse",
+    title: "自有美國/台灣倉儲",
+    subtitle: "現貨供應無需等待",
+    description: "美國及台灣雙倉庫，庫存充足，快速出貨，無需長時間等待",
+    iconImage: "/images/about/blackliving-about-icon-warehouse.svg",
+    angle: 135, // Top right
+  },
+  {
+    id: "shopping",
+    title: "購物流程簡單",
+    subtitle: "交貨準時，售後安心",
+    description: "線上線下整合，可預約實體門市試躺，提供最完善的購物服務",
+    iconImage: "/images/about/blackliving-about-icon-shoppingbag.svg",
+    angle: 225, // Bottom right
+  },
+  {
+    id: "service",
+    title: "線上即時回覆",
+    subtitle: "快速解答，讓購物更安心",
+    description: "Line官方帳號即時回覆，專業團隊提供售前諮詢與完整售後服務",
+    iconImage: "/images/about/blackliving-about-icon-responsive.svg",
+    angle: 315, // Bottom left
+  },
+];
+
+// Calculate position on circle
+const calculatePosition = (angle: number, radius: number) => {
+  const radian = ((angle - 90) * Math.PI) / 180; // -90 to start from top
+  return {
+    x: 50 + radius * Math.cos(radian),
+    y: 50 + radius * Math.sin(radian),
+  };
+};
+
+const circleRadius = 30; // Radius of the connecting circle (in percentage)
+---
+
+<div
+  class="relative w-full container md:max-w-5xl mx-auto h-[35rem] md:h-[55rem]"
+>
+  <!-- SVG Container for circle -->
+  <svg
+    class="absolute inset-0 w-full h-full pointer-events-none"
+    viewBox="0 0 100 100"
+    preserveAspectRatio="xMidYMid meet"
+  >
+    <defs>
+      <linearGradient id="circleGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#C6A679"></stop>
+        <stop offset="50%" stop-color="#C6A679"></stop>
+        <stop offset="100%" stop-color="#C6A679"></stop>
+      </linearGradient>
+    </defs>
+
+    <!-- Connecting circle -->
+    <circle
+      cx="50"
+      cy="50"
+      r={circleRadius}
+      fill="none"
+      stroke="url(#circleGradient)"
+      stroke-width="3"
+      opacity="1"
+    ></circle>
+  </svg>
+
+  <!-- Central hub - Black circle with title -->
+  <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20">
+    <div class="w-48 h-48 flex items-center justify-center">
+      <div class="text-center">
+        <div class="text-2xl font-bold text-gray-800 leading-tight">
+          黑哥
+          <br>
+          四大優勢
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Advantage cloud shapes positioned on circle -->
+  {
+    advantages.map((advantage) => {
+      const pos = calculatePosition(advantage.angle, circleRadius);
+      return (
+        <div
+          class="advantage-item absolute w-30 h-40 md:w-60 md:h-70"
+          style={`left: ${pos.x}%; top: ${pos.y}%; transform: translate(-50%, -50%);`}
+        >
+          <div class="relative w-full h-full group cursor-pointer">
+            {/* Content overlay */}
+            <div class="absolute inset-0 w-full h-full flex flex-col items-center justify-center text-center p-6 z-10">
+              <div class="w-25 md:w-40 aspect-square rounded-full flex bg-primary shadow-lg items-center justify-center z-10">
+                <Image
+                  src={advantage.iconImage}
+                  alt={advantage.title}
+                  width={64}
+                  height={64}
+                  class="w-15 h-auto md:w-25 mb-3 z-30"
+                />
+              </div>
+              <div class="flex flex-col items-center justify-center bg-primary rounded-full shadow-lg px-4 md:px-6 py-2 -mt-2 z-20">
+                <h3 class="text-xs md:text-lg font-bold text-gray-50 mb-1 leading-tight whitespace-nowrap">
+                  {advantage.title}
+                </h3>
+                <p class="text-xs font-bold md:font-normal md:text-lg text-gray-100 opacity-80 whitespace-nowrap">
+                  {advantage.subtitle}
+                </p>
+              </div>
+            </div>
+
+            {/* Hover description tooltip */}
+            <div
+              class="tooltip absolute left-1/2 -translate-x-1/2 w-72 bg-gray-50 rounded-xl shadow-2xl p-5 border-2 border-primary opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity duration-300 z-50"
+              style={`${advantage.angle === 0 || advantage.angle === 90 ? 'top: 100%; margin-top: 1rem;' : 'bottom: 100%; margin-bottom: 1rem;'}`}
+            >
+              <div class="text-sm text-gray-800 leading-relaxed">{advantage.description}</div>
+              {/* Arrow */}
+              <div
+                class="absolute left-1/2 -translate-x-1/2 w-4 h-4 bg-gray-50 border-primary transform rotate-45"
+                style={
+                  advantage.angle === 0 || advantage.angle === 90
+                    ? 'top: -10px; border-width: 2px 0 0 2px;'
+                    : 'bottom: -10px; border-width: 0 2px 2px 0;'
+                }
+              />
+            </div>
+          </div>
+        </div>
+      );
+    })
+  }
+</div>
+
+<style>
+  /* Ensure smooth transitions */
+  .advantage-item {
+    transition: all 0.3s ease;
+  }
+
+  /* Tooltip arrow styling */
+  .tooltip {
+    animation: fadeIn 0.3s ease-in-out;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateX(-50%) translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+  }
+</style>

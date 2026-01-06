@@ -1,0 +1,38 @@
+---
+import CategoryPageLayout from "../../../layouts/CategoryPageLayout.astro";
+import type { CategoryConfig } from "../../../types/category.ts";
+import {
+  fetchCategoryConfig,
+  generateCategoryStaticPaths,
+} from "../../../utils/productPaths.ts";
+
+interface StaticProps {
+  categoryConfig?: CategoryConfig;
+}
+
+export async function getStaticPaths() {
+  return await generateCategoryStaticPaths();
+}
+
+// Conditional prerender: disabled in dev for easier preview, enabled in staging/production for static generation
+export const prerender = import.meta.env.MODE !== "development";
+
+const { category } = Astro.params;
+const { categoryConfig: prefetchedCategory } =
+  (Astro.props as StaticProps) ?? {};
+
+const { categoryConfig, error, notFound } = await fetchCategoryConfig(
+  category,
+  prefetchedCategory
+);
+
+if (notFound || !categoryConfig) {
+  throw new Response(null, { status: 404 });
+}
+
+if (error) {
+  console.warn(`Category fallback used for slug "${category}":`, error);
+}
+---
+
+<CategoryPageLayout categoryConfig={categoryConfig}/>
