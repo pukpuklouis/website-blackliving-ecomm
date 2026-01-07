@@ -10,7 +10,6 @@ type User = BetterAuthUser & {
 };
 
 // Get base URL with enhanced security validation
-// Get base URL with enhanced security validation
 const getBaseURL = () => {
   // Priority 1: Use environment variable if available (most flexible)
   if (typeof import.meta !== "undefined" && import.meta.env?.PUBLIC_API_URL) {
@@ -27,8 +26,10 @@ const getBaseURL = () => {
       "blackliving-web.pages.dev",
       "staging.blackliving-web.pages.dev",
       "blackliving-admin-staging.pukpuk-tw.workers.dev",
-      "blackliving.com",
-      "admin.blackliving.com",
+      // .tw domains
+      "blackliving.tw",
+      "www.blackliving.tw",
+      "admin.blackliving.tw",
     ];
 
     const isValidHost = allowedHosts.some(
@@ -49,10 +50,12 @@ const getBaseURL = () => {
       return "https://blackliving-api-staging.pukpuk-tw.workers.dev"; // Staging API
     }
 
-    if (
-      hostname.includes("pages.dev") ||
-      hostname.includes("blackliving.com")
-    ) {
+    // .tw domain - use api.blackliving.tw
+    if (hostname.includes("blackliving.tw")) {
+      return "https://api.blackliving.tw";
+    }
+
+    if (hostname.includes("pages.dev")) {
       return "https://blackliving-api.pukpuk-tw.workers.dev"; // Production API
     }
 
@@ -176,9 +179,9 @@ export const signInWithGoogleCustomer = async () => {
           return "https://blackliving-web.pages.dev/account/profile";
         }
 
-        // Future custom domain
-        if (hostname.includes("blackliving.com")) {
-          return "https://blackliving.com/account/profile";
+        // .tw custom domain
+        if (hostname.includes("blackliving.tw")) {
+          return `https://${hostname}/account/profile`;
         }
       }
 

@@ -65,11 +65,11 @@ export const createAuth = (
       "https://blackliving-admin.pages.dev",
       "https://blackliving-api.pukpuk-tw.workers.dev",
 
-      // Future custom domains (forward compatibility)
-      "https://blackliving.com",
-      "https://www.blackliving.com",
-      "https://admin.blackliving.com",
-      "https://api.blackliving.com",
+      // Custom domains (.tw)
+      "https://blackliving.tw",
+      "https://www.blackliving.tw",
+      "https://admin.blackliving.tw",
+      "https://api.blackliving.tw",
     ],
 
     // Use Better Auth's built-in Google provider

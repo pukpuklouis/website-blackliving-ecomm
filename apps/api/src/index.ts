@@ -93,15 +93,17 @@ app.use(
         "http://localhost:4321", // Web app
         "http://localhost:5173", // Admin app
         "http://localhost:8787", // API server
-        // Production origins
-        "https://blackliving.com",
-        "https://www.blackliving.com",
-        "https://admin.blackliving.com",
-        "https://api.blackliving.com",
-        // Staging origins
+        // Production origins (.tw)
+        "https://blackliving.tw",
+        "https://www.blackliving.tw",
+        "https://admin.blackliving.tw",
+        "https://api.blackliving.tw",
+        // Staging/deployment origins
         "https://staging.blackliving-web.pages.dev",
         "https://staging.blackliving-admin.pages.dev",
         "https://blackliving-admin-staging.pukpuk-tw.workers.dev",
+        "https://blackliving-web.pages.dev",
+        "https://blackliving-admin.pages.dev",
       ];
 
       const allAllowedOrigins = [...allowedOrigins, ...fallbackOrigins];

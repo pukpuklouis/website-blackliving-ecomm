@@ -76,9 +76,9 @@ preview_id = "e978fa20a08b46bea9bcb31400f8e61f"
 # Environment Variables
 [vars]
 NODE_ENV = "development"
-API_BASE_URL = "https://api.blackliving.com"
-WEB_BASE_URL = "https://blackliving.com"
-ADMIN_BASE_URL = "https://admin.blackliving.com"
+API_BASE_URL = "https://api.blackliving.tw"
+WEB_BASE_URL = "https://www.blackliving.tw"
+ADMIN_BASE_URL = "https://admin.blackliving.tw"
 
 [env.development.vars]
 NODE_ENV = "development"
@@ -88,15 +88,15 @@ ADMIN_BASE_URL = "http://localhost:5173"
 
 [env.staging.vars]
 NODE_ENV = "staging"
-API_BASE_URL = "https://api-staging.blackliving.com"
-WEB_BASE_URL = "https://staging.blackliving.com"
-ADMIN_BASE_URL = "https://admin-staging.blackliving.com"
+API_BASE_URL = "https://blackliving-api-staging.pukpuk-tw.workers.dev"
+WEB_BASE_URL = "https://staging.blackliving-web.pages.dev"
+ADMIN_BASE_URL = "https://blackliving-admin-staging.pukpuk-tw.workers.dev"
 
 [env.production.vars]
 NODE_ENV = "production"
-API_BASE_URL = "https://api.blackliving.com"
-WEB_BASE_URL = "https://blackliving.com"
-ADMIN_BASE_URL = "https://admin.blackliving.com"
+API_BASE_URL = "https://api.blackliving.tw"
+WEB_BASE_URL = "https://www.blackliving.tw"
+ADMIN_BASE_URL = "https://admin.blackliving.tw"
 
 [env.test]
 name = "blackliving-api-test"
