@@ -8,6 +8,9 @@ main = "src/index.ts"
 compatibility_date = "2024-09-23"
 compatibility_flags = ["nodejs_compat"]
 
+[observability]
+enabled = true
+
 [env.development]
 name = "blackliving-api-dev"
 
@@ -103,6 +106,7 @@ WEB_BASE_URL = "https://staging.blackliving-web.pages.dev"
 ADMIN_BASE_URL = "https://blackliving-admin-staging.pukpuk-tw.workers.dev"
 ALLOWED_ORIGINS = "https://staging.blackliving-web.pages.dev,https://blackliving-admin-staging.pukpuk-tw.workers.dev"
 RESEND_FROM_EMAIL = "Black Living <noreply@blackliving.tw>"
+R2_PUBLIC_URL = "https://blackliving-api-staging.pukpuk-tw.workers.dev/media"
 
 [env.production.vars]
 NODE_ENV = "production"
@@ -111,6 +115,7 @@ WEB_BASE_URL = "https://www.blackliving.tw"
 ADMIN_BASE_URL = "https://admin.blackliving.tw"
 ALLOWED_ORIGINS = "https://www.blackliving.tw,https://admin.blackliving.tw,https://blackliving.tw"
 RESEND_FROM_EMAIL = "黑哥居家｜Black Living <noreply@blackliving.tw>"
+R2_PUBLIC_URL = "https://cdn.blackliving.tw"
 
 [env.test]
 name = "blackliving-api-test"
@@ -147,3 +152,4 @@ BETTER_AUTH_URL = "http://localhost:8787"
 # - GOOGLE_CUSTOMER_CLIENT_ID (for Option B)
 # - GOOGLE_CUSTOMER_CLIENT_SECRET (for Option B)
 # - JWT_SECRET (optional, for additional JWT operations)
+
