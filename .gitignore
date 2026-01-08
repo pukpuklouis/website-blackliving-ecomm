@@ -43,10 +43,8 @@ Thumbs.db
 .env.*.local
 
 # Cloudflare Workers configuration
-# API wrangler.toml contains D1/KV/R2 IDs - keep gitignored
-apps/api/wrangler.toml
-# Admin wrangler.toml is safe (no secrets, just public URLs)
-# apps/admin/wrangler.toml is NOT ignored - safe to commit
+# Resource IDs (D1, KV, R2) are safe to commit - they're references, not secrets
+# Actual secrets are set via: wrangler secret put <SECRET_NAME>
 !**/wrangler.example.toml
 
 # React Router
