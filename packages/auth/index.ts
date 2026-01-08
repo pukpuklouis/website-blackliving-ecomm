@@ -130,21 +130,32 @@ export const createAuth = (
     // Role-based access control handled through user.role field
 
     advanced: {
-      // CRITICAL: Cross-origin cookie configuration for .pages.dev <-> .workers.dev
-      // BetterAuth requires defaultCookieAttributes inside advanced, not top-level cookieOptions
+      // Cookie configuration for session persistence
+      // - Production (.blackliving.tw): Cross-subdomain cookies with shared domain
+      // - Staging (.workers.dev/.pages.dev): Cross-origin cookies (SameSite=None)
+      // - Development: Local cookies (SameSite=Lax)
       defaultCookieAttributes: {
-        // CRITICAL: sameSite must be 'none' for cross-origin cookies
-        // pages.dev -> workers.dev is cross-origin, so Lax/Strict won't work
-        sameSite: env.NODE_ENV === "development" ? "lax" : "none",
-        // CRITICAL: secure must be true for SameSite=None (production/staging)
+        // Production & development: "lax" (more secure, works with shared domain)
+        // Staging: "none" (required for cross-origin .pages.dev <-> .workers.dev)
+        sameSite: env.NODE_ENV === "staging" ? "none" : "lax",
+        // HTTPS required in production/staging
         secure: env.NODE_ENV !== "development",
         httpOnly: true,
         path: "/",
-        // Do NOT set domain - let browser handle it (workers.dev is on PSL)
+        // Set domain for production to enable cross-subdomain cookies
+        // .blackliving.tw allows cookies to be shared between:
+        // - www.blackliving.tw
+        // - api.blackliving.tw
+        // - admin.blackliving.tw
+        ...(env.NODE_ENV === "production" && {
+          domain: ".blackliving.tw",
+        }),
       },
-      // Disable cross-subdomain cookies (PSL prevents .workers.dev domain)
+      // Enable cross-subdomain cookies for production (.blackliving.tw)
+      // Disable for development (localhost) and staging (.workers.dev is on PSL)
       crossSubDomainCookies: {
-        enabled: false,
+        enabled: env.NODE_ENV === "production",
+        domain: env.NODE_ENV === "production" ? ".blackliving.tw" : undefined,
       },
     },
 
