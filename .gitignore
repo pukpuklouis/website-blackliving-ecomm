@@ -42,9 +42,11 @@ Thumbs.db
 .env.local
 .env.*.local
 
-# Cloudflare Workers configuration (contains sensitive IDs and secrets)
+# Cloudflare Workers configuration
+# API wrangler.toml contains D1/KV/R2 IDs - keep gitignored
 apps/api/wrangler.toml
-**/wrangler.toml
+# Admin wrangler.toml is safe (no secrets, just public URLs)
+# apps/admin/wrangler.toml is NOT ignored - safe to commit
 !**/wrangler.example.toml
 
 # React Router

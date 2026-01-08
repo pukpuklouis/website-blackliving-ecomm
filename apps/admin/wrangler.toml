@@ -1,0 +1,72 @@
+# Black Living Admin App - Cloudflare Worker Configuration
+
+name = "blackliving-admin"
+main = "./functions/[[path]].ts"
+compatibility_date = "2025-01-15"
+compatibility_flags = ["nodejs_compat"]
+
+[build]
+command = "pnpm build"
+
+[assets]
+directory = "./build/client"
+binding = "ASSETS"
+
+# ==========================================
+# DEVELOPMENT ENVIRONMENT (default)
+# ==========================================
+[vars]
+NODE_ENV = "development"
+API_BASE_URL = "http://localhost:8787"
+PUBLIC_API_BASE_URL = "http://localhost:8787"
+PUBLIC_API_URL = "http://localhost:8787"
+PUBLIC_IMAGE_CDN_URL = "http://localhost:8787/media"
+PUBLIC_SITE_URL = "http://localhost:5173"
+PUBLIC_WEB_URL = "http://localhost:4321"
+
+# ==========================================
+# STAGING ENVIRONMENT
+# ==========================================
+[env.staging]
+name = "blackliving-admin-staging"
+
+[env.staging.build]
+command = "pnpm build:staging"
+
+[env.staging.assets]
+directory = "./build/client"
+binding = "ASSETS"
+
+[env.staging.vars]
+NODE_ENV = "staging"
+API_BASE_URL = "https://blackliving-api-staging.pukpuk-tw.workers.dev"
+PUBLIC_API_BASE_URL = "https://blackliving-api-staging.pukpuk-tw.workers.dev"
+PUBLIC_API_URL = "https://blackliving-api-staging.pukpuk-tw.workers.dev"
+PUBLIC_IMAGE_CDN_URL = "https://blackliving-api-staging.pukpuk-tw.workers.dev/media"
+PUBLIC_SITE_URL = "https://blackliving-admin-staging.pukpuk-tw.workers.dev"
+PUBLIC_WEB_URL = "https://staging.blackliving-web.pages.dev"
+
+# ==========================================
+# PRODUCTION ENVIRONMENT
+# ==========================================
+[env.production]
+name = "blackliving-admin"
+
+[env.production.build]
+command = "pnpm build:production"
+
+[env.production.assets]
+directory = "./build/client"
+binding = "ASSETS"
+
+[env.production.vars]
+NODE_ENV = "production"
+API_BASE_URL = "https://api.blackliving.tw"
+PUBLIC_API_BASE_URL = "https://api.blackliving.tw"
+PUBLIC_API_URL = "https://api.blackliving.tw"
+PUBLIC_IMAGE_CDN_URL = "https://api.blackliving.tw/media"
+PUBLIC_SITE_URL = "https://admin.blackliving.tw"
+PUBLIC_WEB_URL = "https://www.blackliving.tw"
+
+[observability]
+enabled = true
