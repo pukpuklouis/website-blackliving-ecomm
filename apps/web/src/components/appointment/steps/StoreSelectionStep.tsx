@@ -1,8 +1,7 @@
-import { Button } from "@blackliving/ui";
 import { useAppointmentStore } from "../../../stores/appointmentStore";
 
 export default function StoreSelectionStep() {
-  const { stores, appointmentData, updateAppointmentData, nextStep } =
+  const { stores, appointmentData, updateAppointmentData } =
     useAppointmentStore();
 
   const handleStoreSelect = (store: (typeof stores)[0]) => {
@@ -81,16 +80,6 @@ export default function StoreSelectionStep() {
             </div>
           </button>
         ))}
-      </div>
-
-      <div className="mt-8 flex justify-center">
-        <Button
-          className="px-8 py-2"
-          disabled={!appointmentData.selectedStore}
-          onClick={nextStep}
-        >
-          下一步：選擇產品
-        </Button>
       </div>
     </div>
   );

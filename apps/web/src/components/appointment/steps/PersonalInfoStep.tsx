@@ -15,8 +15,7 @@ const personalInfoSchema = z.object({
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function PersonalInfoStep() {
-  const { appointmentData, updateAppointmentData, nextStep } =
-    useAppointmentStore();
+  const { appointmentData, updateAppointmentData } = useAppointmentStore();
   const [formData, setFormData] = useState({
     name: appointmentData.name,
     phone: appointmentData.phone,
@@ -129,17 +128,6 @@ export default function PersonalInfoStep() {
     return () => clearTimeout(timer);
   }, [formData.email]);
 
-  const handleNext = () => {
-    const nameValid = validateField("name", formData.name);
-    const phoneValid = validateField("phone", formData.phone);
-    const emailValid = validateField("email", formData.email);
-    const notesValid = validateField("notes", formData.notes);
-
-    if (nameValid && phoneValid && emailValid && notesValid) {
-      nextStep();
-    }
-  };
-
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") {
       e.preventDefault();
@@ -150,7 +138,8 @@ export default function PersonalInfoStep() {
         setCurrentField("email");
         document.getElementById("email-input")?.focus();
       } else if (currentField === "email" && formData.email.trim()) {
-        handleNext();
+        setCurrentField("notes");
+        document.getElementById("notes-input")?.focus();
       }
     }
   };
@@ -336,24 +325,6 @@ export default function PersonalInfoStep() {
             value={formData.notes}
           />
         </div>
-      </div>
-
-      {/* Continue button */}
-      <div className="mt-8">
-        <button
-          className="rounded-lg bg-black px-8 py-3 font-medium text-white transition-colors hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
-          disabled={
-            !(
-              formData.name.trim() &&
-              formData.phone.trim() &&
-              formData.email.trim()
-            ) || Object.values(errors).some((error) => error)
-          }
-          onClick={handleNext}
-          type="button"
-        >
-          繼續預約時間
-        </button>
       </div>
 
       <AuthModal
