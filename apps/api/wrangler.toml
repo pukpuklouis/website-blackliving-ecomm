@@ -17,6 +17,16 @@ name = "blackliving-api-staging"
 [env.production]
 name = "blackliving-api"
 
+[[env.production.d1_databases]]
+binding = "DB"
+database_name = "blackliving-db"
+database_id = "6e8078ae-a12b-48e2-ab44-f3adf4ba3482"
+migrations_dir = "../../packages/db/migrations"
+
+[[env.production.r2_buckets]]
+binding = "R2"
+bucket_name = "blackliving-images"
+
 # Cloudflare D1 Database
 # Cloudflare D1 Database
 [[d1_databases]]
