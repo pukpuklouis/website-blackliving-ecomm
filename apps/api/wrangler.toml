@@ -101,12 +101,16 @@ NODE_ENV = "staging"
 API_BASE_URL = "https://blackliving-api-staging.pukpuk-tw.workers.dev"
 WEB_BASE_URL = "https://staging.blackliving-web.pages.dev"
 ADMIN_BASE_URL = "https://blackliving-admin-staging.pukpuk-tw.workers.dev"
+ALLOWED_ORIGINS = "https://staging.blackliving-web.pages.dev,https://blackliving-admin-staging.pukpuk-tw.workers.dev"
+RESEND_FROM_EMAIL = "Black Living <noreply@blackliving.tw>"
 
 [env.production.vars]
 NODE_ENV = "production"
 API_BASE_URL = "https://api.blackliving.tw"
 WEB_BASE_URL = "https://www.blackliving.tw"
 ADMIN_BASE_URL = "https://admin.blackliving.tw"
+ALLOWED_ORIGINS = "https://www.blackliving.tw,https://admin.blackliving.tw,https://blackliving.tw"
+RESEND_FROM_EMAIL = "黑哥居家｜Black Living <noreply@blackliving.tw>"
 
 [env.test]
 name = "blackliving-api-test"
