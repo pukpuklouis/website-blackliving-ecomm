@@ -78,7 +78,6 @@ export type CartStore = {
   paymentMethod:
     | "bank_transfer"
     | "credit_card"
-    | "cash_on_delivery"
     | "virtual_account"
     | "apple_pay"
     | "google_pay";
@@ -109,7 +108,6 @@ export type CartStore = {
     method:
       | "bank_transfer"
       | "credit_card"
-      | "cash_on_delivery"
       | "virtual_account"
       | "apple_pay"
       | "google_pay"
@@ -414,7 +412,7 @@ const executeGomypayPaymentFlow = async (
   // Initiate GOMYPAY payment
   return initiateGomypayApi({
     orderNumber: orderResult.orderNumber,
-    amount: Math.round(params.total * 1.05), // Include tax
+    amount: params.total,
     customerInfo: params.customerInfo,
     paymentMethod: params.paymentMethod,
   });

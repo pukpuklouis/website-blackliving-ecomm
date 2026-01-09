@@ -1,8 +1,10 @@
 /**
  * PasswordModal Component
- * Handles password change functionality with proper validation
+ * Handles password change/set functionality with proper validation.
+ * Supports OAuth users who don't have a password yet (hasPassword=false).
  */
 
+import { authClient } from "@blackliving/auth/client";
 import {
   Alert,
   AlertDescription,
@@ -20,16 +22,18 @@ import type React from "react";
 import { useState } from "react";
 import { validatePasswordForm } from "../../lib/validation";
 
-interface PasswordModalProps {
+type PasswordModalProps = {
+  /** Whether user already has a password set (OAuth users may not) */
+  hasPassword?: boolean;
   onSuccess?: (message: string) => void;
   onError?: (error: string) => void;
-}
+};
 
-interface PasswordFormData {
+type PasswordFormData = {
   currentPassword: string;
   newPassword: string;
   confirmPassword: string;
-}
+};
 
 const initialFormData: PasswordFormData = {
   currentPassword: "",
@@ -37,7 +41,124 @@ const initialFormData: PasswordFormData = {
   confirmPassword: "",
 };
 
-export function PasswordModal({ onSuccess, onError }: PasswordModalProps) {
+// Top-level regex patterns for performance
+const UPPERCASE_REGEX = /[A-Z]/;
+const LOWERCASE_REGEX = /[a-z]/;
+const NUMBER_REGEX = /\d/;
+const SPECIAL_CHAR_REGEX = /[!@#$%^&*(),.?":{}|<>]/;
+
+// Password strength rules with regex patterns
+const passwordRules = [
+  {
+    key: "minLength",
+    label: "至少8個字符",
+    test: (p: string) => p.length >= 8,
+  },
+  {
+    key: "hasUppercase",
+    label: "一個大寫字母",
+    test: (p: string) => UPPERCASE_REGEX.test(p),
+  },
+  {
+    key: "hasLowercase",
+    label: "一個小寫字母",
+    test: (p: string) => LOWERCASE_REGEX.test(p),
+  },
+  {
+    key: "hasNumber",
+    label: "一個數字",
+    test: (p: string) => NUMBER_REGEX.test(p),
+  },
+  {
+    key: "hasSpecial",
+    label: "一個特殊字符",
+    test: (p: string) => SPECIAL_CHAR_REGEX.test(p),
+  },
+] as const;
+
+// Calculate password strength score (0-5)
+function getPasswordStrength(password: string): number {
+  if (!password) return 0;
+  return passwordRules.filter((rule) => rule.test(password)).length;
+}
+
+// Get strength label and color
+function getStrengthConfig(strength: number): {
+  label: string;
+  colorClass: string;
+  barColor: string;
+} {
+  if (strength === 0)
+    return { label: "", colorClass: "text-gray-400", barColor: "bg-gray-200" };
+  if (strength <= 2)
+    return { label: "弱", colorClass: "text-red-500", barColor: "bg-red-500" };
+  if (strength <= 3)
+    return {
+      label: "中等",
+      colorClass: "text-yellow-500",
+      barColor: "bg-yellow-500",
+    };
+  if (strength <= 4)
+    return {
+      label: "強",
+      colorClass: "text-green-500",
+      barColor: "bg-green-500",
+    };
+  return {
+    label: "非常強",
+    colorClass: "text-green-600",
+    barColor: "bg-green-600",
+  };
+}
+
+// Password Strength Indicator Component
+function PasswordStrengthIndicator({ password }: { password: string }) {
+  const strength = getPasswordStrength(password);
+  const config = getStrengthConfig(strength);
+
+  if (!password) return null;
+
+  return (
+    <div className="mt-2 space-y-2">
+      {/* Strength Bar */}
+      <div className="flex items-center gap-2">
+        <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-gray-200">
+          <div
+            className={`h-full transition-all duration-300 ${config.barColor}`}
+            style={{ width: `${(strength / 5) * 100}%` }}
+          />
+        </div>
+        <span className={`font-medium text-xs ${config.colorClass}`}>
+          {config.label}
+        </span>
+      </div>
+
+      {/* Rules Checklist */}
+      <ul className="grid grid-cols-2 gap-1 text-xs">
+        {passwordRules.map((rule) => {
+          const passed = rule.test(password);
+          return (
+            <li
+              className={`flex items-center gap-1 transition-colors duration-200 ${
+                passed ? "text-green-600" : "text-gray-400"
+              }`}
+              key={rule.key}
+            >
+              <span className="text-[10px]">{passed ? "✓" : "○"}</span>
+              {rule.label}
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+}
+
+export function PasswordModal({
+  hasPassword = true,
+  onSuccess,
+  onError,
+}: PasswordModalProps) {
   const [showModal, setShowModal] = useState(false);
   const [formData, setFormData] = useState<PasswordFormData>(initialFormData);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -85,33 +206,23 @@ export function PasswordModal({ onSuccess, onError }: PasswordModalProps) {
     setIsSubmitting(true);
 
     try {
-      const response = await fetch("/api/auth/change-password", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          currentPassword: formData.currentPassword,
-          newPassword: formData.newPassword,
-        }),
-        credentials: "include",
+      // Use Better Auth client for proper authentication
+      const result = await authClient.changePassword({
+        currentPassword: formData.currentPassword,
+        newPassword: formData.newPassword,
       });
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      if (result.error) {
+        const errorMsg = result.error.message || "密碼更新失敗";
+        setErrors({ currentPassword: errorMsg });
+        onError?.(errorMsg);
+        return;
       }
 
-      const result = await response.json();
-
-      if (result.success) {
-        setShowModal(false);
-        setFormData(initialFormData);
-        setErrors({});
-        onSuccess?.(result.message || "密碼更新成功！");
-      } else {
-        setErrors({ currentPassword: result.error || "密碼更新失敗" });
-        onError?.(result.error || "密碼更新失敗");
-      }
+      setShowModal(false);
+      setFormData(initialFormData);
+      setErrors({});
+      onSuccess?.("密碼更新成功！");
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : "網路錯誤，請稍後再試";
@@ -122,27 +233,34 @@ export function PasswordModal({ onSuccess, onError }: PasswordModalProps) {
     }
   };
 
-  // Handle modal close
-  const handleClose = () => {
-    if (!isSubmitting) {
-      setShowModal(false);
-      setFormData(initialFormData);
-      setErrors({});
-      setShowPasswords({ current: false, new: false, confirm: false });
-    }
-  };
-
   // Check if form is valid
   const isFormValid = () =>
     formData.currentPassword &&
     formData.newPassword &&
     formData.confirmPassword &&
-    Object.keys(errors).length === 0;
+    Object.values(errors).every((e) => !e);
+
+  // Don't render for OAuth-only users (no password to change)
+  if (!hasPassword) {
+    return null;
+  }
 
   return (
-    <Dialog onOpenChange={handleClose} open={showModal}>
+    <Dialog
+      onOpenChange={(open) => {
+        if (open || isSubmitting) {
+          setShowModal(open);
+        } else {
+          setShowModal(false);
+          setFormData(initialFormData);
+          setErrors({});
+          setShowPasswords({ current: false, new: false, confirm: false });
+        }
+      }}
+      open={showModal}
+    >
       <DialogTrigger asChild>
-        <Button onClick={() => setShowModal(true)} variant="outline">
+        <Button variant="outline">
           <Key className="mr-2 h-4 w-4" />
           更改密碼
         </Button>
@@ -224,9 +342,7 @@ export function PasswordModal({ onSuccess, onError }: PasswordModalProps) {
             {errors.newPassword && (
               <p className="text-red-500 text-sm">{errors.newPassword}</p>
             )}
-            <p className="text-gray-600 text-xs">
-              密碼至少需要8個字符，包含大小寫字母和數字
-            </p>
+            <PasswordStrengthIndicator password={formData.newPassword} />
           </div>
 
           {/* Confirm Password */}
@@ -282,7 +398,7 @@ export function PasswordModal({ onSuccess, onError }: PasswordModalProps) {
           <div className="flex justify-end space-x-2 pt-4">
             <Button
               disabled={isSubmitting}
-              onClick={handleClose}
+              onClick={() => setShowModal(false)}
               type="button"
               variant="outline"
             >
@@ -292,7 +408,7 @@ export function PasswordModal({ onSuccess, onError }: PasswordModalProps) {
               {isSubmitting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  更新中...
+                  處理中...
                 </>
               ) : (
                 "更新密碼"

@@ -1,3 +1,4 @@
+/** biome-ignore-all assist/source/useSortedAttributes: <explanation> */
 import {
   Alert,
   AlertDescription,
@@ -8,6 +9,11 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
   Tabs,
   TabsContent,
   TabsList,
@@ -25,6 +31,7 @@ type ProfileTabsProps = {
 function ProfileTabs({ className }: ProfileTabsProps) {
   const [mounted, setMounted] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [activeTab, setActiveTab] = useState("profile");
 
   // Client-side hydration safety
   useEffect(() => {
@@ -58,12 +65,52 @@ function ProfileTabs({ className }: ProfileTabsProps) {
         </Alert>
       ) : null}
 
-      <Tabs className="space-y-6" defaultValue="profile">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="profile">基本資料</TabsTrigger>
-          <TabsTrigger value="addresses">地址管理</TabsTrigger>
-          <TabsTrigger value="payment">付款方式</TabsTrigger>
-          <TabsTrigger value="security">安全設定</TabsTrigger>
+      <Tabs
+        className="space-y-6"
+        value={activeTab}
+        onValueChange={setActiveTab}
+      >
+        {/* Mobile Navigation - Select Dropdown */}
+        <div className="sm:hidden">
+          <Select value={activeTab} onValueChange={setActiveTab}>
+            <SelectTrigger aria-label="選擇設定頁面" className="w-full">
+              <SelectValue placeholder="選擇設定頁面" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="profile">基本資料</SelectItem>
+              <SelectItem value="addresses">地址管理</SelectItem>
+              <SelectItem value="payment">付款方式</SelectItem>
+              <SelectItem value="security">安全設定</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Desktop Navigation - Clean Tabs List */}
+        <TabsList className="hidden w-auto justify-start gap-6 border-b bg-transparent p-0 sm:inline-flex">
+          <TabsTrigger
+            value="profile"
+            className="rounded-t-md border-transparent border-b-2 bg-transparent px-2 py-2 text-slate-500 hover:text-slate-700 data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-slate-900 data-[state=active]:shadow-none"
+          >
+            基本資料
+          </TabsTrigger>
+          <TabsTrigger
+            value="addresses"
+            className="rounded-t-md border-transparent border-b-2 bg-transparent px-2 py-2 text-slate-500 hover:text-slate-700 data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-slate-900 data-[state=active]:shadow-none"
+          >
+            地址管理
+          </TabsTrigger>
+          <TabsTrigger
+            value="payment"
+            className="rounded-t-md border-transparent border-b-2 bg-transparent px-2 py-2 text-slate-500 hover:text-slate-700 data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-slate-900 data-[state=active]:shadow-none"
+          >
+            付款方式
+          </TabsTrigger>
+          <TabsTrigger
+            value="security"
+            className="rounded-t-md border-transparent border-b-2 bg-transparent px-2 py-2 text-slate-500 hover:text-slate-700 data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-slate-900 data-[state=active]:shadow-none"
+          >
+            安全設定
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="profile">
@@ -76,14 +123,13 @@ function ProfileTabs({ className }: ProfileTabsProps) {
 
         {/* Payment Methods Tab */}
         <TabsContent className="space-y-6" value="payment">
-          <Card>
-            <CardHeader>
-              <CardTitle>付款方式與優惠</CardTitle>
-              <CardDescription>
-                聯繫客服取得更好的報價與付款選項
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
+          <div className="p-0 sm:p-6">
+            <div className="mb-6 hidden sm:block">
+              <h2 className="font-semibold text-lg text-slate-900">付款方式</h2>
+              <p className="text-slate-500 text-sm">管理您的付款選項與優惠</p>
+            </div>
+
+            <div className="space-y-6">
               {/* Line@ Contact Card */}
               <div className="rounded-lg border-2 border-green-200 bg-green-50 p-6">
                 <div className="flex items-center justify-between">
@@ -178,7 +224,7 @@ function ProfileTabs({ className }: ProfileTabsProps) {
                         strokeWidth="2"
                       />
                     </svg>
-                    免費到府試躺
+                    免費預約試躺
                   </div>
                 </div>
               </div>
@@ -236,56 +282,6 @@ function ProfileTabs({ className }: ProfileTabsProps) {
                       </p>
                     </div>
                   </div>
-
-                  <div className="flex items-center space-x-3 rounded-lg border p-4">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-orange-100">
-                      <svg
-                        aria-hidden="true"
-                        className="h-5 w-5 text-orange-600"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                        />
-                      </svg>
-                    </div>
-                    <div>
-                      <h4 className="font-medium">貨到付款</h4>
-                      <p className="text-muted-foreground text-sm">
-                        現金付款給配送人員
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center space-x-3 rounded-lg border p-4">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-100">
-                      <svg
-                        aria-hidden="true"
-                        className="h-5 w-5 text-purple-600"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2zM10 8.5a.5.5 0 11-1 0 .5.5 0 011 0zm5 5a.5.5 0 11-1 0 .5.5 0 011 0z"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                        />
-                      </svg>
-                    </div>
-                    <div>
-                      <h4 className="font-medium">分期付款</h4>
-                      <p className="text-muted-foreground text-sm">
-                        信用卡分期、無息分期
-                      </p>
-                    </div>
-                  </div>
                 </div>
               </div>
 
@@ -317,24 +313,24 @@ function ProfileTabs({ className }: ProfileTabsProps) {
                     </p>
                     <ul className="space-y-1 text-amber-700 text-sm">
                       <li>• 床墊優惠價格諮詢</li>
-                      <li>• 免費到府試躺服務</li>
-                      <li>• 客製化分期付款方案</li>
-                      <li>• 舊床回收折抵優惠</li>
                     </ul>
                   </div>
                 </div>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </TabsContent>
 
         <TabsContent className="space-y-6" value="security">
-          <Card>
-            <CardHeader>
-              <CardTitle>安全設定</CardTitle>
-              <CardDescription>管理您的帳號安全與登入設定</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
+          <div className="p-0 sm:p-6">
+            <div className="mb-6 hidden sm:block">
+              <h2 className="font-semibold text-lg text-slate-900">安全設定</h2>
+              <p className="text-slate-500 text-sm">
+                管理您的帳號安全與登入設定
+              </p>
+            </div>
+
+            <div className="space-y-6">
               <div className="space-y-4">
                 <div className="flex items-center justify-between rounded-lg border p-4">
                   <div>
@@ -412,8 +408,8 @@ function ProfileTabs({ className }: ProfileTabsProps) {
                   </div>
                 </div>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </TabsContent>
       </Tabs>
     </div>

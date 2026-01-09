@@ -51,10 +51,6 @@ const OrderSummarySection: FC<OrderSummarySectionProps> = ({
             <span>小計</span>
             <span>NT$ {subtotal.toLocaleString()}</span>
           </div>
-          <div className="flex justify-between text-gray-500 text-sm dark:text-gray-400">
-            <span>稅金 (5%)</span>
-            <span>NT$ {Math.round(subtotal * 0.05).toLocaleString()}</span>
-          </div>
         </div>
 
         <div className="mt-6 flex items-center justify-between border-gray-200 border-t pt-6 dark:border-zinc-700">
@@ -62,7 +58,7 @@ const OrderSummarySection: FC<OrderSummarySectionProps> = ({
             總計
           </span>
           <span className="font-bold text-2xl text-gray-900 dark:text-white">
-            NT$ {Math.round(total * 1.05).toLocaleString()}
+            NT$ {total.toLocaleString()}
           </span>
         </div>
       </div>

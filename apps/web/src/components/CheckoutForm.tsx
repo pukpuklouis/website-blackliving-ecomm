@@ -201,7 +201,7 @@ const CheckoutForm: FC<CheckoutFormProps> = ({ onSuccess }) => {
     );
 
     if (!isGomypayMethod) {
-      // Traditional order flow (bank_transfer, cash_on_delivery)
+      // Traditional order flow (bank_transfer)
       const result = await createOrder();
       if (result.success) {
         setOrderSuccess(result);
@@ -258,16 +258,6 @@ const CheckoutForm: FC<CheckoutFormProps> = ({ onSuccess }) => {
             <div className="mt-1">💰</div>
             <div className="text-gray-600 text-sm dark:text-gray-300">
               {(() => {
-                if (paymentMethod === "cash_on_delivery") {
-                  return (
-                    <>
-                      <p className="font-medium">貨到付款</p>
-                      <p className="text-gray-500 text-xs">
-                        請於商品送達時準備好現金交給配送人員
-                      </p>
-                    </>
-                  );
-                }
                 if (
                   paymentMethod === "bank_transfer" ||
                   paymentMethod === "virtual_account"

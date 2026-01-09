@@ -12,7 +12,6 @@ import { FaApple, FaGoogle } from "react-icons/fa6";
 type PaymentMethod =
   | "bank_transfer"
   | "credit_card"
-  | "cash_on_delivery"
   | "virtual_account"
   | "apple_pay"
   | "google_pay";
@@ -130,14 +129,6 @@ const PaymentMethodSection: FC<PaymentMethodSectionProps> = ({
         >
           <Landmark className="h-5 w-5" />
           <span>銀行轉帳</span>
-        </button>
-        <button
-          className={getTabButtonClass("cash_on_delivery")}
-          onClick={() => onPaymentMethodChange("cash_on_delivery")}
-          type="button"
-        >
-          <Store className="h-5 w-5" />
-          <span>貨到付款</span>
         </button>
       </div>
 
