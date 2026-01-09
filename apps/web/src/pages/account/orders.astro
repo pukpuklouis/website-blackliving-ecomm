@@ -19,7 +19,7 @@ const description = "查看您的購買記錄";
         <AccountNav currentPage="orders"/>
 
         <div class="md:col-span-2 min-w-0">
-          <div class="min-w-[600px] min-h-[400px]">
+          <div class="w-full min-h-[400px]">
             <div id="loading" class="text-center py-8">
               <div
                 class="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"
@@ -188,47 +188,47 @@ const description = "查看您的購買記錄";
           const statusText = getStatusText(order.status);
 
           return `
-          <div class="bg-white p-6 rounded-lg shadow-md">
-            <div class="flex justify-between items-start mb-4">
+          <div class="bg-white p-4 rounded-lg border border-slate-200 shadow-sm transition-shadow hover:shadow-md sm:p-6">
+            <div class="flex flex-col sm:flex-row justify-between items-start gap-4 mb-4">
               <div>
-                <h3 class="font-semibold text-lg">訂單 #${order.orderNumber}</h3>
-                <p class="text-sm text-gray-500">下單日期：${new Date(order.createdAt).toLocaleDateString("zh-TW")}</p>
-                <p class="text-sm text-gray-500">收件人：${customerInfo.name}</p>
+                <h3 class="font-semibold text-lg text-slate-900">訂單 #${order.orderNumber}</h3>
+                <p class="text-sm text-slate-500">下單日期：${new Date(order.createdAt).toLocaleDateString("zh-TW")}</p>
+                <p class="text-sm text-slate-500">收件人：${customerInfo.name}</p>
               </div>
-              <span class="${statusColor} px-3 py-1 rounded-full text-sm">${statusText}</span>
+              <span class="${statusColor} px-3 py-1 rounded-full text-sm font-medium self-start sm:self-auto">${statusText}</span>
             </div>
             
-            <div class="border-t pt-4 space-y-2">
+            <div class="border-t border-slate-100 pt-4 space-y-2">
               ${items
                 .map(
                   (item) => `
-                <div class="flex justify-between">
+                <div class="flex justify-between items-center gap-4">
                   <div>
-                    <p class="text-gray-700">${item.name}${item.size ? ` - ${item.size}` : ""}</p>
-                    <p class="text-sm text-gray-500">數量：${item.quantity}</p>
+                    <p class="text-slate-700 font-medium">${item.name}${item.size ? ` - ${item.size}` : ""}</p>
+                    <p class="text-sm text-slate-500">數量：${item.quantity}</p>
                   </div>
-                  <p class="text-gray-900 font-medium">NT$ ${item.price.toLocaleString()}</p>
+                  <p class="text-slate-900 font-medium whitespace-nowrap">NT$ ${item.price.toLocaleString()}</p>
                 </div>
               `
                 )
                 .join("")}
               
-              <div class="border-t pt-2 mt-4">
-                <div class="flex justify-between font-semibold text-lg">
+              <div class="border-t border-slate-100 pt-3 mt-4">
+                <div class="flex justify-between items-center font-semibold text-lg text-slate-900">
                   <span>總計</span>
                   <span>NT$ ${order.totalAmount.toLocaleString()}</span>
                 </div>
               </div>
               
-              ${order.notes ? `<p class="text-sm text-gray-600 mt-2">備註：${order.notes}</p>` : ""}
+              ${order.notes ? `<p class="text-sm text-slate-600 mt-2 bg-slate-50 p-3 rounded">備註：${order.notes}</p>` : ""}
               
               ${
                 order.status === "pending_payment" &&
                 GOMYPAY_METHODS.includes(order.paymentMethod)
                   ? `
-                <div class="border-t pt-4 mt-4">
+                <div class="border-t border-slate-100 pt-4 mt-4">
                   <button
-                    class="w-full bg-black text-white px-6 py-3 rounded-lg hover:bg-gray-800 font-semibold transition-colors retry-payment-btn"
+                    class="w-full sm:w-auto bg-slate-900 text-white px-6 py-2.5 rounded hover:bg-slate-800 font-medium transition-colors retry-payment-btn"
                     data-order="${order.orderNumber}"
                   >
                     立即付款

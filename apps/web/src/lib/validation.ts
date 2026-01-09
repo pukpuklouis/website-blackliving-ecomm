@@ -153,6 +153,28 @@ export function validatePasswordForm(data: {
   return Object.keys(errors).length > 0 ? errors : null;
 }
 
+/** Validation for OAuth users setting a password for the first time (no current password) */
+export function validateSetPasswordForm(data: {
+  newPassword: string;
+  confirmPassword: string;
+}): Record<string, string> | null {
+  const errors: Record<string, string> = {};
+
+  try {
+    passwordValidationSchema.newPassword.parse(data.newPassword);
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      errors.newPassword = error.errors[0]?.message || "密碼格式錯誤";
+    }
+  }
+
+  if (data.newPassword !== data.confirmPassword) {
+    errors.confirmPassword = "確認密碼與新密碼不符";
+  }
+
+  return Object.keys(errors).length > 0 ? errors : null;
+}
+
 // Form state validation
 export function isFormDirty(
   current: Record<string, any>,

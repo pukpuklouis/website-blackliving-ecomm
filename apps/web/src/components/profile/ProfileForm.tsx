@@ -14,8 +14,9 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  Separator,
 } from "@blackliving/ui";
-import { Loader2, RotateCcw, Save } from "lucide-react";
+import { Loader2, Save } from "lucide-react";
 import type React from "react";
 import { useEffect, useState } from "react";
 import { useProfile } from "../../hooks/use-profile";
@@ -25,20 +26,20 @@ import {
   validatePhone,
 } from "../../lib/validation";
 
-interface ProfileFormProps {
+type ProfileFormProps = {
   className?: string;
   onSuccess?: (message: string) => void;
   onError?: (error: string) => void;
-}
+};
 
-interface FormData {
+type FormData = {
   firstName: string;
   lastName: string;
   phone: string;
   birthday: string;
   gender: string;
   contactPreference: string;
-}
+};
 
 export function ProfileForm({
   className,
@@ -270,140 +271,187 @@ export function ProfileForm({
   }
 
   return (
-    <Card className={className}>
-      <CardHeader>
-        <CardTitle>個人資料</CardTitle>
-      </CardHeader>
-      <CardContent>
-        {successMessage && (
-          <div className="relatvie mb-4 h-6 w-fit rounded-full border border-green-200 bg-green-50 p-2 text-green-600">
-            <span className="relative mr-1 flex h-2 w-2">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75" />
-              <span className="relative inline-flex h-2 w-2 rounded-full bg-green-500" />
-            </span>
-            <span className="w-fit text-xs">成功</span>
-          </div>
-        )}
+    <CardContent className="p-0 sm:p-6">
+      {/* Header Section - visually distinct but clean */}
+      <div className="mb-6 hidden sm:block">
+        <h2 className="font-semibold text-lg text-slate-900">個人資料</h2>
+        <p className="text-slate-500 text-sm">管理您的基本資訊與聯絡方式</p>
+      </div>
+      {!!successMessage && (
+        <div className="fade-in slide-in-from-top-2 mb-4 flex animate-in items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-green-700 text-sm">
+          <svg
+            className="h-4 w-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              d="M5 13l4 4L19 7"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+            />
+          </svg>
+          {successMessage}
+        </div>
+      )}
 
-        <form className="space-y-4" onSubmit={handleSubmit}>
-          {/* Name Fields */}
-          <div className="grid grid-cols-2 gap-4">
+      <form className="space-y-8" onSubmit={handleSubmit}>
+        {/* Group 1: Basic Info */}
+        <div className="space-y-4">
+          <h3 className="font-medium text-base text-slate-900">基本資料</h3>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="firstName">姓氏 *</Label>
+              <Label className="font-normal text-slate-600" htmlFor="lastName">
+                姓氏 <span className="text-red-500">*</span>
+              </Label>
               <Input
-                className={errors.firstName ? "border-red-500" : ""}
-                id="firstName"
-                onChange={(e) => handleInputChange("firstName", e.target.value)}
-                placeholder="請輸入姓氏"
-                required
-                type="text"
-                value={formData.firstName}
-              />
-              {errors.firstName && (
-                <p className="text-red-500 text-sm">{errors.firstName}</p>
-              )}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="lastName">名字 *</Label>
-              <Input
-                className={errors.lastName ? "border-red-500" : ""}
+                className={`border-slate-200 focus:border-slate-900 ${errors.lastName ? "border-red-500" : ""}`}
                 id="lastName"
                 onChange={(e) => handleInputChange("lastName", e.target.value)}
-                placeholder="請輸入名字"
+                placeholder="請輸入姓氏"
                 required
                 type="text"
                 value={formData.lastName}
               />
-              {errors.lastName && (
-                <p className="text-red-500 text-sm">{errors.lastName}</p>
+              {!!errors.lastName && (
+                <p className="mt-1 text-red-500 text-xs">{errors.lastName}</p>
+              )}
+            </div>
+            <div className="space-y-2">
+              <Label className="font-normal text-slate-600" htmlFor="firstName">
+                名字 <span className="text-red-500">*</span>
+              </Label>
+              <Input
+                className={`border-slate-200 focus:border-slate-900 ${errors.firstName ? "border-red-500" : ""}`}
+                id="firstName"
+                onChange={(e) => handleInputChange("firstName", e.target.value)}
+                placeholder="請輸入名字"
+                required
+                type="text"
+                value={formData.firstName}
+              />
+              {!!errors.firstName && (
+                <p className="mt-1 text-red-500 text-xs">{errors.firstName}</p>
               )}
             </div>
           </div>
 
-          {/* Phone Field */}
-          <div className="space-y-2">
-            <Label htmlFor="phone">手機號碼</Label>
-            <Input
-              className={errors.phone ? "border-red-500" : ""}
-              id="phone"
-              onChange={(e) => handleInputChange("phone", e.target.value)}
-              placeholder="09xxxxxxxx"
-              type="tel"
-              value={formData.phone}
-            />
-            {errors.phone && (
-              <p className="text-red-500 text-sm">{errors.phone}</p>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label className="font-normal text-slate-600" htmlFor="birthday">
+                生日
+              </Label>
+              <Input
+                className="border-slate-200 focus:border-slate-900"
+                id="birthday"
+                onChange={(e) => handleInputChange("birthday", e.target.value)}
+                type="date"
+                value={formData.birthday}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="font-normal text-slate-600" htmlFor="gender">
+                性別
+              </Label>
+              <Select
+                key={formData.gender}
+                onValueChange={(value) => handleInputChange("gender", value)}
+                value={formData.gender}
+              >
+                <SelectTrigger className="border-slate-200 focus:border-slate-900">
+                  <SelectValue placeholder="請選擇性別" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="unspecified">不透露</SelectItem>
+                  <SelectItem value="male">男性</SelectItem>
+                  <SelectItem value="female">女性</SelectItem>
+                  <SelectItem value="other">其他</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </div>
+
+        <Separator className="bg-slate-100" />
+
+        {/* Group 2: Contact Info */}
+        <div className="space-y-4">
+          <h3 className="font-medium text-base text-slate-900">聯絡資訊</h3>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label className="font-normal text-slate-600" htmlFor="phone">
+                手機號碼
+              </Label>
+              <Input
+                className={`border-slate-200 focus:border-slate-900 ${errors.phone ? "border-red-500" : ""}`}
+                id="phone"
+                onChange={(e) => handleInputChange("phone", e.target.value)}
+                placeholder="09xxxxxxxx"
+                type="tel"
+                value={formData.phone}
+              />
+              {errors.phone ? (
+                <p className="mt-1 text-red-500 text-xs">{errors.phone}</p>
+              ) : (
+                <p className="text-slate-400 text-xs">格式：09xxxxxxxx</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label
+                className="font-normal text-slate-600"
+                htmlFor="contactPreference"
+              >
+                聯絡方式偏好
+              </Label>
+              <Select
+                key={formData.contactPreference}
+                onValueChange={(value) =>
+                  handleInputChange("contactPreference", value)
+                }
+                value={formData.contactPreference}
+              >
+                <SelectTrigger className="border-slate-200 focus:border-primary-900">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="email">電子郵件</SelectItem>
+                  <SelectItem value="phone">電話</SelectItem>
+                  <SelectItem value="sms">簡訊</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </div>
+
+        {/* Action Bar - Sticky on Mobile */}
+        <div
+          className={`fixed right-0 bottom-0 left-0 z-50 flex items-center justify-between border-t bg-white/90 p-4 backdrop-blur-sm transition-transform duration-300 sm:static sm:z-0 sm:border-0 sm:bg-transparent sm:p-0 ${localIsDirty ? "translate-y-0" : "translate-y-full sm:translate-y-0"}
+            `}
+        >
+          <div className="flex items-center gap-2 sm:hidden">
+            {!!localIsDirty && (
+              <span className="font-medium text-amber-600 text-xs">
+                有未儲存的變更
+              </span>
             )}
-            <p className="text-gray-600 text-sm">格式：09xxxxxxxx</p>
           </div>
 
-          {/* Birthday Field */}
-          <div className="space-y-2">
-            <Label htmlFor="birthday">生日</Label>
-            <Input
-              id="birthday"
-              onChange={(e) => handleInputChange("birthday", e.target.value)}
-              type="date"
-              value={formData.birthday}
-            />
-          </div>
-
-          {/* Gender Field */}
-          <div className="space-y-2">
-            <Label htmlFor="gender">性別</Label>
-            <Select
-              key={formData.gender}
-              onValueChange={(value) => handleInputChange("gender", value)}
-              value={formData.gender}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="請選擇性別" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="unspecified">未選擇</SelectItem>
-                <SelectItem value="male">男性</SelectItem>
-                <SelectItem value="female">女性</SelectItem>
-                <SelectItem value="other">其他</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Contact Preference Field */}
-          <div className="space-y-2">
-            <Label htmlFor="contactPreference">聯絡方式偏好</Label>
-            <Select
-              key={formData.contactPreference}
-              onValueChange={(value) =>
-                handleInputChange("contactPreference", value)
-              }
-              value={formData.contactPreference}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="email">電子郵件</SelectItem>
-                <SelectItem value="phone">電話</SelectItem>
-                <SelectItem value="sms">簡訊</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex justify-between pt-4">
-            <Button
-              className="flex items-center gap-2"
-              disabled={!localIsDirty || isSubmitting}
-              onClick={handleReset}
-              type="button"
-              variant="outline"
-            >
-              <RotateCcw className="h-4 w-4" />
-              重置
-            </Button>
+          <div className="flex w-full items-center justify-end gap-3 sm:w-auto">
+            {!!localIsDirty && (
+              <Button
+                className="flex-1 text-slate-600 hover:bg-slate-100 hover:text-slate-900 sm:flex-none"
+                onClick={handleReset}
+                type="button"
+                variant="ghost"
+              >
+                取消變更
+              </Button>
+            )}
 
             <Button
-              className="flex items-center gap-2"
+              className="flex-1 sm:flex-none"
               disabled={
                 !localIsDirty ||
                 isSubmitting ||
@@ -413,19 +461,20 @@ export function ProfileForm({
             >
               {isSubmitting ? (
                 <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  更新中...
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  儲存中
                 </>
               ) : (
                 <>
-                  <Save className="h-4 w-4" />
-                  更新資料
+                  <Save className="mr-2 h-4 w-4" />
+                  儲存變更
                 </>
               )}
             </Button>
           </div>
-        </form>
-      </CardContent>
-    </Card>
+        </div>
+      </form>
+    </CardContent>
+    // No wrapper Card here as per new design
   );
 }

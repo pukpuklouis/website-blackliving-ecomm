@@ -187,7 +187,7 @@ function AddressCard({
   onSetDefault,
 }: AddressCardProps) {
   return (
-    <Card className="relative">
+    <Card className="relative transition-shadow duration-200 hover:shadow-md">
       <CardContent className="pt-4">
         <div className="flex items-start justify-between">
           <div className="flex-1">
