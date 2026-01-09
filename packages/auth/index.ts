@@ -135,9 +135,9 @@ export const createAuth = (
       // - Staging (.workers.dev/.pages.dev): Cross-origin cookies (SameSite=None)
       // - Development: Local cookies (SameSite=Lax)
       defaultCookieAttributes: {
-        // Production & development: "lax" (more secure, works with shared domain)
-        // Staging: "none" (required for cross-origin .pages.dev <-> .workers.dev)
-        sameSite: env.NODE_ENV === "staging" ? "none" : "lax",
+        // MUST be "none" for cross-origin fetch requests between subdomains
+        // SameSite=Lax only works for top-level navigations, NOT fetch/XHR
+        sameSite: env.NODE_ENV === "development" ? "lax" : "none",
         // HTTPS required in production/staging
         secure: env.NODE_ENV !== "development",
         httpOnly: true,
