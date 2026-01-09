@@ -10,6 +10,7 @@ import type {
 import { eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
+import { HTTPException } from "hono/http-exception";
 import { logger } from "hono/logger";
 import { createCacheManager } from "./lib/cache";
 import { createStorageManager } from "./lib/storage";
@@ -611,8 +612,20 @@ app.notFound((c) =>
 );
 
 // Error handler
+// Error handler
 app.onError((err, c) => {
+  if (err instanceof HTTPException) {
+    return c.json(
+      {
+        error: err.message,
+        message: err.message,
+      },
+      err.status
+    );
+  }
+
   console.error("API Error:", err);
+
   return c.json(
     {
       error: "Internal Server Error",

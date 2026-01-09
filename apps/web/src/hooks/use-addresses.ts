@@ -46,6 +46,15 @@ export function useAddresses(options: UseAddressesOptions = {}) {
         credentials: "include",
       });
 
+      const contentType = response.headers.get("content-type");
+      if (contentType && contentType.includes("text/html")) {
+        const text = await response.text();
+
+        throw new Error(
+          "API endpoint returned HTML instead of JSON. Check API server connection."
+        );
+      }
+
       const result: AddressesApiResponse = await response.json();
 
       if (!response.ok) {
@@ -88,6 +97,15 @@ export function useAddresses(options: UseAddressesOptions = {}) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
 
+        const contentType = response.headers.get("content-type");
+        if (contentType && contentType.includes("text/html")) {
+          const text = await response.text();
+
+          throw new Error(
+            "API endpoint returned HTML instead of JSON. Check API server connection."
+          );
+        }
+
         const result: AddressApiResponse = await response.json();
 
         if (result.success && result.data) {
@@ -128,6 +146,15 @@ export function useAddresses(options: UseAddressesOptions = {}) {
 
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const contentType = response.headers.get("content-type");
+        if (contentType && contentType.includes("text/html")) {
+          const text = await response.text();
+
+          throw new Error(
+            "API endpoint returned HTML instead of JSON. Check API server connection."
+          );
         }
 
         const result: AddressApiResponse = await response.json();
@@ -176,6 +203,18 @@ export function useAddresses(options: UseAddressesOptions = {}) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
+      const contentType = response.headers.get("content-type");
+      if (contentType && contentType.includes("text/html")) {
+        const text = await response.text();
+        console.error(
+          "[useAddresses] Received HTML response:",
+          text.substring(0, 200)
+        );
+        throw new Error(
+          "API endpoint returned HTML instead of JSON. Check API server connection."
+        );
+      }
+
       const result = await response.json();
 
       if (result.success) {
@@ -211,6 +250,18 @@ export function useAddresses(options: UseAddressesOptions = {}) {
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const contentType = response.headers.get("content-type");
+      if (contentType && contentType.includes("text/html")) {
+        const text = await response.text();
+        console.error(
+          "[useAddresses] Received HTML response:",
+          text.substring(0, 200)
+        );
+        throw new Error(
+          "API endpoint returned HTML instead of JSON. Check API server connection."
+        );
       }
 
       const result: AddressApiResponse = await response.json();
