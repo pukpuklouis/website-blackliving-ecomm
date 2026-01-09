@@ -206,10 +206,7 @@ export function useAddresses(options: UseAddressesOptions = {}) {
       const contentType = response.headers.get("content-type");
       if (contentType && contentType.includes("text/html")) {
         const text = await response.text();
-        console.error(
-          "[useAddresses] Received HTML response:",
-          text.substring(0, 200)
-        );
+
         throw new Error(
           "API endpoint returned HTML instead of JSON. Check API server connection."
         );
@@ -255,10 +252,7 @@ export function useAddresses(options: UseAddressesOptions = {}) {
       const contentType = response.headers.get("content-type");
       if (contentType && contentType.includes("text/html")) {
         const text = await response.text();
-        console.error(
-          "[useAddresses] Received HTML response:",
-          text.substring(0, 200)
-        );
+
         throw new Error(
           "API endpoint returned HTML instead of JSON. Check API server connection."
         );
