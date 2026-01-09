@@ -1,13 +1,6 @@
 ---
-// Check for BetterAuth session cookie
-const hasSession = Astro.cookies.has("better-auth.session_token");
-
-if (hasSession) {
-  // biome-ignore parse: Astro frontmatter allows return statements
-  return Astro.redirect("/account/profile");
-}
-// Redirect to login page if no session
-// biome-ignore parse: Astro frontmatter allows return statements
-return Astro.redirect("/login?redirect=/account/profile");
+// Redirect all requests to /account to /account/profile
+// The profile page handles authentication via client-side AuthGuard
+return Astro.redirect("/account/profile");
 ---
 

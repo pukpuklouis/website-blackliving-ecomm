@@ -1,20 +1,12 @@
 ---
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@blackliving/ui";
 import AccountNav from "../../components/AccountNav.astro";
+import AuthGuard from "../../components/AuthGuard";
 import ProfileTabs from "../../components/ui/ProfileTabs.tsx";
 import BaseLayout from "../../layouts/BaseLayout.astro";
-
-// Client-side auth protection - API handles the real authorization
 ---
 
 <BaseLayout title="個人資料" description="管理您的帳號資訊、地址簿與偏好設定">
-  <header>
+  <AuthGuard client:load fallback="/login">
     <main class="container mx-auto px-4 py-8">
       <div class="max-w-6xl mx-auto">
         <div class="mb-8">
@@ -35,5 +27,5 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
         </div>
       </div>
     </main>
-  </header>
+  </AuthGuard>
 </BaseLayout>
