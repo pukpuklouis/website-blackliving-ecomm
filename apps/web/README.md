@@ -1,6 +1,6 @@
-# Black Living 黑哥家居 - Customer Website
+# Black Living 黑哥居家 - Customer Website
 
-A modern, edge-first e-commerce website for Black Living (黑哥家居), Taiwan's premium Simmons mattress retailer. Built with Astro, React, and Cloudflare technologies for optimal performance and SEO.
+A modern, edge-first e-commerce website for Black Living (黑哥居家), Taiwan's premium Simmons mattress retailer. Built with Astro, React, and Cloudflare technologies for optimal performance and SEO.
 
 ## 🚀 Overview
 

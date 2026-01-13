@@ -12,7 +12,7 @@ export interface Props {
 }
 
 const {
-  title = "Black Living 黑哥家居",
+  title = "Black Living 黑哥居家",
   description,
   canonical,
   image = "https://placehold.co/1200x630?text=og+image",
@@ -24,7 +24,7 @@ const {
 
 const fullTitle = title.includes("Black Living")
   ? title
-  : `${title} | Black Living 黑哥家居`;
+  : `${title} | Black Living 黑哥居家`;
 const canonicalURL = canonical || Astro.url.href;
 const imageURL = new URL(image, Astro.site).href;
 ---
@@ -42,7 +42,7 @@ const imageURL = new URL(image, Astro.site).href;
 <meta property="og:title" content={fullTitle}>
 <meta property="og:description" content={description}>
 <meta property="og:image" content={imageURL}>
-<meta property="og:site_name" content="Black Living 黑哥家居">
+<meta property="og:site_name" content="Black Living 黑哥居家">
 <meta property="og:locale" content="zh_TW">
 
 {publishedTime && <meta property='article:published_time' content={publishedTime} />}
@@ -66,7 +66,7 @@ const imageURL = new URL(image, Astro.site).href;
   {
     "@context": "https://schema.org",
     "@type": "LocalBusiness",
-    "name": "Black Living 黑哥家居",
+    "name": "Black Living 黑哥居家",
     "description": "專營席夢思黑標床墊，提供全台最低價與專業服務",
     "url": "https://blackliving.com.tw",
     "telephone": "+886-X-XXXX-XXXX",

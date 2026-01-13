@@ -1,4 +1,4 @@
-# Black Living 黑哥家居 - 客戶網站
+# Black Living 黑哥居家 - 客戶網站
 
 Black Living（黑哥家居）台灣頂級 Simmons 床墊零售商的現代化電商網站。採用 Astro、React 和 Cloudflare 技術建置，實現最佳效能和 SEO。
 

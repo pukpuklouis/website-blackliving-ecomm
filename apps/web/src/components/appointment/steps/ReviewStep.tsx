@@ -387,7 +387,7 @@ export default function ReviewStep() {
 
       <p className="mt-4 text-gray-500 text-sm">
         完成提交後，系統會保留您的預約資料並以 Email 通知。請確保信箱可收到
-        blackliving.com 寄出的郵件。
+        blackliving.tw 寄出的郵件。
       </p>
 
       {user ? (
