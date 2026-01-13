@@ -1,6 +1,6 @@
 # Black Living E-commerce API Documentation
 
-This document provides comprehensive documentation for the Black Living (黑哥家居) e-commerce API backend built with Hono on Cloudflare Workers.
+This document provides comprehensive documentation for the Black Living (黑哥居家) e-commerce API backend built with Hono on Cloudflare Workers.
 
 ## Table of Contents
 

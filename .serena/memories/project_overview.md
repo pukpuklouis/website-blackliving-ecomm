@@ -2,7 +2,7 @@
 
 ## Project Purpose
 
-**Black Living 黑哥家居** is a premium Taiwanese e-commerce platform specializing in Simmons "Black Label" mattresses and home accessories. The project is designed as a modern, edge-first architecture leveraging Cloudflare's ecosystem for optimal performance and scalability.
+**Black Living 黑哥居家** is a premium Taiwanese e-commerce platform specializing in Simmons "Black Label" mattresses and home accessories. The project is designed as a modern, edge-first architecture leveraging Cloudflare's ecosystem for optimal performance and scalability.
 
 ## Architecture Overview
 

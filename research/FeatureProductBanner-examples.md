@@ -59,7 +59,7 @@
   gradientToColor="transparent"
   gradientOpacity={0.5}
   textPosition="center"
-  textTitle="Black Living 黑哥家居"
+  textTitle="Black Living 黑哥居家"
   textDescription="台灣頂級床墊專門店"
   height="xl"
   textClassName="text-center"
