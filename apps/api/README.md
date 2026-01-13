@@ -261,4 +261,4 @@ Full API documentation available at: `https://api.blackliving.com/docs` (TODO: A
 
 ---
 
-**Built with ❤️ for Black Living 黑哥家居 - Premium Simmons Mattress Retailer**
+**Built with ❤️ for Black Living 黑哥居家 - Premium Simmons Mattress Retailer**

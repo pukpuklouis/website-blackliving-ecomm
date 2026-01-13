@@ -1,8 +1,15 @@
 import { requireAdmin } from "@blackliving/auth";
+import { notificationSettings } from "@blackliving/db/schema";
+import {
+  AdminAppointment,
+  AppointmentConfirmation,
+} from "@blackliving/email-templates";
 import { zValidator } from "@hono/zod-validator";
+import { render } from "@react-email/render";
 import { Hono } from "hono";
 import { z } from "zod";
 import type { Env } from "../index";
+import type { NotificationService } from "../utils/notification";
 
 const appointments = new Hono<{
   Bindings: Env;
@@ -13,6 +20,7 @@ const appointments = new Hono<{
     auth: any;
     user: any;
     session: any;
+    notification: NotificationService;
   };
 }>();
 
@@ -319,8 +327,80 @@ appointments.post(
         // Don't fail the request if notification fails
       }
 
-      // Send confirmation SMS/Email (implement later)
-      // await sendAppointmentConfirmation(appointmentNumber, data);
+      // Send email notifications
+      try {
+        const notification = c.get("notification");
+        if (notification.isConfigured()) {
+          const storeInfo = getStoreInfo(data.storeId);
+
+          // Fetch notification settings
+          const settingsResult = await c.env.DB.prepare(
+            "SELECT * FROM notification_settings LIMIT 1"
+          ).first();
+
+          // Send customer confirmation email
+          const isCustomerEnabled =
+            (settingsResult as { enable_appointment_customer?: boolean })
+              ?.enable_appointment_customer ?? true;
+
+          if (isCustomerEnabled) {
+            const customerEmailHtml = await render(
+              AppointmentConfirmation({
+                appointmentId: appointmentNumber,
+                customerName: data.customerInfo.name,
+                appointmentDate: data.preferredDate,
+                appointmentTime: data.preferredTime,
+                storeName: storeInfo.name,
+                storeAddress: storeInfo.address,
+                storePhone: storeInfo.phone,
+                notes: data.message || undefined,
+                logoUrl: "https://www.blackliving.tw/blackliving-logo-zh.svg",
+              })
+            );
+
+            await notification.sendCustomerNotification(
+              "appointment_confirm",
+              data.customerInfo.email,
+              `[Black Living] 預約確認 - ${data.preferredDate} ${data.preferredTime}`,
+              customerEmailHtml
+            );
+          }
+
+          // Send admin notification email
+          const isAdminEnabled =
+            (settingsResult as { enable_appointment_admin?: boolean })
+              ?.enable_appointment_admin ?? true;
+          const adminEmails =
+            (settingsResult as { admin_emails?: string[] })?.admin_emails || [];
+
+          if (isAdminEnabled && adminEmails.length > 0) {
+            const adminEmailHtml = await render(
+              AdminAppointment({
+                appointmentId: appointmentNumber,
+                customerName: data.customerInfo.name,
+                customerEmail: data.customerInfo.email,
+                customerPhone: data.customerInfo.phone,
+                appointmentDate: data.preferredDate,
+                appointmentTime: data.preferredTime,
+                storeName: storeInfo.name,
+                storeAddress: storeInfo.address,
+                notes: data.message || undefined,
+                logoUrl: "https://www.blackliving.tw/blackliving-logo-zh.svg",
+              })
+            );
+
+            await notification.sendAdminNotification(
+              "new_appointment",
+              adminEmails,
+              `[新預約] ${data.customerInfo.name} - ${data.preferredDate} ${data.preferredTime}`,
+              adminEmailHtml
+            );
+          }
+        }
+      } catch (error) {
+        console.error("Failed to send appointment email notifications:", error);
+        // Don't fail the request if notification fails
+      }
 
       return c.json(
         {
@@ -438,8 +518,63 @@ appointments.patch(
         return c.json({ error: "Appointment not found" }, 404);
       }
 
-      // Send confirmation notification (implement later)
-      // await sendAppointmentConfirmation(id);
+      // Send confirmation email to customer (Story 5.3)
+      const notification = c.get("notification");
+      if (notification.isConfigured()) {
+        // Fetch appointment details
+        const appointment = await c.env.DB.prepare(
+          "SELECT * FROM appointments WHERE id = ?"
+        )
+          .bind(id)
+          .first();
+
+        if (appointment) {
+          const customerInfo = JSON.parse(
+            appointment.customer_info || "{}"
+          ) as { name: string; email: string };
+          const storeInfo = getStoreInfo(appointment.store_location);
+          const confirmedDate = new Date(confirmedDateTime);
+
+          // Check if appointment notification is enabled
+          const db = c.get("db");
+          const [settings] = await db
+            .select()
+            .from(notificationSettings)
+            .limit(1);
+          const isEnabled = settings?.enableAppointmentCustomer ?? true;
+
+          if (isEnabled && customerInfo.email && storeInfo) {
+            const emailHtml = await render(
+              AppointmentConfirmation({
+                appointmentId: appointment.appointment_number,
+                customerName: customerInfo.name,
+                appointmentDate: confirmedDate.toLocaleDateString("zh-TW", {
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                  weekday: "long",
+                }),
+                appointmentTime: confirmedDate.toLocaleTimeString("zh-TW", {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                }),
+                storeName: storeInfo.name,
+                storeAddress: storeInfo.address,
+                storePhone: storeInfo.phone,
+                googleMapsUrl: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(storeInfo.address)}`,
+                notes: appointment.notes || undefined,
+              })
+            );
+
+            await notification.sendCustomerNotification(
+              "appointment_confirmed",
+              customerInfo.email,
+              `[Black Living] 預約已確認 #${appointment.appointment_number}`,
+              emailHtml
+            );
+          }
+        }
+      }
 
       return c.json({
         success: true,

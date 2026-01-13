@@ -1,13 +1,26 @@
 import type { createAuth } from "@blackliving/auth";
 import { requireAdmin, requireAuth } from "@blackliving/auth";
 import type { createDB } from "@blackliving/db";
-import { orders as ordersTable } from "@blackliving/db/schema";
+import {
+  bankAccountInfo,
+  notificationSettings,
+  orders as ordersTable,
+} from "@blackliving/db/schema";
+import {
+  AdminNewOrder,
+  AdminPaymentConfirmation,
+  BankTransferConfirmation,
+  PaymentComplete,
+  ShippingNotification,
+} from "@blackliving/email-templates";
 import type { Session, User } from "@blackliving/types";
 import { zValidator } from "@hono/zod-validator";
+import { render } from "@react-email/render";
 import { desc, eq, sql } from "drizzle-orm";
 import { Hono } from "hono";
 import { z } from "zod";
 import type { Env } from "../index";
+import type { NotificationService } from "../utils/notification";
 
 const orders = new Hono<{
   Bindings: Env;
@@ -18,6 +31,7 @@ const orders = new Hono<{
     auth: ReturnType<typeof createAuth>;
     user: User | null;
     session: Session | null;
+    notification: NotificationService;
   };
 }>();
 
@@ -164,8 +178,127 @@ orders.post("/", zValidator("json", createOrderSchema), async (c) => {
       shippingAddress: data.shippingAddress,
     });
 
-    // Send notification email (implement later)
-    // await sendOrderConfirmationEmail(orderNumber, data);
+    // Send bank transfer confirmation email if payment method is bank_transfer
+    if (data.paymentMethod === "bank_transfer") {
+      console.log(
+        "[Orders] Payment method is bank_transfer, checking notification..."
+      );
+      const notification = c.get("notification");
+      console.log(
+        "[Orders] NotificationService isConfigured:",
+        notification.isConfigured()
+      );
+      if (notification.isConfigured()) {
+        // Fetch bank account info from settings
+        const [bankInfo] = await db
+          .select()
+          .from(bankAccountInfo)
+          .where(eq(bankAccountInfo.isActive, true))
+          .limit(1);
+
+        console.log("[Orders] Bank info found:", !!bankInfo);
+
+        // Check if bank transfer email is enabled
+        const [settings] = await db
+          .select()
+          .from(notificationSettings)
+          .limit(1);
+        const isBankTransferEnabled =
+          settings?.enableBankTransferCustomer ?? true;
+
+        console.log("[Orders] Bank transfer enabled:", isBankTransferEnabled);
+
+        if (bankInfo && isBankTransferEnabled) {
+          console.log("[Orders] Rendering BankTransferConfirmation email...");
+          // Render email template
+          const emailHtml = await render(
+            BankTransferConfirmation({
+              orderId: orderNumber,
+              customerName: data.customerInfo.name,
+              orderItems: data.items.map((item) => ({
+                name: item.name,
+                quantity: item.quantity,
+                price: item.price,
+              })),
+              subtotal: data.subtotalAmount,
+              shipping: data.shippingFee,
+              total: data.totalAmount,
+              bankName: bankInfo.bankName,
+              bankBranch: bankInfo.branchName || "",
+              accountNumber: bankInfo.accountNumber,
+              accountHolder: bankInfo.accountHolder,
+            })
+          );
+
+          console.log(
+            "[Orders] Sending bank transfer email to:",
+            data.customerInfo.email
+          );
+          // Await email to ensure it completes before worker terminates
+          await notification.sendCustomerNotification(
+            "bank_transfer_confirm",
+            data.customerInfo.email,
+            `[Black Living] 訂單確認 #${orderNumber} - 請完成轉帳付款`,
+            emailHtml
+          );
+        }
+      }
+    }
+
+    // Send admin notification for new orders (Story 5.3)
+    console.log("[Orders] Checking admin notification for new order...");
+    const notification = c.get("notification");
+    console.log(
+      "[Orders] Admin notification isConfigured:",
+      notification.isConfigured()
+    );
+    if (notification.isConfigured()) {
+      const [settings] = await db.select().from(notificationSettings).limit(1);
+      const isAdminNotifEnabled = settings?.enableNewOrderAdmin ?? true;
+      const adminEmails = (settings?.adminEmails as string[]) || [];
+
+      console.log("[Orders] Admin notification enabled:", isAdminNotifEnabled);
+      console.log("[Orders] Admin emails:", adminEmails);
+
+      if (isAdminNotifEnabled && adminEmails.length > 0) {
+        console.log("[Orders] Rendering AdminNewOrder email...");
+        const adminEmailHtml = await render(
+          AdminNewOrder({
+            orderId: orderNumber,
+            orderNumber,
+            customerName: data.customerInfo.name,
+            customerEmail: data.customerInfo.email,
+            customerPhone: data.customerInfo.phone,
+            orderItems: data.items.map((item) => ({
+              name: item.name,
+              quantity: item.quantity,
+              price: item.price,
+              size: item.size,
+            })),
+            subtotal: data.subtotalAmount,
+            shipping: data.shippingFee,
+            total: data.totalAmount,
+            paymentMethod: data.paymentMethod,
+            shippingAddress: data.shippingAddress,
+            notes: data.notes || undefined,
+            orderDate: new Date().toLocaleDateString("zh-TW", {
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+              hour: "2-digit",
+              minute: "2-digit",
+            }),
+          })
+        );
+
+        await notification.sendAdminNotification(
+          "new_order",
+          adminEmails,
+          `[新訂單] #${orderNumber} - ${data.customerInfo.name} - $${data.totalAmount}`,
+          adminEmailHtml
+        );
+      }
+    }
 
     return c.json(
       {
@@ -242,11 +375,67 @@ orders.patch(
         .set(updateData)
         .where(eq(ordersTable.id, id));
 
-      // Drizzle doesn't return changes count, so we could optionally check if order exists first
-      // For now, we'll assume the update succeeded if no error was thrown
+      // Send shipping notification when status becomes shipped
+      if (status === "shipped") {
+        const notification = c.get("notification");
+        if (notification.isConfigured()) {
+          // Fetch order details for email
+          const [order] = await db
+            .select()
+            .from(ordersTable)
+            .where(eq(ordersTable.id, id))
+            .limit(1);
 
-      // Send status update notification (implement later)
-      // await sendOrderStatusUpdateEmail(id, status);
+          if (order) {
+            const customerInfo = order.customerInfo as {
+              name: string;
+              email: string;
+            };
+            const items = order.items as Array<{
+              name: string;
+              quantity: number;
+              price: number;
+            }>;
+            const shippingAddress = order.shippingAddress as {
+              name: string;
+              phone: string;
+              address: string;
+              city: string;
+              district: string;
+            } | null;
+
+            // Check if shipping notification is enabled
+            const [settings] = await db
+              .select()
+              .from(notificationSettings)
+              .limit(1);
+            const isEnabled = settings?.enableOrderShippedCustomer ?? true;
+
+            if (isEnabled) {
+              const emailHtml = await render(
+                ShippingNotification({
+                  orderId: order.orderNumber,
+                  customerName: customerInfo.name,
+                  orderItems: items,
+                  subtotal: order.subtotalAmount,
+                  shipping: order.shippingFee || 0,
+                  total: order.totalAmount,
+                  shippingCompany: trackingNumber ? shippingCompany : undefined,
+                  trackingNumber,
+                  shippingAddress: shippingAddress || undefined,
+                })
+              );
+
+              await notification.sendCustomerNotification(
+                "order_shipped",
+                customerInfo.email,
+                `[Black Living] 您的訂單已出貨 #${order.orderNumber}`,
+                emailHtml
+              );
+            }
+          }
+        }
+      }
 
       return c.json({
         success: true,
@@ -294,8 +483,89 @@ orders.patch(
         .set(updateData)
         .where(eq(ordersTable.id, id));
 
-      // Send payment confirmation notification (implement later)
-      // await sendPaymentConfirmationEmail(id);
+      // Send payment confirmation notification
+      const notification = c.get("notification");
+      if (notification.isConfigured()) {
+        // Fetch order details
+        const [order] = await db
+          .select()
+          .from(ordersTable)
+          .where(eq(ordersTable.id, id))
+          .limit(1);
+
+        if (order) {
+          const customerInfo = order.customerInfo as {
+            name: string;
+            email: string;
+          };
+          const items = order.items as Array<{
+            name: string;
+            quantity: number;
+            price: number;
+          }>;
+
+          // Check if payment confirmation is enabled
+          const [settings] = await db
+            .select()
+            .from(notificationSettings)
+            .limit(1);
+
+          // Send to customer
+          const emailHtml = await render(
+            PaymentComplete({
+              orderId: order.orderNumber,
+              customerName: customerInfo.name,
+              orderItems: items,
+              subtotal: order.subtotalAmount,
+              shipping: order.shippingFee || 0,
+              total: order.totalAmount,
+              paymentMethod: order.paymentMethod || "銀行轉帳",
+              paymentDate: new Date(paymentVerifiedAt).toLocaleDateString(
+                "zh-TW",
+                { year: "numeric", month: "long", day: "numeric" }
+              ),
+            })
+          );
+
+          await notification.sendCustomerNotification(
+            "payment_complete",
+            customerInfo.email,
+            `[Black Living] 付款已確認 #${order.orderNumber}`,
+            emailHtml
+          );
+
+          // Send to admin if enabled
+          if (settings?.enablePaymentConfirmAdmin) {
+            const adminEmails = (settings.adminEmails as string[]) || [];
+            if (adminEmails.length > 0) {
+              const adminEmailHtml = await render(
+                AdminPaymentConfirmation({
+                  orderId: id,
+                  orderNumber: order.orderNumber,
+                  customerName: customerInfo.name,
+                  customerEmail: customerInfo.email,
+                  customerPhone:
+                    (order.customerInfo as { phone?: string })?.phone || "",
+                  paymentMethod: order.paymentMethod || "銀行轉帳",
+                  paymentAmount: order.totalAmount,
+                  paymentDate: new Date(paymentVerifiedAt).toLocaleString(
+                    "zh-TW",
+                    { timeZone: "Asia/Taipei" }
+                  ),
+                  logoUrl: "https://www.blackliving.tw/blackliving-logo-zh.svg",
+                })
+              );
+
+              await notification.sendAdminNotification(
+                "payment_complete",
+                adminEmails,
+                `[付款確認] #${order.orderNumber} - ${customerInfo.name} - $${order.totalAmount}`,
+                adminEmailHtml
+              );
+            }
+          }
+        }
+      }
 
       return c.json({
         success: true,

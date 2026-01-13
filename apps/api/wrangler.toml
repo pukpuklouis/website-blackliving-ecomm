@@ -41,8 +41,8 @@ migrations_dir = "../../packages/db/migrations"
 
 [[env.development.d1_databases]]
 binding = "DB"
-database_name = "blackliving-db-dev"
-database_id = "local-dev-db-id"
+database_name = "blackliving-db"
+database_id = "6e8078ae-a12b-48e2-ab44-f3adf4ba3482"
 
 migrations_dir = "../../packages/db/migrations"
 

@@ -17,6 +17,7 @@ import { createStorageManager } from "./lib/storage";
 
 import { createEnhancedAuthMiddleware } from "./middleware/auth";
 import admin from "./modules/admin";
+import adminNotifications from "./modules/admin-notifications";
 import appointments from "./modules/appointments";
 // Custom auth module removed - using BetterAuth only
 import businessCooperation from "./modules/business-cooperation";
@@ -41,6 +42,7 @@ import searchConfig from "./routes/search-config";
 import searchKeys from "./routes/search-keys";
 import searchReindex from "./routes/search-reindex";
 import { LineNotificationService } from "./utils/line";
+import { NotificationService } from "./utils/notification";
 
 export type Env = {
   DB: D1Database;
@@ -70,6 +72,7 @@ const app = new Hono<{
     auth: ReturnType<typeof createAuth>;
     search: SearchModule;
     line: LineNotificationService;
+    notification: NotificationService;
     user: User | null;
     session: Session | null;
   };
@@ -156,6 +159,7 @@ app.use("*", async (c, next) => {
   c.set("auth", auth);
   c.set("search", new SearchModule(c));
   c.set("line", new LineNotificationService(c.env, db));
+  c.set("notification", new NotificationService(c.env, db));
 
   await next();
 });
@@ -589,6 +593,7 @@ app.route("/api/payment", gomypay);
 app.route("/api/appointments", appointments);
 app.route("/api/customers", customers);
 app.route("/api/admin", admin);
+app.route("/api/admin/settings/notifications", adminNotifications);
 app.route("/api/reviews", reviews);
 app.route("/api/newsletter", newsletter);
 app.route("/api/contact", contact);

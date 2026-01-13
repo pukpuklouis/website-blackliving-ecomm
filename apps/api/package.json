@@ -32,8 +32,10 @@
   "dependencies": {
     "@blackliving/auth": "workspace:*",
     "@blackliving/db": "workspace:*",
+    "@blackliving/email-templates": "workspace:*",
     "@blackliving/types": "workspace:*",
     "@hono/zod-validator": "^0.2.2",
+    "@react-email/render": "^1.0.7",
     "crypto-js": "^4.2.0",
     "drizzle-orm": "^0.44.7",
     "hono": "^4.10.4",

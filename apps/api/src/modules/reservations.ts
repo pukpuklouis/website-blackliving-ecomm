@@ -1,10 +1,20 @@
-import { appointments, reservations } from "@blackliving/db/schema";
+import {
+  appointments,
+  notificationSettings,
+  reservations,
+} from "@blackliving/db/schema";
+import {
+  AdminAppointment,
+  AppointmentConfirmation,
+} from "@blackliving/email-templates";
 import { zValidator } from "@hono/zod-validator";
 import { createId } from "@paralleldrive/cuid2";
+import { render } from "@react-email/render";
 import { and, desc, eq, sql } from "drizzle-orm";
 import { Hono } from "hono";
 import { z } from "zod";
 import type { Env } from "../index";
+import type { NotificationService } from "../utils/notification";
 
 const reservationsRouter = new Hono<{
   Bindings: Env;
@@ -13,6 +23,7 @@ const reservationsRouter = new Hono<{
     cache: any;
     user: any;
     line: any;
+    notification: NotificationService;
   };
 }>();
 
@@ -145,6 +156,96 @@ reservationsRouter.post(
         console.log("[Reservation] LINE notification sent successfully");
       } catch (error) {
         console.error("Failed to send LINE notification:", error);
+      }
+
+      // Send email notifications
+      try {
+        const notification = c.get("notification");
+        if (notification.isConfigured()) {
+          // Get store info helper
+          const storeMap: Record<
+            string,
+            { name: string; address: string; phone: string }
+          > = {
+            zhonghe: {
+              name: "Black Living 黑哥居家 - 新北中和店",
+              address: "新北市中和區景平路398號2樓",
+              phone: "02-2940-8888",
+            },
+            kaohsiung: {
+              name: "Black Living 黑哥居家 - 高雄店",
+              address: "高雄市前鎮區...",
+              phone: "07-xxx-xxxx",
+            },
+          };
+          const storeInfo = storeMap[data.storeId] || {
+            name: data.storeId,
+            address: "",
+            phone: "",
+          };
+
+          // Fetch notification settings
+          const [settings] = await db
+            .select()
+            .from(notificationSettings)
+            .limit(1);
+
+          // Send customer confirmation email
+          const isCustomerEnabled = settings?.enableAppointmentCustomer ?? true;
+
+          if (isCustomerEnabled) {
+            const customerEmailHtml = await render(
+              AppointmentConfirmation({
+                appointmentId: appointmentNumber,
+                customerName: data.customerInfo.name,
+                appointmentDate: "待確認",
+                appointmentTime: "待確認",
+                storeName: storeInfo.name,
+                storeAddress: storeInfo.address,
+                storePhone: storeInfo.phone,
+                notes: data.notes || undefined,
+                logoUrl: "https://www.blackliving.tw/blackliving-logo-zh.svg",
+              })
+            );
+
+            await notification.sendCustomerNotification(
+              "appointment_confirm",
+              data.customerInfo.email,
+              `[Black Living] 預約確認 - ${appointmentNumber}`,
+              customerEmailHtml
+            );
+          }
+
+          // Send admin notification email
+          const isAdminEnabled = settings?.enableAppointmentAdmin ?? true;
+          const adminEmails = (settings?.adminEmails as string[]) || [];
+
+          if (isAdminEnabled && adminEmails.length > 0) {
+            const adminEmailHtml = await render(
+              AdminAppointment({
+                appointmentId: appointmentNumber,
+                customerName: data.customerInfo.name,
+                customerEmail: data.customerInfo.email,
+                customerPhone: data.customerInfo.phone,
+                appointmentDate: "待確認",
+                appointmentTime: "待確認",
+                storeName: storeInfo.name,
+                storeAddress: storeInfo.address,
+                notes: data.notes || undefined,
+                logoUrl: "https://www.blackliving.tw/blackliving-logo-zh.svg",
+              })
+            );
+
+            await notification.sendAdminNotification(
+              "new_appointment",
+              adminEmails,
+              `[新預約] ${data.customerInfo.name} - ${storeInfo.name}`,
+              adminEmailHtml
+            );
+          }
+        }
+      } catch (error) {
+        console.error("Failed to send appointment email notifications:", error);
       }
 
       // Re-fetch appointment to ensure data integrity
