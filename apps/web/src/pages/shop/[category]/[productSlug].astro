@@ -10,9 +10,9 @@ import {
   generateProductStaticPaths,
 } from "../../../utils/productPaths.ts";
 
-interface StaticProps {
+type StaticProps = {
   categoryConfig?: CategoryConfig;
-}
+};
 
 export async function getStaticPaths() {
   return await generateProductStaticPaths();

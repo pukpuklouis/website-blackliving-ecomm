@@ -49,7 +49,7 @@ type AddToCartSectionProps = {
 const AddToCartSection: FC<AddToCartSectionProps> = ({
   product,
   selectedVariantId,
-  onVariantSelect,
+  _onVariantSelect,
   onAddToCartSuccess,
   onAddToCartError,
   className = "",
@@ -97,7 +97,7 @@ const AddToCartSection: FC<AddToCartSectionProps> = ({
     : 0;
 
   // Handle add to cart
-  const handleAddToCart = async () => {
+  const handleAddToCart = () => {
     if (!isAvailable) {
       const errorMsg = "此商品目前缺貨";
       setLocalError(errorMsg);
@@ -143,8 +143,7 @@ const AddToCartSection: FC<AddToCartSectionProps> = ({
 
       setTimeout(() => setShowSuccess(false), 3000);
       setQuantity(1); // Reset quantity
-    } catch (err) {
-      console.error("Error adding to cart:", err);
+    } catch (_err) {
       const errorMsg = "加入購物車失敗，請稍後再試";
       setLocalError(errorMsg);
       onAddToCartError?.(errorMsg);
@@ -172,7 +171,7 @@ const AddToCartSection: FC<AddToCartSectionProps> = ({
           text: product.description,
           url: window.location.href,
         });
-      } catch (err) {
+      } catch (_err) {
         // Sharing failed - fall through to clipboard fallback
       }
     } else {
@@ -188,11 +187,11 @@ const AddToCartSection: FC<AddToCartSectionProps> = ({
       <div className="sticky top-0 z-10 rounded-t-xl border-b bg-white p-4 md:p-6">
         {/* Product Title & Category */}
         <div className="mb-4">
-          {product.category && (
+          {product.category ? (
             <Badge className="mb-2" variant="outline">
               {product.category}
             </Badge>
-          )}
+          ) : null}
           <h2 className="font-bold text-gray-900 text-xl leading-tight md:text-2xl">
             {product.name}
           </h2>
@@ -205,12 +204,12 @@ const AddToCartSection: FC<AddToCartSectionProps> = ({
               <span className="font-bold text-2xl text-gray-900 md:text-3xl">
                 NT$ {displayPrice.toLocaleString()}
               </span>
-              {variant.originalPrice &&
-                variant.originalPrice > displayPrice && (
-                  <span className="text-gray-500 text-lg line-through">
-                    NT$ {variant.originalPrice.toLocaleString()}
-                  </span>
-                )}
+              {variant.originalPrice !== undefined &&
+              variant.originalPrice > displayPrice ? (
+                <span className="text-gray-500 text-lg line-through">
+                  NT$ {variant.originalPrice.toLocaleString()}
+                </span>
+              ) : null}
             </div>
             {/* Action Buttons */}
             <div className="flex items-center space-x-2">
@@ -224,7 +223,7 @@ const AddToCartSection: FC<AddToCartSectionProps> = ({
                 <Heart
                   className={cn(
                     "h-5 w-5",
-                    isWishlisted && "fill-red-500 text-red-500"
+                    isWishlisted ? "fill-red-500 text-red-500" : ""
                   )}
                 />
               </Button>
@@ -259,28 +258,28 @@ const AddToCartSection: FC<AddToCartSectionProps> = ({
           )}
 
           {/* Variant Info */}
-          {variant.size && (
+          {variant.size ? (
             <div className="text-gray-600 text-sm">
               規格: <span className="font-medium">{variant.size}</span>
-              {variant.firmness && (
+              {variant.firmness ? (
                 <span className="ml-2">
                   硬度: <span className="font-medium">{variant.firmness}</span>
                 </span>
-              )}
+              ) : null}
             </div>
-          )}
+          ) : null}
         </div>
       </div>
 
       {/* Cart Section */}
       <div className="space-y-6 p-4 md:p-6">
         {/* Error Messages */}
-        {currentError && (
+        {currentError ? (
           <div className="flex items-start space-x-2 rounded-lg border border-red-200 bg-red-50 p-3 text-red-700">
             <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0" />
             <span className="text-sm">{currentError}</span>
           </div>
-        )}
+        ) : null}
 
         {/* Stock Status */}
         <div className="flex items-center justify-between">
@@ -301,11 +300,13 @@ const AddToCartSection: FC<AddToCartSectionProps> = ({
               <span>{isAvailable ? "現貨供應" : "暫時缺貨"}</span>
             </div>
           </div>
-          {variant.stock && variant.stock <= 5 && variant.stock > 0 && (
+          {variant.stock !== undefined &&
+          variant.stock <= 5 &&
+          variant.stock > 0 ? (
             <span className="font-medium text-orange-600 text-xs">
               僅剩 {variant.stock} 件
             </span>
-          )}
+          ) : null}
         </div>
 
         {/* Current Cart Info */}
@@ -320,12 +321,12 @@ const AddToCartSection: FC<AddToCartSectionProps> = ({
         )}
 
         {/* Quantity Selector */}
-        {isAvailable && (
+        {isAvailable ? (
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <label className="font-medium text-gray-700 text-sm">
+              <span className="font-medium text-gray-700 text-sm">
                 選擇數量:
-              </label>
+              </span>
               <span className="text-gray-500 text-xs">
                 最多 {maxQuantity} 件
               </span>
@@ -366,7 +367,7 @@ const AddToCartSection: FC<AddToCartSectionProps> = ({
               </div>
             </div>
           </div>
-        )}
+        ) : null}
 
         <Separator />
 
@@ -387,33 +388,41 @@ const AddToCartSection: FC<AddToCartSectionProps> = ({
             className={cn(
               "h-14 w-full font-semibold text-lg transition-all duration-200",
               isAvailable
-                ? "transform bg-black text-white shadow-lg hover:-translate-y-0.5 hover:bg-gray-800 hover:shadow-xl"
+                ? "hover:-translate-y-0.5 transform bg-black text-white shadow-lg hover:bg-gray-800 hover:shadow-xl"
                 : "cursor-not-allowed bg-gray-200 text-gray-500"
             )}
             disabled={!isAvailable || isAdding}
             onClick={handleAddToCart}
           >
-            {isAdding ? (
-              <>
-                <div className="mr-3 h-5 w-5 animate-spin rounded-full border-white border-b-2" />
-                加入購物車中...
-              </>
-            ) : isAvailable ? (
-              <>
-                <ShoppingCart className="mr-3 h-5 w-5" />
-                加入購物車
-                {quantity > 1 && (
-                  <span className="ml-2 rounded-full bg-gray-700 px-2 py-1 text-sm">
-                    {quantity} 件
-                  </span>
-                )}
-              </>
-            ) : (
-              <>
-                <AlertCircle className="mr-3 h-5 w-5" />
-                目前缺貨
-              </>
-            )}
+            {(() => {
+              if (isAdding) {
+                return (
+                  <>
+                    <div className="mr-3 h-5 w-5 animate-spin rounded-full border-white border-b-2" />
+                    加入購物車中...
+                  </>
+                );
+              }
+              if (isAvailable) {
+                return (
+                  <>
+                    <ShoppingCart className="mr-3 h-5 w-5" />
+                    加入購物車
+                    {quantity > 1 ? (
+                      <span className="ml-2 rounded-full bg-gray-700 px-2 py-1 text-sm">
+                        {quantity} 件
+                      </span>
+                    ) : null}
+                  </>
+                );
+              }
+              return (
+                <>
+                  <AlertCircle className="mr-3 h-5 w-5" />
+                  目前缺貨
+                </>
+              );
+            })()}
           </Button>
         )}
 

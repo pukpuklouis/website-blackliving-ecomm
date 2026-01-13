@@ -8,9 +8,20 @@ import ProductCard from "../components/ProductCard.astro";
 import BaseLayout from "../layouts/BaseLayout.astro";
 import type { CategoryConfig } from "../types/category.ts";
 
-export interface Props {
+export type Props = {
   categoryConfig: CategoryConfig;
-}
+};
+
+type ApiProduct = {
+  id: string;
+  name: string;
+  slug: string;
+  images?: string[];
+  features?: string[];
+  variants?: { price?: number; originalPrice?: number }[];
+  inStock?: boolean;
+  featured?: boolean;
+};
 
 const { categoryConfig } = Astro.props;
 
@@ -57,14 +68,18 @@ const hasValidSubtype = Boolean(
 );
 const appliedSubtype = hasValidSubtype ? normalizedSubtype : null;
 // Generate label for multiple types
-const activeSubtypeLabel = isAccessoriesCategory
-  ? appliedSubtype
-    ? appliedSubtype
-        .split(",")
-        .map((type) => ACCESSORY_SUBTYPE_LABELS[type.trim()] || type)
-        .join("、")
-    : "全部精選周邊"
-  : null;
+const activeSubtypeLabel = (() => {
+  if (!isAccessoriesCategory) {
+    return null;
+  }
+  if (!appliedSubtype) {
+    return "全部精選周邊";
+  }
+  return appliedSubtype
+    .split(",")
+    .map((type) => ACCESSORY_SUBTYPE_LABELS[type.trim()] || type)
+    .join("、");
+})();
 const invalidSubtypeQuery =
   isAccessoriesCategory && rawSubtypeParam && !appliedSubtype
     ? rawSubtypeParam
@@ -78,11 +93,11 @@ const pageTitle = categoryConfig.title;
 const pageDescription = categoryConfig.description;
 const canonicalUrl = new URL(
   categoryUrlPath,
-  Astro.site || "https://blackliving.com.tw"
+  Astro.site || "https://www.blackliving.tw"
 );
 
 // Fetch products from API
-let products: any[] = [];
+let products: ApiProduct[] = [];
 let error: string | null = null;
 let isLoading = false;
 
@@ -114,13 +129,7 @@ try {
   const data = await response.json();
 
   // Extract products from the API response structure
-  if (
-    data &&
-    data.success &&
-    data.data &&
-    data.data.products &&
-    Array.isArray(data.data.products)
-  ) {
+  if (data?.success && Array.isArray(data.data?.products)) {
     products = data.data.products;
   } else {
     console.error("API未返回正確的產品陣列格式:", data);
@@ -141,7 +150,7 @@ try {
 
 // Transform products for ProductCard component with enhanced data
 const transformedProducts = Array.isArray(products)
-  ? products.map((product: any) => ({
+  ? products.map((product) => ({
       id: product.id,
       name: product.name,
       series: categoryConfig.series,
@@ -169,7 +178,7 @@ const structuredData = {
         "@type": "ListItem",
         position: 1,
         name: "首頁",
-        item: Astro.site?.toString() || "https://blackliving.com.tw",
+        item: Astro.site?.toString() || "https://www.blackliving.tw",
       },
       {
         "@type": "ListItem",
@@ -190,7 +199,7 @@ const structuredData = {
       image: product.image,
       url: new URL(
         product.href,
-        Astro.site || "https://blackliving.com.tw"
+        Astro.site || "https://www.blackliving.tw"
       ).toString(),
       brand: {
         "@type": "Brand",
@@ -250,8 +259,7 @@ const structuredData = {
       aspectRatio="11/6"
     />
     <!-- Error State -->
-    {
-      error && (
+    {error && (
         <div
           class="bg-red-50 border border-red-200 text-red-800 px-6 py-4 rounded-lg mb-8"
           role="alert"
@@ -277,22 +285,18 @@ const structuredData = {
             </div>
           </div>
         </div>
-      )
-    }
+      )}
 
     <!-- Loading State -->
-    {
-      isLoading && (
+    {isLoading && (
         <div class="text-center py-12">
           <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-black" />
           <p class="mt-4 text-gray-600">載入產品中...</p>
         </div>
-      )
-    }
+      )}
 
     <!-- Products Grid -->
-    {
-      !isLoading && (
+    {!isLoading && (
         <section aria-labelledby="products-heading">
           <h2 id="products-heading" class="sr-only">
             {categoryConfig.series}產品列表
@@ -345,8 +349,7 @@ const structuredData = {
             )
           )}
         </section>
-      )
-    }
+      )}
     <!-- CTA Section -->
   </main>
   <CTA
@@ -358,14 +361,12 @@ const structuredData = {
     secondaryButtonHref="https://line.me/R/ti/p/@blackking"
     secondaryButtonTarget="_blank"
   />
-  {
-    invalidSubtypeQuery && (
+  {invalidSubtypeQuery && (
       <script
         type="module"
         set:html={`(function(){const invalidValue=${JSON.stringify(
           invalidSubtypeQuery
         )};console.warn('Unknown accessories subtype filter:',invalidValue);if(typeof window!=='undefined' && typeof gtag!=='undefined'){gtag('event','invalid_accessory_filter',{event_category:'accessories',event_label:invalidValue});}})();`}
       />
-    )
-  }
+    )}
 </BaseLayout>

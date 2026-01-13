@@ -16,14 +16,14 @@ const createVariantSchema = (
 ) => {
   const schemaShape: Record<string, z.ZodTypeAny> = {};
 
-  optionNames.forEach((optionName) => {
+  for (const optionName of optionNames) {
     const availableValues = [
       ...new Set(variants.map((v) => v.options[optionName])),
     ];
     schemaShape[optionName] = z.enum(availableValues as [string, ...string[]], {
       message: `請選擇${optionName}`,
     });
-  });
+  }
 
   schemaShape.quantity = z
     .number()
@@ -38,25 +38,25 @@ type VariantData = {
   quantity: number;
 };
 
-interface ProductVariant {
+type ProductVariant = {
   options: Record<string, string>;
   price: number;
   stock: number;
   sku: string;
-}
+};
 
-interface ProductVariantSelectorProps {
+type ProductVariantSelectorProps = {
   productId: string;
   variants: ProductVariant[];
-  onVariantChange: (
+  onVariantChange?: (
     variant: VariantData & { price: number; sku: string }
   ) => void;
   onAddToCart?: (variant: VariantData & { price: number; sku: string }) => void;
   className?: string;
-}
+};
 
 export default function ProductVariantSelector({
-  productId,
+  productId: _productId,
   variants,
   onVariantChange,
   onAddToCart,
@@ -100,7 +100,9 @@ export default function ProductVariantSelector({
 
   // Update price and SKU when variant selection changes
   useEffect(() => {
-    if (variants.length === 0 || optionNames.length === 0) return;
+    if (variants.length === 0 || optionNames.length === 0) {
+      return;
+    }
 
     const allOptionsSelected = optionNames.every(
       (name) => selectedOptions[name]
@@ -118,17 +120,17 @@ export default function ProductVariantSelector({
 
         try {
           const variantSchema = createVariantSchema(optionNames, variants);
-          const validatedData = variantSchema.parse({
+          variantSchema.parse({
             ...selectedOptions,
             quantity,
           });
-          onVariantChange({
+          onVariantChange?.({
             options: selectedOptions,
             quantity,
             price: variant.price,
             sku: variant.sku,
           });
-        } catch (error) {
+        } catch (_error) {
           // Validation failed, don't call onVariantChange
         }
       }
@@ -152,29 +154,45 @@ export default function ProductVariantSelector({
     }
   };
 
-  const validateAndAddToCart = async () => {
-    if (!onAddToCart || variants.length === 0 || optionNames.length === 0)
+  const handleCartError = (error: unknown) => {
+    if (error instanceof z.ZodError) {
+      const fieldErrors: Record<string, string> = {};
+      for (const err of error.issues) {
+        if (err.path[0]) {
+          fieldErrors[err.path[0] as string] = err.message;
+        }
+      }
+      setErrors(fieldErrors);
       return;
+    }
+    setErrors({
+      general: error instanceof Error ? error.message : "加入購物車失敗",
+    });
+  };
+
+  const findSelectedVariant = () =>
+    variants.find(
+      (v) =>
+        v.options &&
+        optionNames.every((name) => v.options[name] === selectedOptions[name])
+    );
+
+  const validateAndAddToCart = async () => {
+    if (!onAddToCart || variants.length === 0 || optionNames.length === 0) {
+      return;
+    }
 
     setIsLoading(true);
     setErrors({});
 
     try {
       const variantSchema = createVariantSchema(optionNames, variants);
-      const validatedData = variantSchema.parse({
-        ...selectedOptions,
-        quantity,
-      });
-      const variant = variants.find(
-        (v) =>
-          v.options &&
-          optionNames.every((name) => v.options[name] === selectedOptions[name])
-      );
+      variantSchema.parse({ ...selectedOptions, quantity });
 
+      const variant = findSelectedVariant();
       if (!variant) {
         throw new Error("找不到對應的產品規格");
       }
-
       if (variant.stock < quantity) {
         throw new Error("庫存不足");
       }
@@ -186,28 +204,22 @@ export default function ProductVariantSelector({
         sku: variant.sku,
       });
     } catch (error) {
-      if (error instanceof z.ZodError) {
-        const fieldErrors: Record<string, string> = {};
-        error.issues.forEach((err) => {
-          if (err.path[0]) {
-            fieldErrors[err.path[0] as string] = err.message;
-          }
-        });
-        setErrors(fieldErrors);
-      } else {
-        alert(error instanceof Error ? error.message : "加入購物車失敗");
-      }
+      handleCartError(error);
     } finally {
       setIsLoading(false);
     }
   };
 
   const getCurrentStock = () => {
-    if (variants.length === 0 || optionNames.length === 0) return null;
+    if (variants.length === 0 || optionNames.length === 0) {
+      return null;
+    }
     const allOptionsSelected = optionNames.every(
       (name) => selectedOptions[name]
     );
-    if (!allOptionsSelected) return null;
+    if (!allOptionsSelected) {
+      return null;
+    }
     const variant = variants.find(
       (v) =>
         v.options &&
@@ -223,7 +235,10 @@ export default function ProductVariantSelector({
       {/* Dynamic Option Selections */}
       {optionConfigs.map((config) => (
         <div key={config.name}>
-          <label className="mb-3 block font-medium text-gray-700 text-md md:text-lg">
+          <label
+            className="mb-3 block font-medium text-gray-700 text-md md:text-lg"
+            htmlFor={`variant-${config.name}`}
+          >
             選擇{config.displayName} *
           </label>
           <Select
@@ -232,7 +247,10 @@ export default function ProductVariantSelector({
             }
             value={selectedOptions[config.name] || ""}
           >
-            <SelectTrigger className="w-full text-md md:w-[50%] md:text-lg">
+            <SelectTrigger
+              className="w-full text-md md:w-[50%] md:text-lg"
+              id={`variant-${config.name}`}
+            >
               <SelectValue placeholder={`請選擇${config.displayName}`} />
             </SelectTrigger>
             <SelectContent>
@@ -245,16 +263,16 @@ export default function ProductVariantSelector({
               ))}
             </SelectContent>
           </Select>
-          {errors[config.name] && (
+          {errors[config.name] ? (
             <p className="mt-1 text-destructive text-md">
               {errors[config.name]}
             </p>
-          )}
+          ) : null}
         </div>
       ))}
 
       {/* Price Display */}
-      {currentPrice && (
+      {currentPrice !== null && currentPrice > 0 ? (
         <div className="rounded-lg bg-gray-50 p-4">
           <div className="flex items-center justify-between">
             <span className="font-semibold text-lg">售價</span>
@@ -262,17 +280,20 @@ export default function ProductVariantSelector({
               NT$ {currentPrice.toLocaleString()}
             </span>
           </div>
-          {currentStock !== null && (
+          {currentStock !== null ? (
             <div className="mt-1 text-gray-600 text-sm">
               庫存: {currentStock} 件
             </div>
-          )}
+          ) : null}
         </div>
-      )}
+      ) : null}
 
       {/* Quantity Selection */}
       <div>
-        <label className="mb-2 block font-medium text-gray-700 text-sm">
+        <label
+          className="mb-2 block font-medium text-gray-700 text-sm"
+          htmlFor="quantity-input"
+        >
           數量 *
         </label>
         <div className="flex items-center space-x-3">
@@ -288,12 +309,13 @@ export default function ProductVariantSelector({
           </button>
           <input
             className="w-20 rounded-lg border border-gray-300 py-2 text-center"
+            id="quantity-input"
             max={Math.min(10, currentStock || 10)}
             min="1"
             onChange={(e) =>
               handleVariantChange(
                 "quantity",
-                Number.parseInt(e.target.value) || 1
+                Number.parseInt(e.target.value, 10) || 1
               )
             }
             type="number"
@@ -313,31 +335,45 @@ export default function ProductVariantSelector({
             +
           </button>
         </div>
-        {errors.quantity && (
+        {errors.quantity ? (
           <p className="mt-1 text-red-500 text-sm">{errors.quantity}</p>
-        )}
+        ) : null}
       </div>
 
       {/* Add to Cart Button */}
-      {onAddToCart && (
+      {onAddToCart ? (
         <button
           className="w-full rounded-lg bg-black px-6 py-4 font-semibold text-lg text-white transition-colors hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
-          disabled={isLoading || !currentPrice || currentStock === 0}
-          onClick={validateAndAddToCart}
+          disabled={isLoading || currentStock === 0}
+          onClick={() => {
+            // If in stock but no price, redirect to contact page
+            if (!currentPrice && currentStock !== 0) {
+              window.location.href = "/contact-us";
+              return;
+            }
+            validateAndAddToCart();
+          }}
           type="button"
         >
-          {isLoading
-            ? "處理中..."
-            : currentStock === 0
-              ? "暫時缺貨"
-              : "加入購物車"}
+          {(() => {
+            if (isLoading) {
+              return "處理中...";
+            }
+            if (currentStock === 0) {
+              return "暫時缺貨";
+            }
+            if (!currentPrice) {
+              return "聯絡客服";
+            }
+            return "加入購物車";
+          })()}
         </button>
-      )}
+      ) : null}
 
       {/* SKU Display */}
-      {currentSku && (
+      {currentSku ? (
         <div className="text-gray-500 text-xs">商品編號: {currentSku}</div>
-      )}
+      ) : null}
     </div>
   );
 }

@@ -4,7 +4,7 @@ import ProductVariantSelector from "./ProductVariantSelector";
 import { StarRating } from "./StarRating";
 import { useToast } from "./ToastNotification";
 
-interface Product {
+type Product = {
   id: string;
   name: string;
   slug: string;
@@ -28,19 +28,19 @@ interface Product {
   features?: string[];
   featuresMarkdown?: string;
   specifications?: Record<string, string>;
-}
+};
 
-interface CategoryConfig {
+type CategoryConfig = {
   series: string;
   title: string;
   category: string;
-}
+};
 
-interface ProductDetailProps {
+type ProductDetailProps = {
   product: Product;
   categoryConfig: CategoryConfig;
   className?: string;
-}
+};
 
 const ProductDetail: FC<ProductDetailProps> = ({
   product,
@@ -72,11 +72,11 @@ const ProductDetail: FC<ProductDetailProps> = ({
     ];
     const options: Record<string, string> = {};
 
-    Object.keys(variant).forEach((key) => {
+    for (const key of Object.keys(variant)) {
       if (!reservedKeys.includes(key) && variant[key as keyof typeof variant]) {
         options[key] = String(variant[key as keyof typeof variant]);
       }
-    });
+    }
 
     return {
       options,
@@ -87,7 +87,12 @@ const ProductDetail: FC<ProductDetailProps> = ({
   });
 
   // Handle add to cart from ProductVariantSelector
-  const handleAddToCart = async (variantData: any) => {
+  const handleAddToCart = (variantData: {
+    options?: Record<string, string>;
+    price: number;
+    sku: string;
+    quantity: number;
+  }) => {
     const options = variantData.options || {};
     const variantLabel = Object.values(options).join(" / ");
 
@@ -150,7 +155,7 @@ const ProductDetail: FC<ProductDetailProps> = ({
       <ProductVariantSelector
         className="mb-6"
         onAddToCart={handleAddToCart}
-        onVariantChange={() => {}} // Optional callback for variant changes
+        // onVariantChange is optional - not needed for this implementation
         productId={product.id}
         variants={convertedVariants}
       />

@@ -2,6 +2,7 @@ import type { createAuth } from "@blackliving/auth";
 import { requireAdmin } from "@blackliving/auth";
 import type { createDB } from "@blackliving/db";
 import { postCategories, posts } from "@blackliving/db/schema";
+import type { Session, User } from "@blackliving/types";
 import type {
   D1Database,
   KVNamespace,
@@ -16,8 +17,9 @@ import { z } from "zod";
 import type { createCacheManager } from "../lib/cache";
 import type { createStorageManager } from "../lib/storage";
 import { transformPost } from "../utils/searchSync";
+import type { SearchModule } from "./search";
 
-interface Env {
+type Env = {
   DB: D1Database;
   R2: R2Bucket;
   CACHE: KVNamespace;
@@ -30,7 +32,7 @@ interface Env {
   GOOGLE_ADMIN_CLIENT_SECRET: string;
   GOOGLE_CUSTOMER_CLIENT_ID: string;
   GOOGLE_CUSTOMER_CLIENT_SECRET: string;
-}
+};
 
 const postsRouter = new Hono<{
   Bindings: Env;
@@ -39,9 +41,9 @@ const postsRouter = new Hono<{
     cache: ReturnType<typeof createCacheManager>;
     storage: ReturnType<typeof createStorageManager>;
     auth: ReturnType<typeof createAuth>;
-    search: any;
-    user: any;
-    session: any;
+    search: SearchModule;
+    user: User | null;
+    session: Session | null;
   };
 }>();
 
@@ -147,7 +149,7 @@ const querySchema = z.object({
 });
 
 // Helper functions
-const generateSlug = (title: string): string =>
+const _generateSlug = (title: string): string =>
   title
     .toLowerCase()
     .replace(/[^a-z0-9\u4e00-\u9fff\s-]/g, "")
@@ -307,8 +309,8 @@ postsRouter.get(
       const { page, limit, search, featured, sortBy, sortOrder } =
         c.req.valid("query");
 
-      const pageNum = Number.parseInt(page);
-      const limitNum = Number.parseInt(limit);
+      const pageNum = Number.parseInt(page, 10);
+      const limitNum = Number.parseInt(limit, 10);
       const offset = (pageNum - 1) * limitNum;
 
       // Get category first
@@ -340,12 +342,13 @@ postsRouter.get(
       ];
 
       if (search) {
-        conditions.push(
-          or(
-            like(posts.title, `%${search}%`),
-            like(posts.description, `%${search}%`)
-          )
+        const searchCondition = or(
+          like(posts.title, `%${search}%`),
+          like(posts.description, `%${search}%`)
         );
+        if (searchCondition) {
+          conditions.push(searchCondition);
+        }
       }
 
       if (featured !== "all") {
@@ -468,21 +471,22 @@ postsRouter.get(
         sortOrder,
       } = c.req.valid("query");
 
-      const pageNum = Number.parseInt(page);
-      const limitNum = Number.parseInt(limit);
+      const pageNum = Number.parseInt(page, 10);
+      const limitNum = Number.parseInt(limit, 10);
       const offset = (pageNum - 1) * limitNum;
 
       // Build where conditions
-      const conditions = [];
+      const conditions: SQL[] = [];
 
       if (search) {
-        conditions.push(
-          or(
-            like(posts.title, `%${search}%`),
-            like(posts.description, `%${search}%`),
-            like(posts.content, `%${search}%`)
-          )
+        const searchCondition = or(
+          like(posts.title, `%${search}%`),
+          like(posts.description, `%${search}%`),
+          like(posts.content, `%${search}%`)
         );
+        if (searchCondition) {
+          conditions.push(searchCondition);
+        }
       }
 
       if (status !== "all") {
@@ -645,20 +649,21 @@ postsRouter.get(
       const { page, limit, search, category, featured, sortBy, sortOrder } =
         c.req.valid("query");
 
-      const pageNum = Number.parseInt(page);
-      const limitNum = Number.parseInt(limit);
+      const pageNum = Number.parseInt(page, 10);
+      const limitNum = Number.parseInt(limit, 10);
       const offset = (pageNum - 1) * limitNum;
 
       // Build where conditions (only published posts)
       const conditions = [eq(posts.status, "published")];
 
       if (search) {
-        conditions.push(
-          or(
-            like(posts.title, `%${search}%`),
-            like(posts.description, `%${search}%`)
-          )
+        const searchCondition = or(
+          like(posts.title, `%${search}%`),
+          like(posts.description, `%${search}%`)
         );
+        if (searchCondition) {
+          conditions.push(searchCondition);
+        }
       }
 
       if (category !== "all") {
@@ -863,7 +868,9 @@ postsRouter.post(
       const postData = c.req.valid("json");
 
       const parseIncomingDate = (val: unknown): Date | null => {
-        if (val === null || val === undefined || val === "") return null;
+        if (val === null || val === undefined || val === "") {
+          return null;
+        }
         try {
           if (typeof val === "number") {
             // Treat numbers < 1e12 as seconds, otherwise milliseconds
@@ -872,10 +879,14 @@ postsRouter.post(
           }
           if (typeof val === "string") {
             const d = new Date(val);
-            return isNaN(d.getTime()) ? null : d;
+            return Number.isNaN(d.getTime()) ? null : d;
           }
-          if (val instanceof Date) return val;
-        } catch {}
+          if (val instanceof Date) {
+            return val;
+          }
+        } catch {
+          // Date parsing failed, return null
+        }
         return null;
       };
 
@@ -921,6 +932,10 @@ postsRouter.post(
         viewCount: 0,
         createdAt: new Date(),
         updatedAt: new Date(),
+        // Serialize overlaySettings to JSON string for D1 compatibility
+        overlaySettings: postData.overlaySettings
+          ? JSON.stringify(postData.overlaySettings)
+          : "{}",
       };
 
       await db.insert(posts).values(newPost);
@@ -1123,7 +1138,9 @@ postsRouter.put(
 
       // Normalize incoming publishedAt if provided
       const parseIncomingDate = (val: unknown): Date | null => {
-        if (val === null || val === undefined || val === "") return null;
+        if (val === null || val === undefined || val === "") {
+          return null;
+        }
         try {
           if (typeof val === "number") {
             const ms = val < 1e12 ? val * 1000 : val;
@@ -1131,10 +1148,14 @@ postsRouter.put(
           }
           if (typeof val === "string") {
             const d = new Date(val);
-            return isNaN(d.getTime()) ? null : d;
+            return Number.isNaN(d.getTime()) ? null : d;
           }
-          if (val instanceof Date) return val;
-        } catch {}
+          if (val instanceof Date) {
+            return val;
+          }
+        } catch {
+          // Date parsing failed, return null
+        }
         return null;
       };
 
@@ -1146,7 +1167,7 @@ postsRouter.put(
       if (
         updates.status === "published" &&
         existingPost[0].status !== "published" &&
-        updates.publishedAt == null
+        updates.publishedAt === null
       ) {
         updates.publishedAt = new Date();
       }
@@ -1180,11 +1201,13 @@ postsRouter.put(
         try {
           const searchModule = c.get("search");
           if (updatedPost.status === "published") {
-            // Index the updated post
-            const searchDocument = transformPost({
+            // Index the updated post - merge with existing post data
+            // Type assertion is safe as the combined data matches PostRow structure
+            const mergedPost = {
               ...existingPost[0],
               ...updatedPost,
-            });
+            } as Parameters<typeof transformPost>[0];
+            const searchDocument = transformPost(mergedPost);
             await searchModule.indexDocument(searchDocument).catch((error) => {
               console.warn("Failed to index updated post in search:", error);
             });
@@ -1384,7 +1407,7 @@ postsRouter.get("/:id/related", async (c) => {
     const db = c.get("db");
     const cache = c.get("cache");
     const postIdOrSlug = c.req.param("id");
-    const limit = Number.parseInt(c.req.query("limit") || "3");
+    const limit = Number.parseInt(c.req.query("limit") || "3", 10);
 
     const cacheKey = `blog:related:${postIdOrSlug}:${limit}`;
 
