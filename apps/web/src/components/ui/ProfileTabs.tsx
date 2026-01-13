@@ -89,25 +89,25 @@ function ProfileTabs({ className }: ProfileTabsProps) {
         <TabsList className="hidden w-auto justify-start gap-6 border-b bg-transparent p-0 sm:inline-flex">
           <TabsTrigger
             value="profile"
-            className="rounded-t-md border-transparent border-b-2 bg-transparent px-2 py-2 text-slate-500 hover:text-slate-700 data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-slate-900 data-[state=active]:shadow-none"
+            className="rounded-t-md border-2 border-transparent bg-transparent px-2 py-2 text-slate-500 hover:text-slate-700 data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-slate-900 data-[state=active]:shadow-none"
           >
             基本資料
           </TabsTrigger>
           <TabsTrigger
             value="addresses"
-            className="rounded-t-md border-transparent border-b-2 bg-transparent px-2 py-2 text-slate-500 hover:text-slate-700 data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-slate-900 data-[state=active]:shadow-none"
+            className="rounded-t-md border-2 border-transparent bg-transparent px-2 py-2 text-slate-500 hover:text-slate-700 data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-slate-900 data-[state=active]:shadow-none"
           >
             地址管理
           </TabsTrigger>
           <TabsTrigger
             value="payment"
-            className="rounded-t-md border-transparent border-b-2 bg-transparent px-2 py-2 text-slate-500 hover:text-slate-700 data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-slate-900 data-[state=active]:shadow-none"
+            className="rounded-t-md border-transparent border-2 bg-transparent px-2 py-2 text-slate-500 hover:text-slate-700 data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-slate-900 data-[state=active]:shadow-none"
           >
             付款方式
           </TabsTrigger>
           <TabsTrigger
             value="security"
-            className="rounded-t-md border-transparent border-b-2 bg-transparent px-2 py-2 text-slate-500 hover:text-slate-700 data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-slate-900 data-[state=active]:shadow-none"
+            className="rounded-t-md border-transparent border-2 bg-transparent px-2 py-2 text-slate-500 hover:text-slate-700 data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-slate-900 data-[state=active]:shadow-none"
           >
             安全設定
           </TabsTrigger>
