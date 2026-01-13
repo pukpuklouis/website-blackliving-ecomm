@@ -22,7 +22,7 @@ import { AdminNavUser } from "./AdminNavUser";
 
 const data = {
   user: {
-    name: "黑哥家居管理員",
+    name: "黑哥居家管理員",
     email: "admin@blackliving.com.tw",
     avatar: "/avatars/admin.jpg",
   },
@@ -91,7 +91,7 @@ export function BlackLivingAppSidebar({ ...props }) {
             <Home className="h-4 w-4" />
           </div>
           <div className="grid flex-1 text-left text-sm leading-tight">
-            <span className="truncate font-semibold">黑哥家居</span>
+            <span className="truncate font-semibold">黑哥居家</span>
             <span className="truncate text-xs">管理後台</span>
           </div>
         </div>

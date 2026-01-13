@@ -30,7 +30,7 @@ export default function Home() {
   return (
     <div className="flex min-h-screen items-center justify-center">
       <div className="text-center">
-        <h1 className="mb-4 font-bold text-2xl">黑哥家居管理後台</h1>
+        <h1 className="mb-4 font-bold text-2xl">黑哥居家管理後台</h1>
         <p className="text-muted-foreground">
           {loading ? "正在載入..." : "正在導向..."}
         </p>

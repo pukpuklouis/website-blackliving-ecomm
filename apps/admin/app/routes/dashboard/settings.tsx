@@ -17,6 +17,7 @@ import {
 import {
   CreditCard,
   Loader2,
+  Mail,
   MessageSquare,
   RefreshCw,
   Save,
@@ -25,6 +26,7 @@ import {
   Truck,
 } from "lucide-react";
 import { useEffect, useState } from "react";
+import EmailNotificationSettings from "../../components/EmailNotificationSettings";
 import GomypaySettings from "../../components/GomypaySettings";
 import LineSettings from "../../components/LineSettings";
 import LogisticSettings from "../../components/LogisticSettings";
@@ -142,7 +144,7 @@ export default function SettingsPage() {
       </div>
 
       <Tabs className="space-y-6" defaultValue="search">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger className="flex items-center gap-2" value="search">
             <Search className="h-4 w-4" />
             搜尋引擎
@@ -157,6 +159,13 @@ export default function SettingsPage() {
           >
             <MessageSquare className="h-4 w-4" />
             LINE 通知
+          </TabsTrigger>
+          <TabsTrigger
+            className="flex items-center gap-2"
+            value="email-notification"
+          >
+            <Mail className="h-4 w-4" />
+            Email 通知
           </TabsTrigger>
           <TabsTrigger className="flex items-center gap-2" value="payment">
             <CreditCard className="h-4 w-4" />
@@ -316,6 +325,11 @@ export default function SettingsPage() {
         {/* Line Notification Settings Tab */}
         <TabsContent className="space-y-6" value="line-notification">
           <LineSettings />
+        </TabsContent>
+
+        {/* Email Notification Settings Tab */}
+        <TabsContent className="space-y-6" value="email-notification">
+          <EmailNotificationSettings />
         </TabsContent>
 
         {/* Payment Settings Tab */}
