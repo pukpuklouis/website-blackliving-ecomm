@@ -103,3 +103,4 @@ research/** */
 # BMAD (local only)
 .bmad-core/
 .bmad-*/
+_bmad-output/
