@@ -204,4 +204,6 @@ export interface SalesAnalytics {
     sales: number;
     orders: number;
   }>;
+  salesGrowth?: number | null;
+  ordersGrowth?: number | null;
 }

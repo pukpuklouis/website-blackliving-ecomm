@@ -6,7 +6,11 @@ import {
   productCategories,
   products,
 } from "@blackliving/db";
-import type { DashboardStats, ProductCategory } from "@blackliving/types";
+import type {
+  DashboardStats,
+  ProductCategory,
+  SalesAnalytics,
+} from "@blackliving/types";
 import { zValidator } from "@hono/zod-validator";
 import { createId } from "@paralleldrive/cuid2";
 import {
@@ -159,6 +163,122 @@ admin.get("/dashboard/stats", async (c) => {
     console.error("Dashboard stats error:", error);
     return c.json(
       { success: false, error: "Failed to fetch dashboard stats" },
+      500
+    );
+  }
+});
+
+// Dashboard Sales Analytics - Monthly sales data for charts
+admin.get("/dashboard/analytics", async (c) => {
+  const db = c.get("db");
+  const cache = c.get("cache");
+
+  try {
+    const analytics = await cache.getOrSet(
+      "admin:dashboard:analytics",
+      async (): Promise<SalesAnalytics> => {
+        // Get the date 6 months ago
+        const sixMonthsAgo = new Date();
+        sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+        sixMonthsAgo.setDate(1);
+        sixMonthsAgo.setHours(0, 0, 0, 0);
+
+        // Query orders grouped by month
+        const monthlyData = await db
+          .select({
+            yearMonth: sql<string>`strftime('%Y-%m', ${orders.createdAt})`,
+            sales: sql<number>`COALESCE(SUM(${orders.totalAmount}), 0)`,
+            orderCount: count(),
+          })
+          .from(orders)
+          .where(
+            and(
+              sql`${orders.createdAt} >= ${sixMonthsAgo.toISOString()}`,
+              eq(orders.status, "delivered")
+            )
+          )
+          .groupBy(sql`strftime('%Y-%m', ${orders.createdAt})`)
+          .orderBy(sql`strftime('%Y-%m', ${orders.createdAt})`);
+
+        // Convert to salesByMonth format with Chinese month names
+        const monthNames = [
+          "1月",
+          "2月",
+          "3月",
+          "4月",
+          "5月",
+          "6月",
+          "7月",
+          "8月",
+          "9月",
+          "10月",
+          "11月",
+          "12月",
+        ];
+
+        const salesByMonth = monthlyData.map((row) => {
+          const [, monthStr] = row.yearMonth.split("-");
+          const monthIndex = Number.parseInt(monthStr, 10) - 1;
+          return {
+            month: monthNames[monthIndex],
+            sales: Number(row.sales),
+            orders: row.orderCount,
+          };
+        });
+
+        // Calculate totals
+        const totalSales = salesByMonth.reduce((sum, m) => sum + m.sales, 0);
+        const ordersCount = salesByMonth.reduce((sum, m) => sum + m.orders, 0);
+        const averageOrderValue =
+          ordersCount > 0 ? Math.round(totalSales / ordersCount) : 0;
+
+        // Calculate growth percentages (only if we have at least 2 months of data)
+        let salesGrowth: number | null = null;
+        let ordersGrowth: number | null = null;
+
+        if (salesByMonth.length >= 2) {
+          const currentMonth = salesByMonth.at(-1)!;
+          const previousMonth = salesByMonth.at(-2)!;
+
+          if (previousMonth.sales > 0) {
+            salesGrowth = Number(
+              (
+                ((currentMonth.sales - previousMonth.sales) /
+                  previousMonth.sales) *
+                100
+              ).toFixed(1)
+            );
+          }
+          if (previousMonth.orders > 0) {
+            ordersGrowth = Number(
+              (
+                ((currentMonth.orders - previousMonth.orders) /
+                  previousMonth.orders) *
+                100
+              ).toFixed(1)
+            );
+          }
+        }
+
+        return {
+          totalSales,
+          ordersCount,
+          averageOrderValue,
+          salesByCategory: {}, // Not implemented yet
+          salesByMonth,
+          topProducts: [], // Not implemented yet
+          salesGrowth,
+          ordersGrowth,
+        };
+      },
+      CacheTTL.SHORT
+    );
+
+    return c.json({ success: true, data: analytics });
+  } catch (error) {
+    console.error("Dashboard analytics error:", error);
+    return c.json(
+      { success: false, error: "Failed to fetch dashboard analytics" },
       500
     );
   }

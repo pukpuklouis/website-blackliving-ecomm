@@ -1,3 +1,4 @@
+import type { DashboardStats, SalesAnalytics } from "@blackliving/types";
 import {
   Badge,
   Card,
@@ -6,81 +7,132 @@ import {
   CardHeader,
   CardTitle,
   SimpleChart,
+  Skeleton,
 } from "@blackliving/ui";
+import ArrowDownRight from "@lucide/react/arrow-down-right";
 // Tree-shakable Lucide imports
 import ArrowUpRight from "@lucide/react/arrow-up-right";
 import BarChart3 from "@lucide/react/bar-chart-3";
-import Lock from "@lucide/react/lock";
 import PlusCircle from "@lucide/react/plus-circle";
+import { useCallback, useEffect, useState } from "react";
+import { useApiUrl } from "../../contexts/EnvironmentContext";
+import { statusColors, statusLabels } from "./order-details-dialog";
 
-// Mock data for dashboard
-const salesData = [
-  { month: "1月", sales: 450_000, orders: 42 },
-  { month: "2月", sales: 380_000, orders: 35 },
-  { month: "3月", sales: 520_000, orders: 48 },
-  { month: "4月", sales: 680_000, orders: 62 },
-  { month: "5月", sales: 750_000, orders: 71 },
-  { month: "6月", sales: 890_000, orders: 85 },
-];
-
-const recentOrders = [
-  {
-    id: "ORD-001",
-    customer: "王小明",
-    product: "Simmons S4 特大雙人床墊",
-    amount: 125_000,
-    status: "已付款",
-  },
-  {
-    id: "ORD-002",
-    customer: "李美麗",
-    product: "Simmons S3 雙人床墊",
-    amount: 95_000,
-    status: "待付款",
-  },
-  {
-    id: "ORD-003",
-    customer: "張大華",
-    product: "Simmons L-Class 加大雙人",
-    amount: 168_000,
-    status: "配送中",
-  },
-  {
-    id: "ORD-004",
-    customer: "陳淑芬",
-    product: "Simmons S2 單人床墊",
-    amount: 68_000,
-    status: "已完成",
-  },
-];
-
-const getStatusColor = (status: string) => {
-  switch (status) {
-    case "已付款":
-      return "bg-green-100 text-green-800";
-    case "待付款":
-      return "bg-yellow-100 text-yellow-800";
-    case "配送中":
-      return "bg-blue-100 text-blue-800";
-    case "已完成":
-      return "bg-gray-100 text-gray-800";
-    default:
-      return "bg-gray-100 text-gray-800";
-  }
-};
+const getStatusColor = (status: string) =>
+  statusColors[status as keyof typeof statusColors] || "bg-gray-100";
 
 export default function Dashboard() {
-  const totalSales = salesData.reduce((sum, month) => sum + month.sales, 0);
-  const totalOrders = salesData.reduce((sum, month) => sum + month.orders, 0);
-  const avgOrderValue = Math.round(totalSales / totalOrders);
+  const apiUrl = useApiUrl();
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [analytics, setAnalytics] = useState<SalesAnalytics | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  const loadDashboardData = useCallback(async () => {
+    try {
+      setLoading(true);
+
+      const [statsResponse, analyticsResponse] = await Promise.all([
+        fetch(`${apiUrl}/api/admin/dashboard/stats`, {
+          credentials: "include",
+        }),
+        fetch(`${apiUrl}/api/admin/dashboard/analytics`, {
+          credentials: "include",
+        }),
+      ]);
+
+      if (statsResponse.ok) {
+        const statsResult = await statsResponse.json();
+        if (statsResult.success) {
+          setStats(statsResult.data);
+        }
+      }
+
+      if (analyticsResponse.ok) {
+        const analyticsResult = await analyticsResponse.json();
+        if (analyticsResult.success) {
+          setAnalytics(analyticsResult.data);
+        }
+      }
+    } catch (error) {
+      console.error("Failed to load dashboard data:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, [apiUrl]);
+
+  useEffect(() => {
+    loadDashboardData();
+  }, [loadDashboardData]);
+
+  const formatGrowth = (growth: number | null | undefined) => {
+    if (growth === null || growth === undefined) {
+      return null;
+    }
+    const isPositive = growth >= 0;
+    const Icon = isPositive ? ArrowUpRight : ArrowDownRight;
+    const colorClass = isPositive ? "text-green-600" : "text-red-600";
+    return (
+      <span className={`flex items-center gap-1 ${colorClass}`}>
+        <Icon className="h-3 w-3" />
+        {isPositive ? "+" : ""}
+        {growth}%
+      </span>
+    );
+  };
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <h1 className="font-semibold text-2xl text-gray-900">總覽</h1>
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {[1, 2, 3].map((i) => (
+            <Card key={i}>
+              <CardHeader className="pb-2">
+                <Skeleton className="h-4 w-20" />
+              </CardHeader>
+              <CardContent>
+                <Skeleton className="h-8 w-32" />
+                <Skeleton className="mt-2 h-3 w-24" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <Card>
+            <CardHeader>
+              <Skeleton className="h-6 w-32" />
+            </CardHeader>
+            <CardContent>
+              <Skeleton className="h-80 w-full" />
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <Skeleton className="h-6 w-24" />
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {[1, 2, 3, 4].map((i) => (
+                <Skeleton className="h-20 w-full" key={i} />
+              ))}
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  const totalSales = analytics?.totalSales ?? 0;
+  const totalOrders = analytics?.ordersCount ?? stats?.totalOrders ?? 0;
+  const avgOrderValue = analytics?.averageOrderValue ?? 0;
+  const salesByMonth = analytics?.salesByMonth ?? [];
 
   return (
     <div className="space-y-6">
       {/* Page Header */}
       <h1 className="font-semibold text-2xl text-gray-900">總覽</h1>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
+      {/* Stats Cards - 3 cards since conversion rate is hidden */}
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="font-medium text-sm">總銷售額</CardTitle>
@@ -90,18 +142,32 @@ export default function Dashboard() {
             <div className="font-bold text-2xl">
               NT$ {totalSales.toLocaleString()}
             </div>
-            <p className="text-muted-foreground text-xs">比上月成長 +8.2%</p>
+            <p className="flex items-center gap-2 text-muted-foreground text-xs">
+              {analytics?.salesGrowth !== null &&
+              analytics?.salesGrowth !== undefined ? (
+                <>比上月 {formatGrowth(analytics.salesGrowth)}</>
+              ) : (
+                "尚無上月資料比較"
+              )}
+            </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="font-medium text-sm">總訂單數</CardTitle>
-            <Lock className="h-4 w-4 text-muted-foreground" />
+            <BarChart3 className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="font-bold text-2xl">{totalOrders}</div>
-            <p className="text-muted-foreground text-xs">比上月成長 +12.5%</p>
+            <p className="flex items-center gap-2 text-muted-foreground text-xs">
+              {analytics?.ordersGrowth !== null &&
+              analytics?.ordersGrowth !== undefined ? (
+                <>比上月 {formatGrowth(analytics.ordersGrowth)}</>
+              ) : (
+                "尚無上月資料比較"
+              )}
+            </p>
           </CardContent>
         </Card>
 
@@ -114,18 +180,7 @@ export default function Dashboard() {
             <div className="font-bold text-2xl">
               NT$ {avgOrderValue.toLocaleString()}
             </div>
-            <p className="text-muted-foreground text-xs">比上月下降 -2.1%</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="font-medium text-sm">轉換率</CardTitle>
-            <BarChart3 className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="font-bold text-2xl">3.2%</div>
-            <p className="text-muted-foreground text-xs">比上月成長 +0.4%</p>
+            <p className="text-muted-foreground text-xs">依據已完成訂單計算</p>
           </CardContent>
         </Card>
       </div>
@@ -140,7 +195,13 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent>
             <div className="h-80">
-              <SimpleChart data={salesData} />
+              {salesByMonth.length > 0 ? (
+                <SimpleChart data={salesByMonth} />
+              ) : (
+                <div className="flex h-full items-center justify-center text-gray-500">
+                  尚無銷售資料
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -153,27 +214,37 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {recentOrders.map((order) => (
-                <div
-                  className="flex items-center justify-between rounded-lg border p-4"
-                  key={order.id}
-                >
-                  <div className="space-y-1">
-                    <p className="font-medium text-sm">
-                      {order.id} - {order.customer}
-                    </p>
-                    <p className="text-muted-foreground text-sm">
-                      {order.product}
-                    </p>
-                    <p className="font-semibold text-sm">
-                      NT$ {order.amount.toLocaleString()}
-                    </p>
+              {stats?.recentOrders && stats.recentOrders.length > 0 ? (
+                stats.recentOrders.map((order) => (
+                  <div
+                    className="flex items-center justify-between rounded-lg border p-4"
+                    key={order.id}
+                  >
+                    <div className="space-y-1">
+                      <p className="font-medium text-sm">
+                        {order.customerInfo?.name ?? "未知客戶"}
+                      </p>
+                      <p className="text-muted-foreground text-sm">
+                        {order.customerInfo?.email ?? ""}
+                      </p>
+                      <p className="font-semibold text-sm">
+                        NT$ {order.totalAmount.toLocaleString()}
+                      </p>
+                    </div>
+                    <Badge
+                      className={`text-white ${getStatusColor(order.status)}`}
+                    >
+                      {statusLabels[
+                        order.status as keyof typeof statusLabels
+                      ] ?? order.status}
+                    </Badge>
                   </div>
-                  <Badge className={getStatusColor(order.status)}>
-                    {order.status}
-                  </Badge>
+                ))
+              ) : (
+                <div className="flex h-40 items-center justify-center text-gray-500">
+                  尚無訂單資料
                 </div>
-              ))}
+              )}
             </div>
           </CardContent>
         </Card>
