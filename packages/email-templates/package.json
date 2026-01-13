@@ -1,0 +1,31 @@
+{
+  "name": "@blackliving/email-templates",
+  "version": "1.0.0",
+  "description": "Branded email templates for Black Living using React Email",
+  "type": "module",
+  "main": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./templates/*": "./src/templates/*",
+    "./components/*": "./src/components/*"
+  },
+  "scripts": {
+    "dev": "email dev --dir src/templates --port 3001",
+    "build": "tsc",
+    "preview": "email preview --dir src/templates",
+    "export": "email export --dir src/templates --outDir dist"
+  },
+  "dependencies": {
+    "@react-email/components": "^0.0.36",
+    "react": "^19.1.0",
+    "react-email": "^5.2.1"
+  },
+  "devDependencies": {
+    "@react-email/preview-server": "5.2.1",
+    "@types/react": "^19.1.8",
+    "typescript": "^5.9.3"
+  },
+  "peerDependencies": {
+    "react": "^19.1.0"
+  }
+}
