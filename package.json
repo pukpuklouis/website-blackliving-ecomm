@@ -1,7 +1,7 @@
 {
   "name": "blackliving-ecomm",
   "version": "1.0.0",
-  "description": "Black Living 黑哥家居 - Premium Simmons mattress e-commerce platform",
+  "description": "Black Living 黑哥居家 - Premium Simmons mattress e-commerce platform",
   "private": true,
   "workspaces": [
     "apps/*",
@@ -37,6 +37,7 @@
     "@turbo/gen": "^2.6.3",
     "concurrently": "^9.2.1",
     "tailwindcss": "^4.1.18",
+    "tsx": "^4.21.0",
     "turbo": "^2.6.3",
     "typescript": "^5.9.3",
     "ultracite": "6.4.0"
