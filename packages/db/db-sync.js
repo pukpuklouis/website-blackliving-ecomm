@@ -35,7 +35,7 @@ const COMMANDS = {
   "migrate-local": {
     description: "Apply migrations to local database",
     commands: [
-      "cd ../../apps/api && wrangler d1 migrations apply blackliving-db --local",
+      "cd ../../apps/api && wrangler d1 migrations apply blackliving-db --local --persist-to .wrangler/state",
     ],
   },
   "migrate-remote": {
@@ -47,7 +47,7 @@ const COMMANDS = {
   "seed-local": {
     description: "Seed local database with sample data",
     commands: [
-      "cd ../../apps/api && wrangler d1 execute blackliving-db --file=../../packages/db/seed-wrangler.sql --local",
+      "cd ../../apps/api && wrangler d1 execute blackliving-db --file=../../packages/db/seed-wrangler.sql --local --persist-to .wrangler/state",
     ],
   },
   "seed-remote": {
@@ -60,15 +60,15 @@ const COMMANDS = {
     description: "Reset local database (delete and recreate)",
     commands: [
       "rm -rf ../../apps/api/.wrangler/state/v3/d1/",
-      "cd ../../apps/api && wrangler d1 migrations apply blackliving-db --local",
-      "cd ../../apps/api && wrangler d1 execute blackliving-db --file=../../packages/db/seed-wrangler.sql --local",
+      "cd ../../apps/api && wrangler d1 migrations apply blackliving-db --local --persist-to .wrangler/state",
+      "cd ../../apps/api && wrangler d1 execute blackliving-db --file=../../packages/db/seed-wrangler.sql --local --persist-to .wrangler/state",
     ],
   },
   status: {
     description: "Show database migration status",
     commands: [
       "cd ../../apps/api && wrangler d1 migrations list blackliving-db",
-      "cd ../../apps/api && wrangler d1 migrations list blackliving-db --local",
+      "cd ../../apps/api && wrangler d1 migrations list blackliving-db --local --persist-to .wrangler/state",
     ],
   },
 };

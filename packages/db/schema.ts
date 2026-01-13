@@ -867,3 +867,98 @@ export const settings = sqliteTable("settings", {
     () => new Date()
   ),
 });
+
+// Notification Settings - Admin-configurable email notification settings
+export const notificationSettings = sqliteTable("notification_settings", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => createId()),
+
+  // Recipient Configuration
+  adminEmails: text("admin_emails", { mode: "json" }).notNull().default("[]"), // Array of admin email addresses
+  customerServiceEmail: text("customer_service_email"), // Primary customer service email
+
+  // Notification Type Toggles
+  enableNewOrderAdmin: integer("enable_new_order_admin", {
+    mode: "boolean",
+  }).default(true),
+  enablePaymentConfirmAdmin: integer("enable_payment_confirm_admin", {
+    mode: "boolean",
+  }).default(true),
+  enableAppointmentAdmin: integer("enable_appointment_admin", {
+    mode: "boolean",
+  }).default(true),
+  enableBankTransferCustomer: integer("enable_bank_transfer_customer", {
+    mode: "boolean",
+  }).default(true),
+  enableOrderShippedCustomer: integer("enable_order_shipped_customer", {
+    mode: "boolean",
+  }).default(true),
+  enableAppointmentCustomer: integer("enable_appointment_customer", {
+    mode: "boolean",
+  }).default(true),
+
+  // Email Sender Configuration
+  senderName: text("sender_name").default("Black Living 黑哥居家"),
+  replyToEmail: text("reply_to_email").default("service@blackliving.tw"),
+
+  // Metadata
+  updatedBy: text("updated_by"), // Admin who last updated
+  createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(
+    () => new Date()
+  ),
+  updatedAt: integer("updated_at", { mode: "timestamp" }).$defaultFn(
+    () => new Date()
+  ),
+});
+
+// Bank Account Info - Admin-configurable bank account for customer payments
+export const bankAccountInfo = sqliteTable("bank_account_info", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => createId()),
+
+  // Bank Details
+  // TODO: [SECURITY] Encrypt accountNumber using crypto package before storing
+  // See: https://developers.cloudflare.com/workers/runtime-apis/web-crypto/
+  bankName: text("bank_name").notNull(), // 銀行名稱
+  bankCode: text("bank_code"), // 銀行代碼 (e.g., 808, 812)
+  branchName: text("branch_name"), // 分行名稱
+  branchCode: text("branch_code"), // 分行代碼
+  accountNumber: text("account_number").notNull(), // 帳號 - SHOULD BE ENCRYPTED
+  accountHolder: text("account_holder").notNull(), // 戶名
+
+  // Display Settings
+  isActive: integer("is_active", { mode: "boolean" }).default(true),
+  displayOrder: integer("display_order").default(0),
+  notes: text("notes"), // 備註文字 (顯示給客戶)
+
+  // Metadata
+  updatedBy: text("updated_by"), // Admin who last updated
+  createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(
+    () => new Date()
+  ),
+  updatedAt: integer("updated_at", { mode: "timestamp" }).$defaultFn(
+    () => new Date()
+  ),
+});
+
+// Email Logs - Track sent emails for retry and debugging
+export const emailLogs = sqliteTable("email_logs", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => createId()),
+  type: text("type").notNull(), // new_order, payment_confirm, bank_transfer, etc.
+  recipient: text("recipient").notNull(), // Email address
+  subject: text("subject").notNull(),
+  status: text("status").default("pending"), // pending, sent, failed
+  messageId: text("message_id"), // From email provider (Resend)
+  errorMessage: text("error_message"),
+  retryCount: integer("retry_count").default(0),
+  relatedId: text("related_id"), // Order ID, Appointment ID, etc.
+  relatedType: text("related_type"), // orders, appointments
+  sentAt: integer("sent_at", { mode: "timestamp" }),
+  createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(
+    () => new Date()
+  ),
+});
