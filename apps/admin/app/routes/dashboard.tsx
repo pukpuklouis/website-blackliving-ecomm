@@ -3,6 +3,17 @@ import { Outlet } from "react-router";
 import { BlackLivingAppSidebar } from "../components/BlackLivingAppSidebar";
 import { BreadcrumbComponent } from "../components/BreadcrumbComponent";
 import { ProtectedRoute } from "../components/ProtectedRoute";
+import type { Route } from "./+types/dashboard";
+
+export function meta(_args: Route.MetaArgs) {
+  return [
+    { title: "黑哥居家 | 管理後台" },
+    {
+      name: "description",
+      content: "黑哥居家管理後台",
+    },
+  ];
+}
 
 export default function DashboardLayout() {
   return (
