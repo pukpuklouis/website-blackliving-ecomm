@@ -547,8 +547,9 @@ gomypay.get("/callback", async (c) => {
     const db = c.get("db");
 
     const config = await getGomypayConfig(db);
+    const webBaseUrl = c.env.WEB_BASE_URL || "";
     if (!config) {
-      return c.redirect("/checkout?error=config_missing");
+      return c.redirect(`${webBaseUrl}/checkout?error=config_missing`);
     }
 
     const { response, amount } = parseCallbackParams(params);
@@ -565,14 +566,16 @@ gomypay.get("/callback", async (c) => {
         response.e_orderno
       );
       return c.redirect(
-        `/checkout/payment-callback?success=false&error=verification_failed&orderNo=${response.e_orderno}`
+        `${webBaseUrl}/checkout/payment-callback?success=false&error=verification_failed&orderNo=${response.e_orderno}`
       );
     }
 
-    return c.redirect(buildCallbackRedirectUrl(c.req.url, response));
+    return c.redirect(buildCallbackRedirectUrl(webBaseUrl, response));
   } catch (error) {
     console.error("Error handling payment callback:", error);
-    return c.redirect("/checkout?error=callback_failed");
+    return c.redirect(
+      `${c.env.WEB_BASE_URL || ""}/checkout?error=callback_failed`
+    );
   }
 });
 
