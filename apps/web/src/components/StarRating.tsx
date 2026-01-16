@@ -1,12 +1,12 @@
 import { Star } from "lucide-react";
 
-interface StarRatingProps {
+type StarRatingProps = {
   rating: number;
   reviewCount?: number;
   showReviews?: boolean;
   size?: "sm" | "md" | "lg";
   className?: string;
-}
+};
 
 export const StarRating = ({
   rating,
@@ -73,11 +73,11 @@ export const StarRating = ({
   return (
     <div className={`flex items-center gap-1 ${className}`}>
       <div className="flex items-center">{renderStars()}</div>
-      {showReviews && (
+      {showReviews ? (
         <span className={`ml-1 text-gray-600 ${textSizeClasses[size]}`}>
           ({reviewCount || 0} 則評論)
         </span>
-      )}
+      ) : null}
     </div>
   );
 };

@@ -139,7 +139,7 @@ const ProductDetail: FC<ProductDetailProps> = ({
 
         {/* Star Rating */}
         <StarRating
-          className="mb-3"
+          className="mb-3 hidden"
           rating={reviewsData.rating}
           reviewCount={reviewsData.count}
           size="md"
