@@ -14,7 +14,7 @@ const ShoppingCart: FC = () => {
   } = useCartStore();
 
   // Use selectors for computed values
-  const itemCount = useCartStore((state) => state.getItemCount());
+  const _itemCount = useCartStore((state) => state.getItemCount());
   const subtotal = useCartStore((state) => state.getSubtotal());
   const shippingFee = useCartStore((state) => state.getShippingFee());
   const total = useCartStore((state) => state.getTotal());
@@ -40,6 +40,7 @@ const ShoppingCart: FC = () => {
           <button
             className="flex items-center text-gray-600 hover:text-gray-800"
             onClick={() => setShowCheckout(false)}
+            type="button"
           >
             ← 返回購物車
           </button>
@@ -59,18 +60,18 @@ const ShoppingCart: FC = () => {
           <p className="mb-8 text-gray-500">快去選購您喜愛的床墊吧！</p>
           <a
             className="inline-block rounded-lg bg-black px-8 py-3 text-white transition-colors hover:bg-gray-800"
-            href="/simmons-black"
+            href="/shop/simmons-black"
           >
             開始購物
           </a>
         </div>
       ) : (
         <div>
-          {error && (
+          {error ? (
             <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4">
               <p className="text-red-600">{error}</p>
             </div>
-          )}
+          ) : null}
 
           <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
             <div className="lg:col-span-2">
@@ -89,34 +90,32 @@ const ShoppingCart: FC = () => {
                         <img
                           alt={item.name}
                           className="h-20 w-20 rounded-lg object-cover"
-                          onError={(e) => {
-                            e.currentTarget.src =
-                              "/images/placeholder-product.jpg";
-                          }}
+                          height={80}
                           src={item.image}
+                          width={80}
                         />
                         <div className="flex-1">
                           <h3 className="font-semibold text-lg">{item.name}</h3>
-                          {item.variant && (
+                          {item.variant ? (
                             <p className="text-gray-600 text-sm">
                               {item.variant}
                             </p>
-                          )}
-                          {item.size && (
+                          ) : null}
+                          {item.size ? (
                             <p className="text-gray-500 text-sm">
                               尺寸: {item.size}
                             </p>
-                          )}
+                          ) : null}
                           <div className="mt-2 flex items-center space-x-2">
                             <p className="font-bold text-lg">
                               NT$ {item.price.toLocaleString()}
                             </p>
-                            {item.originalPrice &&
-                              item.originalPrice > item.price && (
-                                <p className="text-gray-500 text-sm line-through">
-                                  NT$ {item.originalPrice.toLocaleString()}
-                                </p>
-                              )}
+                            {item.originalPrice !== undefined &&
+                            item.originalPrice > item.price ? (
+                              <p className="text-gray-500 text-sm line-through">
+                                NT$ {item.originalPrice.toLocaleString()}
+                              </p>
+                            ) : null}
                           </div>
                           {!item.inStock && (
                             <p className="mt-1 text-red-500 text-sm">
@@ -135,6 +134,7 @@ const ShoppingCart: FC = () => {
                                 item.variantId
                               )
                             }
+                            type="button"
                           >
                             -
                           </button>
@@ -151,6 +151,7 @@ const ShoppingCart: FC = () => {
                                 item.variantId
                               )
                             }
+                            type="button"
                           >
                             +
                           </button>
@@ -160,6 +161,7 @@ const ShoppingCart: FC = () => {
                             onClick={() =>
                               handleRemoveItem(item.productId, item.variantId)
                             }
+                            type="button"
                           >
                             移除
                           </button>
@@ -210,6 +212,7 @@ const ShoppingCart: FC = () => {
                     isSubmittingOrder || cartItems.some((item) => !item.inStock)
                   }
                   onClick={() => setShowCheckout(true)}
+                  type="button"
                 >
                   {isSubmittingOrder ? "處理中..." : "前往結帳"}
                 </button>
@@ -222,7 +225,7 @@ const ShoppingCart: FC = () => {
 
                 <a
                   className="block text-center text-gray-600 hover:underline"
-                  href="/simmons-black"
+                  href="/shop/simmons-black"
                 >
                   繼續購物
                 </a>
