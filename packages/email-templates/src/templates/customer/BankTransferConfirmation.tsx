@@ -149,8 +149,9 @@ export function BankTransferConfirmation({
 
       <Section style={styles.notice}>
         <Text style={styles.noticeText}>
-          ⚠️ 匯款時請務必在備註欄填寫訂單編號 <strong>#{orderId}</strong>
-          ，以便我們快速核對款項。如有任何問題，請聯繫客服。
+          匯款完成後，麻煩請至官方LINE告知帳號後五碼及訂單編號{" "}
+          <strong>#{orderId}</strong>，以便我們快速核對款項。
+          如有任何問題，請聯繫客服。
         </Text>
       </Section>
     </EmailLayout>
