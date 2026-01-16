@@ -101,13 +101,13 @@ function ProfileTabs({ className }: ProfileTabsProps) {
           </TabsTrigger>
           <TabsTrigger
             value="payment"
-            className="rounded-t-md border-transparent border-2 bg-transparent px-2 py-2 text-slate-500 hover:text-slate-700 data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-slate-900 data-[state=active]:shadow-none"
+            className="rounded-t-md border-2 border-transparent bg-transparent px-2 py-2 text-slate-500 hover:text-slate-700 data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-slate-900 data-[state=active]:shadow-none"
           >
             付款方式
           </TabsTrigger>
           <TabsTrigger
             value="security"
-            className="rounded-t-md border-transparent border-2 bg-transparent px-2 py-2 text-slate-500 hover:text-slate-700 data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-slate-900 data-[state=active]:shadow-none"
+            className="rounded-t-md border-2 border-transparent bg-transparent px-2 py-2 text-slate-500 hover:text-slate-700 data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-slate-900 data-[state=active]:shadow-none"
           >
             安全設定
           </TabsTrigger>
@@ -158,7 +158,7 @@ function ProfileTabs({ className }: ProfileTabsProps) {
                     className="bg-green-600 text-white hover:bg-green-700"
                   >
                     <a
-                      href="https://line.me/R/ti/p/@blackliving"
+                      href="https://line.me/R/ti/p/@blackking"
                       rel="noopener noreferrer"
                       target="_blank"
                     >
