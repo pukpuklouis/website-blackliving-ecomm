@@ -1,6 +1,5 @@
 import cloudflare from "@astrojs/cloudflare";
 import react from "@astrojs/react";
-import sitemap from "@astrojs/sitemap";
 import tailwindcss from "@tailwindcss/vite";
 import { defineConfig, fontProviders } from "astro/config";
 import type { Plugin } from "vite";
@@ -47,48 +46,16 @@ function lucideIconResolver(): Plugin {
   };
 }
 
-// Function to fetch dynamic pages for sitemap
-async function getDynamicPages(): Promise<string[]> {
-  try {
-    const apiUrl = process.env.PUBLIC_API_URL || "http://localhost:8787";
-    // Fetch published pages
-    const response = await fetch(
-      `${apiUrl}/api/pages?status=published&limit=1000`
-    );
-    if (!response.ok) return [];
-    const json = (await response.json()) as {
-      success: boolean;
-      data: { pages: { slug: string }[] };
-    };
-    if (!json.success) return [];
-
-    const siteUrl =
-      process.env.PUBLIC_SITE_URL ||
-      (process.env.NODE_ENV === "production"
-        ? "https://blackliving-web.pages.dev"
-        : "http://localhost:4321");
-
-    return json.data.pages.map((page) => `${siteUrl}/${page.slug}`);
-  } catch (error) {
-    console.warn("Failed to fetch dynamic pages for sitemap:", error);
-    return [];
-  }
-}
-
 // https://astro.build/config
 // Note: Using Tailwind v4 - no @astrojs/tailwind integration needed
+// Note: Using custom sitemap endpoints for SSR mode - @astrojs/sitemap doesn't work with output: "server"
 export default defineConfig({
   site:
     process.env.PUBLIC_SITE_URL ||
     (process.env.NODE_ENV === "production"
-      ? "https://blackliving-web.pages.dev"
+      ? "https://www.blackliving.tw"
       : "http://localhost:4321"),
-  integrations: [
-    react(),
-    sitemap({
-      customPages: await getDynamicPages(),
-    }),
-  ],
+  integrations: [react()],
 
   output: "server",
   adapter: cloudflare(),

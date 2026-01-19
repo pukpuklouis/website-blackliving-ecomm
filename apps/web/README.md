@@ -148,7 +148,8 @@ pnpm deploy:staging
 ### Astro Configuration (`astro.config.mjs`)
 
 - **Adapter**: Cloudflare Pages with server-side rendering
-- **Integrations**: React, Sitemap, Font loading
+- **Integrations**: React, Font loading
+- **SEO**: Custom robots.txt and sitemap endpoints (SSR-compatible)
 - **Fonts**: Custom web fonts (Agatho, Noto Sans TC, Crimson Text)
 - **Vite Plugins**: Tailwind CSS v4, Lucide icon resolver
 

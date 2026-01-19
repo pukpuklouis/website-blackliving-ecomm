@@ -28,7 +28,6 @@
     "@astrojs/cloudflare": "^12.6.12",
     "@astrojs/db": "^0.18.3",
     "@astrojs/react": "^4.4.2",
-    "@astrojs/sitemap": "^3.6.0",
     "@blackliving/auth": "workspace:*",
     "@blackliving/types": "workspace:*",
     "@blackliving/ui": "workspace:*",

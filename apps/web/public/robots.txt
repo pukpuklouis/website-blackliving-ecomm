@@ -1,0 +1,78 @@
+# robots.txt for Black Living 黑哥居家
+# https://blackliving.tw
+
+# === SEARCH ENGINES ===
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: Yandex
+Allow: /
+
+User-agent: Baidu
+Allow: /
+
+# === AI ASSISTANTS (Allow for discovery/chat) ===
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Amazonbot
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+# === BLOCK AI TRAINING CRAWLERS ===
+User-agent: CCBot
+Disallow: /
+
+User-agent: Google-Extended
+Disallow: /
+
+User-agent: GPTBot-Training
+Disallow: /
+
+User-agent: Bytespider
+Disallow: /
+
+User-agent: FacebookBot
+Disallow: /
+
+# === BLOCK SEO TOOL SCRAPERS ===
+User-agent: AhrefsBot
+Disallow: /
+
+User-agent: SemrushBot
+Disallow: /
+
+User-agent: MJ12bot
+Disallow: /
+
+User-agent: DotBot
+Disallow: /
+
+# === DEFAULT RULES ===
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /admin/
+Disallow: /account/
+Disallow: /checkout/
+Disallow: /_astro/
+
+# Sitemap location
+Sitemap: https://blackliving.tw/sitemap-index.xml
