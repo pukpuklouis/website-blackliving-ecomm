@@ -26,7 +26,7 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 
-interface Appointment {
+type Appointment = {
   id: string;
   customerInfo: {
     name: string;
@@ -35,20 +35,20 @@ interface Appointment {
   };
   storeLocation: "中和" | "中壢";
   preferredDate: string;
-  preferredTime: "上午" | "下午" | "晚上";
+  preferredTime: "上午" | "下午";
   confirmedDateTime?: string;
   productInterest?: string[];
   status: "pending" | "confirmed" | "completed" | "cancelled";
   notes?: string;
   createdAt: string;
   updatedAt: string;
-}
+};
 
-interface AppointmentsManagerProps {
+type AppointmentsManagerProps = {
   className?: string;
   onSuccess?: (message: string) => void;
   onError?: (error: string) => void;
-}
+};
 
 const statusConfig = {
   pending: {
@@ -72,7 +72,6 @@ const statusConfig = {
 const timeSlots = {
   上午: "09:00 - 12:00",
   下午: "14:00 - 17:00",
-  晚上: "19:00 - 21:00",
 };
 
 function formatDate(dateString: string): string {
@@ -84,6 +83,225 @@ function formatDate(dateString: string): string {
   });
 }
 
+type AppointmentActionsProps = {
+  appointment: Appointment;
+  pendingCancelId: string | null;
+  actionLoading: string | null;
+  onReschedule: (id: string) => void;
+  onRequestCancel: (id: string) => void;
+  onConfirmCancel: (id: string) => void;
+  onCancelRequest: () => void;
+};
+
+function AppointmentActions({
+  appointment,
+  pendingCancelId,
+  actionLoading,
+  onReschedule,
+  onRequestCancel,
+  onConfirmCancel,
+  onCancelRequest,
+}: AppointmentActionsProps) {
+  if (appointment.status === "pending") {
+    return (
+      <>
+        <Button
+          className="text-blue-600"
+          onClick={() => onReschedule(appointment.id)}
+          size="sm"
+          variant="outline"
+        >
+          <RefreshCcw className="mr-1 h-3 w-3" />
+          改期
+        </Button>
+        {pendingCancelId === appointment.id ? (
+          <div className="flex flex-col gap-1">
+            <p className="text-red-600 text-xs">確定取消？</p>
+            <div className="flex gap-1">
+              <Button
+                className="text-red-600"
+                disabled={actionLoading === appointment.id}
+                onClick={() => onConfirmCancel(appointment.id)}
+                size="sm"
+                variant="outline"
+              >
+                {actionLoading === appointment.id ? (
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                ) : (
+                  "確定"
+                )}
+              </Button>
+              <Button onClick={onCancelRequest} size="sm" variant="ghost">
+                取消
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <Button
+            className="text-red-600"
+            onClick={() => onRequestCancel(appointment.id)}
+            size="sm"
+            variant="outline"
+          >
+            <X className="mr-1 h-3 w-3" />
+            取消
+          </Button>
+        )}
+      </>
+    );
+  }
+
+  if (appointment.status === "confirmed") {
+    return (
+      <Button
+        className="text-blue-600"
+        onClick={() => onReschedule(appointment.id)}
+        size="sm"
+        variant="outline"
+      >
+        <RefreshCcw className="mr-1 h-3 w-3" />
+        改期
+      </Button>
+    );
+  }
+
+  if (appointment.status === "completed") {
+    return (
+      <Button asChild className="text-green-600" size="sm" variant="outline">
+        <a href="/appointment">
+          <Plus className="mr-1 h-3 w-3" />
+          再預約
+        </a>
+      </Button>
+    );
+  }
+
+  return null;
+}
+
+type AppointmentCardProps = {
+  appointment: Appointment;
+  pendingCancelId: string | null;
+  actionLoading: string | null;
+  onReschedule: (id: string) => void;
+  onRequestCancel: (id: string) => void;
+  onConfirmCancel: (id: string) => void;
+  onCancelRequest: () => void;
+};
+
+function AppointmentCard({
+  appointment,
+  pendingCancelId,
+  actionLoading,
+  onReschedule,
+  onRequestCancel,
+  onConfirmCancel,
+  onCancelRequest,
+}: AppointmentCardProps) {
+  return (
+    <Card className="relative">
+      <CardContent className="pt-4">
+        <div className="flex items-start justify-between">
+          <div className="flex-1">
+            <div className="mb-3 flex items-center gap-2">
+              <Badge className={statusConfig[appointment.status].color}>
+                {statusConfig[appointment.status].label}
+              </Badge>
+              <span className="text-gray-500 text-sm">
+                預約編號: {appointment.id.slice(-8)}
+              </span>
+            </div>
+
+            <div className="mb-3 grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <div className="flex items-center text-sm">
+                  <User className="mr-2 h-4 w-4 text-gray-500" />
+                  <span>{appointment.customerInfo.name}</span>
+                </div>
+                <div className="flex items-center text-sm">
+                  <Phone className="mr-2 h-4 w-4 text-gray-500" />
+                  <span>{appointment.customerInfo.phone}</span>
+                </div>
+                <div className="flex items-center text-sm">
+                  <MapPin className="mr-2 h-4 w-4 text-gray-500" />
+                  <span>{appointment.storeLocation}門市</span>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex items-center text-sm">
+                  <Calendar className="mr-2 h-4 w-4 text-gray-500" />
+                  <span>{formatDate(appointment.preferredDate)}</span>
+                </div>
+                <div className="flex items-center text-sm">
+                  <Clock className="mr-2 h-4 w-4 text-gray-500" />
+                  <span>
+                    {appointment.preferredTime} (
+                    {timeSlots[appointment.preferredTime]})
+                  </span>
+                </div>
+                {appointment.confirmedDateTime ? (
+                  <div className="font-medium text-blue-600 text-sm">
+                    ✓ 已確認時間:{" "}
+                    {new Date(appointment.confirmedDateTime).toLocaleString(
+                      "zh-TW"
+                    )}
+                  </div>
+                ) : null}
+              </div>
+            </div>
+
+            {appointment.productInterest
+              ? appointment.productInterest.length > 0 && (
+                  <div className="mb-3">
+                    <p className="mb-1 text-gray-600 text-sm">興趣產品:</p>
+                    <div className="flex flex-wrap gap-1">
+                      {appointment.productInterest.map((product) => (
+                        <Badge
+                          className="text-xs"
+                          key={product}
+                          variant="outline"
+                        >
+                          {product}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )
+              : null}
+
+            {appointment.notes ? (
+              <div className="mb-3">
+                <p className="mb-1 text-gray-600 text-sm">備註:</p>
+                <p className="rounded bg-gray-50 p-2 text-gray-700 text-sm">
+                  {appointment.notes}
+                </p>
+              </div>
+            ) : null}
+
+            <p className="text-gray-500 text-xs">
+              建立時間:{" "}
+              {new Date(appointment.createdAt).toLocaleString("zh-TW")}
+            </p>
+          </div>
+
+          <div className="ml-4 flex flex-col space-y-2">
+            <AppointmentActions
+              actionLoading={actionLoading}
+              appointment={appointment}
+              onCancelRequest={onCancelRequest}
+              onConfirmCancel={onConfirmCancel}
+              onRequestCancel={onRequestCancel}
+              onReschedule={onReschedule}
+              pendingCancelId={pendingCancelId}
+            />
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 export function AppointmentsManager({
   className,
   onSuccess,
@@ -93,6 +311,7 @@ export function AppointmentsManager({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [pendingCancelId, setPendingCancelId] = useState<string | null>(null);
 
   // Load appointments
   const loadAppointments = async () => {
@@ -127,12 +346,14 @@ export function AppointmentsManager({
     }
   };
 
-  // Cancel appointment
-  const cancelAppointment = async (appointmentId: string) => {
-    if (!confirm("確定要取消這個預約嗎？")) {
-      return;
-    }
+  // Request cancel confirmation
+  const requestCancelConfirmation = (appointmentId: string) => {
+    setPendingCancelId(appointmentId);
+  };
 
+  // Cancel appointment (called after confirmation)
+  const cancelAppointment = async (appointmentId: string) => {
+    setPendingCancelId(null);
     setActionLoading(appointmentId);
 
     try {
@@ -174,12 +395,13 @@ export function AppointmentsManager({
   };
 
   // Reschedule appointment
-  const rescheduleAppointment = async (appointmentId: string) => {
+  const rescheduleAppointment = (appointmentId: string) => {
     // For now, redirect to booking page with appointment ID
     window.location.href = `/appointment?reschedule=${appointmentId}`;
   };
 
   // Load appointments on mount
+  // biome-ignore lint/correctness/useExhaustiveDependencies: loadAppointments is stable, only run on mount
   useEffect(() => {
     loadAppointments();
   }, []);
@@ -253,159 +475,16 @@ export function AppointmentsManager({
         ) : (
           <div className="space-y-4">
             {appointments.map((appointment) => (
-              <Card className="relative" key={appointment.id}>
-                <CardContent className="pt-4">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="mb-3 flex items-center gap-2">
-                        <Badge
-                          className={statusConfig[appointment.status].color}
-                        >
-                          {statusConfig[appointment.status].label}
-                        </Badge>
-                        <span className="text-gray-500 text-sm">
-                          預約編號: {appointment.id.slice(-8)}
-                        </span>
-                      </div>
-
-                      <div className="mb-3 grid grid-cols-1 gap-4 md:grid-cols-2">
-                        <div className="space-y-2">
-                          <div className="flex items-center text-sm">
-                            <User className="mr-2 h-4 w-4 text-gray-500" />
-                            <span>{appointment.customerInfo.name}</span>
-                          </div>
-                          <div className="flex items-center text-sm">
-                            <Phone className="mr-2 h-4 w-4 text-gray-500" />
-                            <span>{appointment.customerInfo.phone}</span>
-                          </div>
-                          <div className="flex items-center text-sm">
-                            <MapPin className="mr-2 h-4 w-4 text-gray-500" />
-                            <span>{appointment.storeLocation}門市</span>
-                          </div>
-                        </div>
-
-                        <div className="space-y-2">
-                          <div className="flex items-center text-sm">
-                            <Calendar className="mr-2 h-4 w-4 text-gray-500" />
-                            <span>{formatDate(appointment.preferredDate)}</span>
-                          </div>
-                          <div className="flex items-center text-sm">
-                            <Clock className="mr-2 h-4 w-4 text-gray-500" />
-                            <span>
-                              {appointment.preferredTime} (
-                              {timeSlots[appointment.preferredTime]})
-                            </span>
-                          </div>
-                          {appointment.confirmedDateTime && (
-                            <div className="font-medium text-blue-600 text-sm">
-                              ✓ 已確認時間:{" "}
-                              {new Date(
-                                appointment.confirmedDateTime
-                              ).toLocaleString("zh-TW")}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                      {appointment.productInterest &&
-                        appointment.productInterest.length > 0 && (
-                          <div className="mb-3">
-                            <p className="mb-1 text-gray-600 text-sm">
-                              興趣產品:
-                            </p>
-                            <div className="flex flex-wrap gap-1">
-                              {appointment.productInterest.map(
-                                (product, index) => (
-                                  <Badge
-                                    className="text-xs"
-                                    key={index}
-                                    variant="outline"
-                                  >
-                                    {product}
-                                  </Badge>
-                                )
-                              )}
-                            </div>
-                          </div>
-                        )}
-
-                      {appointment.notes && (
-                        <div className="mb-3">
-                          <p className="mb-1 text-gray-600 text-sm">備註:</p>
-                          <p className="rounded bg-gray-50 p-2 text-gray-700 text-sm">
-                            {appointment.notes}
-                          </p>
-                        </div>
-                      )}
-
-                      <p className="text-gray-500 text-xs">
-                        建立時間:{" "}
-                        {new Date(appointment.createdAt).toLocaleString(
-                          "zh-TW"
-                        )}
-                      </p>
-                    </div>
-
-                    <div className="ml-4 flex flex-col space-y-2">
-                      {appointment.status === "pending" && (
-                        <>
-                          <Button
-                            className="text-blue-600"
-                            onClick={() =>
-                              rescheduleAppointment(appointment.id)
-                            }
-                            size="sm"
-                            variant="outline"
-                          >
-                            <RefreshCcw className="mr-1 h-3 w-3" />
-                            改期
-                          </Button>
-                          <Button
-                            className="text-red-600"
-                            disabled={actionLoading === appointment.id}
-                            onClick={() => cancelAppointment(appointment.id)}
-                            size="sm"
-                            variant="outline"
-                          >
-                            {actionLoading === appointment.id ? (
-                              <Loader2 className="h-3 w-3 animate-spin" />
-                            ) : (
-                              <X className="mr-1 h-3 w-3" />
-                            )}
-                            取消
-                          </Button>
-                        </>
-                      )}
-
-                      {appointment.status === "confirmed" && (
-                        <Button
-                          className="text-blue-600"
-                          onClick={() => rescheduleAppointment(appointment.id)}
-                          size="sm"
-                          variant="outline"
-                        >
-                          <RefreshCcw className="mr-1 h-3 w-3" />
-                          改期
-                        </Button>
-                      )}
-
-                      {appointment.status === "completed" && (
-                        <Button
-                          asChild
-                          className="text-green-600"
-                          size="sm"
-                          variant="outline"
-                        >
-                          <a href="/appointment">
-                            <Plus className="mr-1 h-3 w-3" />
-                            再預約
-                          </a>
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+              <AppointmentCard
+                actionLoading={actionLoading}
+                appointment={appointment}
+                key={appointment.id}
+                onCancelRequest={() => setPendingCancelId(null)}
+                onConfirmCancel={cancelAppointment}
+                onRequestCancel={requestCancelConfirmation}
+                onReschedule={rescheduleAppointment}
+                pendingCancelId={pendingCancelId}
+              />
             ))}
           </div>
         )}
@@ -422,13 +501,9 @@ export function AppointmentsManager({
                 如需修改預約時間或有任何問題，請聯繫我們：
               </p>
               <div className="space-y-1">
-                <p className="text-blue-700 text-sm">
-                  📞 中和門市：(02) 2234-5678
-                </p>
-                <p className="text-blue-700 text-sm">
-                  📞 中壢門市：(03) 4567-890
-                </p>
-                <p className="text-blue-700 text-sm">💬 Line@：@blackliving</p>
+                <p className="text-blue-700 text-sm">中和門市</p>
+                <p className="text-blue-700 text-sm">中壢門市</p>
+                <p className="text-blue-700 text-sm">💬 Line@：@blackking</p>
               </div>
             </div>
           </div>

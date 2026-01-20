@@ -1,20 +1,35 @@
 ---
-import SEO from "../components/SEO.astro";
 import BaseLayout from "./BaseLayout.astro";
 import "../styles/global.css";
 
-export interface Props {
+export type Props = {
   title: string;
   description: string;
   image?: string;
   publishedTime?: string;
   modifiedTime?: string;
-}
+  productSchema?: object;
+};
 
-const { title, description, image, publishedTime, modifiedTime } = Astro.props;
+const {
+  title,
+  description,
+  image,
+  publishedTime,
+  modifiedTime,
+  productSchema,
+} = Astro.props;
 ---
 
-<BaseLayout {title} {description} {image} {publishedTime} {modifiedTime}>
+<BaseLayout
+  {title}
+  {description}
+  {image}
+  {publishedTime}
+  {modifiedTime}
+  schema={productSchema}
+  type="product"
+>
   <main class="container mx-auto px-4 py-8">
     <!-- Two-column product layout -->
     <div class="grid grid-cols-1 lg:grid-cols-18 gap-8">

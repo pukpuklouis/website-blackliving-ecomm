@@ -1,6 +1,6 @@
 ---
 // Centralized SEO component for all Black Living pages
-export interface Props {
+export type Props = {
   title: string;
   description: string;
   canonical?: string;
@@ -9,7 +9,7 @@ export interface Props {
   publishedTime?: string;
   modifiedTime?: string;
   schema?: object;
-}
+};
 
 const {
   title = "Black Living 黑哥居家",
@@ -68,39 +68,38 @@ const imageURL = new URL(image, Astro.site).href;
     "@type": "LocalBusiness",
     "name": "Black Living 黑哥居家",
     "description": "專營席夢思黑標床墊，提供全台最低價與專業服務",
-    "url": "https://blackliving.com.tw",
-    "telephone": "+886-X-XXXX-XXXX",
+    "url": "https://www.blackliving.tw",
     "address": [
       {
         "@type": "PostalAddress",
-        "streetAddress": "中和展間地址",
+        "streetAddress": "景平路398號2樓",
         "addressLocality": "中和區",
         "addressRegion": "新北市",
+        "postalCode": "235",
         "addressCountry": "TW"
       },
       {
         "@type": "PostalAddress",
-        "streetAddress": "中壢展間地址",
+        "streetAddress": "義民路91號",
         "addressLocality": "中壢區",
         "addressRegion": "桃園市",
+        "postalCode": "320",
         "addressCountry": "TW"
       }
     ],
-    "openingHours": "Mo-Su 09:00-21:00",
-    "priceRange": "$$$$",
-    "servesCuisine": [],
-    "hasOfferCatalog": {
-      "@type": "OfferCatalog",
-      "name": "床墊產品目錄",
-      "itemListElement": [
-        {
-          "@type": "Offer",
-          "itemOffered": {
-            "@type": "Product",
-            "name": "席夢思黑標床墊"
-          }
-        }
-      ]
-    }
+    "geo": [
+      {
+        "@type": "GeoCoordinates",
+        "latitude": 24.993266164506316,
+        "longitude": 121.50956962541346
+      },
+      {
+        "@type": "GeoCoordinates",
+        "latitude": 24.953674269219704,
+        "longitude": 121.21636951191849
+      }
+    ],
+    "openingHours": "Mo-Su 10:00-21:00",
+    "priceRange": "$$$$"
   }
 </script>

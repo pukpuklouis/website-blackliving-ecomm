@@ -206,16 +206,21 @@ const structuredData = {
         name: categoryConfig.brand,
       },
       category: "床墊",
-      ...(product.priceFrom && {
-        offers: {
-          "@type": "Offer",
-          price: product.priceFrom,
-          priceCurrency: "TWD",
-          availability: product.inStock
-            ? "https://schema.org/InStock"
-            : "https://schema.org/OutOfStock",
-        },
-      }),
+      offers: product.priceFrom
+        ? {
+            "@type": "Offer",
+            price: product.priceFrom,
+            priceCurrency: "TWD",
+            availability: product.inStock
+              ? "https://schema.org/InStock"
+              : "https://schema.org/OutOfStock",
+          }
+        : {
+            "@type": "Offer",
+            price: 0,
+            priceCurrency: "TWD",
+            availability: "https://schema.org/InStoreOnly",
+          },
     })),
   },
 };
@@ -227,7 +232,10 @@ const structuredData = {
   canonical={canonicalUrl.toString()}
 >
   <!-- Structured Data -->
-  <script type="application/ld+json" set:html={JSON.stringify(structuredData)}/>
+  <script
+    type="application/ld+json"
+    set:html={JSON.stringify(structuredData)}
+  />
 
   <!-- Enhanced Meta Tags -->
   <meta slot="head" property="og:title" content={pageTitle}>

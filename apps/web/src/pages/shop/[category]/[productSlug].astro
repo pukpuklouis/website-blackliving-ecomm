@@ -56,16 +56,100 @@ if (categoryError) {
   console.warn(`Category fallback used for slug "${category}":`, categoryError);
 }
 
+// Build Product structured data with required offers
+const siteUrl = Astro.site?.toString() || "https://www.blackliving.tw";
+const productUrl = new URL(
+  `/shop/${categoryConfig.slug}/${product.slug}`,
+  siteUrl
+).toString();
+const productImage = product.images?.[0]
+  ? new URL(product.images[0], siteUrl).toString()
+  : undefined;
+
+// Calculate price range from variants
+const prices = (product.variants || [])
+  .map((v: { price?: number }) => v.price)
+  .filter(
+    (p: number | undefined): p is number => typeof p === "number" && p > 0
+  );
+const lowestPrice = prices.length > 0 ? Math.min(...prices) : null;
+const highestPrice = prices.length > 0 ? Math.max(...prices) : null;
+
+// Build offers - use AggregateOffer if multiple prices, otherwise single Offer
+function buildOffers(
+  minPrice: number | null,
+  maxPrice: number | null,
+  priceCount: number,
+  isInStock: boolean
+) {
+  const availability = isInStock
+    ? "https://schema.org/InStock"
+    : "https://schema.org/OutOfStock";
+
+  if (minPrice === null) {
+    return {
+      "@type": "Offer",
+      price: 0,
+      priceCurrency: "TWD",
+      availability: "https://schema.org/PreOrder",
+      priceValidUntil: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)
+        .toISOString()
+        .split("T")[0],
+    };
+  }
+
+  if (minPrice !== maxPrice && maxPrice !== null) {
+    return {
+      "@type": "AggregateOffer",
+      lowPrice: minPrice,
+      highPrice: maxPrice,
+      priceCurrency: "TWD",
+      availability,
+      offerCount: priceCount,
+    };
+  }
+
+  return {
+    "@type": "Offer",
+    price: minPrice,
+    priceCurrency: "TWD",
+    availability,
+  };
+}
+
+const offers = buildOffers(
+  lowestPrice,
+  highestPrice,
+  prices.length,
+  product.inStock !== false
+);
+
+const productSchema = {
+  "@context": "https://schema.org",
+  "@type": "Product",
+  name: product.name,
+  description:
+    product.description || `${categoryConfig.series} - ${product.name}`,
+  image: productImage,
+  url: productUrl,
+  brand: {
+    "@type": "Brand",
+    name: categoryConfig.brand || "席夢思 Simmons",
+  },
+  category: categoryConfig.series,
+  offers,
+};
+
 // Conditional prerender: disabled in dev for easier preview, enabled in staging/production for static generation
 export const prerender = import.meta.env.MODE !== "development";
 ---
 
-{
-  product && (
+{product && (
     <ProductLayout
       title={product.name}
       description={product.description}
       image={product.images?.[0]}
+      productSchema={productSchema}
     >
       <ProductImageCarousel
         images={product.images || []}
@@ -103,5 +187,4 @@ export const prerender = import.meta.env.MODE !== "development";
         />
       </div>
     </ProductLayout>
-  )
-}
+  )}

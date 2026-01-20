@@ -474,9 +474,9 @@ Book a showroom visit appointment.
     "status": "pending",
     "message": "預約已送出，我們將在24小時內與您聯繫確認時間",
     "storeInfo": {
-      "name": "Black Living 中和門市",
-      "address": "新北市中和區中正路123號",
-      "phone": "02-1234-5678",
+      "name": "Black Living 中和展間",
+      "address": "新北市中和區景平路398號2樓",
+
       "hours": "週一至週日 10:00-21:00"
     }
   }
