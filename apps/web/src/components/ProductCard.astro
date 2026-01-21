@@ -34,13 +34,11 @@ const { product, class: className = "" } = Astro.props;
     />
 
     <!-- Series Badge hidden -->
-    {
-      product.series && (
+    {product.series && (
         <div class="absolute hidden top-3 left-3 bg-primary text-white px-3 py-1 text-sm font-semibold rounded">
           {product.series}
         </div>
-      )
-    }
+      )}
   </div>
   <div class="flex flex-col justify-between items-center p-6 gap-3">
     <!-- Product Name -->
@@ -52,8 +50,7 @@ const { product, class: className = "" } = Astro.props;
 
     <!-- Price -->
     <div class="flex items-center">
-      {
-        product.priceFrom ? (
+      {product.priceFrom ? (
           <div class="text-lg font-bold">
             <span class="text-gray-600">NT$ {product.priceFrom.toLocaleString()}</span>
             <span class="text-sm font-base text-gray-600">起</span>
@@ -62,8 +59,7 @@ const { product, class: className = "" } = Astro.props;
           <div class="border border-gray-800  text-gray-800 px-4 py-1 text-md font-semibold rounded hover:bg-gray-50 transition-colors">
             聯絡我們
           </div>
-        )
-      }
+        )}
     </div>
   </div>
 </a>
@@ -73,11 +69,11 @@ const { product, class: className = "" } = Astro.props;
   document.addEventListener("DOMContentLoaded", () => {
     const productCards = document.querySelectorAll('a[href*="/"]');
 
-    productCards.forEach((card) => {
-      card.addEventListener("click", (e) => {
+    for (const card of productCards) {
+      card.addEventListener("click", (_e) => {
         // Allow normal link behavior - no additional handling needed
         // The entire card is already wrapped in an anchor tag
       });
-    });
+    }
   });
 </script>

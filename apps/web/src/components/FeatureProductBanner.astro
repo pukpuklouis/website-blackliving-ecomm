@@ -157,8 +157,7 @@ const Component = href ? "a" : "div";
         />
 
         <!-- Gradient Overlay -->
-        {
-          gradientFromColor.startsWith('var(') || gradientToColor.startsWith('var(') ? (
+        {gradientFromColor.startsWith('var(') || gradientToColor.startsWith('var(') ? (
             <div
               class="absolute inset-0"
               style={`background: linear-gradient(${gradientDirection === 'left-to-right' ? 'to right' : gradientDirection === 'right-to-left' ? 'to left' : gradientDirection === 'top-to-bottom' ? 'to bottom' : 'to top'}, ${gradientFromColor}, ${gradientToColor}); opacity: ${gradientOpacity}`}
@@ -168,12 +167,10 @@ const Component = href ? "a" : "div";
               class={`absolute inset-0 ${gradientDirections[gradientDirection]} from-${gradientColors.from} to-${gradientColors.to}`}
               style={`opacity: ${gradientOpacity}`}
             />
-          )
-        }
+          )}
 
         <!-- Text Overlay -->
-        {
-          (textTitle || textDescription) && (
+        {(textTitle || textDescription) && (
             <div class={`absolute inset-0 flex flex-col ${textPositions[textPosition]}  py-8`}>
               <div class={`text-white max-w-md ${textClassName}`}>
                 {textTitle && (
@@ -184,12 +181,10 @@ const Component = href ? "a" : "div";
                 )}
               </div>
             </div>
-          )
-        }
+          )}
 
         <!-- Image Overlay -->
-        {
-          overlayImageUrl && (
+        {overlayImageUrl && (
             <div
               class={`absolute top-1/2 -translate-y-1/2 ${overlayImagePositions[overlayImagePosition]}`}
             >
@@ -202,15 +197,12 @@ const Component = href ? "a" : "div";
                 class={`${overlayImageSizes[overlayImageSize]} object-cover drop-shadow-lg ${hoverEffect ? 'group-hover:scale-110 transition-transform duration-300' : ''}`}
               />
             </div>
-          )
-        }
+          )}
 
         <!-- Hover Effect Overlay (if enabled and has link) -->
-        {
-          hoverEffect && href && (
+        {hoverEffect && href && (
             <div class="absolute inset-0 bg-black bg-opacity-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-          )
-        }
+          )}
       </Component>
     </div>
   </div>

@@ -1,6 +1,6 @@
 ---
 import { Image } from "astro:assets";
-export interface Props {
+export type Props = {
   title?: string;
   description?: string;
   primaryButtonText?: string;
@@ -24,7 +24,7 @@ export interface Props {
   gradientToColor?: string;
   gradientOpacity?: number;
   className?: string;
-}
+};
 
 const {
   title = "準備好體驗頂級睡眠了嗎？",
@@ -129,8 +129,7 @@ const getTailwindGradientColors = (
   />
 
   <!-- Gradient Overlay -->
-  {
-    getTailwindGradientColors(gradientFromColor, gradientToColor, gradientOpacity) ? (
+  {getTailwindGradientColors(gradientFromColor, gradientToColor, gradientOpacity) ? (
       <div
         class={`absolute inset-0 ${getTailwindGradient(gradientDirection)} ${getTailwindGradientColors(gradientFromColor, gradientToColor, gradientOpacity)}`}
       />
@@ -139,8 +138,7 @@ const getTailwindGradientColors = (
         class="absolute inset-0"
         style={`background: linear-gradient(${gradientDirection === 'left-to-right' ? 'to right' : gradientDirection === 'right-to-left' ? 'to left' : gradientDirection === 'top-to-bottom' ? 'to bottom' : 'to top'}, ${gradientFromColor}, ${gradientToColor}); opacity: ${gradientOpacity};`}
       />
-    )
-  }
+    )}
 
   <!-- Content -->
   <div

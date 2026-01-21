@@ -1,11 +1,4 @@
-import {
-  CreditCard,
-  Landmark,
-  Loader2,
-  Lock,
-  ShieldCheck,
-  Store,
-} from "lucide-react";
+import { CreditCard, Landmark, Loader2, Lock, ShieldCheck } from "lucide-react";
 import type { FC } from "react";
 import { FaApple, FaGoogle } from "react-icons/fa6";
 

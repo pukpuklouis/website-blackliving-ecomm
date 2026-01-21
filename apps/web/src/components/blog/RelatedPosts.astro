@@ -15,13 +15,13 @@ type BlogPost = Pick<
   | "publishedAt"
 >;
 
-export interface Props {
+export type Props = {
   posts: BlogPost[];
   layout?: "inline" | "grid";
   class?: string;
   maxPosts?: number;
   locale?: string;
-}
+};
 
 const {
   posts,
@@ -48,8 +48,7 @@ const labels = {
 const label = labels[locale as keyof typeof labels] || labels["zh-TW"];
 ---
 
-{
-  relatedPosts.length > 0 && (
+{relatedPosts.length > 0 && (
     <section
       class={`related-posts related-posts--${layout} border-t border-gray-200 pt-8 mt-12 ${className}`}
     >
@@ -113,8 +112,7 @@ const label = labels[locale as keyof typeof labels] || labels["zh-TW"];
         ))}
       </div>
     </section>
-  )
-}
+  )}
 
 <style>
   /* Utility for line clamping - Tailwind v4 may not have this built-in */

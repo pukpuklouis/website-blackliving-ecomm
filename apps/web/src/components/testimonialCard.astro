@@ -24,8 +24,7 @@ const { testimonial } = Astro.props;
     "
   </div>
 
-  {
-    testimonial.image && (
+  {testimonial.image && (
       <div class="mb-6 overflow-hidden rounded-xl bg-gray-50 aspect-video relative group-hover:shadow-md transition-shadow">
         <Image
           src={testimonial.image}
@@ -36,20 +35,17 @@ const { testimonial } = Astro.props;
         />
         <div class="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
       </div>
-    )
-  }
+    )}
 
   <div class="flex-1 z-10">
     <div class="flex gap-1 mb-4 text-amber-400">
-      {
-        Array.from({ length: 5 }).map((_, i) => (
+      {Array.from({ length: 5 }).map((_, i) => (
           <Star
             size={16}
             fill={i < testimonial.rating ? "currentColor" : "none"}
             className={i < testimonial.rating ? "text-amber-400" : "text-gray-200"}
           />
-        ))
-      }
+        ))}
     </div>
 
     <blockquote class="mb-6 flex-1">

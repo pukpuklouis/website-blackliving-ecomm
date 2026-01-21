@@ -7,7 +7,7 @@ import Breadcrumbs from "../components/blog/Breadcrumbs.astro";
 import PostHeader from "../components/blog/PostHeader.astro";
 import BaseLayout from "./BaseLayout.astro";
 
-interface BlogPost {
+type BlogPost = {
   id: string;
   title: string;
   slug: string;
@@ -25,25 +25,25 @@ interface BlogPost {
   readingTime: number;
   seoTitle?: string;
   seoDescription?: string;
-}
+};
 
-interface PostCategory {
+type PostCategory = {
   id: string;
   name: string;
   slug: string;
   description: string;
   color: string;
   icon: string;
-}
+};
 
-export interface Props {
+type Props = {
   post: BlogPost;
   category?: PostCategory | null;
   relatedPosts?: BlogPost[];
   seoTitle: string;
   seoDescription: string;
   ogImage: string;
-}
+};
 
 const {
   post,

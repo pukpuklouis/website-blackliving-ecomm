@@ -1,5 +1,4 @@
 import { Img, Section, Text } from "@react-email/components";
-import React from "react";
 
 type BrandHeaderProps = {
   logoUrl?: string; // Kept for backward compatibility, but we'll prefer the inline one if we want consistency, or allow override

@@ -78,13 +78,13 @@ const menuItems =
               <span class="text-xs">⌘</span>K
             </kbd>
           </button>
-          <CartTrigger client:load/>
+          <CartTrigger client:load />
           <a
             href="/account/profile"
             class="text-black text-sm lg:text-base font-normal hover:text-gray-600 transition-colors flex items-center gap-1"
             aria-label="會員中心"
           >
-            <UserIcon/>
+            <UserIcon />
             會員中心
           </a>
         </div>
@@ -151,8 +151,7 @@ const menuItems =
         <ul
           class="flex items-center gap-4 md:gap-2 lg:gap-6 justify-center relative"
         >
-          {
-            menuItems.map((item) => (
+          {menuItems.map((item) => (
               <li class={`relative group ${item.subItems ? 'has-submenu' : ''}`}>
                 <a
                   href={item.href}
@@ -193,8 +192,7 @@ const menuItems =
                   </ul>
                 )}
               </li>
-            ))
-          }
+            ))}
         </ul>
       </nav>
     </div>
@@ -275,14 +273,13 @@ const menuItems =
             href="/account/profile"
             class="text-primary-foreground/80 text-sm font-normal hover:text-primary-foreground transition-colors flex items-center gap-2"
           >
-            <UserIcon/>
+            <UserIcon />
             會員中心
           </a>
         </div>
 
         <!-- Mobile Navigation Links with Submenu Support -->
-        {
-          menuItems.map((item, index) => (
+        {menuItems.map((item, index) => (
             <div class={`space-y-1 ${index === menuItems.length - 1 ? ' mb-3' : ''}`}>
               <button
                 class={`w-full block px-6 py-3 text-left text-primary-foreground text-base font-normal hover:bg-primary-foreground/10 hover:text-primary-foreground transition-colors rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-foreground/50 ${item.subItems ? 'flex items-center justify-between' : ''}`}
@@ -326,8 +323,7 @@ const menuItems =
                 </ul>
               )}
             </div>
-          ))
-        }
+          ))}
       </div>
     </div>
   </div>

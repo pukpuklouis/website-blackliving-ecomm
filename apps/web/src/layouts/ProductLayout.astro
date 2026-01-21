@@ -35,21 +35,21 @@ const {
     <div class="grid grid-cols-1 lg:grid-cols-18 gap-8">
       <!-- Left Column - Product Images (60% width on desktop) -->
       <div class="lg:col-span-8">
-        <slot name="product-images"/>
+        <slot name="product-images" />
       </div>
 
       <!-- Right Column - Product Details & Actions (40% width on desktop) -->
       <div class="lg:col-span-10">
-        <slot name="product-details"/>
+        <slot name="product-details" />
       </div>
     </div>
 
     <!-- Full-width content below the main grid (tabs, additional info) -->
     <div class="mt-12">
-      <slot name="product-tabs"/>
+      <slot name="product-tabs" />
     </div>
 
     <!-- Fallback slot for backwards compatibility -->
-    <slot/>
+    <slot />
   </main>
 </BaseLayout>

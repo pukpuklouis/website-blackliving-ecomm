@@ -1,5 +1,5 @@
 ---
-interface Photo {
+type Photo = {
   src: string;
   alt: string;
   text?: string;
@@ -10,15 +10,15 @@ interface Photo {
   gradientTo?: string; // e.g., 'rgba(0,0,0,0)'
   gradientCoverage?: number; // Percentage where solid color ends (0-100), default 40
   hoverScale?: number; // Scale multiplier on hover (e.g., 1.1 for scale-110), default 1.1
-}
+};
 
-interface Props {
+type Props = {
   photos: Photo[];
   columns?: number;
   gap?: string;
   aspectRatio?: string;
   fullWidth?: boolean;
-}
+};
 
 const {
   photos,
@@ -33,8 +33,7 @@ const {
   class={`${fullWidth ? 'w-screen relative left-1/2 right-1/2 -mx-[50vw]' : ''} grid gap-${gap}`}
   style={`grid-template-columns: repeat(${columns}, minmax(0, 1fr));`}
 >
-  {
-    photos.map((photo) => {
+  {photos.map((photo) => {
       const focalX = photo.focalPoint?.x || '50%';
       const focalY = photo.focalPoint?.y || '50%';
       const backgroundSize = photo.backgroundSize || 'cover';
@@ -84,8 +83,7 @@ const {
           )}
         </div>
       );
-    })
-  }
+    })}
 </div>
 
 <style>

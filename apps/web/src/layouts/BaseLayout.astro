@@ -10,7 +10,7 @@ import SEO from "../components/SEO.astro";
 import SearchModal from "../components/SearchModal.tsx";
 import "@blackliving/tailwind-config/styles.css";
 
-export interface Props {
+export type Props = {
   title: string;
   description: string;
   canonical?: string;
@@ -20,7 +20,7 @@ export interface Props {
   modifiedTime?: string;
   schema?: object;
   class?: string;
-}
+};
 
 const {
   title,

@@ -1,14 +1,13 @@
 ---
 import type { BlogHeaderProps } from "@blackliving/types";
 
-export interface Props extends BlogHeaderProps {}
+export type Props = BlogHeaderProps;
 
 const { post, category } = Astro.props;
 ---
 
 <header class="mb-8">
-  {
-    category && (
+  {category && (
       <div class="mb-4">
         <span
           class="blog-category-tag inline-flex items-center px-3 py-1 rounded-full text-sm font-medium"
@@ -17,6 +16,5 @@ const { post, category } = Astro.props;
           {category.name}
         </span>
       </div>
-    )
-  }
+    )}
 </header>

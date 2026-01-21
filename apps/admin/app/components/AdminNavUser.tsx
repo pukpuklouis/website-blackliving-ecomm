@@ -21,7 +21,7 @@ import { useAuth } from "../contexts/AuthContext";
 
 export function AdminNavUser() {
   const { isMobile } = useSidebar();
-  const { user, logout } = useAuth();
+  const { logout, user } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = async () => {
@@ -29,7 +29,13 @@ export function AdminNavUser() {
     navigate("/login", { replace: true });
   };
 
-  if (!user) return null;
+  const handleAccountSettings = () => {
+    navigate("/admin/settings");
+  };
+
+  if (!user) {
+    return null;
+  }
 
   return (
     <SidebarMenu>
@@ -58,7 +64,7 @@ export function AdminNavUser() {
             side={isMobile ? "bottom" : "right"}
             sideOffset={4}
           >
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={handleAccountSettings}>
               <User className="mr-2 h-4 w-4" />
               帳戶設定
             </DropdownMenuItem>

@@ -1,14 +1,8 @@
-/** biome-ignore-all assist/source/useSortedAttributes: <explanation> */
 import {
   Alert,
   AlertDescription,
   Badge,
   Button,
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
   Select,
   SelectContent,
   SelectItem,
@@ -67,12 +61,12 @@ function ProfileTabs({ className }: ProfileTabsProps) {
 
       <Tabs
         className="space-y-6"
-        value={activeTab}
         onValueChange={setActiveTab}
+        value={activeTab}
       >
         {/* Mobile Navigation - Select Dropdown */}
         <div className="sm:hidden">
-          <Select value={activeTab} onValueChange={setActiveTab}>
+          <Select onValueChange={setActiveTab} value={activeTab}>
             <SelectTrigger aria-label="選擇設定頁面" className="w-full">
               <SelectValue placeholder="選擇設定頁面" />
             </SelectTrigger>
@@ -88,26 +82,26 @@ function ProfileTabs({ className }: ProfileTabsProps) {
         {/* Desktop Navigation - Clean Tabs List */}
         <TabsList className="hidden w-auto justify-start gap-6 border-b bg-transparent p-0 sm:inline-flex">
           <TabsTrigger
-            value="profile"
             className="rounded-t-md border-2 border-transparent bg-transparent px-2 py-2 text-slate-500 hover:text-slate-700 data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-slate-900 data-[state=active]:shadow-none"
+            value="profile"
           >
             基本資料
           </TabsTrigger>
           <TabsTrigger
-            value="addresses"
             className="rounded-t-md border-2 border-transparent bg-transparent px-2 py-2 text-slate-500 hover:text-slate-700 data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-slate-900 data-[state=active]:shadow-none"
+            value="addresses"
           >
             地址管理
           </TabsTrigger>
           <TabsTrigger
-            value="payment"
             className="rounded-t-md border-2 border-transparent bg-transparent px-2 py-2 text-slate-500 hover:text-slate-700 data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-slate-900 data-[state=active]:shadow-none"
+            value="payment"
           >
             付款方式
           </TabsTrigger>
           <TabsTrigger
-            value="security"
             className="rounded-t-md border-2 border-transparent bg-transparent px-2 py-2 text-slate-500 hover:text-slate-700 data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-slate-900 data-[state=active]:shadow-none"
+            value="security"
           >
             安全設定
           </TabsTrigger>

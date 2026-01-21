@@ -16,23 +16,25 @@ import type { FC } from "react";
 import { useState } from "react";
 import { type CartItem, useCartStore } from "../stores/cartStore";
 
+type ProductVariant = {
+  id: string;
+  name: string;
+  size?: string;
+  firmness?: string;
+  price: number;
+  originalPrice?: number;
+  inStock: boolean;
+  stock?: number;
+  sku?: string;
+};
+
 type Product = {
   id: string;
   name: string;
   slug: string;
   description: string;
   images: string[];
-  variants: Array<{
-    id: string;
-    name: string;
-    size?: string;
-    firmness?: string;
-    price: number;
-    originalPrice?: number;
-    inStock: boolean;
-    stock?: number;
-    sku?: string;
-  }>;
+  variants: ProductVariant[];
   inStock: boolean;
   category?: string;
 };
@@ -46,13 +48,251 @@ type AddToCartSectionProps = {
   className?: string;
 };
 
+// Sub-component: Savings badges
+function SavingsBadges({
+  savings,
+  savingsPercentage,
+}: {
+  savings: number;
+  savingsPercentage: number;
+}) {
+  if (savings <= 0) {
+    return null;
+  }
+  return (
+    <div className="inline-flex items-center space-x-2">
+      <Badge
+        className="border-green-200 bg-green-100 text-green-800"
+        variant="secondary"
+      >
+        省下 NT$ {savings.toLocaleString()}
+      </Badge>
+      <Badge className="border-green-300 text-green-700" variant="outline">
+        -{savingsPercentage}%
+      </Badge>
+    </div>
+  );
+}
+
+// Sub-component: Variant info display
+function VariantInfo({ variant }: { variant: ProductVariant }) {
+  if (!variant.size) {
+    return null;
+  }
+  return (
+    <div className="text-gray-600 text-sm">
+      規格: <span className="font-medium">{variant.size}</span>
+      {variant.firmness ? (
+        <span className="ml-2">
+          硬度: <span className="font-medium">{variant.firmness}</span>
+        </span>
+      ) : null}
+    </div>
+  );
+}
+
+// Sub-component: Stock status display
+function StockStatus({
+  isAvailable,
+  lowStock,
+}: {
+  isAvailable: boolean;
+  lowStock?: number;
+}) {
+  return (
+    <div className="flex items-center justify-between">
+      <div className="flex items-center space-x-2">
+        <span className="font-medium text-sm">庫存狀態:</span>
+        <div
+          className={cn(
+            "flex items-center space-x-1 text-sm",
+            isAvailable ? "text-green-600" : "text-red-600"
+          )}
+        >
+          <div
+            className={cn(
+              "h-2 w-2 rounded-full",
+              isAvailable ? "bg-green-500" : "bg-red-500"
+            )}
+          />
+          <span>{isAvailable ? "現貨供應" : "暫時缺貨"}</span>
+        </div>
+      </div>
+      {lowStock !== undefined && lowStock <= 5 && lowStock > 0 ? (
+        <span className="font-medium text-orange-600 text-xs">
+          僅剩 {lowStock} 件
+        </span>
+      ) : null}
+    </div>
+  );
+}
+
+// Sub-component: Cart info banner
+function CartInfo({ quantityInCart }: { quantityInCart: number }) {
+  if (quantityInCart <= 0) {
+    return null;
+  }
+  return (
+    <div className="rounded-lg border border-blue-200 bg-blue-50 p-3">
+      <div className="text-blue-800 text-sm">
+        💡 購物車中已有 <span className="font-medium">{quantityInCart}</span>{" "}
+        件此商品
+      </div>
+    </div>
+  );
+}
+
+// Sub-component: Quantity selector
+function QuantitySelector({
+  quantity,
+  maxQuantity,
+  displayPrice,
+  isAdding,
+  onQuantityChange,
+}: {
+  quantity: number;
+  maxQuantity: number;
+  displayPrice: number;
+  isAdding: boolean;
+  onQuantityChange: (qty: number) => void;
+}) {
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <span className="font-medium text-gray-700 text-sm">選擇數量:</span>
+        <span className="text-gray-500 text-xs">最多 {maxQuantity} 件</span>
+      </div>
+      <div className="flex items-center space-x-4">
+        <div className="flex items-center rounded-lg border bg-gray-50">
+          <Button
+            aria-label="減少數量"
+            className="h-12 w-12 p-0 hover:bg-gray-200"
+            disabled={quantity <= 1 || isAdding}
+            onClick={() => onQuantityChange(quantity - 1)}
+            size="sm"
+            type="button"
+            variant="ghost"
+          >
+            <Minus className="h-4 w-4" />
+          </Button>
+          <div className="min-w-[80px] bg-white px-6 py-3 text-center font-semibold text-lg">
+            {quantity}
+          </div>
+          <Button
+            aria-label="增加數量"
+            className="h-12 w-12 p-0 hover:bg-gray-200"
+            disabled={quantity >= maxQuantity || isAdding}
+            onClick={() => onQuantityChange(quantity + 1)}
+            size="sm"
+            type="button"
+            variant="ghost"
+          >
+            <Plus className="h-4 w-4" />
+          </Button>
+        </div>
+        <div className="text-gray-600 text-sm">
+          小計:{" "}
+          <span className="font-semibold">
+            NT$ {(displayPrice * quantity).toLocaleString()}
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Sub-component: Add to cart button content
+function AddToCartButtonContent({
+  isAdding,
+  isAvailable,
+  quantity,
+}: {
+  isAdding: boolean;
+  isAvailable: boolean;
+  quantity: number;
+}) {
+  if (isAdding) {
+    return (
+      <>
+        <div className="mr-3 h-5 w-5 animate-spin rounded-full border-white border-b-2" />
+        加入購物車中...
+      </>
+    );
+  }
+  if (isAvailable) {
+    return (
+      <>
+        <ShoppingCart className="mr-3 h-5 w-5" />
+        加入購物車
+        {quantity > 1 ? (
+          <span className="ml-2 rounded-full bg-gray-700 px-2 py-1 text-sm">
+            {quantity} 件
+          </span>
+        ) : null}
+      </>
+    );
+  }
+  return (
+    <>
+      <AlertCircle className="mr-3 h-5 w-5" />
+      目前缺貨
+    </>
+  );
+}
+
+// Sub-component: Service features grid
+function ServiceFeatures() {
+  return (
+    <div className="grid grid-cols-1 gap-3 border-t pt-4 sm:grid-cols-3">
+      <div className="flex items-center space-x-2 text-gray-600 text-sm">
+        <Truck className="h-4 w-4 text-blue-600" />
+        <span>免費配送安裝</span>
+      </div>
+      <div className="flex items-center space-x-2 text-gray-600 text-sm">
+        <Shield className="h-4 w-4 text-green-600" />
+        <span>原廠品質保固</span>
+      </div>
+      <div className="flex items-center space-x-2 text-gray-600 text-sm">
+        <CreditCard className="h-4 w-4 text-purple-600" />
+        <span>分期零利率</span>
+      </div>
+    </div>
+  );
+}
+
+// Sub-component: Contact help section
+function ContactHelp() {
+  return (
+    <div className="rounded-lg border-2 border-gray-200 border-dashed bg-gray-50 p-4">
+      <div className="space-y-3 text-center">
+        <Phone className="mx-auto h-8 w-8 text-gray-400" />
+        <div>
+          <h4 className="mb-1 font-semibold text-gray-900">需要協助？</h4>
+          <p className="text-gray-600 text-sm">
+            聯繫我們的專業顧問獲取更多資訊
+          </p>
+        </div>
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <Button asChild className="flex-1" size="sm" variant="outline">
+            <a href="tel:+886-2-12345678">📞 02-1234-5678</a>
+          </Button>
+          <Button asChild className="flex-1" size="sm" variant="outline">
+            <a href="mailto:info@blackliving.com">✉️ 聯繫我們</a>
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 const AddToCartSection: FC<AddToCartSectionProps> = ({
   product,
   selectedVariantId,
-  _onVariantSelect,
+  onVariantSelect: _onVariantSelect,
   onAddToCartSuccess,
   onAddToCartError,
   className = "",
+  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Component has been refactored with extracted sub-components; remaining complexity is necessary for state management
 }) => {
   const { addItem, error, setError, items } = useCartStore();
   const itemCount = useCartStore((state) => state.getItemCount());
@@ -68,7 +308,7 @@ const AddToCartSection: FC<AddToCartSectionProps> = ({
     : product.variants[0];
 
   // If no variants, create a default one from product
-  const variant = selectedVariant || {
+  const variant: ProductVariant = selectedVariant || {
     id: "default",
     name: "Standard",
     price: 0,
@@ -160,7 +400,6 @@ const AddToCartSection: FC<AddToCartSectionProps> = ({
 
   const handleWishlist = () => {
     setIsWishlisted(!isWishlisted);
-    // TODO: Implement wishlist functionality
   };
 
   const handleShare = async () => {
@@ -175,9 +414,7 @@ const AddToCartSection: FC<AddToCartSectionProps> = ({
         // Sharing failed - fall through to clipboard fallback
       }
     } else {
-      // Fallback: copy to clipboard
       navigator.clipboard.writeText(window.location.href);
-      // Could show a toast here
     }
   };
 
@@ -239,35 +476,11 @@ const AddToCartSection: FC<AddToCartSectionProps> = ({
             </div>
           </div>
 
-          {/* Savings Badge */}
-          {savings > 0 && (
-            <div className="inline-flex items-center space-x-2">
-              <Badge
-                className="border-green-200 bg-green-100 text-green-800"
-                variant="secondary"
-              >
-                省下 NT$ {savings.toLocaleString()}
-              </Badge>
-              <Badge
-                className="border-green-300 text-green-700"
-                variant="outline"
-              >
-                -{savingsPercentage}%
-              </Badge>
-            </div>
-          )}
-
-          {/* Variant Info */}
-          {variant.size ? (
-            <div className="text-gray-600 text-sm">
-              規格: <span className="font-medium">{variant.size}</span>
-              {variant.firmness ? (
-                <span className="ml-2">
-                  硬度: <span className="font-medium">{variant.firmness}</span>
-                </span>
-              ) : null}
-            </div>
-          ) : null}
+          <SavingsBadges
+            savings={savings}
+            savingsPercentage={savingsPercentage}
+          />
+          <VariantInfo variant={variant} />
         </div>
       </div>
 
@@ -281,92 +494,17 @@ const AddToCartSection: FC<AddToCartSectionProps> = ({
           </div>
         ) : null}
 
-        {/* Stock Status */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <span className="font-medium text-sm">庫存狀態:</span>
-            <div
-              className={cn(
-                "flex items-center space-x-1 text-sm",
-                isAvailable ? "text-green-600" : "text-red-600"
-              )}
-            >
-              <div
-                className={cn(
-                  "h-2 w-2 rounded-full",
-                  isAvailable ? "bg-green-500" : "bg-red-500"
-                )}
-              />
-              <span>{isAvailable ? "現貨供應" : "暫時缺貨"}</span>
-            </div>
-          </div>
-          {variant.stock !== undefined &&
-          variant.stock <= 5 &&
-          variant.stock > 0 ? (
-            <span className="font-medium text-orange-600 text-xs">
-              僅剩 {variant.stock} 件
-            </span>
-          ) : null}
-        </div>
+        <StockStatus isAvailable={isAvailable} lowStock={variant.stock} />
+        <CartInfo quantityInCart={currentQuantityInCart} />
 
-        {/* Current Cart Info */}
-        {currentQuantityInCart > 0 && (
-          <div className="rounded-lg border border-blue-200 bg-blue-50 p-3">
-            <div className="text-blue-800 text-sm">
-              💡 購物車中已有{" "}
-              <span className="font-medium">{currentQuantityInCart}</span>{" "}
-              件此商品
-            </div>
-          </div>
-        )}
-
-        {/* Quantity Selector */}
         {isAvailable ? (
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="font-medium text-gray-700 text-sm">
-                選擇數量:
-              </span>
-              <span className="text-gray-500 text-xs">
-                最多 {maxQuantity} 件
-              </span>
-            </div>
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center rounded-lg border bg-gray-50">
-                <Button
-                  aria-label="減少數量"
-                  className="h-12 w-12 p-0 hover:bg-gray-200"
-                  disabled={quantity <= 1 || isAdding}
-                  onClick={() => handleQuantityChange(quantity - 1)}
-                  size="sm"
-                  type="button"
-                  variant="ghost"
-                >
-                  <Minus className="h-4 w-4" />
-                </Button>
-                <div className="min-w-[80px] bg-white px-6 py-3 text-center font-semibold text-lg">
-                  {quantity}
-                </div>
-                <Button
-                  aria-label="增加數量"
-                  className="h-12 w-12 p-0 hover:bg-gray-200"
-                  disabled={quantity >= maxQuantity || isAdding}
-                  onClick={() => handleQuantityChange(quantity + 1)}
-                  size="sm"
-                  type="button"
-                  variant="ghost"
-                >
-                  <Plus className="h-4 w-4" />
-                </Button>
-              </div>
-              <div className="text-gray-600 text-sm">
-                小計:{" "}
-                <span className="font-semibold">
-                  NT$ {(displayPrice * quantity).toLocaleString()}
-                </span>
-              </div>
-            </div>
-          </div>
+          <QuantitySelector
+            displayPrice={displayPrice}
+            isAdding={isAdding}
+            maxQuantity={maxQuantity}
+            onQuantityChange={handleQuantityChange}
+            quantity={quantity}
+          />
         ) : null}
 
         <Separator />
@@ -394,76 +532,17 @@ const AddToCartSection: FC<AddToCartSectionProps> = ({
             disabled={!isAvailable || isAdding}
             onClick={handleAddToCart}
           >
-            {(() => {
-              if (isAdding) {
-                return (
-                  <>
-                    <div className="mr-3 h-5 w-5 animate-spin rounded-full border-white border-b-2" />
-                    加入購物車中...
-                  </>
-                );
-              }
-              if (isAvailable) {
-                return (
-                  <>
-                    <ShoppingCart className="mr-3 h-5 w-5" />
-                    加入購物車
-                    {quantity > 1 ? (
-                      <span className="ml-2 rounded-full bg-gray-700 px-2 py-1 text-sm">
-                        {quantity} 件
-                      </span>
-                    ) : null}
-                  </>
-                );
-              }
-              return (
-                <>
-                  <AlertCircle className="mr-3 h-5 w-5" />
-                  目前缺貨
-                </>
-              );
-            })()}
+            <AddToCartButtonContent
+              isAdding={isAdding}
+              isAvailable={isAvailable}
+              quantity={quantity}
+            />
           </Button>
         )}
 
-        {/* Service Features */}
-        <div className="grid grid-cols-1 gap-3 border-t pt-4 sm:grid-cols-3">
-          <div className="flex items-center space-x-2 text-gray-600 text-sm">
-            <Truck className="h-4 w-4 text-blue-600" />
-            <span>免費配送安裝</span>
-          </div>
-          <div className="flex items-center space-x-2 text-gray-600 text-sm">
-            <Shield className="h-4 w-4 text-green-600" />
-            <span>原廠品質保固</span>
-          </div>
-          <div className="flex items-center space-x-2 text-gray-600 text-sm">
-            <CreditCard className="h-4 w-4 text-purple-600" />
-            <span>分期零利率</span>
-          </div>
-        </div>
+        <ServiceFeatures />
 
-        {/* Contact for Quote */}
-        {!isAvailable && (
-          <div className="rounded-lg border-2 border-gray-200 border-dashed bg-gray-50 p-4">
-            <div className="space-y-3 text-center">
-              <Phone className="mx-auto h-8 w-8 text-gray-400" />
-              <div>
-                <h4 className="mb-1 font-semibold text-gray-900">需要協助？</h4>
-                <p className="text-gray-600 text-sm">
-                  聯繫我們的專業顧問獲取更多資訊
-                </p>
-              </div>
-              <div className="flex flex-col gap-2 sm:flex-row">
-                <Button asChild className="flex-1" size="sm" variant="outline">
-                  <a href="tel:+886-2-12345678">📞 02-1234-5678</a>
-                </Button>
-                <Button asChild className="flex-1" size="sm" variant="outline">
-                  <a href="mailto:info@blackliving.com">✉️ 聯繫我們</a>
-                </Button>
-              </div>
-            </div>
-          </div>
-        )}
+        {isAvailable ? null : <ContactHelp />}
       </div>
     </div>
   );

@@ -34,8 +34,7 @@ const error =
     <div
       class="mx-auto w-full max-w-lg rounded-xl border border-border-light bg-white p-8 text-center shadow-card dark:border-zinc-700 dark:bg-zinc-800"
     >
-      {
-        success ? (
+      {success ? (
           <>
             <div class="mb-6 flex justify-center">
               <div class="flex h-20 w-20 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30">
@@ -113,12 +112,10 @@ const error =
               </div>
             )}
           </>
-        )
-      }
+        )}
 
       <div class="flex flex-col justify-center gap-4 sm:flex-row">
-        {
-          success ? (
+        {success ? (
             <>
               <a
                 class="rounded-lg bg-black px-8 py-3 font-semibold text-white shadow transition-colors hover:bg-gray-800"
@@ -148,8 +145,7 @@ const error =
                 聯繫客服
               </a>
             </>
-          )
-        }
+          )}
       </div>
     </div>
   </div>

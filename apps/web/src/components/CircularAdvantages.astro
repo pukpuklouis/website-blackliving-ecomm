@@ -1,14 +1,14 @@
 ---
 import { Image } from "astro:assets";
 
-interface Advantage {
+type Advantage = {
   id: string;
   title: string;
   subtitle: string;
   description: string;
   iconImage: string;
   angle: number; // Position on circle in degrees
-}
+};
 
 const advantages: Advantage[] = [
   {
@@ -101,8 +101,7 @@ const circleRadius = 30; // Radius of the connecting circle (in percentage)
   </div>
 
   <!-- Advantage cloud shapes positioned on circle -->
-  {
-    advantages.map((advantage) => {
+  {advantages.map((advantage) => {
       const pos = calculatePosition(advantage.angle, circleRadius);
       return (
         <div
@@ -150,8 +149,7 @@ const circleRadius = 30; // Radius of the connecting circle (in percentage)
           </div>
         </div>
       );
-    })
-  }
+    })}
 </div>
 
 <style>

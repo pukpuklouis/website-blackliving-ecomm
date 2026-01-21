@@ -1,4 +1,4 @@
-import { CreditCard, Headphones, ShieldCheck, Zap } from "lucide-react";
+import { Headphones, ShieldCheck, Zap } from "lucide-react";
 import type { FC } from "react";
 import type { CartItem } from "../../stores/cartStore";
 

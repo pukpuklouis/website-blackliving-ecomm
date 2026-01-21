@@ -1,4 +1,5 @@
 import {
+  authClient,
   checkSession,
   signInWithGoogleAdmin,
   signOut,
@@ -13,21 +14,32 @@ import {
 } from "react";
 import { useApiUrl } from "./EnvironmentContext";
 
-interface User {
+type User = {
   id: string;
   email: string;
   role: "admin" | "customer";
   name?: string;
-}
+};
 
-interface AuthContextType {
+type AuthContextType = {
   user: User | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<boolean>;
   loginWithGoogle: () => Promise<boolean>;
   logout: () => Promise<void>;
   checkAuth: () => Promise<void>;
-}
+  updateProfile: (data: { name?: string; email?: string }) => Promise<{
+    data?: unknown;
+    error: { status: number; message?: string; statusText?: string } | null;
+  }>;
+  changePassword: (data: {
+    currentPassword: string;
+    newPassword: string;
+  }) => Promise<{
+    data?: unknown;
+    error: { status: number; message?: string } | null;
+  }>;
+};
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -39,9 +51,9 @@ export function useAuth() {
   return context;
 }
 
-interface AuthProviderProps {
+type AuthProviderProps = {
   children: React.ReactNode;
-}
+};
 
 export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null);
@@ -53,7 +65,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const data = await checkSession();
 
       if (data.user && data.user.role === "admin") {
-        setUser(data.user);
+        setUser(data.user as User);
       } else {
         setUser(null);
       }
@@ -63,23 +75,21 @@ export function AuthProvider({ children }: AuthProviderProps) {
     } finally {
       setLoading(false);
     }
-  }, [setUser]);
+  }, []);
 
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
       const response = await fetch(`${apiUrl}/api/auth/sign-in/email`, {
-        method: "POST",
+        body: JSON.stringify({ email, password }),
+        credentials: "include",
         headers: {
           "Content-Type": "application/json",
         },
-        credentials: "include",
-        body: JSON.stringify({ email, password }),
+        method: "POST",
       });
 
       if (response.ok) {
         await checkAuth();
-        // After checkAuth updates state, route protection will gate access.
-        // Return success here to avoid a race on stale `user` state.
         return true;
       }
       return false;
@@ -107,31 +117,83 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const logout = async () => {
     try {
-      // Use Better Auth's proper signOut method
       await signOut({
         fetchOptions: {
-          onSuccess: () => {
-            console.log("Better Auth logout successful");
-          },
           onError: (error) => {
             console.warn("Better Auth logout error:", error);
+          },
+          onSuccess: () => {
+            console.log("Better Auth logout successful");
           },
         },
       });
 
-      // Clear any local storage
       if (typeof Storage !== "undefined") {
         localStorage.clear();
         sessionStorage.clear();
       }
     } catch (error) {
       console.error("Logout failed:", error);
-      // Fallback: clear session cookies manually
+      // biome-ignore lint/suspicious/noDocumentCookie: Fallback cookie cleanup - Cookie Store API has limited browser support
       document.cookie =
         "better-auth.session_token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;";
     } finally {
-      // Always clear user state locally
       setUser(null);
+    }
+  };
+
+  const updateProfile = async (data: {
+    name?: string;
+    email?: string;
+  }): Promise<{
+    data?: unknown;
+    error: { status: number; message?: string; statusText?: string } | null;
+  }> => {
+    try {
+      const response = await authClient.updateUser(data);
+
+      if (!response.error) {
+        await checkAuth();
+      }
+
+      return response;
+    } catch (error) {
+      console.error("Profile update failed:", error);
+      return {
+        data: undefined,
+        error: {
+          message: "更新失敗，請重試",
+          status: 500,
+          statusText: "Internal Error",
+        },
+      };
+    }
+  };
+
+  const changePassword = async (data: {
+    currentPassword: string;
+    newPassword: string;
+  }): Promise<{
+    data?: unknown;
+    error: { status: number; message?: string } | null;
+  }> => {
+    try {
+      const response = await authClient.changePassword({
+        currentPassword: data.currentPassword,
+        newPassword: data.newPassword,
+        revokeOtherSessions: true,
+      });
+
+      return response;
+    } catch (error) {
+      console.error("Password change failed:", error);
+      return {
+        data: undefined,
+        error: {
+          message: "密碼更改失敗，請重試",
+          status: 500,
+        },
+      };
     }
   };
 
@@ -140,12 +202,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, [checkAuth]);
 
   const value: AuthContextType = {
-    user,
-    loading,
+    changePassword,
+    checkAuth,
     login,
     loginWithGoogle,
     logout,
-    checkAuth,
+    updateProfile,
+    user,
+    loading,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

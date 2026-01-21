@@ -1,7 +1,7 @@
 ---
-import { BlogPostCard } from "./BlogPostCard";
+import { BlogPostCard as BlogPostCardReact } from "./BlogPostCard";
 
-interface Props {
+type Props = {
   post: {
     slug: string;
     title: string;
@@ -16,7 +16,7 @@ interface Props {
   variant?: "vertical" | "horizontal";
   class?: string;
   href: string;
-}
+};
 
 const {
   post,
@@ -27,5 +27,5 @@ const {
 ---
 
 <div class={className}>
-  <BlogPostCard post={post} variant={variant} href={href} client:load/>
+  <BlogPostCardReact post={post} variant={variant} href={href} client:load/>
 </div>

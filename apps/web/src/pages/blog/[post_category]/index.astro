@@ -55,7 +55,9 @@ const fallbackCategories: StaticCategory[] = [
 ];
 
 function normalizeCategorySlug(value?: string | null): string {
-  if (!value) return "blog-post";
+  if (!value) {
+    return "blog-post";
+  }
   const input = value.trim().toLowerCase();
   if (
     ["blogger-testimonial", "blogger testimonial", "部落格推薦"].includes(input)
@@ -76,25 +78,43 @@ function normalizeCategorySlug(value?: string | null): string {
     return "simmons-knowledge";
   }
   if (input.startsWith("cat_")) {
-    if (input === "cat_001") return "blog-post";
-    if (input === "cat_002") return "blogger-testimonial";
-    if (input === "cat_003") return "simmons-knowledge";
-    if (input === "cat_004") return "customer-reviews";
+    if (input === "cat_001") {
+      return "blog-post";
+    }
+    if (input === "cat_002") {
+      return "blogger-testimonial";
+    }
+    if (input === "cat_003") {
+      return "simmons-knowledge";
+    }
+    if (input === "cat_004") {
+      return "customer-reviews";
+    }
     return input.slice(4);
   }
   return input.replace(/\s+/g, "-");
 }
 
 function resolveCategoryName(slug: string, fallback?: string): string {
-  if (slug === "customer-reviews") return "顧客真實回饋";
-  if (slug === "blogger-testimonial") return "部落格推薦";
-  if (slug === "simmons-knowledge") return "席夢思小知識";
-  if (slug === "blog-post") return "好文分享";
+  if (slug === "customer-reviews") {
+    return "顧客真實回饋";
+  }
+  if (slug === "blogger-testimonial") {
+    return "部落格推薦";
+  }
+  if (slug === "simmons-knowledge") {
+    return "席夢思小知識";
+  }
+  if (slug === "blog-post") {
+    return "好文分享";
+  }
   return fallback || slug;
 }
 
 function resolveCategoryDescription(slug: string, fallback?: string): string {
-  if (fallback) return fallback;
+  if (fallback) {
+    return fallback;
+  }
   if (slug === "blogger-testimonial") {
     return "精選媒體與部落客合作推薦，掌握品牌評測與趨勢觀點";
   }
@@ -110,13 +130,15 @@ function resolveCategoryDescription(slug: string, fallback?: string): string {
   return "";
 }
 
-function isPostCategory(data: any): data is PostCategory {
+function isPostCategory(data: unknown): data is PostCategory {
+  if (typeof data !== "object" || data === null) {
+    return false;
+  }
+  const obj = data as Record<string, unknown>;
   return (
-    data &&
-    typeof data === "object" &&
-    typeof data.id === "string" &&
-    typeof data.slug === "string" &&
-    typeof data.name === "string"
+    typeof obj.id === "string" &&
+    typeof obj.slug === "string" &&
+    typeof obj.name === "string"
   );
 }
 
@@ -129,20 +151,28 @@ export async function getStaticPaths() {
 
       if (categories.length > 0) {
         return categories
-          .map((category: any) => {
-            if (!(category?.slug || category?.name)) return null;
-            const slug = normalizeCategorySlug(category.slug || category.name);
+          .map((cat: unknown) => {
+            if (typeof cat !== "object" || cat === null) {
+              return null;
+            }
+            const catObj = cat as Record<string, unknown>;
+            if (!(catObj.slug || catObj.name)) {
+              return null;
+            }
+            const slug = normalizeCategorySlug(
+              (catObj.slug as string) || (catObj.name as string)
+            );
             return {
               params: { post_category: slug },
               props: {
                 category: {
-                  id: category.id,
+                  id: catObj.id as string,
                   slug,
-                  name: category.name,
-                  description: category.description,
-                  color: category.color,
-                  icon: category.icon,
-                  postsCount: category.postsCount,
+                  name: catObj.name as string,
+                  description: (catObj.description as string) ?? "",
+                  color: (catObj.color as string) ?? "#1f2937",
+                  icon: (catObj.icon as string) ?? "",
+                  postsCount: catObj.postsCount as number | undefined,
                 } satisfies StaticCategory,
               },
             };
@@ -224,9 +254,9 @@ export async function getStaticPaths() {
 // Conditional prerender: disabled in dev for easier preview, enabled in staging/production for static generation
 export const prerender = import.meta.env.MODE !== "development";
 
-interface Props {
+type Props = {
   category?: StaticCategory;
-}
+};
 
 interface Params extends Record<string, string> {
   post_category: string;
@@ -331,7 +361,8 @@ const posts: BlogPostSummary[] = rawPosts.map((post) => {
     category: categoryLabel,
     authorName: post.authorName,
     publishedAt: post.publishedAt,
-    overlaySettings: post.overlaySettings,
+    overlaySettings: (post as unknown as Record<string, unknown>)
+      .overlaySettings as BlogPostSummary["overlaySettings"],
   };
 });
 
@@ -352,23 +383,19 @@ const pageDescription = categoryDescription || "最新文章與品牌故事分�
       <div
         class={`grid grid-cols-1 ${cardVariant === 'vertical' ? 'grid-cols-1 md:grid-cols-3 gap-8' : 'md:flex flex-col gap-8'}`}
       >
-        {
-          posts.map((post) => (
+        {posts.map((post) => (
             <BlogPostCard
               post={post}
               variant={cardVariant}
               href={`/blog/${categorySlug}/${post.slug}`}
             />
-          ))
-        }
+          ))}
       </div>
-      {
-        posts.length === 0 && (
+      {posts.length === 0 && (
           <div class="text-center py-12">
             <p class="text-gray-500">目前尚無文章...</p>
           </div>
-        )
-      }
+        )}
     </div>
   </main>
   <!-- CTA Section -->

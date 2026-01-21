@@ -247,6 +247,7 @@ export default function MyAppointments() {
           type="button"
         >
           <svg
+            aria-hidden="true"
             className="h-4 w-4"
             fill="none"
             stroke="currentColor"
@@ -268,8 +269,8 @@ export default function MyAppointments() {
         {/* Mobile Filter - Select */}
         <div className="w-full sm:hidden">
           <Select
-            value={statusFilter}
             onValueChange={(val) => setStatusFilter(val as StatusFilter)}
+            value={statusFilter}
           >
             <SelectTrigger className="w-full">
               <SelectValue placeholder="篩選狀態" />
@@ -285,16 +286,17 @@ export default function MyAppointments() {
         </div>
 
         {/* Desktop Filter - Pills */}
-        <div className="hidden sm:flex flex-wrap gap-2">
+        <div className="hidden flex-wrap gap-2 sm:flex">
           {filterOptions.map((option) => (
             <button
-              key={option.value}
-              onClick={() => setStatusFilter(option.value)}
               className={`rounded-full px-4 py-1.5 text-sm transition-colors ${
                 statusFilter === option.value
                   ? "bg-slate-900 text-white"
                   : "bg-slate-100 text-slate-600 hover:bg-slate-200"
               }`}
+              key={option.value}
+              onClick={() => setStatusFilter(option.value)}
+              type="button"
             >
               {option.label}
             </button>
@@ -303,21 +305,22 @@ export default function MyAppointments() {
 
         {/* Sort Button - cleaned up */}
         <button
-          className="hidden sm:flex items-center gap-1 text-slate-500 text-sm hover:text-slate-700"
+          className="hidden items-center gap-1 text-slate-500 text-sm hover:text-slate-700 sm:flex"
           onClick={() => setSortNewestFirst(!sortNewestFirst)}
           type="button"
         >
           <svg
+            aria-hidden="true"
             className="h-4 w-4"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
           >
             <path
+              d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"
               strokeLinecap="round"
               strokeLinejoin="round"
               strokeWidth={2}
-              d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"
             />
           </svg>
           {sortNewestFirst ? "最新優先" : "最舊優先"}

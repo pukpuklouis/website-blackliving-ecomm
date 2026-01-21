@@ -1,11 +1,11 @@
 ---
 import { Image } from "astro:assets";
 
-interface ComparisonRow {
+type ComparisonRow = {
   category: string;
   blackLiving: string;
   traditional: string;
-}
+};
 
 const comparisonData: ComparisonRow[] = [
   {
@@ -76,23 +76,20 @@ const comparisonData: ComparisonRow[] = [
         />
       </div>
 
-      {
-        comparisonData.map((row) => (
+      {comparisonData.map((row) => (
           <div class='flex items-center justify-center py-6 md:py-6 px-2 md:px-4 border-y-2 border-white'>
             <p class='text-xs md:text-xl font-bold text-center text-gray-50 leading-snug whitespace-pre-line'>
               {row.blackLiving}
             </p>
           </div>
-        ))
-      }
+        ))}
     </div>
 
     <!-- Right Side: Category + Traditional (together) -->
     <div
       class="flex flex-col -ml-4 h-fit flex-1 border-4 rounded-r-xl border-gray-700"
     >
-      {
-        comparisonData.map((row) => (
+      {comparisonData.map((row) => (
           <div class='flex gap-0'>
             <!-- Center: Category -->
             <div class='flex items-center justify-center bg-gray-400 px-4 py-2 md:py-6 border-y-2 border-gray-800 w-20 md:w-40'>
@@ -106,8 +103,7 @@ const comparisonData: ComparisonRow[] = [
               </p>
             </div>
           </div>
-        ))
-      }
+        ))}
     </div>
   </div>
 </div>

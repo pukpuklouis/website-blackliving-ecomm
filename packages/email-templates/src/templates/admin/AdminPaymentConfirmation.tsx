@@ -181,7 +181,7 @@ AdminPaymentConfirmation.PreviewProps = {
   customerEmail: "mei@example.com",
   customerPhone: "0923-456-789",
   paymentMethod: "銀行轉帳",
-  paymentAmount: 45000,
+  paymentAmount: 45_000,
   paymentDate: "2026/01/12 15:30",
   notes: "客戶已確認收件地址",
   logoUrl: "https://www.blackliving.tw/blackliving-logo-zh.svg",

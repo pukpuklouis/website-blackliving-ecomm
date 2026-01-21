@@ -249,12 +249,12 @@ AdminNewOrder.PreviewProps = {
   customerEmail: "test@example.com",
   customerPhone: "0912-345-678",
   orderItems: [
-    { name: "經典雙人床墊 - 標準款", quantity: 1, price: 28000, size: "雙人" },
+    { name: "經典雙人床墊 - 標準款", quantity: 1, price: 28_000, size: "雙人" },
     { name: "記憶枕頭", quantity: 2, price: 1500 },
   ],
-  subtotal: 31000,
+  subtotal: 31_000,
   shipping: 0,
-  total: 31000,
+  total: 31_000,
   paymentMethod: "銀行轉帳",
   shippingAddress: {
     name: "王小明",

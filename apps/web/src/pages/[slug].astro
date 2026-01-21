@@ -61,8 +61,7 @@ const {
   type="article"
   publishedTime={publishedAt ?? undefined}
 >
-  {
-    featuredImage && (
+  {featuredImage && (
       <div class="w-full aspect-[16/7] md:aspect-[1106/300] max-h-[600px] overflow-hidden mb-2">
         <Image
           src={featuredImage}
@@ -72,31 +71,26 @@ const {
           class="w-full h-full object-cover"
         />
       </div>
-    )
-  }
+    )}
 
   <article
     class={`md:max-w-4xl mx-auto px-4 ${featuredImage ? 'py-4' : 'py-12'}`}
   >
     <header class="mb-8 text-center">
       <h1 class="text-2xl md:text-4xl font-bold mb-4">{title}</h1>
-      {
-        publishedAt && (
+      {publishedAt && (
           <time datetime={publishedAt} class="hidden text-gray-500">
             {new Date(publishedAt).toLocaleDateString('zh-TW')}
           </time>
-        )
-      }
+        )}
     </header>
 
     <div class="mx-auto">
-      {
-        content && content.length > 0 ? (
+      {content && content.length > 0 ? (
           <BlockNoteRenderer client:only="react" content={content} />
         ) : (
           <MarkdownRenderer content={contentMarkdown || ''} />
-        )
-      }
+        )}
     </div>
   </article>
 </BaseLayout>

@@ -38,7 +38,6 @@ import {
   type Order,
   paymentMethodLabels,
   paymentStatusLabels,
-  statusColors,
   statusLabels,
 } from "./order-details-dialog";
 
@@ -84,14 +83,14 @@ function StatusIndicator({
       </span>
       <div className="flex items-center gap-2">
         <span
-          className={`h-2.5 w-2.5 rounded-full ${dotColors[color]}`}
           aria-hidden="true"
+          className={`h-2.5 w-2.5 rounded-full ${dotColors[color]}`}
         />
         <span className={`font-bold text-base ${colorClasses[color]}`}>
           {value}
         </span>
         {badge ? (
-          <span className="rounded-full border border-stone-200 bg-stone-100 px-2 py-0.5 text-xs text-stone-500">
+          <span className="rounded-full border border-stone-200 bg-stone-100 px-2 py-0.5 text-stone-500 text-xs">
             {badge}
           </span>
         ) : null}
@@ -144,7 +143,7 @@ function OrderHeader({ order, onBack }: { order: Order; onBack: () => void }) {
     : "";
 
   return (
-    <header className="sticky top-0 z-50 border-b border-stone-200 bg-white shadow-sm">
+    <header className="sticky top-0 z-50 border-stone-200 border-b bg-white shadow-sm">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <div className="flex items-center gap-4">
           <Button
@@ -181,10 +180,11 @@ function OrderHeader({ order, onBack }: { order: Order; onBack: () => void }) {
             列印
           </Button>
           <Button
-            onClick={() =>
-              order.customerInfo.phone &&
-              (window.location.href = `tel:${order.customerInfo.phone}`)
-            }
+            onClick={() => {
+              if (order.customerInfo.phone) {
+                window.location.href = `tel:${order.customerInfo.phone}`;
+              }
+            }}
             size="sm"
           >
             <Phone className="mr-1.5 h-4 w-4" />
@@ -207,26 +207,32 @@ function StatusBar({
   const nextStep = getNextStepAction(order);
 
   // Determine status colors
-  const orderStatusColor =
-    order.status === "delivered"
-      ? "green"
-      : order.status === "cancelled"
-        ? "muted"
-        : "blue";
+  const orderStatusColor = (() => {
+    if (order.status === "delivered") {
+      return "green";
+    }
+    if (order.status === "cancelled") {
+      return "muted";
+    }
+    return "blue";
+  })();
   const paymentColor = order.paymentStatus === "paid" ? "green" : "red";
   const shippingColor =
     order.status === "shipped" || order.status === "delivered"
       ? "green"
       : "muted";
-  const shippingLabel =
-    order.status === "shipped"
-      ? "配送中"
-      : order.status === "delivered"
-        ? "已送達"
-        : "未出貨";
+  const shippingLabel = (() => {
+    if (order.status === "shipped") {
+      return "配送中";
+    }
+    if (order.status === "delivered") {
+      return "已送達";
+    }
+    return "未出貨";
+  })();
 
   return (
-    <div className="sticky top-16 z-40 border-b border-stone-200 bg-white/95 shadow-sm backdrop-blur transition-all">
+    <div className="sticky top-16 z-40 border-stone-200 border-b bg-white/95 shadow-sm backdrop-blur transition-all">
       <div className="mx-auto max-w-7xl px-4 py-3 sm:px-6 lg:px-8">
         <div className="flex flex-col items-center justify-between gap-4 xl:flex-row">
           {/* Status indicators */}
@@ -264,9 +270,9 @@ function StatusBar({
                   </span>
                 </div>
                 <Button
+                  className="whitespace-nowrap"
                   onClick={() => onAction(nextStep.action)}
                   size="sm"
-                  className="whitespace-nowrap"
                 >
                   {nextStep.label}
                 </Button>
@@ -347,24 +353,24 @@ function CustomerShippingCard({ order }: { order: Order }) {
               </div>
               <div className="flex items-center gap-1 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100">
                 <Button
-                  onClick={() =>
-                    (window.location.href = `mailto:${order.customerInfo.email}`)
-                  }
+                  className="h-7 w-7"
+                  onClick={() => {
+                    window.location.href = `mailto:${order.customerInfo.email}`;
+                  }}
                   size="icon"
                   title="寄信"
                   variant="ghost"
-                  className="h-7 w-7"
                 >
                   <Send className="h-3.5 w-3.5" />
                 </Button>
                 <Button
+                  className="h-7 w-7"
                   onClick={() =>
                     copyToClipboard(order.customerInfo.email, "Email 已複製")
                   }
                   size="icon"
                   title="複製 Email"
                   variant="ghost"
-                  className="h-7 w-7"
                 >
                   <Copy className="h-3.5 w-3.5" />
                 </Button>
@@ -381,24 +387,24 @@ function CustomerShippingCard({ order }: { order: Order }) {
               </div>
               <div className="flex items-center gap-1 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100">
                 <Button
-                  onClick={() =>
-                    (window.location.href = `tel:${order.customerInfo.phone}`)
-                  }
+                  className="h-7 w-7"
+                  onClick={() => {
+                    window.location.href = `tel:${order.customerInfo.phone}`;
+                  }}
                   size="icon"
                   title="撥打"
                   variant="ghost"
-                  className="h-7 w-7"
                 >
                   <ExternalLink className="h-3.5 w-3.5" />
                 </Button>
                 <Button
+                  className="h-7 w-7"
                   onClick={() =>
                     copyToClipboard(order.customerInfo.phone, "電話已複製")
                   }
                   size="icon"
                   title="複製電話"
                   variant="ghost"
-                  className="h-7 w-7"
                 >
                   <Copy className="h-3.5 w-3.5" />
                 </Button>
@@ -459,7 +465,7 @@ function CustomerShippingCard({ order }: { order: Order }) {
 function OrderItemsCard({ order }: { order: Order }) {
   return (
     <Card className="overflow-hidden">
-      <div className="flex items-center justify-between border-b border-stone-100 bg-stone-50/50 p-4">
+      <div className="flex items-center justify-between border-stone-100 border-b bg-stone-50/50 p-4">
         <h2 className="flex items-center gap-2 font-bold text-base text-primary">
           <ShoppingBag className="h-4 w-4" />
           訂單商品
@@ -499,7 +505,7 @@ function OrderItemsCard({ order }: { order: Order }) {
             </div>
           ))}
         </div>
-        <div className="border-t border-stone-100 bg-stone-50 p-4">
+        <div className="border-stone-100 border-t bg-stone-50 p-4">
           <div className="ml-auto flex max-w-xs flex-col gap-2">
             <div className="flex justify-between text-sm text-stone-600">
               <span>小計</span>
@@ -534,7 +540,7 @@ function OrderHistoryCard({ order }: { order: Order }) {
   if (order.paymentVerifiedAt) {
     events.push({
       title: "付款確認",
-      description: `訂單已確認付款`,
+      description: "訂單已確認付款",
       date: order.paymentVerifiedAt,
     });
   }
@@ -612,7 +618,7 @@ function PaymentInfoCard({
     <>
       <Card>
         <CardContent className="p-5">
-          <div className="mb-4 flex items-center justify-between border-b border-stone-100 pb-3">
+          <div className="mb-4 flex items-center justify-between border-stone-100 border-b pb-3">
             <h2 className="flex items-center gap-2 font-bold text-primary">
               <CreditCard className="h-4 w-4" />
               付款資訊
@@ -712,7 +718,7 @@ function ShippingInfoCard({
   return (
     <Card>
       <CardContent className="p-5">
-        <div className="mb-4 flex items-center justify-between border-b border-stone-100 pb-3">
+        <div className="mb-4 flex items-center justify-between border-stone-100 border-b pb-3">
           <h2 className="flex items-center gap-2 font-bold text-primary">
             <Truck className="h-4 w-4" />
             物流資訊
@@ -743,18 +749,18 @@ function ShippingInfoCard({
             ) : null}
           </div>
         ) : (
-          <div className="rounded-lg border-2 border-dashed border-stone-200 bg-stone-50 p-5 text-center">
+          <div className="rounded-lg border-2 border-stone-200 border-dashed bg-stone-50 p-5 text-center">
             <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-stone-100">
               <Package className="h-6 w-6 text-stone-400" />
             </div>
             <p className="mb-1 font-bold text-sm text-stone-800">
               尚未建立物流單
             </p>
-            {!canCreateShipment ? (
+            {canCreateShipment ? null : (
               <p className="mb-4 flex items-center justify-center gap-1 text-red-500 text-xs">
                 需先完成付款
               </p>
-            ) : null}
+            )}
             <Button
               className="mb-3 w-full"
               disabled={!canCreateShipment}
@@ -763,7 +769,7 @@ function ShippingInfoCard({
             >
               建立物流單
             </Button>
-            {!canCreateShipment ? (
+            {canCreateShipment ? null : (
               <button
                 className="flex w-full items-center justify-center gap-1 text-primary text-xs hover:underline"
                 type="button"
@@ -771,7 +777,7 @@ function ShippingInfoCard({
                 <Send className="h-3 w-3" />
                 立即發送付款提醒
               </button>
-            ) : null}
+            )}
           </div>
         )}
       </CardContent>
@@ -848,7 +854,7 @@ export default function OrderDetailPage() {
           setOrder(result.data);
         }
       }
-    } catch (error) {
+    } catch (_error) {
       toast.error("載入訂單失敗");
     } finally {
       setLoading(false);
@@ -909,6 +915,8 @@ export default function OrderDetailPage() {
           }
           break;
         }
+        default:
+          break;
       }
     } catch {
       toast.error("操作失敗");
@@ -978,7 +986,7 @@ export default function OrderDetailPage() {
     return (
       <div className="flex h-64 items-center justify-center">
         <div className="text-center">
-          <div className="mx-auto h-8 w-8 animate-spin rounded-full border-b-2 border-stone-900" />
+          <div className="mx-auto h-8 w-8 animate-spin rounded-full border-stone-900 border-b-2" />
           <p className="mt-2 text-stone-600">載入中...</p>
         </div>
       </div>

@@ -1,13 +1,13 @@
 ---
-interface TimelineItem {
+type TimelineItem = {
   year: string;
   description: string;
   color?: string;
-}
+};
 
-interface Props {
+type Props = {
   items: TimelineItem[];
-}
+};
 
 const { items } = Astro.props;
 ---
@@ -18,8 +18,7 @@ const { items } = Astro.props;
 
   <!-- Timeline items -->
   <div class="space-y-12">
-    {
-      items.map((item, index) => (
+    {items.map((item, index) => (
         <div class='relative flex items-top gap-8 group'>
           <div class='relative z-10 flex gap-4 flex-shrink-0'>
             <div
@@ -36,8 +35,7 @@ const { items } = Astro.props;
             </div>
           </div>
         </div>
-      ))
-    }
+      ))}
   </div>
 </div>
 
