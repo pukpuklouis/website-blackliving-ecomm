@@ -30,7 +30,7 @@ export function AdminNavUser() {
   };
 
   const handleAccountSettings = () => {
-    navigate("/admin/settings");
+    navigate("/dashboard/account-settings");
   };
 
   if (!user) {

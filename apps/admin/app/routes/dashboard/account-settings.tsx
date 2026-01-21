@@ -1,6 +1,18 @@
+import {
+  Alert,
+  AlertDescription,
+  Button,
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  Input,
+  Label,
+} from "@blackliving/ui";
 import { type FormEvent, useState } from "react";
 import { useNavigate } from "react-router";
-import { useAuth } from "../contexts/AuthContext";
+import { useAuth } from "../../contexts/AuthContext";
 
 type FormState = {
   confirmPassword: string;
@@ -113,49 +125,35 @@ export function AdminSettingsRoute() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="mx-auto max-w-2xl">
-        <h1 className="mb-6 font-bold text-2xl text-gray-900">帳戶設定</h1>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h1 className="font-semibold text-2xl text-gray-900">帳戶設定</h1>
+      </div>
 
-        {/* Alert Messages */}
-        {message ? (
-          <div
-            className={`mb-4 rounded-md p-4 ${
-              message.type === "success"
-                ? "bg-green-100 text-green-800"
-                : "bg-red-100 text-red-800"
-            }`}
-          >
-            {message.text}
+      {message && (
+        <Alert variant={message.type === "error" ? "destructive" : "default"}>
+          <AlertDescription>{message.text}</AlertDescription>
+        </Alert>
+      )}
+
+      <Card>
+        <CardHeader className="flex flex-row items-start justify-between space-y-0">
+          <div className="space-y-1">
+            <CardTitle>個人資料</CardTitle>
+            <CardDescription>更新管理員名稱與電子郵箱</CardDescription>
           </div>
-        ) : null}
-
-        {/* Profile Section */}
-        <div className="mb-6 rounded-lg bg-white p-6 shadow-md">
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="font-semibold text-gray-900 text-lg">個人資料</h2>
-            {!isEditing && (
-              <button
-                className="rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
-                onClick={() => setIsEditing(true)}
-                type="button"
-              >
-                編輯
-              </button>
-            )}
-          </div>
-
+          {!isEditing && (
+            <Button onClick={() => setIsEditing(true)} size="sm" type="button">
+              編輯
+            </Button>
+          )}
+        </CardHeader>
+        <CardContent className="space-y-4">
           {isEditing ? (
             <form className="space-y-4" onSubmit={handleProfileUpdate}>
-              <div>
-                <label
-                  className="mb-1 block font-medium text-gray-700 text-sm"
-                  htmlFor="name"
-                >
-                  管理員名稱
-                </label>
-                <input
-                  className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
+              <div className="space-y-2">
+                <Label htmlFor="name">管理員名稱</Label>
+                <Input
                   id="name"
                   onChange={(e) =>
                     setFormData((prev) => ({ ...prev, name: e.target.value }))
@@ -165,15 +163,9 @@ export function AdminSettingsRoute() {
                   value={formData.name}
                 />
               </div>
-              <div>
-                <label
-                  className="mb-1 block font-medium text-gray-700 text-sm"
-                  htmlFor="email"
-                >
-                  電子郵箱
-                </label>
-                <input
-                  className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
+              <div className="space-y-2">
+                <Label htmlFor="email">電子郵箱</Label>
+                <Input
                   id="email"
                   onChange={(e) =>
                     setFormData((prev) => ({ ...prev, email: e.target.value }))
@@ -183,68 +175,56 @@ export function AdminSettingsRoute() {
                   value={formData.email}
                 />
               </div>
-              <div className="flex gap-2">
-                <button
-                  className="flex-1 rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
-                  type="submit"
-                >
-                  儲存
-                </button>
-                <button
-                  className="rounded-md bg-gray-200 px-4 py-2 text-gray-800 hover:bg-gray-300"
+              <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
+                <Button type="submit">儲存</Button>
+                <Button
                   onClick={() => setIsEditing(false)}
                   type="button"
+                  variant="outline"
                 >
                   取消
-                </button>
+                </Button>
               </div>
             </form>
           ) : (
-            <div className="space-y-3">
-              <div>
-                <span className="block font-medium text-gray-700 text-sm">
-                  電子郵箱
-                </span>
-                <p className="text-gray-900">{user.email}</p>
+            <div className="space-y-4">
+              <div className="space-y-1">
+                <p className="text-muted-foreground text-sm">電子郵箱</p>
+                <p className="text-sm font-medium">{user.email}</p>
               </div>
-              <div>
-                <span className="block font-medium text-gray-700 text-sm">
-                  管理員名稱
-                </span>
-                <p className="text-gray-900">
+              <div className="space-y-1">
+                <p className="text-muted-foreground text-sm">管理員名稱</p>
+                <p className="text-sm font-medium">
                   {user.name ?? user.email?.split("@")[0]}
                 </p>
               </div>
             </div>
           )}
-        </div>
+        </CardContent>
+      </Card>
 
-        {/* Password Change Section */}
-        <div className="rounded-lg bg-white p-6 shadow-md">
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="font-semibold text-gray-900 text-lg">更改密碼</h2>
-            {!isChangingPassword && (
-              <button
-                className="rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
-                onClick={() => setIsChangingPassword(true)}
-                type="button"
-              >
-                更改密碼
-              </button>
-            )}
+      <Card>
+        <CardHeader className="flex flex-row items-start justify-between space-y-0">
+          <div className="space-y-1">
+            <CardTitle>更改密碼</CardTitle>
+            <CardDescription>定期更新密碼以保護帳戶安全</CardDescription>
           </div>
-
+          {!isChangingPassword && (
+            <Button
+              onClick={() => setIsChangingPassword(true)}
+              size="sm"
+              type="button"
+            >
+              更改密碼
+            </Button>
+          )}
+        </CardHeader>
+        <CardContent className="space-y-4">
           {isChangingPassword ? (
             <form className="space-y-4" onSubmit={handlePasswordChange}>
-              <div>
-                <label
-                  className="mb-1 block font-medium text-gray-700 text-sm"
-                  htmlFor="currentPassword"
-                >
-                  目前密碼
-                </label>
-                <input
-                  className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
+              <div className="space-y-2">
+                <Label htmlFor="currentPassword">目前密碼</Label>
+                <Input
                   id="currentPassword"
                   onChange={(e) =>
                     setFormData((prev) => ({
@@ -257,15 +237,9 @@ export function AdminSettingsRoute() {
                   value={formData.currentPassword}
                 />
               </div>
-              <div>
-                <label
-                  className="mb-1 block font-medium text-gray-700 text-sm"
-                  htmlFor="newPassword"
-                >
-                  新密碼
-                </label>
-                <input
-                  className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
+              <div className="space-y-2">
+                <Label htmlFor="newPassword">新密碼</Label>
+                <Input
                   id="newPassword"
                   minLength={8}
                   onChange={(e) =>
@@ -279,15 +253,9 @@ export function AdminSettingsRoute() {
                   value={formData.newPassword}
                 />
               </div>
-              <div>
-                <label
-                  className="mb-1 block font-medium text-gray-700 text-sm"
-                  htmlFor="confirmPassword"
-                >
-                  確認新密碼
-                </label>
-                <input
-                  className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
+              <div className="space-y-2">
+                <Label htmlFor="confirmPassword">確認新密碼</Label>
+                <Input
                   id="confirmPassword"
                   minLength={8}
                   onChange={(e) =>
@@ -301,29 +269,24 @@ export function AdminSettingsRoute() {
                   value={formData.confirmPassword}
                 />
               </div>
-              <div className="flex gap-2">
-                <button
-                  className="flex-1 rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
-                  type="submit"
-                >
-                  更改
-                </button>
-                <button
-                  className="rounded-md bg-gray-200 px-4 py-2 text-gray-800 hover:bg-gray-300"
+              <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
+                <Button type="submit">更改</Button>
+                <Button
                   onClick={() => setIsChangingPassword(false)}
                   type="button"
+                  variant="outline"
                 >
                   取消
-                </button>
+                </Button>
               </div>
             </form>
           ) : (
-            <p className="text-gray-600 text-sm">
+            <p className="text-muted-foreground text-sm">
               定期更改密碼以保護您的帳戶安全
             </p>
           )}
-        </div>
-      </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
