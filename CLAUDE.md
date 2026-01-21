@@ -226,6 +226,7 @@ Using the test-runner agent ensures:
 
 ### ABSOLUTE RULES:
 
+- **NO ULTRACITE FIX WITHOUT FILE PATHS**: NEVER run `npx ultracite fix` without specifying exact file paths. This will modify files across the entire monorepo. Always use: `npx ultracite fix <specific-files>`
 - **NO PARTIAL IMPLEMENTATION**
 - **NO SIMPLIFICATION**: no "//This is simplified stuff for now, complete implementation would blablabla"
 - **NO CODE DUPLICATION**: check existing codebase to reuse functions and constants Read files before writing new functions. Use common sense function name to find them easily.
@@ -244,9 +245,23 @@ This project uses **Ultracite**, a zero-config Biome preset that enforces strict
 
 ## Quick Reference
 
-- **Format code**: `npx ultracite fix`
-- **Check for issues**: `npx ultracite check`
+- **Format specific files**: `npx ultracite fix path/to/file.ts path/to/other.tsx`
+- **Check specific files**: `npx ultracite check path/to/file.ts`
 - **Diagnose setup**: `npx ultracite doctor`
+
+## ⚠️ CRITICAL: NEVER Run Without File Paths
+
+**ABSOLUTE RULE**: NEVER run `npx ultracite fix` without specifying exact file paths.
+
+```bash
+# ❌ FORBIDDEN - Fixes ALL files in the project
+npx ultracite fix
+
+# ✅ CORRECT - Fixes only specified files
+npx ultracite fix apps/admin/app/routes/admin.settings.tsx
+```
+
+Running Ultracite without file paths will modify files across the entire monorepo, causing unwanted side effects and potentially breaking code that was intentionally structured differently.
 
 Biome (the underlying engine) provides extremely fast Rust-based linting and formatting. Most issues are automatically fixable.
 
@@ -360,4 +375,4 @@ Biome's linter will catch most issues automatically. Focus your attention on:
 
 ---
 
-Most formatting and common issues are automatically fixed by Biome. Run `npx ultracite fix` before committing to ensure compliance.
+Most formatting and common issues are automatically fixed by Biome. Run `npx ultracite fix <changed-files>` before committing to ensure compliance.
