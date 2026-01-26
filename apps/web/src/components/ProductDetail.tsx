@@ -161,7 +161,7 @@ const ProductDetail: FC<ProductDetailProps> = ({
       />
 
       {/* Delivery Information */}
-      <div className="rounded-lg bg-gray-50 p-3 text-center text-gray-600 text-sm">
+      <div className="hidden rounded-lg bg-gray-50 p-3 text-center text-gray-600 text-sm">
         預估配送期：訂單成立後約 3 個月
       </div>
     </div>

@@ -15,11 +15,11 @@ type FooterProps = {
 
 // Default contact info - TODO: Replace with real Black Living contact data
 const DEFAULT_CONTACT = {
-  phone: "07-123-4567",
   email: "service@blackliving.tw",
   address: "新北市中和區景平路398號2樓",
 
-  facebookUrl: "https://www.facebook.com/profile.php?id=100057144952837",
+  facebookUrl:
+    "https://www.facebook.com/p/Black-Living%E9%BB%91%E5%93%A5%E5%B1%85%E5%AE%B6-%E9%BB%91%E6%A8%99%E7%8E%8B%E9%A0%82%E7%B4%9A%E5%B8%AD%E5%A4%A2%E6%80%9D%E9%BB%91%E6%A8%99%E5%B0%88%E8%B3%A3-100057144952837/",
   lineUrl: "https://line.me/R/ti/p/@blackking",
 } as const;
 

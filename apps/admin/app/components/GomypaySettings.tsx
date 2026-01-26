@@ -19,6 +19,7 @@ import { useApiUrl } from "../contexts/EnvironmentContext";
 type GomypayConfig = {
   hasConfig: boolean;
   customerId: string;
+  merchantId: string; // 明碼商店代號 (統一編號) - 用於 MD5 驗證
   hasStrCheck?: boolean;
   isTestMode: boolean;
   returnUrl: string;
@@ -39,6 +40,7 @@ export default function GomypaySettings() {
   const [config, setConfig] = useState<GomypayConfig>({
     hasConfig: false,
     customerId: "",
+    merchantId: "",
     isTestMode: true,
     returnUrl: "",
     callbackUrl: "",
@@ -58,6 +60,7 @@ export default function GomypaySettings() {
     ): GomypayConfig => ({
       hasConfig: Boolean(data.hasConfig),
       customerId: String(data.customerId || ""),
+      merchantId: String(data.merchantId || ""),
       hasStrCheck: Boolean(data.hasStrCheck),
       isTestMode: data.isTestMode !== false,
       returnUrl: String(data.returnUrl || ""),
@@ -88,7 +91,10 @@ export default function GomypaySettings() {
 
   const validateSaveConfig = (): string | null => {
     if (!config.customerId) {
-      return "請輸入商店代號";
+      return "請輸入商店代號 (加密 32 碼)";
+    }
+    if (!config.merchantId) {
+      return "請輸入明碼商店代號 (統一編號)";
     }
     const needsStrCheck = !(strCheck || config.hasStrCheck);
     if (needsStrCheck) {
@@ -118,6 +124,7 @@ export default function GomypaySettings() {
         credentials: "include",
         body: JSON.stringify({
           customerId: config.customerId,
+          merchantId: config.merchantId,
           strCheck: strCheck || undefined,
           isTestMode: config.isTestMode,
           returnUrl: config.returnUrl || undefined,
@@ -207,15 +214,33 @@ export default function GomypaySettings() {
         {/* Credentials */}
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <div className="space-y-2">
-            <Label htmlFor="customer-id">商店代號 (CustomerId)</Label>
+            <Label htmlFor="customer-id">加密商店代號 (CustomerId)</Label>
             <Input
               id="customer-id"
               onChange={(e) =>
                 setConfig((prev) => ({ ...prev, customerId: e.target.value }))
               }
-              placeholder="統一編號或 32 碼加密代號"
+              placeholder="32 碼加密代號"
               value={config.customerId}
             />
+            <p className="text-muted-foreground text-xs">
+              GOMYPAY 提供的 32 碼加密商店代號
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="merchant-id">明碼商店代號 (統一編號)</Label>
+            <Input
+              id="merchant-id"
+              onChange={(e) =>
+                setConfig((prev) => ({ ...prev, merchantId: e.target.value }))
+              }
+              placeholder="8 碼統一編號"
+              value={config.merchantId}
+            />
+            <p className="text-muted-foreground text-xs">
+              用於 Webhook 驗證的明碼商店代號（統一編號或身分證）
+            </p>
           </div>
 
           <div className="space-y-2">

@@ -26,6 +26,7 @@ export type GomypayPaymentType =
 /** GOMYPAY 設定 */
 type GomypayConfig = {
   customerId: string;
+  merchantId: string; // 明碼商店代號 (統編/身分證) - 用於 MD5 驗證
   strCheck: string;
   isTestMode: boolean;
   returnUrl: string;
@@ -275,6 +276,7 @@ const initiatePaymentSchema = z.object({
 
 const saveConfigSchema = z.object({
   customerId: z.string().min(1).max(32),
+  merchantId: z.string().min(1).max(20), // 明碼商店代號 (統編/身分證)
   strCheck: z.string().length(32).optional(),
   isTestMode: z.boolean().default(true),
   returnUrl: z.string().url().optional().or(z.literal("")),
@@ -385,6 +387,7 @@ gomypay.post(
 
       const configValue: GomypayConfig = {
         customerId: data.customerId,
+        merchantId: data.merchantId,
         strCheck: strCheckToUse,
         isTestMode: data.isTestMode,
         returnUrl: data.returnUrl || "",
@@ -555,10 +558,12 @@ gomypay.get("/callback", async (c) => {
     const { response, amount } = parseCallbackParams(params);
 
     // Verify str_check for successful payments
+    // IMPORTANT: Use merchantId (plaintext) not customerId (encrypted) for MD5 verification
     const isSuccess = response.result === "1";
     const verificationFailed =
       isSuccess &&
-      !verifyStrCheck(response, config.customerId, amount, config.strCheck);
+      config.merchantId &&
+      !verifyStrCheck(response, config.merchantId, amount, config.strCheck);
 
     if (verificationFailed) {
       console.error(
@@ -606,10 +611,20 @@ gomypay.post("/webhook", async (c) => {
     const amount = Number.parseInt(response.e_money || "0", 10);
 
     // Verify str_check
-    if (!verifyStrCheck(response, config.customerId, amount, config.strCheck)) {
+    // IMPORTANT: Use merchantId (plaintext) not customerId (encrypted) for MD5 verification
+    // Skip verification if merchantId is not configured (backward compatibility)
+    if (
+      config.merchantId &&
+      !verifyStrCheck(response, config.merchantId, amount, config.strCheck)
+    ) {
       console.error(
         "Webhook str_check verification failed for order:",
-        response.e_orderno
+        response.e_orderno,
+        {
+          receivedStrCheck: response.str_check,
+          merchantId: config.merchantId,
+          amount,
+        }
       );
       return c.text("OK", 200);
     }
