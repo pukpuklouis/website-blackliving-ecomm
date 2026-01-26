@@ -28,7 +28,6 @@ import {
 
 type ProfileFormProps = {
   className?: string;
-  onSuccess?: (message: string) => void;
   onError?: (error: string) => void;
 };
 
@@ -41,20 +40,10 @@ type FormData = {
   contactPreference: string;
 };
 
-export function ProfileForm({
-  className,
-  onSuccess,
-  onError,
-}: ProfileFormProps) {
-  const {
-    profile,
-    loading,
-    error,
-    isDirty,
-    updateProfile,
-    checkDirty,
-    resetForm,
-  } = useProfile();
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Complex form with multiple validation paths
+export function ProfileForm({ className, onError }: ProfileFormProps) {
+  const { profile, loading, error, updateProfile, checkDirty, resetForm } =
+    useProfile();
 
   const [formData, setFormData] = useState<FormData>({
     firstName: "",
@@ -73,12 +62,7 @@ export function ProfileForm({
 
   // Sync form data with profile
   useEffect(() => {
-    if (
-      profile &&
-      profile.user &&
-      profile.customerProfile &&
-      profile.userProfile
-    ) {
+    if (profile?.user && profile?.customerProfile && profile?.userProfile) {
       setFormData({
         firstName: profile.user.firstName || "",
         lastName: profile.user.lastName || "",
@@ -94,12 +78,7 @@ export function ProfileForm({
   const [localIsDirty, setLocalIsDirty] = useState(false);
 
   useEffect(() => {
-    if (
-      profile &&
-      profile.user &&
-      profile.customerProfile &&
-      profile.userProfile
-    ) {
+    if (profile?.user && profile?.customerProfile && profile?.userProfile) {
       const dirty =
         formData.firstName !== (profile.user.firstName || "") ||
         formData.lastName !== (profile.user.lastName || "") ||
@@ -117,35 +96,50 @@ export function ProfileForm({
         lastName: formData.lastName,
         phone: formData.phone,
         birthday: formData.birthday,
-        gender: formData.gender === "unspecified" ? undefined : formData.gender,
-        contactPreference: formData.contactPreference,
+        gender: (formData.gender === "unspecified"
+          ? undefined
+          : formData.gender) as "male" | "female" | "other" | undefined,
+        contactPreference: formData.contactPreference as
+          | "email"
+          | "phone"
+          | "sms",
       });
     }
   }, [formData, profile, checkDirty]);
 
-  // Handle input changes with validation
+  // Validate a single field
+  const validateField = (field: keyof FormData, value: string): string => {
+    switch (field) {
+      case "firstName":
+        return validateFirstName(value) || "";
+      case "lastName":
+        return validateLastName(value) || "";
+      case "phone":
+        if (value.trim() !== "") {
+          return validatePhone(value) || "";
+        }
+        return "";
+      default:
+        return "";
+    }
+  };
+
+  // Handle input changes - only validate if error exists (aggressive clear)
   const handleInputChange = (field: keyof FormData, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     setSuccessMessage(""); // Clear success message on edit
 
-    // Real-time validation
-    let error = "";
-    switch (field) {
-      case "firstName":
-        error = validateFirstName(value) || "";
-        break;
-      case "lastName":
-        error = validateLastName(value) || "";
-        break;
-      case "phone":
-        // Only validate phone if it's not empty
-        if (value.trim() !== "") {
-          error = validatePhone(value) || "";
-        }
-        break;
+    if (errors[field]) {
+      const fieldError = validateField(field, value);
+      setErrors((prev) => ({ ...prev, [field]: fieldError || undefined }));
     }
+  };
 
-    setErrors((prev) => ({ ...prev, [field]: error || undefined }));
+  // Handle blur - validate field
+  const handleBlur = (field: keyof FormData) => {
+    const value = formData[field];
+    const fieldError = validateField(field, value);
+    setErrors((prev) => ({ ...prev, [field]: fieldError || undefined }));
   };
 
   // Validate entire form
@@ -153,19 +147,25 @@ export function ProfileForm({
     const newErrors: Partial<Record<keyof FormData, string>> = {};
 
     const firstNameError = validateFirstName(formData.firstName);
-    if (firstNameError) newErrors.firstName = firstNameError;
+    if (firstNameError) {
+      newErrors.firstName = firstNameError;
+    }
 
     const lastNameError = validateLastName(formData.lastName);
-    if (lastNameError) newErrors.lastName = lastNameError;
+    if (lastNameError) {
+      newErrors.lastName = lastNameError;
+    }
 
     const phoneError = validatePhone(formData.phone);
-    if (phoneError) newErrors.phone = phoneError;
+    if (phoneError) {
+      newErrors.phone = phoneError;
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  // Handle form submission
+  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Form submission with error handling
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -191,12 +191,12 @@ export function ProfileForm({
       };
 
       // Remove empty strings and convert to undefined
-      Object.keys(updateData).forEach((key) => {
+      for (const key of Object.keys(updateData)) {
         const value = updateData[key as keyof ProfileUpdateRequest];
         if (value === "") {
           delete updateData[key as keyof ProfileUpdateRequest];
         }
-      });
+      }
 
       const result = await updateProfile(updateData);
 
@@ -219,10 +219,9 @@ export function ProfileForm({
   const handleReset = () => {
     const originalProfile = resetForm();
     if (
-      originalProfile &&
-      originalProfile.user &&
-      originalProfile.customerProfile &&
-      originalProfile.userProfile
+      originalProfile?.user &&
+      originalProfile?.customerProfile &&
+      originalProfile?.userProfile
     ) {
       setFormData({
         firstName: originalProfile.user.firstName || "",
@@ -277,9 +276,10 @@ export function ProfileForm({
         <h2 className="font-semibold text-lg text-slate-900">個人資料</h2>
         <p className="text-slate-500 text-sm">管理您的基本資訊與聯絡方式</p>
       </div>
-      {!!successMessage && (
+      {successMessage ? (
         <div className="fade-in slide-in-from-top-2 mb-4 flex animate-in items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-green-700 text-sm">
           <svg
+            aria-hidden="true"
             className="h-4 w-4"
             fill="none"
             stroke="currentColor"
@@ -294,7 +294,7 @@ export function ProfileForm({
           </svg>
           {successMessage}
         </div>
-      )}
+      ) : null}
 
       <form className="space-y-8" onSubmit={handleSubmit}>
         {/* Group 1: Basic Info */}
@@ -308,15 +308,16 @@ export function ProfileForm({
               <Input
                 className={`border-slate-200 focus:border-slate-900 ${errors.lastName ? "border-red-500" : ""}`}
                 id="lastName"
+                onBlur={() => handleBlur("lastName")}
                 onChange={(e) => handleInputChange("lastName", e.target.value)}
                 placeholder="請輸入姓氏"
                 required
                 type="text"
                 value={formData.lastName}
               />
-              {!!errors.lastName && (
+              {errors.lastName ? (
                 <p className="mt-1 text-red-500 text-xs">{errors.lastName}</p>
-              )}
+              ) : null}
             </div>
             <div className="space-y-2">
               <Label className="font-normal text-slate-600" htmlFor="firstName">
@@ -325,15 +326,16 @@ export function ProfileForm({
               <Input
                 className={`border-slate-200 focus:border-slate-900 ${errors.firstName ? "border-red-500" : ""}`}
                 id="firstName"
+                onBlur={() => handleBlur("firstName")}
                 onChange={(e) => handleInputChange("firstName", e.target.value)}
                 placeholder="請輸入名字"
                 required
                 type="text"
                 value={formData.firstName}
               />
-              {!!errors.firstName && (
+              {errors.firstName ? (
                 <p className="mt-1 text-red-500 text-xs">{errors.firstName}</p>
-              )}
+              ) : null}
             </div>
           </div>
 
@@ -386,6 +388,7 @@ export function ProfileForm({
               <Input
                 className={`border-slate-200 focus:border-slate-900 ${errors.phone ? "border-red-500" : ""}`}
                 id="phone"
+                onBlur={() => handleBlur("phone")}
                 onChange={(e) => handleInputChange("phone", e.target.value)}
                 placeholder="09xxxxxxxx"
                 type="tel"
@@ -431,15 +434,15 @@ export function ProfileForm({
             `}
         >
           <div className="flex items-center gap-2 sm:hidden">
-            {!!localIsDirty && (
+            {localIsDirty ? (
               <span className="font-medium text-amber-600 text-xs">
                 有未儲存的變更
               </span>
-            )}
+            ) : null}
           </div>
 
           <div className="flex w-full items-center justify-end gap-3 sm:w-auto">
-            {!!localIsDirty && (
+            {localIsDirty ? (
               <Button
                 className="flex-1 text-slate-600 hover:bg-slate-100 hover:text-slate-900 sm:flex-none"
                 onClick={handleReset}
@@ -448,7 +451,7 @@ export function ProfileForm({
               >
                 取消變更
               </Button>
-            )}
+            ) : null}
 
             <Button
               className="flex-1 sm:flex-none"
@@ -475,6 +478,5 @@ export function ProfileForm({
         </div>
       </form>
     </CardContent>
-    // No wrapper Card here as per new design
   );
 }

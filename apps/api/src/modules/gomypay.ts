@@ -585,6 +585,7 @@ gomypay.get("/callback", async (c) => {
 });
 
 // POST /api/payment/webhook - Handle background reconciliation (Callback_Url)
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Webhook handler with multiple payment status paths
 gomypay.post("/webhook", async (c) => {
   try {
     const body = await c.req.parseBody();

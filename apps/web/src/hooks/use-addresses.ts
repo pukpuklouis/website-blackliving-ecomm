@@ -11,6 +11,7 @@ import type {
   CustomerAddress,
 } from "@blackliving/types/profile";
 import { useCallback, useEffect, useState } from "react";
+import { getApiUrl } from "../lib/api";
 
 type UseAddressesOptions = {
   autoLoad?: boolean;
@@ -23,7 +24,7 @@ type AddressesState = {
   lastUpdated: Date | null;
 };
 
-const API_BASE = "/api/customers/profile/addresses";
+const API_ENDPOINT = "/api/customers/profile/addresses";
 
 export function useAddresses(options: UseAddressesOptions = {}) {
   const { autoLoad = true } = options;
@@ -40,11 +41,17 @@ export function useAddresses(options: UseAddressesOptions = {}) {
     setState((prev) => ({ ...prev, loading: true, error: null }));
 
     try {
-      const response = await fetch(API_BASE, {
+      const response = await fetch(getApiUrl(API_ENDPOINT), {
         method: "GET",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
       });
+
+      // Handle non-JSON responses (e.g. 404 HTML pages)
+      const contentType = response.headers.get("content-type") ?? "";
+      if (!contentType.includes("application/json")) {
+        throw new Error("Received non-JSON response from API");
+      }
 
       const result: AddressesApiResponse = await response.json();
 
@@ -77,7 +84,7 @@ export function useAddresses(options: UseAddressesOptions = {}) {
       setState((prev) => ({ ...prev, loading: true, error: null }));
 
       try {
-        const response = await fetch(API_BASE, {
+        const response = await fetch(getApiUrl(API_ENDPOINT), {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(addressData),
@@ -119,12 +126,15 @@ export function useAddresses(options: UseAddressesOptions = {}) {
       setState((prev) => ({ ...prev, loading: true, error: null }));
 
       try {
-        const response = await fetch(`${API_BASE}/${addressId}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(updateData),
-          credentials: "include",
-        });
+        const response = await fetch(
+          getApiUrl(`${API_ENDPOINT}/${addressId}`),
+          {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(updateData),
+            credentials: "include",
+          }
+        );
 
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
@@ -166,7 +176,7 @@ export function useAddresses(options: UseAddressesOptions = {}) {
     setState((prev) => ({ ...prev, loading: true, error: null }));
 
     try {
-      const response = await fetch(`${API_BASE}/${addressId}`, {
+      const response = await fetch(getApiUrl(`${API_ENDPOINT}/${addressId}`), {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -203,11 +213,14 @@ export function useAddresses(options: UseAddressesOptions = {}) {
     setState((prev) => ({ ...prev, loading: true, error: null }));
 
     try {
-      const response = await fetch(`${API_BASE}/${addressId}/default`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-      });
+      const response = await fetch(
+        getApiUrl(`${API_ENDPOINT}/${addressId}/default`),
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+        }
+      );
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);

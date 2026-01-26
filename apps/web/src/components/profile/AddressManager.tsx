@@ -41,6 +41,7 @@ import {
 import type React from "react";
 import { useState } from "react";
 import { useAddresses } from "../../hooks/use-addresses";
+import { taiwanAddressData, taiwanPostalCodes } from "../../lib/taiwan-data";
 import { validateAddress } from "../../lib/validation";
 
 type AddressManagerProps = {
@@ -82,31 +83,6 @@ const initialFormData: AddressFormData = {
   accessCode: "",
   isDefault: false,
 };
-
-const taiwanCities = [
-  "台北市",
-  "新北市",
-  "桃園市",
-  "台中市",
-  "台南市",
-  "高雄市",
-  "基隆市",
-  "新竹市",
-  "新竹縣",
-  "苗栗縣",
-  "彰化縣",
-  "南投縣",
-  "雲林縣",
-  "嘉義縣",
-  "嘉義市",
-  "屏東縣",
-  "宜蘭縣",
-  "花蓮縣",
-  "台東縣",
-  "澎湖縣",
-  "金門縣",
-  "連江縣",
-];
 
 // Helper function to get address type label
 function getAddressTypeLabel(type: "shipping" | "billing" | "both"): string {
@@ -289,7 +265,24 @@ export function AddressManager({
     field: keyof AddressFormData,
     value: string | boolean
   ) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
+    setFormData((prev) => {
+      const updates: Partial<AddressFormData> = { [field]: value };
+
+      // Handle cascading updates for City -> District -> Postal Code
+      if (field === "city") {
+        updates.district = "";
+        updates.postalCode = "";
+      } else if (field === "district") {
+        // Auto-fill postal code based on city and district
+        const city = prev.city;
+        const district = value as string;
+        if (city && district && taiwanPostalCodes[city]?.[district]) {
+          updates.postalCode = taiwanPostalCodes[city][district];
+        }
+      }
+
+      return { ...prev, ...updates };
+    });
 
     // Clear field error when user types
     if (formErrors[field]) {
@@ -415,6 +408,10 @@ export function AddressManager({
     );
   }
 
+  const availableDistricts = formData.city
+    ? taiwanAddressData[formData.city] || []
+    : [];
+
   return (
     <Card className={className}>
       <CardHeader className="flex flex-row items-center justify-between space-y-0">
@@ -524,7 +521,7 @@ export function AddressManager({
                       <SelectValue placeholder="選擇縣市" />
                     </SelectTrigger>
                     <SelectContent>
-                      {taiwanCities.map((city) => (
+                      {Object.keys(taiwanAddressData).map((city) => (
                         <SelectItem key={city} value={city}>
                           {city}
                         </SelectItem>
@@ -538,16 +535,26 @@ export function AddressManager({
 
                 <div className="space-y-2">
                   <Label htmlFor="district">區域 *</Label>
-                  <Input
-                    className={formErrors.district ? "border-red-500" : ""}
-                    id="district"
-                    onChange={(e) =>
-                      handleInputChange("district", e.target.value)
+                  <Select
+                    disabled={!formData.city}
+                    onValueChange={(value) =>
+                      handleInputChange("district", value)
                     }
-                    placeholder="例如：中正區"
-                    required
                     value={formData.district}
-                  />
+                  >
+                    <SelectTrigger
+                      className={formErrors.district ? "border-red-500" : ""}
+                    >
+                      <SelectValue placeholder="選擇區域" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {availableDistricts.map((district) => (
+                        <SelectItem key={district} value={district}>
+                          {district}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   {formErrors.district ? (
                     <p className="text-red-500 text-sm">
                       {formErrors.district}
@@ -563,7 +570,7 @@ export function AddressManager({
                     onChange={(e) =>
                       handleInputChange("postalCode", e.target.value)
                     }
-                    placeholder="100"
+                    placeholder="自動填入"
                     required
                     value={formData.postalCode}
                   />
