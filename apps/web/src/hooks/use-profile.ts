@@ -21,27 +21,53 @@ type ProfileState = {
 
 const PROFILE_ENDPOINT = "/api/customers/profile";
 
-const profileCache = new Map<
-  string,
-  { data: unknown; timestamp: number; ttl: number }
->();
+// Note: Caching is handled at the API layer using Cloudflare KV (cacheMiddleware)
+// No client-side Map caching needed to avoid dual-cache inconsistency
 
-function getCache<T>(key: string): T | null {
-  const cached = profileCache.get(key);
-  if (!cached) {
+// Valid gender values for type-safe validation
+const VALID_GENDERS = ["male", "female", "other", "unspecified"] as const;
+const VALID_CONTACT_PREFERENCES = ["email", "phone", "sms"] as const;
+
+// Allowed fields for profile update
+const ALLOWED_UPDATE_FIELDS = [
+  "phone",
+  "birthday",
+  "gender",
+  "contactPreference",
+] as const;
+
+/**
+ * Build request body for profile update API
+ * Extracted to reduce cognitive complexity of updateProfile
+ */
+function buildRequestBody(
+  updateData: ProfileUpdateRequest
+): Record<string, unknown> | null {
+  const requestBody: Record<string, unknown> = {};
+
+  // Combine firstName and lastName into 'name' for API
+  if (updateData.firstName !== undefined || updateData.lastName !== undefined) {
+    const firstName = updateData.firstName ?? "";
+    const lastName = updateData.lastName ?? "";
+    const combinedName = `${firstName} ${lastName}`.trim();
+    if (combinedName) {
+      requestBody.name = combinedName;
+    }
+  }
+
+  // Add allowed fields
+  for (const field of ALLOWED_UPDATE_FIELDS) {
+    if (updateData[field] !== undefined) {
+      requestBody[field] = updateData[field];
+    }
+  }
+
+  // Return null if nothing to update
+  if (Object.keys(requestBody).length === 0) {
     return null;
   }
 
-  if (Date.now() - cached.timestamp > cached.ttl) {
-    profileCache.delete(key);
-    return null;
-  }
-
-  return cached.data as T;
-}
-
-function setCache<T>(key: string, data: T, ttl = 300_000): void {
-  profileCache.set(key, { data, timestamp: Date.now(), ttl });
+  return requestBody;
 }
 
 function transformApiResponseToProfile(data: {
@@ -56,12 +82,27 @@ function transformApiResponseToProfile(data: {
 }): FullUserProfile {
   const [firstName, ...lastName] = (data.name || "").split(" ");
 
+  // Type-safe gender validation
+  const gender = VALID_GENDERS.includes(
+    data.gender as (typeof VALID_GENDERS)[number]
+  )
+    ? (data.gender as (typeof VALID_GENDERS)[number])
+    : undefined;
+
+  // Type-safe contactPreference validation
+  const contactPreference = VALID_CONTACT_PREFERENCES.includes(
+    data.contactPreference as (typeof VALID_CONTACT_PREFERENCES)[number]
+  )
+    ? (data.contactPreference as (typeof VALID_CONTACT_PREFERENCES)[number])
+    : undefined;
+
   return {
     user: {
       id: data.id,
       email: data.email,
       firstName,
       lastName: lastName.join(" "),
+      role: "customer", // Default role for profile API
       createdAt: "", // Not available in the response
       updatedAt: "", // Not available in the response
     },
@@ -70,11 +111,8 @@ function transformApiResponseToProfile(data: {
       avatarUrl: data.image ?? undefined,
       bio: "", // Not available in the response
       birthday: data.birthday ?? undefined,
-      gender:
-        (data.gender as "male" | "female" | "other" | "unspecified") ??
-        undefined,
-      contactPreference:
-        (data.contactPreference as "email" | "phone" | "sms") ?? undefined,
+      gender,
+      contactPreference,
     },
     customerProfile: {
       customerId: "", // Not available in the response
@@ -128,7 +166,7 @@ export function useProfile(options: UseProfileOptions = {}) {
   const {
     autoRefresh = false,
     refreshInterval = 60_000, // 1 minute
-    cacheTimeout = 300_000, // 5 minutes
+    // cacheTimeout removed - caching is handled at API layer
   } = options;
 
   const [state, setState] = useState<ProfileState>({
@@ -144,43 +182,28 @@ export function useProfile(options: UseProfileOptions = {}) {
   );
 
   // Load full profile
-  const loadProfile = useCallback(
-    async (force = false) => {
-      const cacheKey = "profile:full";
+  const loadProfile = useCallback(async (_force = false) => {
+    setState((prev) => ({ ...prev, loading: true, error: null }));
 
-      if (!force) {
-        const cached = getCache<FullUserProfile>(cacheKey);
-        if (cached) {
-          setState((prev) => ({ ...prev, profile: cached }));
-          setOriginalData(cached);
-          return cached;
-        }
-      }
+    try {
+      const apiData = await fetchProfileFromApi();
+      const transformedData = transformApiResponseToProfile(apiData);
 
-      setState((prev) => ({ ...prev, loading: true, error: null }));
-
-      try {
-        const apiData = await fetchProfileFromApi();
-        const transformedData = transformApiResponseToProfile(apiData);
-
-        setCache(cacheKey, transformedData, cacheTimeout);
-        setState((prev) => ({
-          ...prev,
-          profile: transformedData,
-          loading: false,
-          lastUpdated: new Date(),
-        }));
-        setOriginalData(transformedData);
-        return transformedData;
-      } catch (error) {
-        const errorMessage =
-          error instanceof Error ? error.message : "Unknown error";
-        setState((prev) => ({ ...prev, error: errorMessage, loading: false }));
-        return null;
-      }
-    },
-    [cacheTimeout]
-  );
+      setState((prev) => ({
+        ...prev,
+        profile: transformedData,
+        loading: false,
+        lastUpdated: new Date(),
+      }));
+      setOriginalData(transformedData);
+      return transformedData;
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error";
+      setState((prev) => ({ ...prev, error: errorMessage, loading: false }));
+      return null;
+    }
+  }, []);
 
   // Update profile
   const updateProfile = useCallback(
@@ -188,21 +211,19 @@ export function useProfile(options: UseProfileOptions = {}) {
       setState((prev) => ({ ...prev, loading: true, error: null }));
 
       try {
-        const allowedFields = [
-          "firstName",
-          "lastName",
-          "phone",
-          "birthday",
-          "gender",
-          "contactPreference",
-        ] as const;
+        const requestBody = buildRequestBody(updateData);
 
-        const requestBody: Record<string, unknown> = {};
-        for (const field of allowedFields) {
-          if (updateData[field] !== undefined) {
-            requestBody[field] = updateData[field];
-          }
+        // Fail early if nothing to update
+        if (!requestBody) {
+          console.log("[useProfile] requestBody is empty, failing early");
+          setState((prev) => ({ ...prev, loading: false }));
+          return { success: false, error: "沒有任何資料需要更新" };
         }
+
+        console.log(
+          "[useProfile] Sending PATCH request with body:",
+          requestBody
+        );
 
         const response = await fetch(getApiUrl(PROFILE_ENDPOINT), {
           method: "PATCH",
@@ -218,15 +239,12 @@ export function useProfile(options: UseProfileOptions = {}) {
         const result: ApiResponse<FullUserProfile> = await response.json();
 
         if (result.success) {
-          // Clear cache to force refresh
-          profileCache.delete("profile:full");
-
-          // Reload profile data
+          // Reload profile data from server (API cache will be cleared by backend)
           await loadProfile(true);
           setIsDirty(false);
-
           return { success: true, message: result.message };
         }
+
         throw new Error(result.error || "Failed to update profile");
       } catch (error) {
         const errorMessage =
@@ -336,9 +354,5 @@ export function useProfile(options: UseProfileOptions = {}) {
 
     // Utilities
     refresh: () => loadProfile(true),
-    clearCache: () => {
-      profileCache.clear();
-      setState((prev) => ({ ...prev, lastUpdated: null }));
-    },
   };
 }

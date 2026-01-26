@@ -1,4 +1,4 @@
-import { createHash } from "crypto";
+import { createHash } from "node:crypto";
 import type { Context, Next } from "hono";
 
 export type CacheOptions = {
@@ -6,7 +6,6 @@ export type CacheOptions = {
   keyPrefix?: string;
   varyByUser?: boolean;
   skipCache?: boolean;
-  staleWhileRevalidate?: number; // Additional time to serve stale content
 };
 
 export type CacheHeaders = {
@@ -18,7 +17,6 @@ export type CacheHeaders = {
 
 type CacheConfig = {
   ttl: number;
-  staleWhileRevalidate: number;
 };
 
 type ServeCacheOptions = {
@@ -39,7 +37,7 @@ async function serveCachedResponse(
   cacheKey: string,
   config: CacheConfig
 ): Promise<Response | undefined> {
-  const { c, next } = ctx;
+  const { c } = ctx;
   const cachedResponse = await getCachedResponse(cache, cacheKey);
 
   if (!cachedResponse) {
@@ -58,24 +56,6 @@ async function serveCachedResponse(
       cacheStatus: "HIT",
       maxAge: config.ttl - age,
     });
-
-    return c.json(data);
-  }
-
-  // Check if we can serve stale content while revalidating
-  if (age < config.ttl + config.staleWhileRevalidate) {
-    // Serve stale content immediately
-    setResponseHeaders(c, {
-      age,
-      etag,
-      cacheStatus: "STALE",
-      maxAge: 0, // Force revalidation on next request
-    });
-
-    // Trigger background revalidation (fire and forget)
-    c.executionCtx?.waitUntil(
-      revalidateCache({ c, next, cache, cacheKey, config })
-    );
 
     return c.json(data);
   }
@@ -106,7 +86,7 @@ async function cacheSuccessfulResponse(
       timestamp: Date.now(),
       etag: generateETag(responseData),
     },
-    config.ttl + config.staleWhileRevalidate
+    config.ttl
   );
 
   setResponseHeaders(c, {
@@ -123,7 +103,6 @@ export function cacheMiddleware(options: CacheOptions = {}) {
     keyPrefix = "cache",
     varyByUser = true,
     skipCache = false,
-    staleWhileRevalidate = 60, // 1 minute stale serving
   } = options;
 
   return async (c: Context, next: Next) => {
@@ -142,7 +121,7 @@ export function cacheMiddleware(options: CacheOptions = {}) {
     try {
       const cacheKey = generateCacheKey(c, keyPrefix, varyByUser);
 
-      const config: CacheConfig = { ttl, staleWhileRevalidate };
+      const config: CacheConfig = { ttl };
 
       // Try to serve from cache
       const cachedResponse = await serveCachedResponse(
@@ -231,30 +210,6 @@ async function setCachedResponse(
 }
 
 /**
- * Background revalidation for stale-while-revalidate
- * Currently disabled due to c.clone() not being available in Hono
- */
-function revalidateCache(options: {
-  c: Context;
-  next: Next;
-  cache: KVNamespace;
-  cacheKey: string;
-  config: CacheConfig;
-}): Promise<void> {
-  const {
-    c: _c,
-    next: _next,
-    cache: _cache,
-    cacheKey: _cacheKey,
-    config: _config,
-  } = options;
-  // FIXME: c.clone() is not available in Hono.
-  // Background revalidation requires a more complex setup to safely re-run handlers.
-  // Disabling SWR revalidation to prevent runtime errors.
-  return Promise.resolve();
-}
-
-/**
  * Generate ETag for response data
  */
 function generateETag(data: unknown): string {
@@ -334,31 +289,38 @@ export class CacheInvalidator {
    * Invalidate user-specific cache entries
    */
   async invalidateUserCache(userId: string, patterns: string[] = []) {
+    // Use actual API paths that match cacheMiddleware routes
     const defaultPatterns = [
-      "profile",
-      "full-profile",
-      "analytics",
-      "addresses",
-      "payment-methods",
-      "wishlist",
-      "notifications",
+      "/api/customers/profile",
+      "/api/customers/profile/full",
+      "/api/customers/profile/analytics",
+      "/api/customers/addresses",
+      "/api/customers/payment-methods",
+      "/api/customers/wishlist",
+      "/api/customers/notifications",
     ];
 
     const allPatterns = [...defaultPatterns, ...patterns];
 
+    console.log("[CacheInvalidator] Invalidating cache for user:", userId);
+
     const deletePromises = allPatterns.map((pattern) => {
+      // Use URL constructor with base parameter - domain is just for parsing, only pathname matters
+      const parsedUrl = new URL(pattern, "https://cache-key-base");
       const key = generateCacheKey(
         {
-          req: { url: `/${pattern}` },
+          req: { url: parsedUrl.href },
           get: () => ({ id: userId }),
         } as unknown as Context,
         "cache",
         true
       );
+      console.log(`[CacheInvalidator] Deleting key for ${pattern}:`, key);
       return this.cache.delete(key);
     });
 
     await Promise.all(deletePromises);
+    console.log("[CacheInvalidator] Cache invalidation complete");
   }
 
   /**

@@ -1,14 +1,15 @@
 import { Button } from "@blackliving/ui";
+import { secureSignOut } from "@blackliving/auth";
 import { Calendar, LogOut, Package, User } from "lucide-react";
 
 // Simple utility function for combining classnames
 const cn = (...classes: (string | undefined | null | false)[]) =>
   classes.filter(Boolean).join(" ");
 
-interface AccountNavProps {
+type AccountNavProps = {
   currentPage: "profile" | "orders" | "appointments";
   className?: string;
-}
+};
 
 const navItems = [
   {
@@ -36,43 +37,8 @@ export default function AccountNav({
   className,
 }: AccountNavProps) {
   const handleLogout = async () => {
-    try {
-      const API_BASE =
-        import.meta.env.PUBLIC_API_URL || "http://localhost:8787";
-
-      // Try multiple logout endpoints as Better Auth might use different ones
-      const endpoints = [
-        `${API_BASE}/api/auth/sign-out`,
-        `${API_BASE}/api/auth/logout`,
-        `${API_BASE}/api/auth/session-logout`,
-      ];
-
-      for (const endpoint of endpoints) {
-        try {
-          const response = await fetch(endpoint, {
-            method: "POST",
-            credentials: "include",
-          });
-          if (response.ok) {
-            break; // Success, exit loop
-          }
-        } catch (err) {
-          console.warn(`Logout attempt failed for ${endpoint}:`, err);
-        }
-      }
-
-      // Clear any local storage/session storage
-      if (typeof Storage !== "undefined") {
-        localStorage.clear();
-        sessionStorage.clear();
-      }
-
-      window.location.href = "/login";
-    } catch (error) {
-      console.error("All logout attempts failed:", error);
-      // Still redirect even if logout fails
-      window.location.href = "/login";
-    }
+    await secureSignOut();
+    window.location.href = "/login";
   };
 
   return (

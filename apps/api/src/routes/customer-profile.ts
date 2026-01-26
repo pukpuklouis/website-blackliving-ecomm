@@ -10,6 +10,14 @@ import { z } from "zod";
 import { requireRole } from "../middleware/auth";
 import { cacheMiddleware, setCacheHeaders } from "../middleware/cache";
 
+// Cache TTL constants (in seconds)
+const CACHE_TTL = {
+  BASIC_PROFILE: 300, // 5 minutes - most frequent access
+  FULL_PROFILE: 180, // 3 minutes - less frequent
+  ANALYTICS: 600, // 10 minutes - changes infrequently
+  ADDRESSES: 180, // 3 minutes - moderate frequency
+} as const;
+
 type AppContext = Context<{
   Bindings: {
     DB: D1Database;
@@ -182,7 +190,7 @@ function createDatabaseInstance(c: AppContext) {
 app.get(
   "/",
   requireRole(["customer", "admin"]),
-  cacheMiddleware({ ttl: 300 }), // 5 minute cache
+  cacheMiddleware({ ttl: CACHE_TTL.BASIC_PROFILE }),
   async (c) => {
     const requestId = logRequest(c, "GET_BASIC_PROFILE");
     try {
@@ -201,7 +209,7 @@ app.get(
 
       // Generate consistent ETag based on profile data
       const etag = generateETag(profile, userId);
-      setCacheHeaders(c, { maxAge: 300, etag });
+      setCacheHeaders(c, { maxAge: CACHE_TTL.BASIC_PROFILE, etag });
 
       logRequest(c, "PROFILE_FETCHED_SUCCESS", {
         userId,
@@ -231,7 +239,7 @@ app.get(
 app.get(
   "/full",
   requireRole(["customer", "admin"]),
-  cacheMiddleware({ ttl: 180 }), // 3 minute cache (less frequent)
+  cacheMiddleware({ ttl: CACHE_TTL.FULL_PROFILE }),
   async (c) => {
     try {
       const userId = c.get("user").id;
@@ -244,8 +252,8 @@ app.get(
       }
 
       setCacheHeaders(c, {
-        maxAge: 180,
-        etag: `full-profile-${userId}-${Date.now()}`,
+        maxAge: CACHE_TTL.FULL_PROFILE,
+        etag: generateETag(profile, userId),
       });
 
       return c.json({
@@ -266,7 +274,7 @@ app.get(
 app.get(
   "/analytics",
   requireRole(["customer", "admin"]),
-  cacheMiddleware({ ttl: 600 }), // 10 minute cache (analytics change less frequently)
+  cacheMiddleware({ ttl: CACHE_TTL.ANALYTICS }),
   async (c) => {
     try {
       const userId = c.get("user").id;
@@ -279,8 +287,8 @@ app.get(
       }
 
       setCacheHeaders(c, {
-        maxAge: 600,
-        etag: `analytics-${userId}-${Date.now()}`,
+        maxAge: CACHE_TTL.ANALYTICS,
+        etag: generateETag(analytics, userId),
       });
 
       return c.json({
@@ -365,26 +373,22 @@ app.patch(
 
       const result = await service.updateBasicInfo(userId, updateData);
 
-      // Clear user's cache after update
-      const cacheKeys = [
-        `profile:${userId}`,
-        `full-profile:${userId}`,
-        `analytics:${userId}`,
-      ];
-      const cacheDelResults = await Promise.allSettled(
-        cacheKeys.map((key) => c.env.CACHE.delete(key))
-      );
-
-      // Log cache deletion results
-      cacheDelResults.forEach((cacheResult, index) => {
-        if (cacheResult.status === "rejected") {
-          logRequest(c, "CACHE_DELETE_ERROR", {
-            key: cacheKeys[index],
-            error: cacheResult.reason,
-            requestId,
-          });
-        }
-      });
+      // Clear user's cache after update using CacheInvalidator
+      // This generates the correct MD5 hash keys that match cacheMiddleware
+      let cacheWarning: string | null = null;
+      try {
+        const { CacheInvalidator } = await import("../middleware/cache");
+        const invalidator = new CacheInvalidator(c.env.CACHE);
+        await invalidator.invalidateUserCache(userId);
+        logRequest(c, "CACHE_INVALIDATED", { userId, requestId });
+      } catch (cacheError) {
+        cacheWarning = "Cache invalidation failed - data may be stale";
+        logRequest(c, "CACHE_INVALIDATE_ERROR", {
+          userId,
+          requestId,
+          error: cacheError instanceof Error ? cacheError.message : "Unknown",
+        });
+      }
 
       // Get updated profile to verify changes
       const afterProfile = await service.getBasicProfile(userId);
@@ -401,13 +405,23 @@ app.patch(
           : null,
       });
 
-      return c.json({
-        success: true,
-        data: result,
-        message: "Profile updated successfully",
-        timestamp: new Date().toISOString(),
-        requestId,
-      });
+      const response = c.json(
+        {
+          success: true,
+          data: result,
+          message: "Profile updated successfully",
+          timestamp: new Date().toISOString(),
+          requestId,
+        },
+        cacheWarning ? 200 : 200
+      );
+
+      // Add warning header if cache invalidation failed
+      if (cacheWarning) {
+        c.res.headers.set("X-Cache-Warning", cacheWarning);
+      }
+
+      return response;
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : "Unknown error";
@@ -724,7 +738,7 @@ app.get("/health", async (c) => {
 app.get(
   "/addresses",
   requireRole(["customer", "admin"]),
-  cacheMiddleware({ ttl: 180 }), // 3 minute cache
+  cacheMiddleware({ ttl: CACHE_TTL.ADDRESSES }),
   async (c) => {
     try {
       const userId = c.get("user").id;
@@ -745,8 +759,8 @@ app.get(
         );
 
       setCacheHeaders(c, {
-        maxAge: 180,
-        etag: `addresses-${userId}-${Date.now()}`,
+        maxAge: CACHE_TTL.ADDRESSES,
+        etag: generateETag(addresses, userId),
       });
 
       return c.json({
