@@ -40,6 +40,7 @@ type FormData = {
   contactPreference: string;
 };
 
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: form component requires coordinated state, validation, dirty tracking, and conditional UI rendering
 export function ProfileForm({ className, onError }: ProfileFormProps) {
   const { profile, loading, error, updateProfile, checkDirty, resetForm } =
     useProfile();
@@ -83,11 +84,14 @@ export function ProfileForm({ className, onError }: ProfileFormProps) {
 
   // Dirty State Check & Completion Calculation
   useEffect(() => {
-    if (!initialData) return;
+    if (!initialData) {
+      return;
+    }
 
     // Efficient dirty check using key-by-key comparison
     const isDirty = Object.keys(formData).some(
-      (key) => formData[key as keyof FormData] !== initialData[key as keyof FormData]
+      (key) =>
+        formData[key as keyof FormData] !== initialData[key as keyof FormData]
     );
     setShowStickyFooter(isDirty);
 
@@ -156,6 +160,7 @@ export function ProfileForm({ className, onError }: ProfileFormProps) {
     setErrors((prev) => ({ ...prev, [field]: errorMsg || undefined }));
   };
 
+  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: form submission logic requires validation and API handling in one flow
   const handleSubmit = async () => {
     console.log("[ProfileForm] handleSubmit called");
     console.log("[ProfileForm] formData:", formData);
@@ -165,13 +170,13 @@ export function ProfileForm({ className, onError }: ProfileFormProps) {
     const newErrors: Partial<Record<keyof FormData, string>> = {};
     let hasError = false;
 
-    (Object.keys(formData) as Array<keyof FormData>).forEach((key) => {
+    for (const key of Object.keys(formData) as Array<keyof FormData>) {
       const errorMsg = validateField(key, formData[key]);
       if (errorMsg) {
         newErrors[key] = errorMsg;
         hasError = true;
       }
-    });
+    }
 
     console.log(
       "[ProfileForm] validation errors:",
@@ -203,11 +208,11 @@ export function ProfileForm({ className, onError }: ProfileFormProps) {
       };
 
       // Clean undefined/empty
-      Object.keys(updateData).forEach((key) => {
+      for (const key of Object.keys(updateData)) {
         if (updateData[key as keyof ProfileUpdateRequest] === "") {
           delete updateData[key as keyof ProfileUpdateRequest];
         }
-      });
+      }
 
       const result = await updateProfile(updateData);
 
@@ -279,28 +284,28 @@ export function ProfileForm({ className, onError }: ProfileFormProps) {
   return (
     <div className={`space-y-16 ${className || ""}`}>
       {/* Success Toast / Message */}
-      {successMessage && (
-        <div className="fixed top-4 right-4 z-50 flex items-center rounded-lg bg-green-600 px-4 py-3 text-white shadow-lg animate-in fade-in slide-in-from-top-2">
+      {successMessage ? (
+        <div className="fade-in slide-in-from-top-2 fixed top-4 right-4 z-50 flex animate-in items-center rounded-lg bg-green-600 px-4 py-3 text-white shadow-lg">
           <CheckCircle className="mr-2 h-5 w-5" />
           {successMessage}
         </div>
-      )}
+      ) : null}
 
       {/* Error Toast / Message */}
-      {errorMessage && (
-        <div className="fixed top-4 right-4 z-50 flex items-center rounded-lg bg-red-600 px-4 py-3 text-white shadow-lg animate-in fade-in slide-in-from-top-2">
+      {errorMessage ? (
+        <div className="fade-in slide-in-from-top-2 fixed top-4 right-4 z-50 flex animate-in items-center rounded-lg bg-red-600 px-4 py-3 text-white shadow-lg">
           <Info className="mr-2 h-5 w-5" />
           {errorMessage}
         </div>
-      )}
+      ) : null}
 
       {/* Header Section */}
       <div className="flex flex-col justify-between gap-6 md:flex-row md:items-center">
         <div>
-          <h1 className="mb-2 text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
+          <h1 className="mb-2 font-bold text-3xl text-slate-900 tracking-tight dark:text-white">
             個人資料
           </h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400">
+          <p className="text-slate-500 text-sm dark:text-slate-400">
             管理您的基本資訊與聯絡方式
           </p>
         </div>
@@ -309,16 +314,16 @@ export function ProfileForm({ className, onError }: ProfileFormProps) {
         {isComplete ? (
           <div className="flex items-center gap-2 rounded-full border border-slate-100 bg-slate-50 px-4 py-2 dark:border-slate-700/50 dark:bg-slate-800/50">
             <CheckCircle className="h-5 w-5 text-green-500" />
-            <span className="text-sm font-medium text-slate-600 dark:text-slate-300">
+            <span className="font-medium text-slate-600 text-sm dark:text-slate-300">
               個人資料已完成
             </span>
           </div>
         ) : (
           <div className="flex items-center gap-2 rounded-full border border-slate-100 bg-slate-50 px-4 py-2 dark:border-slate-700/50 dark:bg-slate-800/50">
             <div className="h-5 w-5 text-slate-400">
-              <span className="text-xs font-bold">{completionPercentage}%</span>
+              <span className="font-bold text-xs">{completionPercentage}%</span>
             </div>
-            <span className="text-sm font-medium text-slate-600 dark:text-slate-300">
+            <span className="font-medium text-slate-600 text-sm dark:text-slate-300">
               資料完整度
             </span>
           </div>
@@ -330,7 +335,7 @@ export function ProfileForm({ className, onError }: ProfileFormProps) {
         <section>
           <div className="mb-8 flex items-center gap-3">
             <User className="h-6 w-6 text-primary" />
-            <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+            <h2 className="font-bold text-slate-900 text-xl dark:text-white">
               基本資料
             </h2>
           </div>
@@ -338,80 +343,80 @@ export function ProfileForm({ className, onError }: ProfileFormProps) {
           <div className="grid gap-x-10 gap-y-8 md:grid-cols-2">
             <div className="space-y-2">
               <Label
+                className="font-medium text-slate-700 text-sm dark:text-slate-300"
                 htmlFor="lastName"
-                className="text-sm font-medium text-slate-700 dark:text-slate-300"
               >
                 姓氏 <span className="text-red-500">*</span>
               </Label>
               <Input
+                className={`w-full rounded-lg border bg-white px-4 py-6 text-base outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20 dark:bg-slate-800 dark:text-white ${errors.lastName ? "border-red-500" : "border-slate-200 dark:border-slate-700"}`}
                 id="lastName"
+                onBlur={() => handleBlur("lastName")}
+                onChange={(e) => handleChange("lastName", e.target.value)}
                 placeholder="請輸入姓氏"
                 value={formData.lastName}
-                onChange={(e) => handleChange("lastName", e.target.value)}
-                onBlur={() => handleBlur("lastName")}
-                className={`w-full rounded-lg border bg-white px-4 py-6 text-base outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20 dark:bg-slate-800 dark:text-white ${errors.lastName ? "border-red-500" : "border-slate-200 dark:border-slate-700"}`}
               />
-              {errors.lastName && (
-                <p className="text-xs text-red-500">{errors.lastName}</p>
-              )}
+              {errors.lastName ? (
+                <p className="text-red-500 text-xs">{errors.lastName}</p>
+              ) : null}
             </div>
 
             <div className="space-y-2">
               <Label
+                className="font-medium text-slate-700 text-sm dark:text-slate-300"
                 htmlFor="firstName"
-                className="text-sm font-medium text-slate-700 dark:text-slate-300"
               >
                 名字 <span className="text-red-500">*</span>
               </Label>
               <Input
+                className={`w-full rounded-lg border bg-white px-4 py-6 text-base outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20 dark:bg-slate-800 dark:text-white ${errors.firstName ? "border-red-500" : "border-slate-200 dark:border-slate-700"}`}
                 id="firstName"
+                onBlur={() => handleBlur("firstName")}
+                onChange={(e) => handleChange("firstName", e.target.value)}
                 placeholder="請輸入名字"
                 value={formData.firstName}
-                onChange={(e) => handleChange("firstName", e.target.value)}
-                onBlur={() => handleBlur("firstName")}
-                className={`w-full rounded-lg border bg-white px-4 py-6 text-base outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20 dark:bg-slate-800 dark:text-white ${errors.firstName ? "border-red-500" : "border-slate-200 dark:border-slate-700"}`}
               />
-              {errors.firstName && (
-                <p className="text-xs text-red-500">{errors.firstName}</p>
-              )}
+              {errors.firstName ? (
+                <p className="text-red-500 text-xs">{errors.firstName}</p>
+              ) : null}
             </div>
 
             <div className="space-y-2">
               <Label
+                className="font-medium text-slate-700 text-sm dark:text-slate-300"
                 htmlFor="birthday"
-                className="text-sm font-medium text-slate-700 dark:text-slate-300"
               >
                 生日
               </Label>
               <div className="relative">
                 <Input
-                  id="birthday"
-                  type="date"
-                  placeholder="YYYY/MM/DD"
-                  max={todayStr}
-                  value={formData.birthday}
-                  onChange={(e) => handleChange("birthday", e.target.value)}
-                  onBlur={() => handleBlur("birthday")}
                   className={`w-full rounded-lg border bg-white px-4 py-6 text-base outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20 dark:bg-slate-800 dark:text-white ${errors.birthday ? "border-red-500" : "border-slate-200 dark:border-slate-700"}`}
+                  id="birthday"
+                  max={todayStr}
+                  onBlur={() => handleBlur("birthday")}
+                  onChange={(e) => handleChange("birthday", e.target.value)}
+                  placeholder="YYYY/MM/DD"
+                  type="date"
+                  value={formData.birthday}
                 />
-                <Calendar className="pointer-events-none absolute right-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+                <Calendar className="-translate-y-1/2 pointer-events-none absolute top-1/2 right-4 h-5 w-5 text-slate-400" />
               </div>
-              {errors.birthday && (
-                <p className="text-xs text-red-500">{errors.birthday}</p>
-              )}
+              {errors.birthday ? (
+                <p className="text-red-500 text-xs">{errors.birthday}</p>
+              ) : null}
             </div>
 
             <div className="space-y-2">
               <Label
+                className="font-medium text-slate-700 text-sm dark:text-slate-300"
                 htmlFor="gender"
-                className="text-sm font-medium text-slate-700 dark:text-slate-300"
               >
                 性別
               </Label>
               <div className="relative">
                 <Select
-                  value={formData.gender}
                   onValueChange={(val) => handleChange("gender", val)}
+                  value={formData.gender}
                 >
                   <SelectTrigger className="w-full rounded-lg border border-slate-200 bg-white px-4 py-6 text-base transition-all focus:border-primary focus:ring-2 focus:ring-primary/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white">
                     <SelectValue placeholder="不透露" />
@@ -432,7 +437,7 @@ export function ProfileForm({ className, onError }: ProfileFormProps) {
         <section>
           <div className="mb-8 flex items-center gap-3">
             <Contact className="h-6 w-6 text-primary" />
-            <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+            <h2 className="font-bold text-slate-900 text-xl dark:text-white">
               聯絡資訊
             </h2>
           </div>
@@ -440,50 +445,50 @@ export function ProfileForm({ className, onError }: ProfileFormProps) {
           <div className="grid gap-x-10 gap-y-8 md:grid-cols-2">
             <div className="space-y-2">
               <Label
+                className="font-medium text-slate-700 text-sm dark:text-slate-300"
                 htmlFor="phone"
-                className="text-sm font-medium text-slate-700 dark:text-slate-300"
               >
                 手機號碼
               </Label>
               <div className="relative">
                 <Input
-                  id="phone"
-                  type="tel"
-                  placeholder="09xxxxxxxx"
-                  value={formData.phone}
-                  onChange={(e) => handleChange("phone", e.target.value)}
-                  onBlur={() => handleBlur("phone")}
                   className={`w-full rounded-lg border bg-white px-4 py-6 text-base outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20 dark:bg-slate-800 dark:text-white ${errors.phone ? "border-red-500" : "border-primary/50 dark:border-primary/50"}`}
+                  id="phone"
+                  onBlur={() => handleBlur("phone")}
+                  onChange={(e) => handleChange("phone", e.target.value)}
+                  placeholder="09xxxxxxxx"
+                  type="tel"
+                  value={formData.phone}
                 />
                 {!errors.phone &&
                   formData.phone &&
-                  /^09\d{8}$/.test(formData.phone) && (
-                    <CheckCircle className="absolute right-4 top-1/2 h-5 w-5 -translate-y-1/2 text-green-500" />
+                  PHONE_REGEX.test(formData.phone) && (
+                    <CheckCircle className="-translate-y-1/2 absolute top-1/2 right-4 h-5 w-5 text-green-500" />
                   )}
-                {errors.phone && (
-                  <p className="absolute -bottom-6 left-0 text-xs text-red-500">
+                {errors.phone ? (
+                  <p className="-bottom-6 absolute left-0 text-red-500 text-xs">
                     {errors.phone}
                   </p>
-                )}
-                {!errors.phone && !formData.phone && (
-                  <Pencil className="absolute right-4 top-1/2 h-5 w-5 -translate-y-1/2 text-primary" />
+                ) : null}
+                {!(errors.phone || formData.phone) && (
+                  <Pencil className="-translate-y-1/2 absolute top-1/2 right-4 h-5 w-5 text-primary" />
                 )}
               </div>
-              <p className="mt-1.5 font-medium tracking-tight text-xs text-slate-400">
+              <p className="mt-1.5 font-medium text-slate-400 text-xs tracking-tight">
                 格式：09xxxxxxxx
               </p>
             </div>
 
             <div className="space-y-2">
               <Label
+                className="font-medium text-slate-700 text-sm dark:text-slate-300"
                 htmlFor="contactPreference"
-                className="text-sm font-medium text-slate-700 dark:text-slate-300"
               >
                 聯絡方式偏好
               </Label>
               <Select
-                value={formData.contactPreference}
                 onValueChange={(val) => handleChange("contactPreference", val)}
+                value={formData.contactPreference}
               >
                 <SelectTrigger className="w-full rounded-lg border border-slate-200 bg-white px-4 py-6 text-base transition-all focus:border-primary focus:ring-2 focus:ring-primary/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white">
                   <SelectValue />
@@ -494,7 +499,7 @@ export function ProfileForm({ className, onError }: ProfileFormProps) {
                   <SelectItem value="sms">簡訊</SelectItem>
                 </SelectContent>
               </Select>
-              <p className="mt-2 flex items-center gap-1.5 font-medium text-xs text-slate-500 dark:text-slate-400">
+              <p className="mt-2 flex items-center gap-1.5 font-medium text-slate-500 text-xs dark:text-slate-400">
                 <Info className="h-[14px] w-[14px]" />
                 我們將優先使用此方式與您聯繫
               </p>
@@ -504,8 +509,8 @@ export function ProfileForm({ className, onError }: ProfileFormProps) {
       </div>
 
       {/* Sticky Footer for Unsaved Changes */}
-      {showStickyFooter && (
-        <div className="fixed bottom-10 left-0 right-0 z-50 px-6 animate-in slide-in-from-bottom-4">
+      {showStickyFooter ? (
+        <div className="slide-in-from-bottom-4 fixed right-0 bottom-10 left-0 z-50 animate-in px-6">
           <div className="mx-auto max-w-4xl">
             <div className="flex items-center justify-between rounded-xl border border-slate-700 bg-[#1e293b] px-8 py-5 text-white shadow-[0_20px_50px_rgba(0,0,0,0.3)]">
               <div className="flex items-center gap-4">
@@ -513,22 +518,23 @@ export function ProfileForm({ className, onError }: ProfileFormProps) {
                   <div className="absolute h-3 w-3 animate-ping rounded-full bg-primary/20" />
                   <div className="relative h-2 w-2 rounded-full bg-primary" />
                 </div>
-                <span className="font-medium tracking-wide text-sm">
+                <span className="font-medium text-sm tracking-wide">
                   您有尚未儲存的變更
                 </span>
               </div>
               <div className="flex items-center gap-8">
                 <button
+                  className="font-medium text-slate-400 text-sm transition-colors hover:text-white"
                   onClick={handleCancel}
                   type="button"
-                  className="font-medium text-slate-400 text-sm transition-colors hover:text-white"
                 >
                   取消
                 </button>
                 <button
-                  onClick={handleSubmit}
+                  className="rounded-lg bg-primary px-10 py-2.5 font-bold text-sm text-white shadow-lg shadow-primary/20 transition-all hover:bg-primary/90 active:scale-95 disabled:opacity-50"
                   disabled={isSubmitting}
-                  className="rounded-lg bg-primary px-10 py-2.5 font-bold text-sm text-white shadow-lg shadow-primary/20 transition-all active:scale-95 hover:bg-primary/90 disabled:opacity-50"
+                  onClick={handleSubmit}
+                  type="button"
                 >
                   {isSubmitting ? (
                     <div className="flex items-center gap-2">
@@ -543,7 +549,7 @@ export function ProfileForm({ className, onError }: ProfileFormProps) {
             </div>
           </div>
         </div>
-      )}
+      ) : null}
     </div>
   );
 }

@@ -1,5 +1,5 @@
+import { secureSignOut } from "@blackliving/auth/client";
 import { Button } from "@blackliving/ui";
-import { secureSignOut } from "@blackliving/auth";
 import { Calendar, LogOut, Package, User } from "lucide-react";
 
 // Simple utility function for combining classnames
