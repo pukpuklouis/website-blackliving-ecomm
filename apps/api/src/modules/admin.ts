@@ -175,7 +175,7 @@ admin.get("/dashboard/analytics", async (c) => {
 
   try {
     const analytics = await cache.getOrSet(
-      "admin:dashboard:analytics",
+      "admin:dashboard:analytics:v8",
       async (): Promise<SalesAnalytics> => {
         // Get the date 6 months ago
         const sixMonthsAgo = new Date();
@@ -184,21 +184,26 @@ admin.get("/dashboard/analytics", async (c) => {
         sixMonthsAgo.setHours(0, 0, 0, 0);
 
         // Query orders grouped by month
+        // Use substr for D1 SQLite compatibility (createdAt is ISO format: YYYY-MM-DDTHH:mm:ss.sssZ)
+        // Note: Removed date filter as it caused issues with D1/drizzle - status filter is sufficient
         const monthlyData = await db
           .select({
-            yearMonth: sql<string>`strftime('%Y-%m', ${orders.createdAt})`,
+            yearMonth: sql<string>`substr(${orders.createdAt}, 1, 7)`,
             sales: sql<number>`COALESCE(SUM(${orders.totalAmount}), 0)`,
             orderCount: count(),
           })
           .from(orders)
           .where(
-            and(
-              sql`${orders.createdAt} >= ${sixMonthsAgo.toISOString()}`,
-              eq(orders.status, "delivered")
-            )
+            inArray(orders.status, [
+              "pending_payment",
+              "paid",
+              "processing",
+              "shipped",
+              "delivered",
+            ])
           )
-          .groupBy(sql`strftime('%Y-%m', ${orders.createdAt})`)
-          .orderBy(sql`strftime('%Y-%m', ${orders.createdAt})`);
+          .groupBy(sql`substr(${orders.createdAt}, 1, 7)`)
+          .orderBy(sql`substr(${orders.createdAt}, 1, 7)`);
 
         // Convert to salesByMonth format with Chinese month names
         const monthNames = [

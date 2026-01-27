@@ -33,12 +33,17 @@ export function SimpleChart({ data }: SimpleChartProps) {
             type="monotone"
             dataKey="sales"
             stroke="hsl(var(--primary))"
-            strokeWidth={2}
-            strokeOpacity={0}
+            strokeWidth={3}
+            strokeOpacity={1}
             dot={{
-              r: 5,
+              r: 6,
               fill: 'hsl(var(--primary))',
+              stroke: 'white',
               strokeWidth: 2,
+            }}
+            activeDot={{
+              r: 8,
+              strokeWidth: 0,
             }}
           />
         </LineChart>
