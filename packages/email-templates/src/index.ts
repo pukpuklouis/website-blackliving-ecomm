@@ -1,4 +1,5 @@
 // Components
+// biome-ignore lint/performance/noBarrelFile: false positive
 export { BrandHeader, brandColors } from "./components/BrandHeader";
 export { EmailLayout } from "./components/EmailLayout";
 export { Footer } from "./components/Footer";
@@ -15,4 +16,5 @@ export { AdminPaymentConfirmation } from "./templates/admin/AdminPaymentConfirma
 export { AppointmentConfirmation } from "./templates/customer/AppointmentConfirmation";
 export { BankTransferConfirmation } from "./templates/customer/BankTransferConfirmation";
 export { PaymentComplete } from "./templates/customer/PaymentComplete";
+export { PaymentReminder } from "./templates/customer/PaymentReminder";
 export { ShippingNotification } from "./templates/customer/ShippingNotification";

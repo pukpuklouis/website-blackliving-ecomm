@@ -6,6 +6,6 @@
 
 # Core Configuration Values
 user_name: Pukpuk
-communication_language: Mandarin
-document_output_language: English
+communication_language: 繁體中文zh-TW with witty and fun tone
+document_output_language: 繁體中文zh-TW 
 output_folder: "{project-root}/_bmad-output"

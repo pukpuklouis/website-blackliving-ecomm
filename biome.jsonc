@@ -6,6 +6,16 @@
     "ultracite/remix",
     "ultracite/react"
   ],
+  "linter": {
+    "rules": {
+      "style": {
+        "useConsistentTypeDefinitions": {
+          "level": "error",
+          "options": { "style": "type" }
+        }
+      }
+    }
+  },
   "files": {
     "includes": [
       "**/*.{js,jsx,ts,tsx,mjs,cjs,astro,mdx}",

@@ -33,7 +33,7 @@ import User from "@lucide/react/user";
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router";
 import { toast } from "sonner";
-import { useApiUrl } from "../../contexts/EnvironmentContext";
+import { useApiUrl, useEnvironment } from "../../contexts/EnvironmentContext";
 import {
   type Order,
   paymentMethodLabels,
@@ -43,9 +43,31 @@ import {
 
 // Helper to copy text to clipboard
 function copyToClipboard(text: string, successMessage = "已複製到剪貼簿") {
-  navigator.clipboard.writeText(text).then(() => {
-    toast.success(successMessage);
-  });
+  if (navigator?.clipboard?.writeText) {
+    navigator.clipboard
+      .writeText(text)
+      .then(() => {
+        toast.success(successMessage);
+      })
+      .catch((err) => {
+        console.error("Failed to copy:", err);
+        toast.error("複製失敗，請手動複製");
+      });
+  } else {
+    // Fallback for older browsers or non-secure contexts
+    try {
+      const textArea = document.createElement("textarea");
+      textArea.value = text;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand("copy");
+      document.body.removeChild(textArea);
+      toast.success(successMessage);
+    } catch (err) {
+      console.error("Fallback copy failed:", err);
+      toast.error("複製失敗，請手動複製");
+    }
+  }
 }
 
 // Status indicator component
@@ -204,6 +226,7 @@ function StatusBar({
   order: Order;
   onAction: (action: string) => void;
 }) {
+  const { PUBLIC_WEB_URL } = useEnvironment();
   const nextStep = getNextStepAction(order);
 
   // Determine status colors
@@ -278,6 +301,10 @@ function StatusBar({
                 </Button>
                 <Button
                   className="text-primary hover:bg-primary/10"
+                  onClick={() => {
+                    const link = `${PUBLIC_WEB_URL}/payment/${order.orderNumber}`;
+                    copyToClipboard(link, "付款連結已複製");
+                  }}
                   size="icon"
                   title="複製付款連結"
                   variant="ghost"
@@ -572,7 +599,7 @@ function OrderHistoryCard({ order }: { order: Order }) {
           {events.map((event, index) => (
             <div className="relative" key={event.title}>
               <span
-                className={`-left-[27px] absolute top-1 h-3.5 w-3.5 rounded-full border-2 border-white shadow-sm ${
+                className={`absolute top-1 -left-[27px] h-3.5 w-3.5 rounded-full border-2 border-white shadow-sm ${
                   index === 0 ? "bg-primary" : "bg-stone-300"
                 }`}
               />
@@ -607,10 +634,12 @@ function PaymentInfoCard({
   order,
   onConfirmPayment,
   onSendReminder,
+  sendingReminder = false,
 }: {
   order: Order;
   onConfirmPayment: () => void;
   onSendReminder: () => void;
+  sendingReminder?: boolean;
 }) {
   const [showConfirm, setShowConfirm] = useState(false);
 
@@ -652,13 +681,26 @@ function PaymentInfoCard({
                 NT${order.totalAmount.toLocaleString()}
               </span>
             </div>
+
+            {order.lastReminderSentAt && (
+              <div className="rounded bg-stone-100 p-2 text-center text-stone-500 text-xs">
+                上次發送提醒：
+                {new Date(order.lastReminderSentAt).toLocaleString("zh-TW")}
+              </div>
+            )}
           </div>
           <div className="mt-6 flex flex-col gap-2.5">
             {order.paymentStatus === "unpaid" ? (
               <>
-                <Button className="w-full" onClick={onSendReminder}>
-                  <Send className="mr-1.5 h-4 w-4" />
-                  發送付款提醒
+                <Button
+                  className="w-full"
+                  disabled={!!sendingReminder}
+                  onClick={onSendReminder}
+                >
+                  <Send
+                    className={`mr-1.5 h-4 w-4 ${sendingReminder ? "animate-pulse" : ""}`}
+                  />
+                  {sendingReminder ? "發送中..." : "發送付款提醒"}
                 </Button>
                 <Button className="w-full" variant="outline">
                   檢視交易紀錄
@@ -837,6 +879,7 @@ export default function OrderDetailPage() {
   const apiUrl = useApiUrl();
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
+  const [sendingReminder, setSendingReminder] = useState(false);
 
   const loadOrder = useCallback(async () => {
     if (!orderId) {
@@ -877,7 +920,7 @@ export default function OrderDetailPage() {
     try {
       switch (action) {
         case "payment_reminder":
-          toast.success("付款提醒已發送");
+          await handleSendReminder();
           break;
         case "mark_processing": {
           const response = await fetch(
@@ -953,8 +996,34 @@ export default function OrderDetailPage() {
     }
   };
 
-  const handleSendReminder = () => {
-    toast.success("付款提醒已發送");
+  const handleSendReminder = async () => {
+    if (!order) {
+      return;
+    }
+
+    try {
+      setSendingReminder(true);
+      const response = await fetch(
+        `${apiUrl}/api/orders/${order.id}/payment-reminder`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+        }
+      );
+
+      if (response.ok) {
+        toast.success("付款提醒已發送");
+        await loadOrder(); // Reload to get updated lastReminderSentAt
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "發送失敗");
+      }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "發送付款提醒失敗");
+    } finally {
+      setSendingReminder(false);
+    }
   };
 
   const handleCreateShipment = () => {
@@ -1024,6 +1093,7 @@ export default function OrderDetailPage() {
               onConfirmPayment={handleConfirmPayment}
               onSendReminder={handleSendReminder}
               order={order}
+              sendingReminder={sendingReminder}
             />
             <ShippingInfoCard
               onCreateShipment={handleCreateShipment}

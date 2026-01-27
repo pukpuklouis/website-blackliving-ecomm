@@ -98,6 +98,7 @@ NODE_ENV = "development"
 API_BASE_URL = "http://localhost:8787"
 WEB_BASE_URL = "http://localhost:4321"
 ADMIN_BASE_URL = "http://localhost:5173"
+RESEND_FROM_EMAIL = "Black Living Dev <noreply@blackliving.tw>"
 
 [env.staging.vars]
 NODE_ENV = "staging"

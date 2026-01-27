@@ -11,6 +11,7 @@ import {
   AdminPaymentConfirmation,
   BankTransferConfirmation,
   PaymentComplete,
+  PaymentReminder,
   ShippingNotification,
 } from "@blackliving/email-templates";
 import type { Session, User } from "@blackliving/types";
@@ -577,6 +578,78 @@ orders.patch(
     }
   }
 );
+
+// POST /api/orders/:id/payment-reminder - Send payment reminder (Admin only)
+orders.post("/:id/payment-reminder", requireAdmin(), async (c) => {
+  try {
+    const id = c.req.param("id");
+    const db = c.get("db");
+
+    // Check if order exists
+    const [order] = await db
+      .select()
+      .from(ordersTable)
+      .where(eq(ordersTable.id, id))
+      .limit(1);
+
+    if (!order) {
+      return c.json({ error: "Order not found" }, 404);
+    }
+
+    if (order.paymentStatus !== "unpaid") {
+      return c.json({ error: "Order is already paid" }, 400);
+    }
+
+    const notification = c.get("notification");
+    if (!notification.isConfigured()) {
+      return c.json({ error: "Notification service not configured" }, 500);
+    }
+
+    const customerInfo = order.customerInfo as {
+      name: string;
+      email: string;
+    };
+    const items = order.items as Array<{
+      name: string;
+      quantity: number;
+      price: number;
+    }>;
+
+    console.log("[Orders] Rendering PaymentReminder email...");
+    const emailHtml = await render(
+      PaymentReminder({
+        orderId: order.orderNumber,
+        customerName: customerInfo.name,
+        orderItems: items,
+        subtotal: order.subtotalAmount,
+        shipping: order.shippingFee || 0,
+        total: order.totalAmount,
+        paymentMethod: order.paymentMethod || "銀行轉帳",
+      })
+    );
+
+    await notification.sendCustomerNotification(
+      "payment_reminder",
+      customerInfo.email,
+      `[Black Living] 付款提醒 #${order.orderNumber}`,
+      emailHtml
+    );
+
+    // Update lastReminderSentAt
+    await db
+      .update(ordersTable)
+      .set({ lastReminderSentAt: new Date() })
+      .where(eq(ordersTable.id, id));
+
+    return c.json({
+      success: true,
+      message: "Payment reminder sent successfully",
+    });
+  } catch (error) {
+    console.error("Error sending payment reminder:", error);
+    return c.json({ error: "Failed to send payment reminder" }, 500);
+  }
+});
 
 // PUT /api/orders/:id - Edit order (Admin only)
 const editOrderSchema = z.object({

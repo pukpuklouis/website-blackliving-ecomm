@@ -187,6 +187,9 @@ export const orders = sqliteTable("orders", {
   paymentCompletedAt: integer("payment_completed_at", { mode: "timestamp" }),
   notes: text("notes").default(""), // 訂單備註
   adminNotes: text("admin_notes").default(""), // 管理員備註
+  lastReminderSentAt: integer("last_reminder_sent_at", {
+    mode: "timestamp",
+  }), // 上次發送付款提醒的時間
   shippingAddress: text("shipping_address", { mode: "json" }), // 配送地址
   trackingNumber: text("tracking_number"), // 物流追蹤號碼
   shippingCompany: text("shipping_company"), // 物流公司

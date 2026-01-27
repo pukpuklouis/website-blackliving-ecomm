@@ -11,6 +11,7 @@ type NotificationType =
   | "order_shipped"
   | "bank_transfer_confirm"
   | "appointment_confirmed"
+  | "payment_reminder"
   | "test";
 
 type SendEmailOptions = {

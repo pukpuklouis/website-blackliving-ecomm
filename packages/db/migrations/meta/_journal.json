@@ -120,6 +120,13 @@
       "when": 1768096258583,
       "tag": "0016_fixed_dagger",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "6",
+      "when": 1769482880178,
+      "tag": "0017_wooden_jimmy_woo",
+      "breakpoints": true
     }
   ]
 }

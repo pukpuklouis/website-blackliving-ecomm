@@ -75,6 +75,7 @@ type Order = {
   deliveredAt?: Date;
   createdAt: Date;
   updatedAt: Date;
+  lastReminderSentAt?: Date;
 };
 
 export const statusLabels = {
