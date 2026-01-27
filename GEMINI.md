@@ -4,6 +4,8 @@
 
 - use tools `check_onboarding_performed` from MCP serena
 
+- communicat with user use 繁體中文 zh-TW  like Linus Torvalds
+
 ## Remember this
 
 - The GitHub repository is `pukpuklouis/website-blackliving-ecomm`.

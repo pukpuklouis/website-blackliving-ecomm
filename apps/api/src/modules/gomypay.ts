@@ -313,6 +313,7 @@ gomypay.get("/config", requireAdmin(), async (c) => {
       data: {
         hasConfig: true,
         customerId: config.customerId,
+        merchantId: config.merchantId,
         hasStrCheck: !!config.strCheck,
         isTestMode: config.isTestMode,
         returnUrl: config.returnUrl,
@@ -543,6 +544,67 @@ gomypay.post(
   }
 );
 
+// ----------------------------------------------------------------------------
+// Helper Functions for Order Updates
+// ----------------------------------------------------------------------------
+
+/**
+ * Update order status to paid
+ */
+async function updateOrderStatus(
+  db: unknown,
+  response: GomypayResponse,
+  amount: number
+) {
+  // Import orders table dynamically to avoid circular deps
+  const { orders: ordersTable } = await import("@blackliving/db/schema");
+  const dbTyped = db as {
+    update: (table: unknown) => {
+      set: (values: unknown) => {
+        where: (condition: unknown) => Promise<unknown>;
+      };
+    };
+    select: () => {
+      from: (table: unknown) => {
+        where: (condition: unknown) => {
+          limit: (n: number) => Promise<Array<{ status: string }>>;
+        };
+      };
+    };
+  };
+
+  // Check current status first to avoid redundant updates
+  const currentOrder = await dbTyped
+    .select()
+    .from(ordersTable)
+    .where(eq(ordersTable.orderNumber, response.e_orderno))
+    .limit(1);
+
+  if (currentOrder.length > 0 && currentOrder[0].status === "paid") {
+    // Already paid, skip update
+    return;
+  }
+
+  await dbTyped
+    .update(ordersTable)
+    .set({
+      status: "paid",
+      paymentStatus: "paid",
+      gomypayOrderId: response.OrderID,
+      paymentCompletedAt: new Date(),
+      paymentDetails: {
+        avCode: response.AvCode,
+        transactionDate: response.e_date,
+        transactionTime: response.e_time,
+        amount,
+      },
+      updatedAt: new Date(),
+    })
+    .where(eq(ordersTable.orderNumber, response.e_orderno));
+
+  console.log(`Order ${response.e_orderno} status updated to paid`);
+}
+
 // GET /api/payment/callback - Handle GOMYPAY callback (Return_url)
 gomypay.get("/callback", async (c) => {
   try {
@@ -575,6 +637,20 @@ gomypay.get("/callback", async (c) => {
       );
     }
 
+    // Update order status if payment successful
+    // This serves as a fallback for webhook (essential for localhost where webhook fails)
+    if (isSuccess && response.e_orderno) {
+      try {
+        await updateOrderStatus(db, response, amount);
+        console.log(
+          `Order ${response.e_orderno} updated via callback (fallback)`
+        );
+      } catch (err) {
+        console.error("Failed to update order in callback:", err);
+        // Continue to redirect even if update fails (webhook might still succeed later)
+      }
+    }
+
     return c.redirect(buildCallbackRedirectUrl(webBaseUrl, response));
   } catch (error) {
     console.error("Error handling payment callback:", error);
@@ -585,7 +661,6 @@ gomypay.get("/callback", async (c) => {
 });
 
 // POST /api/payment/webhook - Handle background reconciliation (Callback_Url)
-// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Webhook handler with multiple payment status paths
 gomypay.post("/webhook", async (c) => {
   try {
     const body = await c.req.parseBody();
@@ -632,34 +707,7 @@ gomypay.post("/webhook", async (c) => {
 
     // Update order status if payment successful
     if (response.result === "1" && response.e_orderno) {
-      const dbTyped = db as {
-        update: (table: unknown) => {
-          set: (values: unknown) => {
-            where: (condition: unknown) => Promise<unknown>;
-          };
-        };
-      };
-
-      // Import orders table dynamically to avoid circular deps
-      const { orders: ordersTable } = await import("@blackliving/db/schema");
-
-      await dbTyped
-        .update(ordersTable)
-        .set({
-          status: "paid",
-          paymentStatus: "paid",
-          gomypayOrderId: response.OrderID,
-          paymentCompletedAt: new Date(),
-          paymentDetails: {
-            avCode: response.AvCode,
-            transactionDate: response.e_date,
-            transactionTime: response.e_time,
-            amount,
-          },
-          updatedAt: new Date(),
-        })
-        .where(eq(ordersTable.orderNumber, response.e_orderno));
-
+      await updateOrderStatus(db, response, amount);
       console.log(`Order ${response.e_orderno} payment confirmed via webhook`);
     }
 

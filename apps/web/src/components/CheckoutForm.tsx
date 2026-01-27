@@ -10,7 +10,6 @@ import AuthModal from "./auth/AuthModal";
 import {
   ALL_FIELDS_TOUCHED,
   checkEmailStatus,
-  EMAIL_REGEX,
   type EmailStatus,
   GOMYPAY_METHODS,
   handlePaymentResult,
@@ -110,25 +109,6 @@ const CheckoutForm: FC<CheckoutFormProps> = ({ onSuccess }) => {
     fetchEnabledMethods();
   }, []);
 
-  // Debounced email check
-  useEffect(() => {
-    if (!EMAIL_REGEX.test(localCustomerInfo.email)) {
-      return;
-    }
-
-    const timer = setTimeout(async () => {
-      setIsCheckingEmail(true);
-      setEmailStatus("checking");
-
-      const result = await performEmailCheck(localCustomerInfo.email);
-      setEmailStatus(result.status);
-      setIsAuthModalOpen(result.shouldOpenModal);
-      setIsCheckingEmail(false);
-    }, 500);
-
-    return () => clearTimeout(timer);
-  }, [localCustomerInfo.email]);
-
   const handleFieldBlur = (field: string, value: string) => {
     setFormTouched((prev) => ({ ...prev, [field]: true }));
     const error = validateField(field, value);
@@ -176,23 +156,20 @@ const CheckoutForm: FC<CheckoutFormProps> = ({ onSuccess }) => {
     // Pre-submission validations
     const isFormValid = validateAllFields();
     const validation = validateCart();
-    const emailCheck = checkEmailStatus(emailStatus);
+    // Verify email on submit
+    setIsCheckingEmail(true);
+    const emailCheckResult = await performEmailCheck(localCustomerInfo.email);
+    setEmailStatus(emailCheckResult.status);
+    setIsCheckingEmail(false);
 
-    if (!isFormValid) {
-      return;
-    }
+    const emailValidation = checkEmailStatus(emailCheckResult.status);
 
-    if (!validation.isValid) {
+    if (emailValidation.error) {
       setFormErrors((prev) => ({
         ...prev,
-        form: validation.errors[0] || "請檢查資料是否完整",
+        email: emailValidation.error || "",
       }));
-      return;
-    }
-
-    if (emailCheck.error) {
-      setFormErrors((prev) => ({ ...prev, email: emailCheck.error || "" }));
-      setIsAuthModalOpen(emailCheck.shouldOpenAuthModal);
+      setIsAuthModalOpen(emailValidation.shouldOpenAuthModal);
       return;
     }
 

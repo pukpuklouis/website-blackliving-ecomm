@@ -80,19 +80,24 @@ export default function OrdersPage() {
         <div className="font-medium font-mono text-sm">{info.getValue()}</div>
       ),
     }),
-    columnHelper.accessor("customerInfo", {
-      header: "客戶資訊",
-      cell: (info) => {
-        const customer = info.getValue();
-        return (
-          <div>
-            <div className="font-medium">{customer.name}</div>
-            <div className="text-gray-600 text-sm">{customer.email}</div>
-            <div className="text-gray-600 text-sm">{customer.phone}</div>
-          </div>
-        );
-      },
-    }),
+    columnHelper.accessor(
+      (row) =>
+        `${row.customerInfo.name} ${row.customerInfo.email} ${row.customerInfo.phone}`,
+      {
+        id: "customerInfo",
+        header: "客戶資訊",
+        cell: (info) => {
+          const customer = info.row.original.customerInfo;
+          return (
+            <div>
+              <div className="font-medium">{customer.name}</div>
+              <div className="text-gray-600 text-sm">{customer.email}</div>
+              <div className="text-gray-600 text-sm">{customer.phone}</div>
+            </div>
+          );
+        },
+      }
+    ),
     columnHelper.accessor("totalAmount", {
       header: "總金額",
       cell: (info) => (

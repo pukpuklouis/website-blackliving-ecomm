@@ -620,7 +620,7 @@ postsRouter.get("/static-paths", async (c) => {
       .orderBy(desc(posts.publishedAt));
 
     // Cache for 30 minutes
-    await cache.set(cacheKey, JSON.stringify(publishedPosts), { ttl: 1800 });
+    await cache.set(cacheKey, JSON.stringify(publishedPosts), 1800);
 
     return c.json({
       success: true,
