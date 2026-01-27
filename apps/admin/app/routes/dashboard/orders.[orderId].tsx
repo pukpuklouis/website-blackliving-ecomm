@@ -39,7 +39,7 @@ import {
   paymentMethodLabels,
   paymentStatusLabels,
   statusLabels,
-} from "./order-details-dialog";
+} from "./order-types";
 
 // Helper to copy text to clipboard
 function copyToClipboard(text: string, successMessage = "已複製到剪貼簿") {

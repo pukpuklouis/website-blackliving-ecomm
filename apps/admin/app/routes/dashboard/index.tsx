@@ -16,7 +16,7 @@ import BarChart3 from "@lucide/react/bar-chart-3";
 import PlusCircle from "@lucide/react/plus-circle";
 import { useCallback, useEffect, useState } from "react";
 import { useApiUrl } from "../../contexts/EnvironmentContext";
-import { statusColors, statusLabels } from "./order-details-dialog";
+import { statusColors, statusLabels } from "./order-types";
 
 const getStatusColor = (status: string) =>
   statusColors[status as keyof typeof statusColors] || "bg-gray-100";

@@ -58,7 +58,7 @@ import {
   paymentStatusLabels,
   statusColors,
   statusLabels,
-} from "./order-details-dialog";
+} from "./order-types";
 
 export default function OrdersPage() {
   const apiUrl = useApiUrl();
