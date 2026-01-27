@@ -8,7 +8,7 @@
 
 - The GitHub repository is `pukpuklouis/website-blackliving-ecomm`.
 
-- My workflow is to first run `check_onboarding_performed` and then read `CLAUDE.md`.
+- My workflow is to read `CLAUDE.md`.
 
 
 # Ultracite Code Standards
